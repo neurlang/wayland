@@ -5,7 +5,7 @@ import xdg "github.com/neurlang/wayland/xdg"
 import "syscall"
 
 func DisplayDispatch(d *wl.Display) error {
-	panic("not implemented")
+	return d.Context().Run()
 }
 func PointerSetUserData(p *wl.Pointer, data interface{}) {
 	return

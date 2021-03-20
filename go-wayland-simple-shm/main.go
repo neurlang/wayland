@@ -21,22 +21,19 @@
 //Go Wayland SimpleShm demo
 package main
 
-//import wl "github.com/neurlang/wayland/wayland"
-//import zxdg "github.com/neurlang/wayland/wayland"
-//import zwp "github.com/neurlang/wayland/wayland"
-//import ivi "github.com/neurlang/wayland/wayland"
+import wl "github.com/neurlang/wayland/wl"
+import zxdg "github.com/neurlang/wayland/xdg"
+import wlclient "github.com/neurlang/wayland/wlclient"
 import "fmt"
 import "github.com/neurlang/wayland/os"
 
 type display struct {
-	display         *wl.Display
-	registry        *wl.Registry
-	compositor      *wl.Compositor
-	shell           *zxdg.ShellV6
-	fshell          *zwp.FullscreenShellV1
-	shm             *wl.Shm
-	has_xrgb        bool
-	ivi_application *ivi.IviApplication
+	display    *wl.Display
+	registry   *wl.Registry
+	compositor *wl.Compositor
+	shell      *zxdg.Shell
+	shm        *wl.Shm
+	has_xrgb   bool
 }
 type buffer struct {
 	buffer   *wl.Buffer
@@ -48,16 +45,15 @@ type window struct {
 	display            *display
 	width, height      int
 	surface            *wl.Surface
-	xdg_surface        *zxdg.SurfaceV6
-	xdg_toplevel       *zxdg.ToplevelV6
-	ivi_surface        *ivi.IviSurface
+	xdg_surface        *zxdg.Surface
+	xdg_toplevel       *zxdg.Toplevel
 	buffers            [2]buffer
 	prev_buffer_id     int
 	callback           *wl.Callback
 	wait_for_configure bool
 }
 
-func (mybuf *buffer) BufferRelease(buf *wl.Buffer) {
+func (mybuf *buffer) HandleBufferRelease(wl.BufferReleaseEvent) {
 	mybuf.busy = false
 }
 
@@ -71,29 +67,38 @@ func create_shm_buffer(w *window, buffer *buffer, width int, height int, format 
 		return err
 	}
 
+	defer os.Close(fd)
+
 	data, err := os.Mmap32(fd, 0,
 		size, os.PROT_READ|os.PROT_WRITE, os.MAP_SHARED)
 	if err != nil {
-		os.Close(fd)
 		return err
 	}
 
-	pool := wl.ShmCreatePool((w.display.shm), int32(fd), int32(size))
-	buffer.buffer = wl.ShmPoolCreateBuffer(pool, 0, int32(width), int32(height), int32(stride), uint32(format))
+	pool, err := w.display.shm.CreatePool(uintptr(fd), int32(size))
+	if err != nil {
+		return err
+	}
+	buf, err := pool.CreateBuffer(0, int32(width), int32(height), int32(stride), uint32(format))
+	if err != nil {
+		return err
+	}
 
+	buffer.buffer = buf
 	// add buffer releaser here
-	wl.BufferAddListener((buffer.buffer), buffer)
-	wl.ShmPoolDestroy(pool)
-	os.Close(fd)
+	wlclient.BufferAddListener((buffer.buffer), buffer)
+	pool.Destroy()
 
 	buffer.shm_data = data
 
 	return nil
 }
+func (window *window) HandleXdgSurfaceConfigure(ev zxdg.XdgSurfaceConfigureEvent) {
+	window.SurfaceConfigure(window.xdg_surface, ev.Serial)
+}
+func (window *window) SurfaceConfigure(sf *zxdg.Surface, serial uint32) {
 
-func (window *window) SurfaceV6Configure(sf *zxdg.SurfaceV6, serial uint32) {
-
-	zxdg.SurfaceV6AckConfigure(sf, serial)
+	sf.AckConfigure(serial)
 
 	if window.wait_for_configure {
 		redraw(window, nil, 0)
@@ -102,24 +107,27 @@ func (window *window) SurfaceV6Configure(sf *zxdg.SurfaceV6, serial uint32) {
 
 }
 
-func (window *window) ToplevelV6Configure(zxdg_toplevel_v6 *zxdg.ToplevelV6,
-	width int32, height int32, states []int32) {
+func (window *window) HandleToplevelConfigure(ev zxdg.ToplevelConfigureEvent) {
 
 }
 
-func (window *window) ToplevelV6Close(tl *zxdg.ToplevelV6) {
+func (window *window) HandleToplevelClose(ev zxdg.ToplevelCloseEvent) {
 }
 
-func (d *display) ShmFormat(shm *wl.Shm, format uint32) {
+func (d *display) HandleShmFormat(ev wl.ShmFormatEvent) {
 
-	if format == wl.SHM_FORMAT_XRGB8888 {
+	if ev.Format == wl.ShmFormatXrgb8888 {
 		d.has_xrgb = true
 	}
 
 }
 
-func (d *display) ShellV6Ping(shell *zxdg.ShellV6, serial uint32) {
-	zxdg.ShellV6Pong(shell, serial)
+func (d *display) HandleXdgWmBasePing(ev zxdg.XdgWmBasePingEvent) {
+	d.shell.Pong(ev.Serial)
+}
+
+func (disp *display) HandleRegistryGlobal(ev wl.RegistryGlobalEvent) {
+	disp.RegistryGlobal(disp.registry, ev.Name, ev.Interface, ev.Version)
 }
 
 func (disp *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
@@ -129,28 +137,25 @@ func (disp *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
 
 	switch goFace {
 	case "wl_compositor":
-		disp.compositor = wl.RegistryBindCompositorInterface(disp.registry, goid, 1)
+		disp.compositor = wlclient.RegistryBindCompositorInterface(disp.registry, goid, 1)
 
 	case "zxdg_shell_v6":
-		disp.shell = zxdg.RegistryBindShellV6Interface(disp.registry, goid, 1)
+		disp.shell = wlclient.RegistryBindShellInterface(disp.registry, goid, 1)
 
-		zxdg.ShellV6AddListener((disp.shell), disp)
+		zxdg.WmBaseAddListener((disp.shell), disp)
 
 	case "zwp_fullscreen_shell_v1":
-		disp.fshell = zwp.RegistryBindFullscreenShellV1Interface(disp.registry, goid, 1)
-	case "wl_shm":
-		disp.shm = wl.RegistryBindShmInterface(disp.registry, goid, 1)
-		wl.ShmAddListener((disp.shm), disp)
 
-	case "ivi_application":
-		disp.ivi_application = ivi.RegistryBindIviApplicationInterface(disp.registry, goid, 1)
+	case "wl_shm":
+		disp.shm = wlclient.RegistryBindShmInterface(disp.registry, goid, 1)
+		wlclient.ShmAddListener((disp.shm), disp)
 
 	default:
 		fmt.Println("Other register global", goFace)
 	}
 }
 
-func (*display) RegistryGlobalRemove(r *wl.Registry, u uint32) {
+func (*display) HandleRegistryGlobalRemove(ev wl.RegistryGlobalRemoveEvent) {
 
 }
 
@@ -158,21 +163,27 @@ func create_display() *display {
 	disp := &display{
 		has_xrgb: false,
 	}
-	disp.display = wl.DisplayConnect(nil)
-	fmt.Printf("Type of wl_display value: %T\n", disp.display)
-
-	if disp.display == nil {
+	d, err := wlclient.DisplayConnect(nil)
+	if err != nil {
 		panic("Could not connect to Wayland.")
 	}
 
-	disp.registry = (wl.DisplayGetRegistry(disp.display))
-	wl.RegistryAddListener((disp.registry), disp)
-	wl.DisplayRoundtrip(disp.display)
+	disp.display = d
+
+	reg, err := disp.display.GetRegistry()
+	if err != nil {
+		panic("Could not get Registry.")
+	}
+
+	disp.registry = reg
+
+	wlclient.RegistryAddListener((disp.registry), disp)
+	wlclient.DisplayRoundtrip(disp.display)
 	if disp.shm == nil {
 		panic("No wl_shm global\n")
 	}
 
-	wl.DisplayRoundtrip(disp.display)
+	wlclient.DisplayRoundtrip(disp.display)
 
 	if !disp.has_xrgb {
 		panic("WL_SHM_FORMAT_XRGB32 not available\n")
@@ -190,38 +201,34 @@ func create_window(disp *display, width, height int) *window {
 		height:   height,
 	}
 
-	win.surface = wl.CompositorCreateSurface((disp.compositor))
+	surf, err := disp.compositor.CreateSurface()
+	if err != nil {
+		panic("cannot create surface")
+	}
+	win.surface = surf
 
 	if disp.shell != nil {
-		win.xdg_surface =
-			zxdg.ShellV6GetXdgSurface((disp.shell),
-				(win.surface))
-		if win.xdg_surface == nil {
-			panic("xdg surface is nil")
+		xdg_surf, err := disp.shell.GetXdgSurface(win.surface)
+		if err != nil {
+			panic("cannot get xdg surface")
+		}
+		win.xdg_surface = xdg_surf
+
+		win.xdg_surface.AddListener(win)
+
+		xdg_toplevel, err := win.xdg_surface.GetToplevel()
+		if err != nil {
+			panic("xdg toplevel is wrong")
 		}
 
-		zxdg.SurfaceV6AddListener((win.xdg_surface), win)
+		win.xdg_toplevel = xdg_toplevel
 
-		win.xdg_toplevel = zxdg.SurfaceV6GetToplevel((win.xdg_surface))
+		zxdg.ToplevelAddListener((win.xdg_toplevel), win)
 
-		if win.xdg_toplevel == nil {
-			panic("xdg surface is nil")
-		}
+		win.xdg_toplevel.SetTitle("Title")
 
-		zxdg.ToplevelV6AddListener((win.xdg_toplevel), win)
-
-		zxdg.ToplevelV6SetTitle((win.xdg_toplevel), []byte("Title"))
-
-		wl.SurfaceCommit((win.surface))
+		win.surface.Commit()
 		win.wait_for_configure = true
-
-	} else if disp.fshell != nil {
-
-		print("Fshell\n")
-
-	} else if disp.ivi_application != nil {
-
-		print("Ivi shell\n")
 
 	} else {
 		print("Unknown shell\n")
@@ -245,7 +252,7 @@ func window_next_buffer(window *window) *buffer {
 	if buffer.buffer == nil {
 		err := create_shm_buffer(window, buffer,
 			window.width, window.height,
-			wl.SHM_FORMAT_XRGB8888)
+			wl.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -293,7 +300,9 @@ func (w *window) paintPixels(time uint32, buf *buffer) {
 		}
 	}
 }
-
+func (win *window) HandleCallbackDone(ev wl.CallbackDoneEvent) {
+	win.CallbackDone(ev.C, ev.CallbackData)
+}
 func (win *window) CallbackDone(callback *wl.Callback, time uint32) {
 	redraw(win, callback, time)
 }
@@ -303,17 +312,22 @@ func redraw(win *window, callback *wl.Callback, time uint32) {
 	buffer := window_next_buffer(win)
 
 	win.paintPixels(uint32(time), buffer)
-	wl.SurfaceAttach(win.surface, (buffer.buffer), 0, 0)
-	wl.SurfaceDamage(win.surface, 0, 0,
+	win.surface.Attach(buffer.buffer, 0, 0)
+	win.surface.Damage(0, 0,
 		int32(win.width), int32(win.height))
 
 	if callback != nil {
-		wl.CallbackDestroy(callback)
+		wlclient.CallbackDestroy(callback)
 	}
 
-	win.callback = wl.SurfaceFrame(win.surface)
-	wl.CallbackAddListener((win.callback), win)
-	wl.SurfaceCommit(win.surface)
+	cb, err := win.surface.Frame()
+	if err != nil {
+		panic("cannot get frame callback")
+	}
+	win.callback = cb
+
+	wlclient.CallbackAddListener(win.callback, win)
+	win.surface.Commit()
 	buffer.busy = true
 }
 
@@ -326,13 +340,13 @@ func main() {
 	}
 
 	// Initialise damage to full surface, so the padding gets painted
-	wl.SurfaceDamage(window.surface, int32(0), int32(0), int32(window.width), int32(window.height))
+	window.surface.Damage((0), (0), int32(window.width), int32(window.height))
 
 	if !window.wait_for_configure {
 		redraw(window, nil, 0)
 	}
 
-	for wl.DisplayDispatch(display.display) != -1 {
+	for wlclient.DisplayDispatch(display.display) == nil {
 	}
 
 	print("go-wayland-simpleshm exiting\n")
