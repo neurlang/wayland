@@ -8,15 +8,36 @@ func DisplayDispatch(d *wl.Display) error {
 	panic("not implemented")
 }
 func PointerSetUserData(p *wl.Pointer, data interface{}) {
-	panic("not implemented")
+	return
 }
 
 func SurfaceSetUserData(p *wl.Surface, data interface{}) {
 	p.UserData = data
 }
 
-func PointerAddListener(p *wl.Pointer, data interface{}) interface{} {
-	panic("not implemented")
+type PointerListener interface {
+	wl.PointerEnterHandler
+	wl.PointerLeaveHandler
+	wl.PointerMotionHandler
+	wl.PointerButtonHandler
+	wl.PointerAxisHandler
+	wl.PointerFrameHandler
+	wl.PointerAxisSourceHandler
+	wl.PointerAxisStopHandler
+	wl.PointerAxisDiscreteHandler
+}
+
+func PointerAddListener(p *wl.Pointer, h PointerListener) {
+	p.AddEnterHandler(h)
+	p.AddLeaveHandler(h)
+	p.AddMotionHandler(h)
+	p.AddButtonHandler(h)
+	p.AddAxisHandler(h)
+	p.AddFrameHandler(h)
+	p.AddAxisSourceHandler(h)
+	p.AddAxisStopHandler(h)
+	p.AddAxisDiscreteHandler(h)
+
 }
 func PointerDestroy(p *wl.Pointer) {
 	panic("not implemented")
@@ -34,13 +55,11 @@ func ShmPoolDestroy(p *wl.ShmPool) {
 func RegistryDestroy(p *wl.Registry) {
 	panic("not implemented")
 }
-func BufferAddListener(p *wl.Buffer, data interface{}) {
-	println("unimpl")
-	return
+func BufferAddListener(b *wl.Buffer, data wl.BufferReleaseHandler) {
+	b.AddReleaseHandler(data)
 }
-func CallbackAddListener(p *wl.Callback, data interface{}) {
-	println("unimpl")
-	return
+func CallbackAddListener(c *wl.Callback, data wl.CallbackDoneHandler) {
+	c.AddDoneHandler(data)
 }
 
 type OutputListener interface {
@@ -48,18 +67,15 @@ type OutputListener interface {
 	wl.OutputModeHandler
 	wl.OutputDoneHandler
 	wl.OutputScaleHandler
-	
 }
 
 func OutputAddListener(o *wl.Output, h OutputListener) {
-	o.AddGeometryHandler(h )
-	o.AddModeHandler(h )
-	o.AddDoneHandler(h )
-	o.AddScaleHandler(h )
+	o.AddGeometryHandler(h)
+	o.AddModeHandler(h)
+	o.AddDoneHandler(h)
+	o.AddScaleHandler(h)
 	return
 }
-
-
 
 type SeatListener interface {
 	wl.SeatCapabilitiesHandler
@@ -72,6 +88,7 @@ func SeatAddListener(s *wl.Seat, data SeatListener) {
 
 	return
 }
+
 type RegistryListener interface {
 	wl.RegistryGlobalHandler
 	wl.RegistryGlobalRemoveHandler
@@ -89,7 +106,7 @@ type SurfaceEnterLeaveListener interface {
 }
 
 type SurfaceEnterLeave struct {
-	surface *wl.Surface
+	surface   *wl.Surface
 	callbacks [2]func(*wl.Surface, *wl.Output)
 }
 
@@ -102,13 +119,11 @@ func (el *SurfaceEnterLeave) HandleSurfaceLeave(le wl.SurfaceLeaveEvent) {
 }
 
 func SurfaceAddListener(s *wl.Surface, enter func(*wl.Surface, *wl.Output), leave func(*wl.Surface, *wl.Output)) {
-	el := &SurfaceEnterLeave{surface: s, callbacks : [2]func(*wl.Surface, *wl.Output){enter, leave}}
+	el := &SurfaceEnterLeave{surface: s, callbacks: [2]func(*wl.Surface, *wl.Output){enter, leave}}
 	s.AddEnterHandler(el)
 	s.AddLeaveHandler(el)
 	return
 }
-
-
 
 func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
 
@@ -118,13 +133,13 @@ func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
 
 }
 func RegionDestroy(p *wl.Region) {
-	panic("not implemented")
+	return
 }
 func CallbackDestroy(p *wl.Callback) {
-	panic("not implemented")
+	return
 }
 func SubsurfaceDestroy(p *wl.Subsurface) {
-	panic("not implemented")
+	return
 }
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
@@ -133,14 +148,12 @@ func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32
 	return c
 }
 
-
 func RegistryBindShmInterface(r *wl.Registry, name uint32, version uint32) *wl.Shm {
 	s := wl.NewShm(r.Ctx)
 	r.Bind(name, "wl_shm", version, s)
 	return s
 	//return (*Shm)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_shm_interface, (C.uint32_t)(version)))
 }
-
 
 func RegistryBindDataDeviceManagerInterface(r *wl.Registry, name uint32, version uint32) *wl.DataDeviceManager {
 	d := wl.NewDataDeviceManager(r.Ctx)
@@ -156,16 +169,12 @@ func RegistryBindOutputInterface(r *wl.Registry, name uint32, version uint32) *w
 	//return (*Output)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_output_interface, (C.uint32_t)(version)))
 }
 
-
-
-
 func RegistryBindSeatInterface(r *wl.Registry, name uint32, version uint32) *wl.Seat {
 	d := wl.NewSeat(r.Ctx)
 	r.Bind(name, "wl_seat", version, d)
 	return d
 	//return (*Seat)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_seat_interface, (C.uint32_t)(version)))
 }
-
 
 func RegistryBindShellInterface(r *wl.Registry, name uint32, version uint32) *xdg.Shell {
 	d := xdg.NewShell(r.Ctx)
@@ -183,6 +192,9 @@ func DisplayGetFd(d *wl.Display) int {
 func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 	return d.GetRegistry()
 }
+func DisplayRun(d *wl.Display) error {
+	return d.Context().Run()
+}
 func DisplayRoundtrip(d *wl.Display) error {
 	cb, err := d.Sync()
 	if err != nil {
@@ -196,11 +208,13 @@ func DisplayDisconnect(display *wl.Display) {
 	//C.wl_display_disconnect((*C.struct_wl_display)(display))
 }
 func DisplayDispatchPending(d *wl.Display) int {
-	println("DisplayDispatchPending: no-op")
+	//println("DisplayDispatchPending: no-op")
 	return 0
 }
+
 var EAgain = syscall.EAGAIN
+
 func DisplayFlush(d *wl.Display) error {
-	println("DisplayFlush: no-op")
+	//println("DisplayFlush: no-op")
 	return nil
 }

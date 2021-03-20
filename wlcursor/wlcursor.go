@@ -9,7 +9,9 @@ type Cursor struct {
 }
 
 func (c *Cursor) GetCursorImage(index int) *Image {
-	panic("unimplemented")
+	println("GetCursorImage: unimplemented")
+
+	return nil
 }
 func (c *Cursor) FrameAndDuration(a uint32, b *uint32) int {
 	panic("unimplemented")
@@ -18,6 +20,7 @@ func (c *Cursor) FrameAndDuration(a uint32, b *uint32) int {
 func (c *Cursor) ImageCount() int {
 	return 1
 }
+
 type Image struct {
 }
 

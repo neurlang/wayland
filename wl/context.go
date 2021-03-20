@@ -94,10 +94,9 @@ func (c *Context) NextFD() uintptr {
 	}
 	return 0
 }
-func (ret *Display) GetFd() (int) {
+func (ret *Display) GetFd() int {
 	return ret.Fd
 }
-
 
 func Connect(addr string) (ret *Display, err error) {
 	runtime_dir := os.Getenv("XDG_RUNTIME_DIR")
@@ -210,7 +209,7 @@ func ListenFD(addr string) (ret int, err error) {
 	return sockFD, nil
 }
 
-func  (c *Context) RunTill(cb *Callback) {
+func (c *Context) RunTill(cb *Callback) {
 loop:
 	for {
 		ev, err := c.readEvent()
@@ -231,7 +230,7 @@ loop:
 		proxy := c.LookupProxy(ev.Pid)
 		if proxy != nil {
 			if dispatcher, ok := proxy.(Dispatcher); ok {
-			
+
 				if found_cb, ok := dispatcher.(*Callback); ok {
 					if found_cb == cb {
 						bytePool.Give(ev.Data)
@@ -246,48 +245,36 @@ loop:
 		} else {
 			log.Print("Proxy NULL")
 		}
-	
+
 	}
 }
 
-func (c *Context) Run() {
+func (c *Context) Run() error {
 	// ctx := context.Background()
 
-loop:
-	for {
-		select {
-		case <-c.dispatchChan:
-			ev, err := c.readEvent()
-			if err != nil {
-				if err == io.EOF {
-					log.Print("connection closed")
-					// connection closed
-					break loop
-
-				}
-
-				if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-					log.Print("Timeout Error")
-					continue
-				}
-
-				log.Fatal(err)
-			}
-
-			proxy := c.LookupProxy(ev.Pid)
-			if proxy != nil {
-				if dispatcher, ok := proxy.(Dispatcher); ok {
-					dispatcher.Dispatch(ev)
-					bytePool.Give(ev.Data)
-				} else {
-					log.Print("Not dispatched")
-				}
-			} else {
-				log.Print("Proxy NULL")
-			}
-
-		case <-c.exitChan:
-			break loop
+	ev, err := c.readEvent()
+	if err != nil {
+		if err == io.EOF {
+			return errors.New("connection closed")
 		}
+
+		if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+			return errors.New("Timeout Error")
+		}
+
+		log.Fatal(err)
 	}
+
+	proxy := c.LookupProxy(ev.Pid)
+	if proxy != nil {
+		if dispatcher, ok := proxy.(Dispatcher); ok {
+			dispatcher.Dispatch(ev)
+			bytePool.Give(ev.Data)
+		} else {
+			return errors.New("Not dispatched")
+		}
+	} else {
+		return errors.New("Proxy NULL")
+	}
+	return nil
 }

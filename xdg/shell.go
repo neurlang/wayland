@@ -8,11 +8,9 @@ type Context = wl.Context
 type Proxy = wl.Proxy
 type Surface = XdgSurface
 
-func (s *Surface) AddListener(_ interface{}) {
-	return
+func (s *Surface) AddListener(h XdgSurfaceConfigureHandler) {
+	s.AddConfigureHandler(h)
 }
-
-
 
 type Seat = wl.Seat
 type Output = wl.Output
@@ -25,11 +23,17 @@ func NewShell(ctx *Context) *Shell {
 
 type Shell = XdgWmBase
 
-
-func WmBaseAddListener(s *Shell, _ interface{}) {
+func WmBaseAddListener(s *Shell, h XdgWmBasePingHandler) {
+	s.AddPingHandler(h)
 	return
 }
 
-func ToplevelAddListener(*Toplevel, interface{}) {
-	return
+type ToplevelListener interface {
+	ToplevelConfigureHandler
+	ToplevelCloseHandler
+}
+
+func ToplevelAddListener(tl *Toplevel, h ToplevelListener) {
+	tl.AddConfigureHandler(h)
+	tl.AddCloseHandler(h)
 }

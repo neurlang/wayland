@@ -100,8 +100,8 @@ type Display struct {
 	mu               sync.RWMutex
 	errorHandlers    []DisplayErrorHandler
 	deleteIdHandlers []DisplayDeleteIdHandler
-	
-	Fd int
+
+	Fd  int
 	Ctx *Context
 }
 
@@ -248,7 +248,7 @@ type Registry struct {
 	mu                   sync.RWMutex
 	globalHandlers       []RegistryGlobalHandler
 	globalRemoveHandlers []RegistryGlobalRemoveHandler
-	
+
 	Ctx *Context
 }
 
@@ -271,6 +271,8 @@ func (p *Registry) Bind(name uint32, iface string, version uint32, id Proxy) err
 
 type CallbackDoneEvent struct {
 	CallbackData uint32
+
+	C *Callback
 }
 
 type CallbackDoneHandler interface {
@@ -301,7 +303,7 @@ func (p *Callback) Dispatch(event *Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.doneHandlers) > 0 {
-			ev := CallbackDoneEvent{}
+			ev := CallbackDoneEvent{C: p}
 			ev.CallbackData = event.Uint32()
 			p.mu.RLock()
 			for _, h := range p.doneHandlers {
@@ -592,6 +594,7 @@ const (
 )
 
 type BufferReleaseEvent struct {
+	B *Buffer
 }
 
 type BufferReleaseHandler interface {
@@ -622,7 +625,7 @@ func (p *Buffer) Dispatch(event *Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.releaseHandlers) > 0 {
-			ev := BufferReleaseEvent{}
+			ev := BufferReleaseEvent{B: p}
 			p.mu.RLock()
 			for _, h := range p.releaseHandlers {
 				h.HandleBufferRelease(ev)
@@ -2016,7 +2019,7 @@ type Surface struct {
 	mu            sync.RWMutex
 	enterHandlers []SurfaceEnterHandler
 	leaveHandlers []SurfaceLeaveHandler
-	
+
 	UserData interface{}
 }
 
@@ -2586,6 +2589,8 @@ func (p *Pointer) RemoveLeaveHandler(h PointerLeaveHandler) {
 }
 
 type PointerMotionEvent struct {
+	P *Pointer
+
 	Time     uint32
 	SurfaceX float32
 	SurfaceY float32
@@ -2817,7 +2822,7 @@ func (p *Pointer) Dispatch(event *Event) {
 		}
 	case 2:
 		if len(p.motionHandlers) > 0 {
-			ev := PointerMotionEvent{}
+			ev := PointerMotionEvent{P: p}
 			ev.Time = event.Uint32()
 			ev.SurfaceX = event.Float32()
 			ev.SurfaceY = event.Float32()
