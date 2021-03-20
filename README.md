@@ -13,6 +13,19 @@ None, this is a pure go implementation
 
 # Installation
 
+First of all you need a wayland-enabled Linux, if you don't have one, install
+the Wayland compositor weston that is useful for testing:
+
+```
+sudo apt-get install weston
+```
+
+Next install the demos:
+
 ```
 go get github.com/neurlang/wayland/...
+go install github.com/neurlang/wayland/go-wayland-simple-shm
+go install github.com/neurlang/wayland/go-wayland-smoke
 ```
+
+And finally run weston and the executables.
