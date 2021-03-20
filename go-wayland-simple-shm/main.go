@@ -21,10 +21,10 @@
 //Go Wayland SimpleShm demo
 package main
 
-import wl "github.com/neurlang/wayland/wayland"
-import zxdg "github.com/neurlang/wayland/wayland"
-import zwp "github.com/neurlang/wayland/wayland"
-import ivi "github.com/neurlang/wayland/wayland"
+//import wl "github.com/neurlang/wayland/wayland"
+//import zxdg "github.com/neurlang/wayland/wayland"
+//import zwp "github.com/neurlang/wayland/wayland"
+//import ivi "github.com/neurlang/wayland/wayland"
 import "fmt"
 import "github.com/neurlang/wayland/os"
 

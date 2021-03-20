@@ -23,14 +23,18 @@ package Window
 
 import "unsafe"
 import "syscall"
-import zwp "github.com/neurlang/wayland/wayland"
-import wl "github.com/neurlang/wayland/wayland"
-import zxdg "github.com/neurlang/wayland/wayland"
+//import zwp "github.com/neurlang/wayland/wayland"
+import wlclient "github.com/neurlang/wayland/wlclient"
+import wlcursor "github.com/neurlang/wayland/wlcursor"
+import wl "github.com/neurlang/wayland/wl"
+import zxdg "github.com/neurlang/wayland/xdg"
 import cairo "github.com/neurlang/wayland/cairoshim"
 
 import "github.com/neurlang/wayland/os"
 
 import "errors"
+
+import "fmt"
 
 const SURFACE_OPAQUE = 0x01
 const SURFACE_SHM = 0x02
@@ -93,10 +97,10 @@ type Display struct {
 	shm                      *wl.Shm
 	data_device_manager      *wl.DataDeviceManager
 	text_cursor_position     *struct{}
-	xdg_shell                *zxdg.ShellV6
+	xdg_shell                *zxdg.Shell
 	ivi_application          unsafe.Pointer
-	relative_pointer_manager *zwp.RelativePointerManagerV1
-	pointer_constraints      *zwp.PointerConstraintsV1
+	relative_pointer_manager unsafe.Pointer
+	pointer_constraints      unsafe.Pointer
 	dpy                      unsafe.Pointer
 	argb_config              unsafe.Pointer
 	argb_ctx                 unsafe.Pointer
@@ -135,8 +139,8 @@ type Display struct {
 	//	padg		uint64
 
 	theme        *struct{}
-	cursor_theme *wl.CursorTheme
-	cursors      *[lengthCursors]*wl.Cursor
+	cursor_theme *wlcursor.Theme
+	cursors      *[lengthCursors]*wlcursor.Cursor
 
 	output_configure_handler unsafe.Pointer
 	global_handler           unsafe.Pointer
@@ -163,7 +167,6 @@ type Display struct {
 
 func (Display *Display) Run(events uint32) {
 	var ep syscall.EpollEvent
-	var ret int
 
 	Display.display_fd_events = events
 
@@ -173,16 +176,17 @@ func (Display *Display) Run(events uint32) {
 	}
 
 	if events&syscall.EPOLLIN != 0 {
-		ret = wl.DisplayDispatch(Display.Display)
-		if ret == -1 {
+		err := wlclient.DisplayDispatch(Display.Display)
+		if err != nil {
+			fmt.Println(err)
 			Display.Exit()
 			return
 		}
 	}
 
 	if events&syscall.EPOLLOUT != 0 {
-		ret = wl.DisplayFlush(Display.Display)
-		if ret == 0 {
+		err := wlclient.DisplayFlush(Display.Display)
+		if err == nil {
 			ep.Events = syscall.EPOLLIN | syscall.EPOLLERR | syscall.EPOLLHUP
 
 			os.Epollctl(uintptr(Display.epoll_fd), syscall.EPOLL_CTL_MOD,
@@ -288,9 +292,9 @@ type Window struct {
 	locked_pointer_motion_handler unsafe.Pointer
 
 	main_surface *surface
-	xdg_surface  *zxdg.SurfaceV6
-	xdg_toplevel *zxdg.ToplevelV6
-	xdg_popup    *zxdg.PopupV6
+	xdg_surface  *zxdg.Surface
+	xdg_toplevel *zxdg.Toplevel
+	xdg_popup    *zxdg.Popup
 
 	parent      *Window
 	last_parent *Window
@@ -302,8 +306,8 @@ type Window struct {
 	/* struct surface::link, contains also main_surface */
 	subsurface_list [2]*surface
 
-	relative_pointer *zwp.RelativePointerV1
-	locked_pointer   *zwp.LockedPointerV1
+	relative_pointer unsafe.Pointer
+	locked_pointer   unsafe.Pointer
 	locked_input     unsafe.Pointer
 	pointer_locked   bool
 
@@ -316,7 +320,7 @@ type Window struct {
 	pointer_confined_handler   unsafe.Pointer
 	pointer_unconfined_handler unsafe.Pointer
 
-	confined_pointer *zwp.ConfinedPointerV1
+	confined_pointer unsafe.Pointer
 	confined_widget  unsafe.Pointer
 	confined         bool
 
@@ -338,15 +342,15 @@ func windowLink(w *Window, direction byte) **Window {
 	return &w.link[direction]
 }
 
-func (Window *Window) SurfaceV6Configure(zxdg_surface_v6 *wl.SurfaceV6, serial uint32) {
+func (Window *Window) SurfaceV6Configure(zxdg_surface_v6 *zxdg.Surface, serial uint32) {
 
-	wl.SurfaceV6AckConfigure(Window.xdg_surface, serial)
+	Window.xdg_surface.AckConfigure(serial)
 
 	window_uninhibit_redraw(Window)
 
 }
 
-func (Window *Window) ToplevelV6Configure(zxdg_toplevel_v6 *zxdg.ToplevelV6, width int32, height int32, states []int32) {
+func (Window *Window) ToplevelV6Configure(zxdg_toplevel_v6 *zxdg.Toplevel, width int32, height int32, states []int32) {
 
 	Window.maximized = 0
 	Window.fullscreen = 0
@@ -355,13 +359,13 @@ func (Window *Window) ToplevelV6Configure(zxdg_toplevel_v6 *zxdg.ToplevelV6, wid
 
 	for i := range states {
 		switch states[i] {
-		case zxdg.TOPLEVEL_V6_STATE_MAXIMIZED:
+		case zxdg.ToplevelStateMaximized:
 			Window.maximized = 1
-		case zxdg.TOPLEVEL_V6_STATE_FULLSCREEN:
+		case zxdg.ToplevelStateFullscreen:
 			Window.fullscreen = 1
-		case zxdg.TOPLEVEL_V6_STATE_RESIZING:
+		case zxdg.ToplevelStateResizing:
 			Window.resizing = 1
-		case zxdg.TOPLEVEL_V6_STATE_ACTIVATED:
+		case zxdg.ToplevelStateActivated:
 			Window.focused = 1
 		default:
 			/* Unknown state */
@@ -385,18 +389,14 @@ func (Window *Window) ToplevelV6Configure(zxdg_toplevel_v6 *zxdg.ToplevelV6, wid
 	}
 
 }
-func (w *Window) ToplevelV6Close(zxdg_toplevel_v6 *zxdg.ToplevelV6) {
+func (w *Window) ToplevelV6Close(zxdg_toplevel_v6 *zxdg.Toplevel) {
 
 	w.Display.Exit()
 }
 
-func (w *Window) To() uintptr {
-	return uintptr(unsafe.Pointer(w))
+func SurfaceEnter(wl_surface *wl.Surface, wl_output *wl.Output) {
 }
-
-func SurfaceEnter(p uintptr, wl_surface *wl.Surface, wl_output *wl.Output) {
-}
-func SurfaceLeave(p uintptr, wl_surface *wl.Surface, wl_output *wl.Output) {
+func SurfaceLeave(wl_surface *wl.Surface, wl_output *wl.Output) {
 }
 
 type Widget struct {
@@ -561,13 +561,13 @@ const CURSOR_UNSET = 101
 func surface_to_buffer_size(buffer_transform uint32, buffer_scale int32, width *int32, height *int32) {
 
 	switch buffer_transform {
-	case wl.OUTPUT_TRANSFORM_90:
+	case wl.OutputTransform90:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_270:
+	case wl.OutputTransform270:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_FLIPPED_90:
+	case wl.OutputTransformFlipped90:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_FLIPPED_270:
+	case wl.OutputTransformFlipped270:
 		*width, *height = *height, *width
 
 		break
@@ -582,13 +582,13 @@ func surface_to_buffer_size(buffer_transform uint32, buffer_scale int32, width *
 //line 532
 func buffer_to_surface_size(buffer_transform uint32, buffer_scale int32, width *int32, height *int32) {
 	switch buffer_transform {
-	case wl.OUTPUT_TRANSFORM_90:
+	case wl.OutputTransform90:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_270:
+	case wl.OutputTransform270:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_FLIPPED_90:
+	case wl.OutputTransformFlipped90:
 		fallthrough
-	case wl.OUTPUT_TRANSFORM_FLIPPED_270:
+	case wl.OutputTransformFlipped270:
 		*width, *height = *height, *width
 		break
 	default:
@@ -647,18 +647,31 @@ func (*Input) PointerAxisStop(wl_pointer *wl.Pointer, time uint32, axis uint32) 
 func (*Input) PointerAxisDiscrete(wl_pointer *wl.Pointer, axis uint32, discrete int32) {
 }
 
+func (input_ *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
+	input_.SeatCapabilities(input_.seat, ev.Capabilities)
+}
+
+func (input_ *Input) HandleSeatName(ev wl.SeatNameEvent) {
+	input_.SeatName(input_.seat, ev.Name)
+}
+
 func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
-	if (0 != (caps & wl.SEAT_CAPABILITY_POINTER)) && (nil == input_.pointer) {
-		input_.pointer = wl.SeatGetPointer(seat)
-		wl.PointerSetUserData(input_.pointer,
-			wl.PointerAddListener(input_.pointer, input_))
+	if (0 != (caps & wl.SeatCapabilityPointer)) && (nil == input_.pointer) {
+		var err error
+		input_.pointer, err = seat.GetPointer()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		wlclient.PointerSetUserData(input_.pointer,
+			wlclient.PointerAddListener(input_.pointer, input_))
 
-	} else if (0 == (caps & wl.SEAT_CAPABILITY_POINTER)) && (nil != input_.pointer) {
+	} else if (0 == (caps & wl.SeatCapabilityPointer)) && (nil != input_.pointer) {
 		if input_.seat_version >= wl.POINTER_RELEASE_SINCE_VERSION {
-			wl.PointerRelease(input_.pointer)
+			input_.pointer.Release()
 		} else {
-			wl.PointerDestroy(input_.pointer)
+			wlclient.PointerDestroy(input_.pointer)
 			input_.pointer = nil
 		}
 	}
@@ -676,7 +689,7 @@ const MAP_FAILED = uintptr(0xffffffffffffffff)
 
 //line 734
 func shm_surface_data_destroy(data *shm_surface_data) {
-	wl.BufferDestroy(data.buffer)
+	data.buffer.Destroy()
 	if data.pool != nil {
 		shm_pool_destroy(data.pool)
 	}
@@ -697,7 +710,13 @@ func make_shm_pool(Display *Display, size os.Length, data *interface{}) (pool *w
 		return nil
 	}
 
-	pool = wl.ShmCreatePool(Display.shm, int32(fd), int32(size))
+	pool, err = Display.shm.CreatePool(uintptr(fd), int32(size))
+	if err != nil {
+		println("create pool failed")
+		syscall.Close(fd)
+		return nil
+	}
+
 
 	syscall.Close(fd)
 
@@ -753,7 +772,7 @@ func shm_pool_destroy(pool *shm_pool) {
 		println(err)
 	}
 
-	wl.ShmPoolDestroy(pool.pool)
+	pool.pool.Destroy()
 	pool.data = nil
 	pool.pool = nil
 	pool.size = 0
@@ -789,6 +808,7 @@ func display_create_shm_surface_from_pool(Display *Display,
 	var stride, length int
 	var offset int
 	var map_ interface{}
+	var err error
 
 	if (flags&uint32(SURFACE_HINT_RGB565) != 0) && Display.has_rgb565 != 0 {
 		cairo_format = cairo.FORMAT_RGB16_565
@@ -819,19 +839,22 @@ func display_create_shm_surface_from_pool(Display *Display,
 	})
 
 	if (flags&uint32(SURFACE_HINT_RGB565) != 0) && Display.has_rgb565 != 0 {
-		format = wl.SHM_FORMAT_RGB565
+		format = wl.ShmFormatRgb565
 	} else {
 		if flags&SURFACE_OPAQUE != 0 {
-			format = wl.SHM_FORMAT_XRGB8888
+			format = wl.ShmFormatXrgb8888
 		} else {
-			format = wl.SHM_FORMAT_ARGB8888
+			format = wl.ShmFormatArgb8888
 		}
 	}
 
-	data.buffer = wl.ShmPoolCreateBuffer(pool.pool, int32(offset),
+	data.buffer, err = pool.pool.CreateBuffer(int32(offset),
 		rectangle.width,
 		rectangle.height,
 		int32(stride), format)
+	if err != nil {
+		return nil, nil
+	}
 
 	return &surface, data
 }
@@ -1008,7 +1031,7 @@ func (s *shm_surface) prepare(dx int, dy int, width int32, height int32, flags u
 		return nil
 	}
 
-	wl.BufferAddListener(leaf.data.buffer, surface)
+	wlclient.BufferAddListener(leaf.data.buffer, surface)
 
 out:
 	surface.current = leaf
@@ -1030,11 +1053,11 @@ func shm_surface_swap(surface *shm_surface, buffer_transform uint32,
 		(&server_allocation.width),
 		(&server_allocation.height))
 
-	wl.SurfaceAttach(surface.surface, leaf.data.buffer,
+	surface.surface.Attach(leaf.data.buffer,
 		int32(surface.dx), int32(surface.dy))
-	wl.SurfaceDamage(surface.surface, 0, 0,
+	surface.surface.Damage(0, 0,
 		server_allocation.width, server_allocation.height)
-	wl.SurfaceCommit(surface.surface)
+	surface.surface.Commit()
 
 	leaf.busy = 1
 	surface.current = nil
@@ -1102,11 +1125,11 @@ func create_cursors(Display *Display) {
 		[]string{"dnd-none\000", "dnd-no-drop\000"},
 	}
 
-	var cursor *wl.Cursor
+	var cursor *wlcursor.Cursor
 
-	Display.cursor_theme = wl.CursorThemeLoad(nil, 32, Display.shm)
+	Display.cursor_theme = wlcursor.LoadTheme(nil, 32, Display.shm)
 
-	var wlCursors = [lengthCursors]*wl.Cursor{}
+	var wlCursors = [lengthCursors]*wlcursor.Cursor{}
 
 	Display.cursors = &wlCursors
 
@@ -1117,8 +1140,7 @@ func create_cursors(Display *Display) {
 
 			str = str[:len(str)-2]
 
-			cursor = wl.CursorThemeGetCursor(
-				Display.cursor_theme, str)
+			cursor = Display.cursor_theme.GetCursor(str)
 
 			if cursor != nil {
 
@@ -1136,7 +1158,7 @@ func create_cursors(Display *Display) {
 
 //line 1386
 func destroy_cursors(Display *Display) {
-	wl.CursorThemeDestroy(Display.cursor_theme)
+	Display.cursor_theme.Destroy()
 }
 
 //line 1402
@@ -1146,15 +1168,14 @@ func surface_flush(surface *surface) {
 	}
 
 	if surface.opaque_region != nil {
-		wl.SurfaceSetOpaqueRegion(surface.surface_, surface.opaque_region)
-		wl.RegionDestroy((surface.opaque_region))
+		surface.surface_.SetOpaqueRegion(surface.opaque_region)
+		surface.opaque_region.Destroy()
 		surface.opaque_region = nil
 	}
 
 	if surface.input_region != nil {
-		wl.SurfaceSetInputRegion((surface.surface_),
-			(surface.input_region))
-		wl.RegionDestroy((surface.input_region))
+		surface.surface_.SetInputRegion(surface.input_region)
+		surface.input_region.Destroy()
 		surface.input_region = nil
 	}
 
@@ -1203,22 +1224,22 @@ func window_create_main_surface(Window *Window) {
 //line 1552
 func surface_destroy(surface *surface) {
 	if surface.frame_cb != nil {
-		wl.CallbackDestroy((surface.frame_cb))
+		wlclient.CallbackDestroy((surface.frame_cb))
 	}
 
 	if surface.input_region != nil {
-		wl.RegionDestroy((surface.input_region))
+		wlclient.RegionDestroy((surface.input_region))
 	}
 
 	if surface.opaque_region != nil {
-		wl.RegionDestroy((surface.opaque_region))
+		wlclient.RegionDestroy((surface.opaque_region))
 	}
 
 	if surface.subsurface != nil {
-		wl.SubsurfaceDestroy((surface.subsurface))
+		wlclient.SubsurfaceDestroy((surface.subsurface))
 	}
 
-	wl.SurfaceDestroy((surface.surface_))
+	surface.surface_.Destroy()
 
 	if surface.toysurface != nil {
 		(*surface.toysurface).destroy()
@@ -1230,13 +1251,13 @@ func surface_destroy(surface *surface) {
 func (Window *Window) Destroy() {
 
 	if Window.xdg_toplevel != nil {
-		zxdg.ToplevelV6Destroy(Window.xdg_toplevel)
+		Window.xdg_toplevel.Destroy()
 	}
 	if Window.xdg_popup != nil {
-		zxdg.PopupV6Destroy(Window.xdg_popup)
+		Window.xdg_popup.Destroy()
 	}
 	if Window.xdg_surface != nil {
-		zxdg.SurfaceV6Destroy(Window.xdg_surface)
+		Window.xdg_surface.Destroy()
 	}
 
 	surface_destroy(Window.main_surface)
@@ -1316,8 +1337,8 @@ func (Widget *Widget) Destroy() {
 
 }
 
-func (d *Display) ShellV6Ping(shell *zxdg.ShellV6, serial uint32) {
-	zxdg.ShellV6Pong(shell, serial)
+func (d *Display) ShellV6Ping(shell *zxdg.Shell, serial uint32) {
+	shell.Pong(serial)
 }
 
 func min_u32(a, b uint32) uint32 {
@@ -1326,17 +1347,26 @@ func min_u32(a, b uint32) uint32 {
 	}
 	return b
 }
-
+func (d *Display) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
+	d.RegistryGlobal(d.registry, e.Name, e.Interface, e.Version)
+}
+func (d *Display) HandleRegistryGlobalRemove(e wl.RegistryGlobalRemoveEvent) {
+	d.RegistryGlobalRemove(d.registry, e.Name)
+}
 func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string, version uint32) {
 	var global = &global{}
 
 	global.name = id
 	global.iface = iface
 	global.version = version
+	
+	println(iface)
 
 	switch iface {
+	
 	case "wl_compositor":
-		d.compositor = wl.RegistryBindCompositorInterface(d.registry, id, 1)
+		d.compositor = wlclient.RegistryBindCompositorInterface(d.registry, id, 1)
+		
 	case "wl_output":
 
 		display_add_output(d, id)
@@ -1353,19 +1383,20 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 
 		}
 	case "wl_shm":
-		d.shm = wl.RegistryBindShmInterface(d.registry, id, 1)
-		wl.ShmAddListener((d.shm), d)
+		d.shm = wlclient.RegistryBindShmInterface(d.registry, id, 1)
+		wlclient.ShmAddListener(d.shm, d)
 	case "wl_data_device_manager":
 		d.data_device_manager_version = min_u32(version, 3)
 
-		wl.RegistryBindDataDeviceManager(registry, id,
+		wlclient.RegistryBindDataDeviceManagerInterface(d.registry, id,
 			d.data_device_manager_version)
 
+	//case "zxdg_shell_v6":
 	case "zxdg_shell_v6":
 
-		d.xdg_shell = zxdg.RegistryBindShellV6Interface(d.registry, id, 1)
+		d.xdg_shell = wlclient.RegistryBindShellInterface(d.registry, id, 1)
 
-		zxdg.ShellV6AddListener((d.xdg_shell), d)
+		zxdg.WmBaseAddListener(d.xdg_shell, d)
 
 	case "text_cursor_position":
 	case "wl_subcompositor":
@@ -1378,9 +1409,11 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 func (d *Display) RegistryGlobalRemove(wl_registry *wl.Registry, name uint32) {
 
 }
-
+func (d *Display) HandleShmFormat(e wl.ShmFormatEvent) {
+	d.ShmFormat(nil, e.Format)
+}
 func (d *Display) ShmFormat(wl_shm *wl.Shm, format uint32) {
-
+	println(format)
 }
 
 //line 1733
@@ -1440,7 +1473,7 @@ func (Window *Window) WindowGetSurface() cairo.Surface {
 
 //line 2614
 func input_set_focus_widget(Input *Input, focus *Widget,
-	x float32, y float32) {
+	x float64, y float64) {
 	var old, Widget *Widget
 	var cursor int
 
@@ -1512,18 +1545,18 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 		return
 	}
 
-	Input.sx = sx
-	Input.sy = sy
+	Input.sx = float32(sx)
+	Input.sy = float32(sy)
 
 	// when making the Window smaller - e.g. after an unmaximise we might
 	// * still have a pending motion event that the compositor has picked
 	// * based on the old surface dimensions. However, if we have an active
 	// * grab, we expect to see Input from outside the Window anyway.
 
-	if nil == Input.grab && (sx < float32(Window.main_surface.allocation.x) ||
-		sy < float32(Window.main_surface.allocation.y) ||
-		sx > float32(Window.main_surface.allocation.width) ||
-		sy > float32(Window.main_surface.allocation.height)) {
+	if nil == Input.grab && (sx < float64(Window.main_surface.allocation.x) ||
+		sy < float64(Window.main_surface.allocation.y) ||
+		sx > float64(Window.main_surface.allocation.width) ||
+		sy > float64(Window.main_surface.allocation.height)) {
 		return
 	}
 
@@ -1541,7 +1574,7 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 	if Widget != nil {
 		if Widget.Userdata != nil {
 			cursor = Widget.Userdata.Motion(Input.focus_widget,
-				Input, time, sx, sy)
+				Input, time, float32(sx), float32(sy))
 		} else {
 			cursor = int(Widget.default_cursor)
 		}
@@ -1556,8 +1589,8 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 //line 3754
 func input_set_pointer_image_index(Input *Input, index int) {
 	var buffer *wl.Buffer
-	var cursor *wl.Cursor
-	var image *wl.CursorImage
+	var cursor *wlcursor.Cursor
+	var image *wlcursor.Image
 
 	if Input.pointer == nil {
 		return
@@ -1568,30 +1601,30 @@ func input_set_pointer_image_index(Input *Input, index int) {
 		return
 	}
 
-	image = wl.CursorGetCursorImage(cursor, index)
+	image = cursor.GetCursorImage(index)
 	if image == nil {
 		print("cursor index out of range\n")
 		return
 	}
 
-	buffer = wl.CursorImageGetBuffer(image)
+	buffer = image.GetBuffer()
 	if buffer == nil {
 		return
 	}
 
-	wl.SurfaceAttach(Input.pointer_surface, buffer, 0, 0)
-	wl.SurfaceDamage(Input.pointer_surface, 0, 0,
-		int32(wl.CursorImageGetWidth(image)), int32(wl.CursorImageGetHeight(image)))
-	wl.SurfaceCommit(Input.pointer_surface)
-	wl.PointerSetCursor(Input.pointer, Input.pointer_enter_serial, Input.pointer_surface,
-		int32(wl.CursorImageGetHotspotX(image)), int32(wl.CursorImageGetHotspotY(image)))
+	Input.pointer_surface.Attach(buffer, 0, 0)
+	Input.pointer_surface.Damage(0, 0,
+		int32(image.GetWidth()), int32(image.GetHeight()))
+	Input.pointer_surface.Commit()
+	wlcursor.PointerSetCursor(Input.pointer, Input.pointer_enter_serial, Input.pointer_surface,
+		int32(image.GetHotspotX()), int32(image.GetHotspotY()))
 
 }
 
 //line 3789
 func input_set_pointer_special(Input *Input) bool {
 	if Input.current_cursor == CURSOR_BLANK {
-		wl.PointerSetCursor((Input.pointer),
+		wlcursor.PointerSetCursor((Input.pointer),
 			(Input.pointer_enter_serial),
 			nil, 0, 0)
 		return true
@@ -1606,7 +1639,7 @@ func input_set_pointer_special(Input *Input) bool {
 
 //line 3805
 func schedule_pointer_image_update(Input *Input,
-	cursor *wl.Cursor,
+	cursor *wlcursor.Cursor,
 	duration uint32,
 	force_frame bool) {
 	/* Some silly cursor sets have enormous pauses in them.  In these
@@ -1628,8 +1661,15 @@ func schedule_pointer_image_update(Input *Input,
 	/* for short durations we'll just spin on frame callbacks for
 	 * accurate timing - the way any kind of timing sensitive animation
 	 * should really be done. */
-	Input.cursor_frame_cb = wl.SurfaceFrame(Input.pointer_surface)
-	wl.CallbackAddListener(Input.cursor_frame_cb, Input)
+	cb, err := Input.pointer_surface.Frame()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	
+	Input.cursor_frame_cb = cb
+	
+	wlclient.CallbackAddListener(Input.cursor_frame_cb, Input)
 
 }
 
@@ -1639,7 +1679,7 @@ func (Input *Input) CallbackDone(wl_callback *wl.Callback, callback_data uint32)
 
 //line 3842
 func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time uint32) {
-	var cursor *wl.Cursor
+	var cursor *wlcursor.Cursor
 	var i int
 	var duration uint32
 	var force_frame = true
@@ -1650,7 +1690,7 @@ func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time ui
 		if callback != Input.cursor_frame_cb {
 			panic("assert")
 		}
-		wl.CallbackDestroy(callback)
+		wlclient.CallbackDestroy(callback)
 		Input.cursor_frame_cb = nil
 		force_frame = false
 	}
@@ -1682,10 +1722,10 @@ func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time ui
 		duration = 0
 		i = 0
 	} else {
-		i = wl.CursorFrameAndDuration(cursor, time-Input.cursor_anim_start, &duration)
+		i = cursor.FrameAndDuration(time-Input.cursor_anim_start, &duration)
 	}
 
-	if wl.CursorImageCount(cursor) > 1 {
+	if cursor.ImageCount() > 1 {
 		schedule_pointer_image_update(Input, cursor, duration,
 			force_frame)
 	}
@@ -1847,7 +1887,7 @@ func window_sync_geometry(Window *Window) {
 		return
 	}
 
-	zxdg.SurfaceV6SetWindowGeometry(Window.xdg_surface,
+	Window.xdg_surface.SetWindowGeometry(
 		geometry.x,
 		geometry.y,
 		geometry.width,
@@ -1883,7 +1923,7 @@ func widget_redraw(Widget *Widget) {
 
 //line 4517
 func (surface *surface) CallbackDone(callback *wl.Callback, time uint32) {
-	wl.CallbackDestroy(callback)
+	wlclient.CallbackDestroy(callback)
 	surface.frame_cb = nil
 
 	surface.last_time = time
@@ -1908,13 +1948,18 @@ func surface_redraw(surface *surface) int {
 			return 0
 		}
 
-		wl.CallbackDestroy(surface.frame_cb)
+		wlclient.CallbackDestroy(surface.frame_cb)
 	}
 
-	surface.frame_cb = wl.SurfaceFrame(surface.surface_)
+	cb, err := surface.surface_.Frame()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		surface.frame_cb = cb 
 
-	// add listener here
-	wl.CallbackAddListener(surface.frame_cb, surface)
+		// add listener here
+		wlclient.CallbackAddListener(surface.frame_cb, surface)
+	}
 
 	surface.redraw_needed = 0
 
@@ -1978,15 +2023,10 @@ func window_schedule_redraw(Window *Window) {
 }
 
 // line 4793
-func (Window *Window) SetTitle(title []byte) {
-
-	// add nul byte
-	if (len(title) == 0) || (title[len(title)-1] != 0) {
-		title = append(title, 0)
-	}
+func (Window *Window) SetTitle(title string) {
 
 	if Window.xdg_toplevel != nil {
-		zxdg.ToplevelV6SetTitle(Window.xdg_toplevel, title)
+		Window.xdg_toplevel.SetTitle(title)
 	}
 }
 
@@ -1995,9 +2035,16 @@ func surface_create(Window *Window) *surface {
 	var Display *Display = Window.Display
 	var surface = &surface{}
 	surface.Window = Window
-	surface.surface_ = wl.CompositorCreateSurface(Display.compositor)
+	surf, err := Display.compositor.CreateSurface()
+	if err != nil {
+		panic(err.Error())
+		return nil
+	}
+	surface.surface_ = surf
+	
+	
 	surface.buffer_scale = 1
-	wl.SurfaceAddListener(surface.surface_, SurfaceEnter, SurfaceLeave, Window.To())
+	wlclient.SurfaceAddListener(surface.surface_, SurfaceEnter, SurfaceLeave)
 
 	Window.subsurface_list_new = append(Window.subsurface_list_new, surface)
 
@@ -2024,7 +2071,7 @@ func window_create_internal(Display *Display, custom int) *Window {
 
 	surface_.buffer_type = WINDOW_BUFFER_TYPE_SHM
 
-	wl.SurfaceSetUserData(surface_.surface_, uintptr(0))
+	wlclient.SurfaceSetUserData(surface_.surface_, uintptr(0))
 	Display.surface2window[surface_.surface_] = Window
 
 	return Window
@@ -2037,20 +2084,31 @@ func Create(Display *Display) *Window {
 	Window = window_create_internal(Display, 0)
 
 	if Window.Display.xdg_shell != nil {
-		Window.xdg_surface =
-			zxdg.ShellV6GetXdgSurface(Window.Display.xdg_shell,
-				Window.main_surface.surface_)
+		surf, err := Window.Display.xdg_shell.GetXdgSurface(Window.main_surface.surface_)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			Window.xdg_surface = surf
+		}
+		
 
-		zxdg.SurfaceV6AddListener(Window.xdg_surface, Window)
+		Window.xdg_surface.AddListener(Window)
 
-		Window.xdg_toplevel =
-			zxdg.SurfaceV6GetToplevel(Window.xdg_surface)
+		tl, err := Window.xdg_surface.GetToplevel()
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			Window.xdg_toplevel = tl
+		}
 
-		zxdg.ToplevelV6AddListener(Window.xdg_toplevel, Window)
+
+		zxdg.ToplevelAddListener(Window.xdg_toplevel, Window)
 
 		window_inhibit_redraw(Window)
 
-		wl.SurfaceCommit(Window.main_surface.surface_)
+		Window.main_surface.surface_.Commit()
 	}
 
 	return Window
@@ -2068,6 +2126,20 @@ func min(a, b int) int {
 	return b
 }
 
+func (o *output) HandleOutputDone(ev wl.OutputDoneEvent) {
+	o.OutputDone(o.output)
+}
+func (o *output) HandleOutputGeometry(ev wl.OutputGeometryEvent) {
+	o.OutputGeometry(o.output, int(ev.X), int(ev.Y), int(ev.PhysicalWidth),
+		int(ev.PhysicalHeight), int(ev.Subpixel), ev.Make, ev.Model, int(ev.Transform))
+}
+func (o *output) HandleOutputMode(ev wl.OutputModeEvent) {
+	o.OutputMode(o.output, ev.Flags, int(ev.Width), int(ev.Height), int(ev.Refresh))
+}
+func (o *output) HandleOutputScale(ev wl.OutputScaleEvent) {
+	o.OutputScale(o.output, ev.Factor)
+}
+
 func (o *output) OutputGeometry(wl_output *wl.Output, x int, y int, physical_width int,
 	physical_height int, subpixel int, maker string, model string, transform int) {
 
@@ -2080,7 +2152,7 @@ func (o *output) OutputGeometry(wl_output *wl.Output, x int, y int, physical_wid
 func (o *output) OutputDone(wl_output *wl.Output) {
 
 }
-func (o *output) OutputScale(wl_output *wl.Output, scale int32) {
+func (o *output) OutputScale(wl_output *wl.Output, factor int32) {
 
 }
 func (o *output) OutputMode(wl_output *wl.Output, flags uint32, width int, height int, refresh int) {
@@ -2094,11 +2166,11 @@ func display_add_output(d *Display, id uint32) {
 
 	output.Display = d
 	output.scale = 1
-	output.output = wl.RegistryBindOutputInterface(d.registry, id, 2)
+	output.output = wlclient.RegistryBindOutputInterface(d.registry, id, 2)
 
 	output.server_output_id = id
 
-	wl.OutputAddListener(output.output, output)
+	wlclient.OutputAddListener(output.output, output)
 
 }
 
@@ -2113,15 +2185,21 @@ func display_add_input(d *Display, id uint32, display_seat_version int) {
 	input_ = &Input{}
 
 	input_.Display = d
-	input_.seat = wl.RegistryBindSeatInterface(d.registry, id, uint32(seat_version))
+	input_.seat = wlclient.RegistryBindSeatInterface(d.registry, id, uint32(seat_version))
 	input_.touch_focus = 0
 	input_.pointer_focus = nil
 	input_.keyboard_focus = nil
 	input_.seat_version = int32(seat_version)
 
-	wl.SeatAddListener(input_.seat, input_)
+	wlclient.SeatAddListener(input_.seat, input_)
 
-	input_.pointer_surface = wl.CompositorCreateSurface(d.compositor)
+	ps, err := d.compositor.CreateSurface()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		input_.pointer_surface = ps
+	}
+
 
 }
 
@@ -2130,9 +2208,9 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 
 	d = &Display{}
 
-	d.Display = wl.DisplayConnect(nil)
-	if d.Display == nil {
-		return nil, errors.New("failed to connect to Wayland Display")
+	d.Display, e = wlclient.DisplayConnect(nil)
+	if e != nil {
+		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
 	}
 
 	var epollfd, err = os.EpollCreateCloexec()
@@ -2140,7 +2218,7 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, errors.New("failed to create epoll")
 	}
 	d.epoll_fd = int32(epollfd)
-	d.display_fd = (int32)(wl.DisplayGetFd(d.Display))
+	d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))
 
 	d.display_task_new = d
 
@@ -2149,10 +2227,13 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 
 	d.surface2window = make(map[*wl.Surface]*Window)
 
-	d.registry = wl.DisplayGetRegistry(d.Display)
-	wl.RegistryAddListener(d.registry, d)
+	d.registry, e = wlclient.DisplayGetRegistry(d.Display)
+	if e != nil {
+		return nil, fmt.Errorf("failed to get Registry: %w", e)
+	}
+	wlclient.RegistryAddListener(d.registry, d)
 
-	if wl.DisplayRoundtrip(d.Display) < 0 {
+	if wlclient.DisplayRoundtrip(d.Display) != nil {
 		return nil, errors.New("Failed to process Wayland connection")
 	}
 
@@ -2171,23 +2252,23 @@ func (Display *Display) Destroy() {
 	destroy_cursors(Display)
 
 	if Display.xdg_shell != nil {
-		zxdg.ShellV6Destroy(Display.xdg_shell)
+		Display.xdg_shell.Destroy()
 	}
 
 	if Display.shm != nil {
-		wl.ShmDestroy((Display.shm))
+		wlclient.ShmDestroy((Display.shm))
 	}
 
-	wl.RegistryDestroy((Display.registry))
+	wlclient.RegistryDestroy((Display.registry))
 
 	syscall.Close(int(Display.epoll_fd))
 
 	if 0 == (Display.display_fd_events&syscall.EPOLLERR) &&
 		0 == (Display.display_fd_events&syscall.EPOLLHUP) {
-		wl.DisplayFlush((Display.Display))
+		wlclient.DisplayFlush((Display.Display))
 	}
 
-	wl.DisplayDisconnect((Display.Display))
+	wlclient.DisplayDisconnect((Display.Display))
 }
 
 //line 6478
@@ -2199,7 +2280,7 @@ func display_defer(Display *Display /*task *task,*/, fun *os.Runner) {
 //line 6501
 func DisplayRun(Display *Display) {
 	var ep [16]syscall.EpollEvent
-	var i, count, ret int
+	var i, count int
 
 	_ = count
 	_ = i
@@ -2220,28 +2301,32 @@ func DisplayRun(Display *Display) {
 
 		}
 
-		wl.DisplayDispatchPending(Display.Display)
+		wlclient.DisplayDispatchPending(Display.Display)
 
 		if 0 == Display.running {
 			break
 		}
 
-		ret = (int)(wl.DisplayFlush(Display.Display))
-		if ret < 0 {
+		err := wlclient.DisplayFlush(Display.Display)
+		if err != nil && err == wlclient.EAgain {
 			ep[0].Events =
 				syscall.EPOLLIN | syscall.EPOLLOUT | syscall.EPOLLERR | syscall.EPOLLHUP
 
 			os.Epollctl(uintptr(Display.epoll_fd), syscall.EPOLL_CTL_MOD,
 				uintptr(Display.display_fd), uintptr(unsafe.Pointer(&ep[0])), &ep[0].Fd, &Display.display_task_new)
 
-		} else if ret < 0 {
+		} else if err != nil {
 			break
 		}
+		
+		println("Go wait")
 
 		count, err := syscall.EpollWait(int(Display.epoll_fd), ep[:], -1)
 		if err != nil {
 			count = 0
 		}
+		
+		println("Done Wait")
 
 		for i = 0; i < count; i++ {
 

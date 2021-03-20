@@ -25,7 +25,7 @@ import "time"
 import "math/rand"
 
 import cairo "github.com/neurlang/wayland/cairoshim"
-import wl "github.com/neurlang/wayland/wayland"
+import wl "github.com/neurlang/wayland/wl"
 import window "github.com/neurlang/wayland/window"
 
 import "fmt"
@@ -298,7 +298,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	
+
 	d.Bit32 = true
 
 	smoke.width = 200
@@ -308,7 +308,7 @@ func main() {
 
 	smoke.widget = smoke.window.AddWidget(&smoke)
 
-	smoke.window.SetTitle([]byte("smoke"))
+	smoke.window.SetTitle("smoke")
 	smoke.window.SetBufferType(window.WINDOW_BUFFER_TYPE_SHM)
 	rand.Seed(int64(time.Now().Nanosecond()))
 
