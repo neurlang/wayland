@@ -9,11 +9,7 @@ This includes two sample apps that render into a shared memory. Tested on pc
 
 # Dependencies
 
-This relies on CGO to compile a wrapper around the libwayland library.
-
-```
-sudo apt-get install libwayland-dev
-```
+None, this is a pure go implementation
 
 # Installation
 
