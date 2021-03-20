@@ -37,15 +37,12 @@ type Surface interface {
 	ImageSurfaceGetStride() int
 }
 type Format = enum
-type UserDataKey struct{}
 
 type simulated_surface struct {
 	data   interface{}
 	width  int
 	height int
 	stride int
-	format Format
-	fun    func()
 }
 
 type simulated_surface_ref struct {
@@ -116,8 +113,6 @@ func ImageSurfaceCreateForData(data interface{}, cairo_format Format, width int,
 func FormatStrideForWidth(cairo_format Format, width int) int {
 	return width * 4
 }
-
-var surface_user_datas map[uintptr]func()
 
 func (surface *simulated_surface) SetUserData(data func()) {
 }

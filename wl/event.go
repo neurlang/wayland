@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"syscall"
-
-	"golang.org/x/sys/unix"
 )
 
 type Event struct {
@@ -14,7 +12,6 @@ type Event struct {
 	Data   []byte
 	scms   []syscall.SocketControlMessage
 	off    int
-	oob    []byte
 }
 
 /*
@@ -48,16 +45,16 @@ func (c *Context) readEvent() (*Event, error) {
 		return nil, err
 	}
 	if n != 8 {
-		return nil, fmt.Errorf("Unable to read message header.")
+		return nil, fmt.Errorf("unable to read message header")
 	}
 	ev := new(Event)
 	if oobn > 0 {
 		if oobn > len(control) {
-			return nil, fmt.Errorf("Unsufficient control msg buffer")
+			return nil, fmt.Errorf("unsufficient control msg buffer")
 		}
 		scms, err := syscall.ParseSocketControlMessage(control)
 		if err != nil {
-			return nil, fmt.Errorf("Control message parse error: %s", err)
+			return nil, fmt.Errorf("control message parse error: %s", err)
 		}
 		ev.scms = scms
 	}
@@ -73,121 +70,10 @@ func (c *Context) readEvent() (*Event, error) {
 		return nil, err
 	}
 	if n != int(size)-8 {
-		return nil, fmt.Errorf("Invalid message size.")
+		return nil, fmt.Errorf("invalid message size")
 	}
 	ev.Data = data
 
-	bytePool.Give(buf)
-	bytePool.Give(control)
-
-	return ev, nil
-}
-
-func ReadEventUnix(fd int) (Event, error) {
-	buf := bytePool.Take(8)
-	control := bytePool.Take(24)
-
-	n, oobn, _, _, err := unix.Recvmsg(fd, buf, control, unix.MSG_DONTWAIT)
-	if err != nil {
-		return Event{}, err
-	}
-	if n != 8 {
-		return Event{}, fmt.Errorf("Unable to read message header.")
-	}
-
-	// ev := new(Event)
-	var ev Event
-
-	if oobn > 0 {
-		if oobn > len(control) {
-			return Event{}, fmt.Errorf("Unsufficient control msg buffer")
-		}
-		scms, err := syscall.ParseSocketControlMessage(control)
-		if err != nil {
-			return Event{}, fmt.Errorf("Control message parse error: %s", err)
-		}
-		ev.scms = scms
-	}
-
-	ev.Pid = ProxyId(order.Uint32(buf[0:4]))
-	// fmt.Println("id", ev.Pid)
-	ev.Opcode = uint32(order.Uint16(buf[4:6]))
-	size := uint32(order.Uint16(buf[6:8]))
-
-	// subtract 8 bytes from header
-	data := bytePool.Take(int(size) - 8)
-	n, err = unix.Read(fd, data)
-	// n, err = c.conn.Read(data)
-	if err != nil {
-		return Event{}, err
-	}
-	if n != int(size)-8 {
-		return Event{}, fmt.Errorf("Invalid message size.")
-	}
-	ev.Data = data
-	fmt.Println("data", data)
-	bytePool.Give(buf)
-	bytePool.Give(control)
-
-	return ev, nil
-}
-
-func (c *Context) ReadEvent() (Event, error) {
-	buf := bytePool.Take(8)
-	control := bytePool.Take(24)
-
-	var ev Event
-	if c.fds == nil {
-		c.fds = make([]uintptr, 0)
-	}
-
-	n, oobn, _, _, err := unix.Recvmsg(c.SockFD, buf, control, unix.MSG_DONTWAIT)
-	if err != nil {
-		return ev, err
-	}
-	if n != 8 {
-		return ev, fmt.Errorf("Unable to read message header.")
-	}
-
-	// ev := new(Event)
-	// var ev Event
-
-	if oobn > 0 {
-		if oobn > len(control) {
-			return ev, fmt.Errorf("Unsufficient control msg buffer")
-		}
-		scms, err := syscall.ParseSocketControlMessage(control)
-		if err != nil {
-			return ev, fmt.Errorf("Control message parse error: %s", err)
-		}
-		ev.scms = scms
-		fds, err := syscall.ParseUnixRights(&ev.scms[0])
-		if err != nil {
-			fmt.Print("Failed to extract fd")
-		}
-		for _, fd := range fds {
-			c.AddFD(uintptr(fd))
-		}
-	}
-
-	ev.Pid = ProxyId(order.Uint32(buf[0:4]))
-	ev.Opcode = uint32(order.Uint16(buf[4:6]))
-	size := uint32(order.Uint16(buf[6:8]))
-
-	// subtract 8 bytes from header
-	data := bytePool.Take(int(size) - 8)
-	n, err = unix.Read(c.SockFD, data)
-	// n, err = c.conn.Read(data)
-	if err != nil {
-		return ev, err
-	}
-	if n != int(size)-8 {
-		return ev, fmt.Errorf("Invalid message size.")
-	}
-	ev.Data = data
-	// fmt.Println(ev.Pid)
-	// fmt.Println(ev.Opcode)
-	// fmt.Println(data)
 	bytePool.Give(buf)
 	bytePool.Give(control)
 
@@ -200,7 +86,7 @@ func (ev *Event) FD() uintptr {
 	}
 	fds, err := syscall.ParseUnixRights(&ev.scms[0])
 	if err != nil {
-		panic("Unable to parse unix rights")
+		panic("unable to parse unix rights")
 	}
 	//TODO is this required
 	ev.scms = append(ev.scms, ev.scms[1:]...)
@@ -210,7 +96,7 @@ func (ev *Event) FD() uintptr {
 func (ev *Event) Uint32() uint32 {
 	buf := ev.next(4)
 	if len(buf) != 4 {
-		panic("Unable to read unsigned int")
+		panic("unable to read unsigned int")
 	}
 	return order.Uint32(buf)
 }
@@ -228,7 +114,7 @@ func (ev *Event) String() string {
 	l := int(ev.Uint32())
 	buf := ev.next(l)
 	if len(buf) != l {
-		panic("Unable to read string")
+		panic("unable to read string")
 	}
 	ret := string(bytes.TrimRight(buf, "\x00"))
 	//padding to 32 bit boundary

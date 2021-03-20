@@ -25,7 +25,6 @@ type Shell = XdgWmBase
 
 func WmBaseAddListener(s *Shell, h XdgWmBasePingHandler) {
 	s.AddPingHandler(h)
-	return
 }
 
 type ToplevelListener interface {

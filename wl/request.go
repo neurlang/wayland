@@ -12,8 +12,6 @@ type Request struct {
 	pid    ProxyId
 	Opcode uint32
 	data   []byte
-	scms   []syscall.SocketControlMessage
-	off    int
 	oob    []byte
 }
 

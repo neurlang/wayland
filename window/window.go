@@ -21,7 +21,6 @@
 // Package window implements a convenient wayland windowing
 package Window
 
-import "unsafe"
 import "syscall"
 
 //import zwp "github.com/neurlang/wayland/wayland"
@@ -36,6 +35,10 @@ import "github.com/neurlang/wayland/os"
 import "errors"
 
 import "fmt"
+
+type runner interface {
+	Run(uint32)
+}
 
 const SURFACE_OPAQUE = 0x01
 const SURFACE_SHM = 0x02
@@ -70,63 +73,39 @@ const CURSOR_BLANK = 16
 const ZWP_RELATIVE_POINTER_MANAGER_V1_VERSION = 1
 const ZWP_POINTER_CONSTRAINTS_V1_VERSION = 1
 
-type task struct {
-	run  unsafe.Pointer
-	link [2]*task
-}
-
-func taskLink(tsk *task, direction byte) **task {
-	return &tsk.link[direction]
-}
-
 type global struct {
 	name    uint32
 	iface   string
 	version uint32
-	link    [2]*global
-}
-
-func globalLink(g *global, direction byte) **global {
-	return &g.link[direction]
 }
 
 type Display struct {
-	Display                  *wl.Display
-	registry                 *wl.Registry
-	compositor               *wl.Compositor
-	subcompositor            *wl.Subcompositor
-	shm                      *wl.Shm
-	data_device_manager      *wl.DataDeviceManager
-	text_cursor_position     *struct{}
-	xdg_shell                *zxdg.Shell
-	ivi_application          unsafe.Pointer
-	relative_pointer_manager unsafe.Pointer
-	pointer_constraints      unsafe.Pointer
-	dpy                      unsafe.Pointer
-	argb_config              unsafe.Pointer
-	argb_ctx                 unsafe.Pointer
-	argb_device              unsafe.Pointer
-	serial                   uint32
+	Display              *wl.Display
+	registry             *wl.Registry
+	compositor           *wl.Compositor
+	subcompositor        *wl.Subcompositor
+	shm                  *wl.Shm
+	data_device_manager  *wl.DataDeviceManager
+	text_cursor_position *struct{}
+	xdg_shell            *zxdg.Shell
+	serial               uint32
 
 	display_fd        int32
 	display_fd_events uint32
-	pad1              uint32
 
-	display_task task
+	//display_task task
 	//	pad4		uint64
 	//	pad5		uint64
 	//	pad6		uint64
 
 	epoll_fd      int32
-	pad2          uint32
 	deferred_list [2]uintptr
 	//	pad7		uint64
 	//	pad8		uint64
 
 	running int32
-	pad3    uint32
 
-	global_list [2]*global
+	global_list []global
 	//	pad9		uint64
 	//	pada		uint64
 	window_list [2]*Window
@@ -143,29 +122,23 @@ type Display struct {
 	cursor_theme *wlcursor.Theme
 	cursors      *[lengthCursors]*wlcursor.Cursor
 
-	output_configure_handler unsafe.Pointer
-	global_handler           unsafe.Pointer
-	global_handler_remove    unsafe.Pointer
-
-	user_data unsafe.Pointer
-
 	xkb_context *struct{}
 
 	/* A hack to get text extents for tooltips */
-	dummy_surface      *cairo.Surface
-	dummy_surface_data unsafe.Pointer
+	dummy_surface *cairo.Surface
 
 	has_rgb565                  int32
 	data_device_manager_version uint32
 
-	deferred_list_new []*os.Runner
+	deferred_list_new []runner
 
-	display_task_new os.Runner
-	surface2window   map[*wl.Surface]*Window
+	//display_task_new os.Runner
+	surface2window map[*wl.Surface]*Window
 
 	Bit32 Bit32
 }
 
+/*
 func (Display *Display) Run(events uint32) {
 	var ep syscall.EpollEvent
 
@@ -195,7 +168,7 @@ func (Display *Display) Run(events uint32) {
 		}
 	}
 }
-
+*/
 type rectangle struct {
 	x      int32
 	y      int32
@@ -222,9 +195,9 @@ type surface struct {
 	toysurface           *toysurface
 	Widget               *Widget
 	redraw_needed        int32
-	pad0                 uint32
-	frame_cb             *wl.Callback
-	last_time            uint32
+
+	frame_cb  *wl.Callback
+	last_time uint32
 	//	pad1	uint32
 
 	allocation        rectangle
@@ -236,19 +209,12 @@ type surface struct {
 	buffer_type      int32
 	buffer_transform int32
 	buffer_scale     int32
-	pad2             uint32
 
 	cairo_surface cairo.Surface
-
-	link [2]*surface
 }
 
 func (s *surface) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	s.CallbackDone(ev.C, ev.CallbackData)
-}
-
-func surfaceLink(s *surface, direction byte) **surface {
-	return &s.link[direction]
 }
 
 type Window struct {
@@ -267,9 +233,8 @@ type Window struct {
 	redraw_inhibited      int32
 	redraw_needed         int32
 	redraw_task_scheduled int32
-	pad1                  uint32
 
-	redraw_task task
+	//redraw_task task
 
 	//	pad1	uint64
 	//	pad2	uint64
@@ -285,17 +250,6 @@ type Window struct {
 
 	preferred_format int
 
-	key_handler            unsafe.Pointer
-	keyboard_focus_handler unsafe.Pointer
-	data_handler           unsafe.Pointer
-	drop_handler           unsafe.Pointer
-	close_handler          unsafe.Pointer
-	fullscreen_handler     unsafe.Pointer
-	output_handler         unsafe.Pointer
-	state_changed_handler  unsafe.Pointer
-
-	locked_pointer_motion_handler unsafe.Pointer
-
 	main_surface *surface
 	xdg_surface  *zxdg.Surface
 	xdg_toplevel *zxdg.Toplevel
@@ -304,47 +258,20 @@ type Window struct {
 	parent      *Window
 	last_parent *Window
 
-	ivi_surface unsafe.Pointer
-
-	frame unsafe.Pointer
-
 	/* struct surface::link, contains also main_surface */
 	subsurface_list [2]*surface
 
-	relative_pointer unsafe.Pointer
-	locked_pointer   unsafe.Pointer
-	locked_input     unsafe.Pointer
-	pointer_locked   bool
+	pointer_locked bool
 
-	pad3 byte
-	pad4 uint16
-	pad5 uint32
+	confined bool
 
-	pointer_locked_handler     unsafe.Pointer
-	pointer_unlocked_handler   unsafe.Pointer
-	pointer_confined_handler   unsafe.Pointer
-	pointer_unconfined_handler unsafe.Pointer
-
-	confined_pointer unsafe.Pointer
-	confined_widget  unsafe.Pointer
-	confined         bool
-
-	pad6 byte
-	pad7 uint16
-	pad8 uint32
-
-	user_data unsafe.Pointer
-	link      [2]*Window
+	link [2]*Window
 
 	userdata WidgetHandler
 
-	redraw_runner os.Runner
+	redraw_runner runner
 
 	subsurface_list_new []*surface
-}
-
-func windowLink(w *Window, direction byte) **Window {
-	return &w.link[direction]
 }
 
 func (Window *Window) HandleXdgSurfaceConfigure(ev zxdg.XdgSurfaceConfigureEvent) {
@@ -425,24 +352,6 @@ type Widget struct {
 	link       [2]uintptr
 	allocation rectangle
 
-	resize_handler        unsafe.Pointer
-	redraw_handler        unsafe.Pointer
-	enter_handler         unsafe.Pointer
-	leave_handler         unsafe.Pointer
-	motion_handler        unsafe.Pointer
-	button_handler        unsafe.Pointer
-	touch_down_handler    unsafe.Pointer
-	touch_up_handler      unsafe.Pointer
-	touch_motion_handler  unsafe.Pointer
-	touch_frame_handler   unsafe.Pointer
-	touch_cancel_handler  unsafe.Pointer
-	axis_handler          unsafe.Pointer
-	pointer_frame_handler unsafe.Pointer
-	axis_source_handler   unsafe.Pointer
-	axis_stop_handler     unsafe.Pointer
-	axis_discrete_handler unsafe.Pointer
-	user_data             *interface{}
-
 	opaque         int32
 	tooltip_count  int32
 	default_cursor int32
@@ -494,22 +403,19 @@ type Input struct {
 	cursor_anim_current  uint32
 	cursor_delay_fd      int32
 	cursor_timer_running bool
-	cursor_task          task
+	//cursor_task          task
 	pointer_surface      *wl.Surface
 	modifiers            uint32
 	pointer_enter_serial uint32
 	cursor_serial        uint32
 	sx                   float32
 	sy                   float32
-	link                 [2]*Input
 
 	focus_widget *Widget
 	grab         *Widget
 	grab_button  uint32
 
 	data_device       *wl.DataDevice
-	drag_offer        unsafe.Pointer
-	selection_offer   unsafe.Pointer
 	touch_grab        uint32
 	touch_grab_id     int32
 	drag_x            float32
@@ -518,14 +424,9 @@ type Input struct {
 	drag_enter_serial uint32
 
 	xkb struct {
-		keymap unsafe.Pointer
-		state  unsafe.Pointer
-
-		compose_table unsafe.Pointer
-		compose_state unsafe.Pointer
-		control_mask  xkb_mod_mask_t
-		alt_mask      xkb_mod_mask_t
-		shift_mask    xkb_mod_mask_t
+		control_mask xkb_mod_mask_t
+		alt_mask     xkb_mod_mask_t
+		shift_mask   xkb_mod_mask_t
 	}
 
 	repeat_rate_sec   int32
@@ -533,7 +434,7 @@ type Input struct {
 	repeat_delay_sec  int32
 	repeat_delay_nsec int32
 
-	repeat_task     task
+	//repeat_task     task
 	repeat_timer_fd int32
 	repeat_sym      uint32
 	repeat_key      uint32
@@ -545,28 +446,16 @@ func (i *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	i.CallbackDone(ev.C, ev.CallbackData)
 }
 
-func inputLink(i *Input, direction byte) **Input {
-	return &i.link[direction]
-}
-
 type output struct {
 	Display          *Display
 	output           *wl.Output
 	server_output_id uint32
-	pad1             uint32
 	allocation       rectangle
 	link             [2]*output
 	transform        int32
 	scale            int32
-	make             unsafe.Pointer
-	model            unsafe.Pointer
-
-	destroy_handler unsafe.Pointer
-	user_data       unsafe.Pointer
-}
-
-func outputLink(o *output, direction byte) **output {
-	return &o.link[direction]
+	maker            string
+	model            string
 }
 
 type shm_pool struct {
@@ -591,10 +480,6 @@ func surface_to_buffer_size(buffer_transform uint32, buffer_scale int32, width *
 		fallthrough
 	case wl.OutputTransformFlipped270:
 		*width, *height = *height, *width
-
-		break
-	default:
-		break
 	}
 
 	*width *= buffer_scale
@@ -612,9 +497,7 @@ func buffer_to_surface_size(buffer_transform uint32, buffer_scale int32, width *
 		fallthrough
 	case wl.OutputTransformFlipped270:
 		*width, *height = *height, *width
-		break
-	default:
-		break
+
 	}
 
 	*width /= buffer_scale
@@ -720,7 +603,7 @@ func (input_ *Input) HandleSeatName(ev wl.SeatNameEvent) {
 
 func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
-	if (0 != (caps & wl.SeatCapabilityPointer)) && (nil == input_.pointer) {
+	if ((caps & wl.SeatCapabilityPointer) != 0) && (input_.pointer == nil) {
 		var err error
 		input_.pointer, err = seat.GetPointer()
 		if err != nil {
@@ -730,7 +613,7 @@ func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 		wlclient.PointerSetUserData(input_.pointer, input_)
 		wlclient.PointerAddListener(input_.pointer, input_)
 
-	} else if (0 == (caps & wl.SeatCapabilityPointer)) && (nil != input_.pointer) {
+	} else if ((caps & wl.SeatCapabilityPointer) == 0) && (nil != input_.pointer) {
 		if input_.seat_version >= wl.POINTER_RELEASE_SINCE_VERSION {
 			input_.pointer.Release()
 		} else {
@@ -748,8 +631,6 @@ type shm_surface_data struct {
 	pool   *shm_pool
 }
 
-const MAP_FAILED = uintptr(0xffffffffffffffff)
-
 //line 734
 func shm_surface_data_destroy(data *shm_surface_data) {
 	data.buffer.Destroy()
@@ -761,7 +642,7 @@ func shm_surface_data_destroy(data *shm_surface_data) {
 //line 744
 func make_shm_pool(Display *Display, size os.Length, data *interface{}) (pool *wl.ShmPool) {
 	fd, err := os.CreateAnonymousFile(int64(size))
-	if fd < 0 {
+	if err != nil {
 		println("creating a buffer file failed")
 		return nil
 	}
@@ -845,9 +726,7 @@ type Bit32 bool
 
 //line 820
 func (b Bit32) data_length_for_shm_surface(rect *rectangle) os.Length {
-	var stride int32
-
-	stride = int32(cairo.FormatStrideForWidth(cairo.FORMAT_ARGB32, int(rect.width)))
+	var stride = int32(cairo.FormatStrideForWidth(cairo.FORMAT_ARGB32, int(rect.width)))
 
 	if b {
 		return os.Len32(int(stride * rect.height))
@@ -985,15 +864,11 @@ const MAX_LEAVES = 3
 
 //line 983
 type shm_surface struct {
-	padding [5]unsafe.Pointer
-
 	Display *Display
 	surface *wl.Surface
 	flags   uint32
 	dx      int32
 	dy      int32
-
-	pad uint32
 
 	leaf    [MAX_LEAVES]shm_surface_leaf
 	current *shm_surface_leaf
@@ -1173,22 +1048,22 @@ func create_cursors(Display *Display) {
 
 	//line 1323
 	var Cursors = [lengthCursors][]string{
-		[]string{"bottom_left_corner\000", "sw-resize\000", "size_bdiag\000"},
-		[]string{"bottom_right_corner\000", "se-resize\000", "size_fdiag\000"},
-		[]string{"bottom_side\000", "s-resize\000", "size_ver\000"},
-		[]string{"grabbing\000", "closedhand\000", "208530c400c041818281048008011002\000"},
-		[]string{"left_ptr\000", "default\000", "top_left_arrow\000", "left-arrow\000"},
-		[]string{"left_side\000", "w-resize\000", "size_hor\000"},
-		[]string{"right_side\000", "e-resize\000", "size_hor\000"},
-		[]string{"top_left_corner\000", "nw-resize\000", "size_fdiag\000"},
-		[]string{"top_right_corner\000", "ne-resize\000", "size_bdiag\000"},
-		[]string{"top_side\000", "n-resize\000", "size_ver\000"},
-		[]string{"xterm\000", "ibeam\000", "text\000"},
-		[]string{"hand1\000", "pointer\000", "pointing_hand\000", "e29285e634086352946a0e7090d73106\000"},
-		[]string{"watch\000", "wait\000", "0426c94ea35c87780ff01dc239897213\000"},
-		[]string{"dnd-move\000"},
-		[]string{"dnd-copy\000"},
-		[]string{"dnd-none\000", "dnd-no-drop\000"},
+		{"bottom_left_corner\000", "sw-resize\000", "size_bdiag\000"},
+		{"bottom_right_corner\000", "se-resize\000", "size_fdiag\000"},
+		{"bottom_side\000", "s-resize\000", "size_ver\000"},
+		{"grabbing\000", "closedhand\000", "208530c400c041818281048008011002\000"},
+		{"left_ptr\000", "default\000", "top_left_arrow\000", "left-arrow\000"},
+		{"left_side\000", "w-resize\000", "size_hor\000"},
+		{"right_side\000", "e-resize\000", "size_hor\000"},
+		{"top_left_corner\000", "nw-resize\000", "size_fdiag\000"},
+		{"top_right_corner\000", "ne-resize\000", "size_bdiag\000"},
+		{"top_side\000", "n-resize\000", "size_ver\000"},
+		{"xterm\000", "ibeam\000", "text\000"},
+		{"hand1\000", "pointer\000", "pointing_hand\000", "e29285e634086352946a0e7090d73106\000"},
+		{"watch\000", "wait\000", "0426c94ea35c87780ff01dc239897213\000"},
+		{"dnd-move\000"},
+		{"dnd-copy\000"},
+		{"dnd-none\000", "dnd-no-drop\000"},
 	}
 
 	var cursor *wlcursor.Cursor
@@ -1362,12 +1237,9 @@ func window_find_widget(Window *Window, x int32, y int32) *Widget {
 
 //line 1655
 func widget_create(Window *Window, surface *surface, data WidgetHandler) *Widget {
-	var w *Widget
-
-	w = &Widget{}
+	var w = new(Widget)
 	w.Window = Window
 	w.surface = surface
-	//w.user_data = unsafe.Pointer(data.Self())
 	w.Userdata = data
 	w.allocation = surface.allocation
 
@@ -1382,9 +1254,7 @@ func widget_create(Window *Window, surface *surface, data WidgetHandler) *Widget
 
 //line 1675
 func (Window *Window) AddWidget(data WidgetHandler) *Widget {
-	var w *Widget
-
-	w = widget_create(Window, Window.main_surface, data)
+	var w = widget_create(Window, Window.main_surface, data)
 
 	Window.main_surface.Widget = w
 
@@ -1444,14 +1314,7 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	case "wl_seat":
 
 		display_add_input(d, id, int(version))
-	case "zwp_relative_pointer_manager_v1":
-		if version == ZWP_RELATIVE_POINTER_MANAGER_V1_VERSION {
 
-		}
-	case "zwp_pointer_constraints_v1":
-		if version == ZWP_POINTER_CONSTRAINTS_V1_VERSION {
-
-		}
 	case "wl_shm":
 		d.shm = wlclient.RegistryBindShmInterface(d.registry, id, 1)
 		wlclient.ShmAddListener(d.shm, d)
@@ -1470,7 +1333,6 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 
 	case "text_cursor_position":
 	case "wl_subcompositor":
-	case "ivi_application":
 
 	default:
 
@@ -1534,9 +1396,7 @@ func (Widget *Widget) WidgetScheduleRedraw() {
 
 //line 2036
 func (Window *Window) WindowGetSurface() cairo.Surface {
-	var cairo_surface cairo.Surface
-
-	cairo_surface = widget_get_cairo_surface(Window.main_surface.Widget)
+	var cairo_surface = widget_get_cairo_surface(Window.main_surface.Widget)
 
 	return cairo_surface.Reference()
 }
@@ -1553,13 +1413,6 @@ func input_set_focus_widget(Input *Input, focus *Widget,
 
 	old = Input.focus_widget
 	if old != nil {
-		Widget = old
-		if Input.grab != nil {
-			Widget = Input.grab
-		}
-		if Widget.leave_handler != nil {
-
-		}
 		Input.focus_widget = nil
 	}
 
@@ -1569,11 +1422,7 @@ func input_set_focus_widget(Input *Input, focus *Widget,
 			Widget = Input.grab
 		}
 		Input.focus_widget = focus
-		if Widget.enter_handler != nil {
-
-		} else {
-			cursor = int(Widget.default_cursor)
-		}
+		cursor = int(Widget.default_cursor)
 
 		input_set_pointer_image(Input, cursor)
 	}
@@ -1821,7 +1670,7 @@ func input_set_pointer_image(Input *Input, pointer int) {
 	Input.cursor_serial = Input.pointer_enter_serial
 	if Input.cursor_frame_cb == nil {
 		pointer_surface_frame_callback(Input, nil, 0)
-	} else if force && (input_set_pointer_special(Input) == false) {
+	} else if force && (!input_set_pointer_special(Input)) {
 		/* The current frame callback may be stuck if, for instance,
 		 * the set cursor request was processed by the server after
 		 * this client lost the focus. In this case the cursor surface
@@ -1857,7 +1706,7 @@ func window_do_resize(Window *Window) {
 
 	surface_resize(Window.main_surface)
 
-	if (0 != Window.fullscreen) && (0 != Window.maximized) {
+	if (Window.fullscreen != 0) && (Window.maximized != 0) {
 		Window.saved_allocation = Window.pending_allocation
 	}
 }
@@ -1882,12 +1731,12 @@ func window_schedule_resize(Window *Window, width int32, height int32) {
 	Window.pending_allocation.height = height
 
 	if Window.min_allocation.width == 0 {
-		if width < min_width && Window.frame != nil {
+		if width < min_width {
 			Window.min_allocation.width = min_width
 		} else {
 			Window.min_allocation.width = width
 		}
-		if height < min_height && Window.frame != nil {
+		if height < min_height {
 			Window.min_allocation.height = min_height
 		} else {
 			Window.min_allocation.height = height
@@ -1919,7 +1768,7 @@ func window_inhibit_redraw(Window *Window) {
 // line 4284
 func window_uninhibit_redraw(Window *Window) {
 	Window.redraw_inhibited = 0
-	if (0 != Window.redraw_needed) || (0 != Window.resize_needed) {
+	if (Window.redraw_needed != 0) || (Window.resize_needed != 0) {
 		window_schedule_redraw_task(Window)
 	}
 }
@@ -1931,9 +1780,7 @@ func window_get_allocation(Window *Window, allocation *rectangle) {
 
 //line 4445
 func window_get_geometry(Window *Window, geometry *rectangle) {
-	if Window.frame != nil && 0 == Window.fullscreen {
-
-	} else {
+	if Window.fullscreen != 0 {
 		window_get_allocation(Window, geometry)
 	}
 }
@@ -1966,11 +1813,11 @@ func window_sync_geometry(Window *Window) {
 // line 4480
 func window_flush(Window *Window) {
 
-	if 0 != Window.redraw_inhibited {
+	if Window.redraw_inhibited != 0 {
 		panic("assert\n")
 	}
 
-	if 0 == Window.custom {
+	if Window.custom == 0 {
 		if Window.xdg_surface != nil {
 			window_sync_geometry(Window)
 
@@ -1996,7 +1843,7 @@ func (surface *surface) CallbackDone(callback *wl.Callback, time uint32) {
 
 	surface.last_time = time
 
-	if (0 != surface.redraw_needed) || (0 != surface.Window.redraw_needed) {
+	if (surface.redraw_needed != 0) || (surface.Window.redraw_needed != 0) {
 
 		window_schedule_redraw_task(surface.Window)
 	}
@@ -2005,14 +1852,14 @@ func (surface *surface) CallbackDone(callback *wl.Callback, time uint32) {
 //line 4545
 func surface_redraw(surface *surface) int {
 
-	if (0 == surface.Window.redraw_needed) && (0 == surface.redraw_needed) {
+	if (surface.Window.redraw_needed == 0) && (surface.redraw_needed == 0) {
 		return 0
 	}
 
 	// Whole-Window redraw forces a redraw even if the previous has
 	// not yet hit the screen
 	if nil != surface.frame_cb {
-		if 0 == surface.Window.redraw_needed {
+		if surface.Window.redraw_needed == 0 {
 			return 0
 		}
 
@@ -2040,47 +1887,35 @@ func surface_redraw(surface *surface) int {
 // line 4617
 func (Window *Window) Run(events uint32) {
 
-	var failed = 0
-	var resized = 0
-
 	Window.redraw_task_scheduled = 0
 
-	if 0 != Window.resize_needed {
+	if Window.resize_needed != 0 {
 		if nil != Window.main_surface.frame_cb {
 			return
 		}
 
 		idle_resize(Window)
 
-		resized = 1
-
 	}
 
-	if (surface_redraw(Window.main_surface)) < 0 {
-
-		failed = 1
-	}
+	surface_redraw(Window.main_surface)
 
 	Window.redraw_needed = 0
 	window_flush(Window)
-
-	if (0 != resized) && (0 != failed) {
-		/* Restore Widget tree to correspond to what is on screen. */
-	}
 
 }
 
 //line 4619
 
 func window_schedule_redraw_task(Window *Window) {
-	if 0 != Window.redraw_inhibited {
+	if Window.redraw_inhibited != 0 {
 		return
 	}
 
-	if 0 == Window.redraw_task_scheduled {
+	if Window.redraw_task_scheduled == 0 {
 
 		Window.redraw_runner = Window
-		display_defer(Window.Display /*&Window.redraw_task,*/, &Window.redraw_runner)
+		display_defer(Window.Display /*&Window.redraw_task,*/, Window)
 		Window.redraw_task_scheduled = 1
 	}
 }
@@ -2129,7 +1964,7 @@ func window_create_internal(Display *Display, custom int) *Window {
 
 	Window.main_surface = (*surface)(surface_)
 
-	if (custom > 0) || (Display.xdg_shell != nil) || (Display.ivi_application != nil) {
+	if (custom > 0) || (Display.xdg_shell != nil) {
 	} else {
 		panic("assertion failed")
 	}
@@ -2146,9 +1981,7 @@ func window_create_internal(Display *Display, custom int) *Window {
 
 //line 5250
 func Create(Display *Display) *Window {
-	var Window *Window
-
-	Window = window_create_internal(Display, 0)
+	var Window = window_create_internal(Display, 0)
 
 	if Window.Display.xdg_shell != nil {
 		surf, err := Window.Display.xdg_shell.GetXdgSurface(Window.main_surface.surface_)
@@ -2208,10 +2041,8 @@ func (o *output) HandleOutputScale(ev wl.OutputScaleEvent) {
 func (o *output) OutputGeometry(wl_output *wl.Output, x int, y int, physical_width int,
 	physical_height int, subpixel int, maker string, model string, transform int) {
 
-	var strmake = []byte(maker)
-	var strmodel = []byte(model)
-	_ = strmake
-	_ = strmodel
+	o.maker = maker
+	o.model = model
 
 }
 func (o *output) OutputDone(wl_output *wl.Output) {
@@ -2277,17 +2108,12 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
 	}
 
-	var epollfd, err = os.EpollCreateCloexec()
-	if err != nil {
-		return nil, errors.New("failed to create epoll")
-	}
-	d.epoll_fd = int32(epollfd)
 	d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))
 
-	d.display_task_new = d
+	//d.display_task_new = d
 
-	display_watch_fd(d, int(d.display_fd), uint32(syscall.EPOLLIN|syscall.EPOLLERR|syscall.EPOLLHUP),
-		os.DoFlagRunner(&d.display_task_new))
+	//display_watch_fd(d, int(d.display_fd), uint32(syscall.EPOLLIN|syscall.EPOLLERR|syscall.EPOLLHUP),
+	//	os.DoFlagRunner(&d.display_task_new))
 
 	d.surface2window = make(map[*wl.Surface]*Window)
 
@@ -2298,7 +2124,7 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 	wlclient.RegistryAddListener(d.registry, d)
 
 	if wlclient.DisplayRoundtrip(d.Display) != nil {
-		return nil, errors.New("Failed to process Wayland connection")
+		return nil, errors.New("failed to process Wayland connection")
 	}
 
 	create_cursors(d)
@@ -2327,100 +2153,44 @@ func (Display *Display) Destroy() {
 
 	syscall.Close(int(Display.epoll_fd))
 
-	if 0 == (Display.display_fd_events&syscall.EPOLLERR) &&
-		0 == (Display.display_fd_events&syscall.EPOLLHUP) {
-		wlclient.DisplayFlush((Display.Display))
-	}
-
+	/*
+		if (Display.display_fd_events&syscall.EPOLLERR) == 0 &&
+			(Display.display_fd_events&syscall.EPOLLHUP) == 0 {
+			wlclient.DisplayFlush((Display.Display))
+		}
+	*/
 	wlclient.DisplayDisconnect((Display.Display))
 }
 
 //line 6478
-func display_defer(Display *Display /*task *task,*/, fun *os.Runner) {
+func display_defer(Display *Display /*task *task,*/, fun runner) {
 
-	Display.deferred_list_new = append(Display.deferred_list_new, os.DoFlagRunner(fun))
+	Display.deferred_list_new = append(Display.deferred_list_new, (fun))
 }
 
 //line 6501
 func DisplayRun(Display *Display) {
-	var ep [16]syscall.EpollEvent
-	var i, count int
-
-	_ = count
-	_ = i
 
 	Display.running = 1
 	for {
 
 		for len(Display.deferred_list_new) > 0 {
 
-			var rnr = Display.deferred_list_new[0]
-
-			if os.IsFlagRunner(rnr) {
-
-				(*os.UnFlagRunner(rnr)).Run(0)
-			}
+			Display.deferred_list_new[0].Run(0)
 
 			Display.deferred_list_new = Display.deferred_list_new[1:]
 
 		}
 
-		wlclient.DisplayDispatchPending(Display.Display)
-
-		if 0 == Display.running {
+		if Display.running == 0 {
 			break
 		}
-
-		err := wlclient.DisplayFlush(Display.Display)
-		if err != nil && err == wlclient.EAgain {
-			ep[0].Events =
-				syscall.EPOLLIN | syscall.EPOLLOUT | syscall.EPOLLERR | syscall.EPOLLHUP
-
-			os.Epollctl(uintptr(Display.epoll_fd), syscall.EPOLL_CTL_MOD,
-				uintptr(Display.display_fd), uintptr(unsafe.Pointer(&ep[0])), &ep[0].Fd, &Display.display_task_new)
-
-		} else if err != nil {
-			break
-		}
-
-		//println("Go wait")
 
 		if wlclient.DisplayRun(Display.Display) != nil {
 			return
 		}
-		/*
-			count, err := syscall.EpollWait(int(Display.epoll_fd), ep[:], -1)
-			if err != nil {
-				count = 0
-			}
-		*/
-		//println("Done Wait")
-
-		for i = 0; i < count; i++ {
-
-			var val = &ep[i].Events
-			var ptr = (*unsafe.Pointer)(unsafe.Pointer(&ep[i].Fd))
-			var rnr = (*os.Runner)(*ptr)
-
-			if os.IsFlagRunner(rnr) {
-				(*os.UnFlagRunner(rnr)).Run(*val)
-			}
-
-		}
 
 	}
-}
-
-//line 6547
-func display_watch_fd(Display *Display, fd int, events uint32, runner *os.Runner) {
-
-	var nep syscall.EpollEvent
-	nep.Events = events
-	var ptr = (*unsafe.Pointer)(unsafe.Pointer(&nep.Fd))
-	*ptr = unsafe.Pointer(os.DoFlagRunner(runner))
-
-	os.Epollctl(uintptr(Display.epoll_fd), uintptr(syscall.EPOLL_CTL_ADD), uintptr(fd), uintptr(unsafe.Pointer(&nep)), &nep.Fd, &Display.display_task_new)
-
 }
 
 func (Display *Display) Exit() {

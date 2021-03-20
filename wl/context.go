@@ -8,8 +8,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"golang.org/x/sys/unix"
 )
 
 func init() {
@@ -24,7 +22,6 @@ type Context struct {
 	objects      map[ProxyId]Proxy
 	dispatchChan chan struct{}
 	exitChan     chan struct{}
-	fds          []uintptr
 }
 
 func (ctx *Context) Register(proxy Proxy) {
@@ -34,15 +31,6 @@ func (ctx *Context) Register(proxy Proxy) {
 	proxy.SetId(ctx.currentId)
 	proxy.SetContext(ctx)
 	ctx.objects[ctx.currentId] = proxy
-}
-
-func (ctx *Context) RegisterId(proxy Proxy, id int) {
-	ctx.mu.Lock()
-	defer ctx.mu.Unlock()
-	ctx.currentId += 1
-	proxy.SetId(ProxyId(id))
-	proxy.SetContext(ctx)
-	ctx.objects[ProxyId(id)] = proxy
 }
 
 func (ctx *Context) LookupProxy(id ProxyId) Proxy {
@@ -55,53 +43,10 @@ func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	return proxy
 }
 
-func (ctx *Context) unregister(proxy Proxy) {
-	ctx.mu.Lock()
-	defer ctx.mu.Unlock()
-	delete(ctx.objects, proxy.Id())
-}
-
-func (ctx *Context) Unregister(proxy Proxy) {
-	ctx.mu.Lock()
-	defer ctx.mu.Unlock()
-	delete(ctx.objects, proxy.Id())
-}
-
-func (ctx *Context) Objects() map[ProxyId]Proxy {
-	return ctx.objects
-}
-
-func (c *Context) Close() {
-	c.conn.Close()
-	c.exitChan <- struct{}{}
-	close(c.dispatchChan)
-
-}
-
-func (c *Context) Dispatch() chan<- struct{} {
-	return c.dispatchChan
-}
-
-func (c *Context) AddFD(fd uintptr) {
-	c.fds = append(c.fds, fd)
-}
-
-func (c *Context) NextFD() uintptr {
-	if len(c.fds) > 0 {
-		fd := c.fds[0]
-		c.fds = c.fds[1:]
-		return fd
-	}
-	return 0
-}
-func (ret *Display) GetFd() int {
-	return ret.Fd
-}
-
 func Connect(addr string) (ret *Display, err error) {
 	runtime_dir := os.Getenv("XDG_RUNTIME_DIR")
 	if runtime_dir == "" {
-		return nil, errors.New("XDG_RUNTIME_DIR not set in the environment.")
+		return nil, errors.New("variable XDG_RUNTIME_DIR not set in the environment")
 	}
 	if addr == "" {
 		addr = os.Getenv("WAYLAND_DISPLAY")
@@ -125,131 +70,22 @@ func Connect(addr string) (ret *Display, err error) {
 	return NewDisplay(c), nil
 }
 
-func NewClientConnect(fd int) *Display {
-	c := new(Context)
-	c.objects = make(map[ProxyId]Proxy)
-	c.currentId = 0
-	c.dispatchChan = make(chan struct{})
-	c.exitChan = make(chan struct{})
-	c.SockFD = fd
-	return NewDisplay(c)
-}
+var errFoundMyCallback = errors.New("run found my callback")
 
-func Listen(addr string) (ret *Display, err error) {
-	c := new(Context)
-	c.objects = make(map[ProxyId]Proxy)
-
-	runtime_dir := os.Getenv("XDG_RUNTIME_DIR")
-	if runtime_dir == "" {
-		return nil, errors.New("XDG_RUNTIME_DIR not set in the environment.")
-	}
-	if addr == "" {
-		addr = os.Getenv("WAYLAND_DISPLAY")
-	}
-	if addr == "" {
-		addr = "wayland-0"
-	}
-	addr = runtime_dir + "/" + addr
-
-	sockFD, err := unix.Socket(unix.AF_UNIX, unix.SOCK_STREAM, 0)
-	if err != nil {
-		log.Println(err)
-		// runtime.Goexit()
-		return NewDisplay(c), err
-	}
-	var sockAddr unix.SockaddrUnix
-	sockAddr.Name = addr
-	unix.Unlink(addr)
-	err = unix.Bind(sockFD, &sockAddr)
-	if err != nil {
-		log.Printf("Couldn't bind %s\n", sockAddr.Name)
-	}
-	err = unix.Listen(sockFD, 64)
-	if err != nil {
-		log.Println(err)
-		return NewDisplay(c), err
-	}
-
-	c.currentId = 0
-	c.SockFD = sockFD
-	return NewDisplay(c), nil
-}
-
-func ListenFD(addr string) (ret int, err error) {
-	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
-	if runtimeDir == "" {
-		return -1, errors.New("XDG_RUNTIME_DIR not set in the environment")
-	}
-	if addr == "" {
-		addr = os.Getenv("WAYLAND_DISPLAY")
-	}
-	if addr == "" {
-		addr = "wayland-0"
-	}
-	addr = runtimeDir + "/" + addr
-
-	sockFD, err := unix.Socket(unix.AF_UNIX, unix.SOCK_STREAM, 0)
-	if err != nil {
-		log.Println(err)
-		return -1, err
-	}
-	var sockAddr unix.SockaddrUnix
-	sockAddr.Name = addr
-	unix.Unlink(addr)
-	err = unix.Bind(sockFD, &sockAddr)
-	if err != nil {
-		log.Printf("Couldn't bind %s\n", sockAddr.Name)
-	}
-	err = unix.Listen(sockFD, 64)
-	if err != nil {
-		log.Println(err)
-		return -1, err
-	}
-
-	return sockFD, nil
-}
-
-func (c *Context) RunTill(cb *Callback) {
-loop:
+func (c *Context) RunTill(cb *Callback) (err error) {
 	for {
-		ev, err := c.readEvent()
+		err = c.Run(cb)
+		if err == errFoundMyCallback {
+			return nil
+		}
 		if err != nil {
-			if err == io.EOF {
-				// connection closed
-				break loop
-
-			}
-
-			if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-				log.Print("Timeout Error")
-				continue
-			}
-
-			log.Fatal(err)
+			return err
 		}
-		proxy := c.LookupProxy(ev.Pid)
-		if proxy != nil {
-			if dispatcher, ok := proxy.(Dispatcher); ok {
-
-				if found_cb, ok := dispatcher.(*Callback); ok {
-					if found_cb == cb {
-						bytePool.Give(ev.Data)
-						return
-					}
-				}
-				dispatcher.Dispatch(ev)
-				bytePool.Give(ev.Data)
-			} else {
-				log.Print("Not dispatched")
-			}
-		} else {
-			log.Print("Proxy NULL")
-		}
-
 	}
+	return nil
 }
 
-func (c *Context) Run() error {
+func (c *Context) Run(cb *Callback) error {
 	// ctx := context.Background()
 
 	ev, err := c.readEvent()
@@ -259,7 +95,7 @@ func (c *Context) Run() error {
 		}
 
 		if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-			return errors.New("Timeout Error")
+			return errors.New("timeout error")
 		}
 
 		log.Fatal(err)
@@ -268,13 +104,19 @@ func (c *Context) Run() error {
 	proxy := c.LookupProxy(ev.Pid)
 	if proxy != nil {
 		if dispatcher, ok := proxy.(Dispatcher); ok {
+			if found_cb, ok := dispatcher.(*Callback); dispatcher != nil && ok {
+				if found_cb == cb {
+					bytePool.Give(ev.Data)
+					return errFoundMyCallback
+				}
+			}
 			dispatcher.Dispatch(ev)
 			bytePool.Give(ev.Data)
 		} else {
-			return errors.New("Not dispatched")
+			return errors.New("not dispatched")
 		}
 	} else {
-		return errors.New("Proxy NULL")
+		return errors.New("proxy NULL")
 	}
 	return nil
 }

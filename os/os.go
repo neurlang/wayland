@@ -28,46 +28,12 @@ import "errors"
 import "crypto/rand"
 import "fmt"
 
-// Control interface for an epoll file descriptor
-func Epollctl(epfd uintptr, op uintptr, fd uintptr, event uintptr, fdp *int32, r *Runner) {
-	var ptr = (*unsafe.Pointer)(unsafe.Pointer(&fdp))
-	*ptr = unsafe.Pointer(DoFlagRunner(r))
-
-	syscall.RawSyscall6(syscall.SYS_EPOLL_CTL, epfd, op, fd, event, 0, 0)
-}
-
-// Type Runner must be Unflagged before Run is called, otherwise it will crash
-// You can check if Runner is Flagged using the IsFlagRunner call
-type Runner interface {
-	Run(events uint32)
-}
-
-func DoFlagRunner(r *Runner) *Runner {
-	return (*Runner)(unsafe.Pointer(uintptr(unsafe.Pointer(r)) | 1))
-}
-func UnFlagRunner(r *Runner) *Runner {
-	return (*Runner)(unsafe.Pointer(uintptr(unsafe.Pointer(r)) & uintptr(0xFFFFFFFFFFFFFFFE)))
-}
-func IsFlagRunner(r *Runner) bool {
-	return (uintptr(unsafe.Pointer(r)) & 1) == 1
-}
-
 const PROT_READ = syscall.PROT_READ
 const PROT_WRITE = syscall.PROT_WRITE
 const MAP_SHARED = syscall.MAP_SHARED
 
-func mvetype(dst, src *interface{}) {
-	*(*uintptr)(unsafe.Pointer(dst)) = *(*uintptr)(unsafe.Pointer(src))
-}
-
 // Length carries length and a bitness of a slice
 type Length int64
-
-// 8bit length
-const LEN8 byte = 1
-
-// 32bit length
-const LEN32 byte = 4
 
 // Create a 8bit length
 func Len8(n int) Length {
@@ -90,7 +56,7 @@ func (l Length) Int() int {
 }
 
 // Error returned by Mmap
-var ErrUnsupportedBitness = errors.New("Unsupported Bitness")
+var ErrUnsupportedBitness = errors.New("unsupported bitness")
 
 // Mmap maps a 32bit or a 8bit slice
 func Mmap(fd int, offset int64, length Length, prot int, flags int) (interface{}, error) {
@@ -113,6 +79,10 @@ func Munmap(buf interface{}) error {
 		return Munmap32(v)
 	}
 	return nil
+}
+
+func mvetype(dst, src *interface{}) {
+	*(*uintptr)(unsafe.Pointer(dst)) = *(*uintptr)(unsafe.Pointer(src))
 }
 
 // Mmap32: Like MMap but for uint32 array
@@ -217,83 +187,4 @@ func CreateAnonymousFile(size int64) (fd int, err error) {
 // Close the fd
 func Close(fd int) error {
 	return syscall.Close(fd)
-}
-
-func os_fd_set_cloexec(fd int) int {
-
-	if fd == -1 {
-		return -1
-	}
-
-	flags, err := fcntl(fd, syscall.F_GETFD, 0)
-	if (flags == -1) || (err != nil) {
-		return -1
-	}
-
-	flags, err = fcntl(fd, syscall.F_SETFD, flags|syscall.FD_CLOEXEC)
-	if (flags == -1) || (err != nil) {
-		return -1
-	}
-
-	return 0
-}
-
-func set_cloexec_or_close(fd int) int {
-	if os_fd_set_cloexec(fd) != 0 {
-		Close(fd)
-		return -1
-	}
-	return fd
-}
-
-// Error returned by SocketpairCloexec
-var ErrWrongFds = errors.New("SocketpairCloexec: wrong fds")
-
-// Error returned by SocketpairCloexec
-var ErrBadFds = errors.New("SocketpairCloexec: bad fds")
-
-// can return ErrWrongFds, ErrBadFds, or other syscall error
-func SocketpairCloexec(domain int, typ int, protocol int) (fdsv [2]int, err error) {
-	fdsv, err = syscall.Socketpair(domain, typ|syscall.SOCK_CLOEXEC, protocol)
-	if (err == nil) || (err != syscall.EINVAL) {
-		return fdsv, err
-	}
-
-	fdsv, err = syscall.Socketpair(domain, typ, protocol)
-	if err != nil {
-		return fdsv, err
-	}
-
-	fdsv[0] = set_cloexec_or_close(fdsv[0])
-	fdsv[1] = set_cloexec_or_close(fdsv[1])
-
-	if fdsv[0] != -1 && fdsv[1] != -1 {
-		return fdsv, ErrWrongFds
-	}
-
-	Close(fdsv[0])
-	Close(fdsv[1])
-	return fdsv, ErrBadFds
-}
-
-// Error returned by EpollCreateCloexec
-var ErrWrongFd = errors.New("EpollCreateCloexec: wrong fd")
-
-// can return ErrWrongFd or other syscall error
-func EpollCreateCloexec() (fd int, err error) {
-
-	fd, err = syscall.EpollCreate1(syscall.EPOLL_CLOEXEC)
-	if fd >= 0 {
-		return fd, err
-	}
-	if err != syscall.EINVAL {
-		return -1, err
-	}
-
-	fd, err = syscall.EpollCreate(1)
-	fd = set_cloexec_or_close(fd)
-	if fd == -1 {
-		return fd, ErrWrongFd
-	}
-	return fd, nil
 }

@@ -108,9 +108,8 @@ func advect(smoke *smoke, time uint32, uu []float32, vv []float32, source []floa
 
 func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, div []float32) {
 	var x, y, k, l, s int
-	var h float32
+	var h = 1.0 / float32(smoke.width)
 
-	h = 1.0 / float32(smoke.width)
 	s = int(smoke.width)
 	for i := 0; i < int(smoke.height*smoke.width); i++ {
 		p[i] = 0.

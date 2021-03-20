@@ -2,13 +2,11 @@ package wlclient
 
 import wl "github.com/neurlang/wayland/wl"
 import xdg "github.com/neurlang/wayland/xdg"
-import "syscall"
 
 func DisplayDispatch(d *wl.Display) error {
-	return d.Context().Run()
+	return d.Context().Run(nil)
 }
 func PointerSetUserData(p *wl.Pointer, data interface{}) {
-	return
 }
 
 func SurfaceSetUserData(p *wl.Surface, data interface{}) {
@@ -40,20 +38,10 @@ func PointerAddListener(p *wl.Pointer, h PointerListener) {
 
 }
 func PointerDestroy(p *wl.Pointer) {
-	panic("not implemented")
-}
-
-func BufferDestroy(p *wl.Buffer) {
-	panic("not implemented")
 }
 func ShmDestroy(p *wl.Shm) {
-	panic("not implemented")
-}
-func ShmPoolDestroy(p *wl.ShmPool) {
-	panic("not implemented")
 }
 func RegistryDestroy(p *wl.Registry) {
-	panic("not implemented")
 }
 func BufferAddListener(b *wl.Buffer, data wl.BufferReleaseHandler) {
 	b.AddReleaseHandler(data)
@@ -74,7 +62,6 @@ func OutputAddListener(o *wl.Output, h OutputListener) {
 	o.AddModeHandler(h)
 	o.AddDoneHandler(h)
 	o.AddScaleHandler(h)
-	return
 }
 
 type SeatListener interface {
@@ -85,8 +72,6 @@ type SeatListener interface {
 func SeatAddListener(s *wl.Seat, data SeatListener) {
 	s.AddCapabilitiesHandler(data)
 	s.AddNameHandler(data)
-
-	return
 }
 
 type RegistryListener interface {
@@ -97,12 +82,6 @@ type RegistryListener interface {
 func RegistryAddListener(r *wl.Registry, data RegistryListener) {
 	r.AddGlobalHandler(data)
 	r.AddGlobalRemoveHandler(data)
-	return
-}
-
-type SurfaceEnterLeaveListener interface {
-	wl.SurfaceEnterHandler
-	wl.SurfaceLeaveHandler
 }
 
 type SurfaceEnterLeave struct {
@@ -122,24 +101,16 @@ func SurfaceAddListener(s *wl.Surface, enter func(*wl.Surface, *wl.Output), leav
 	el := &SurfaceEnterLeave{surface: s, callbacks: [2]func(*wl.Surface, *wl.Output){enter, leave}}
 	s.AddEnterHandler(el)
 	s.AddLeaveHandler(el)
-	return
 }
 
 func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
-
 	p.AddFormatHandler(data)
-
-	return
-
 }
 func RegionDestroy(p *wl.Region) {
-	return
 }
 func CallbackDestroy(p *wl.Callback) {
-	return
 }
 func SubsurfaceDestroy(p *wl.Subsurface) {
-	return
 }
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
@@ -152,35 +123,30 @@ func RegistryBindShmInterface(r *wl.Registry, name uint32, version uint32) *wl.S
 	s := wl.NewShm(r.Ctx)
 	r.Bind(name, "wl_shm", version, s)
 	return s
-	//return (*Shm)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_shm_interface, (C.uint32_t)(version)))
 }
 
 func RegistryBindDataDeviceManagerInterface(r *wl.Registry, name uint32, version uint32) *wl.DataDeviceManager {
 	d := wl.NewDataDeviceManager(r.Ctx)
 	r.Bind(name, "wl_data_device_manager", version, d)
 	return d
-	//return (*DataDeviceManager)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_data_device_manager_interface, (C.uint32_t)(version)))
 }
 
 func RegistryBindOutputInterface(r *wl.Registry, name uint32, version uint32) *wl.Output {
 	d := wl.NewOutput(r.Ctx)
 	r.Bind(name, "wl_output", version, d)
 	return d
-	//return (*Output)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_output_interface, (C.uint32_t)(version)))
 }
 
 func RegistryBindSeatInterface(r *wl.Registry, name uint32, version uint32) *wl.Seat {
 	d := wl.NewSeat(r.Ctx)
 	r.Bind(name, "wl_seat", version, d)
 	return d
-	//return (*Seat)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_seat_interface, (C.uint32_t)(version)))
 }
 
 func RegistryBindShellInterface(r *wl.Registry, name uint32, version uint32) *xdg.Shell {
 	d := xdg.NewShell(r.Ctx)
 	r.Bind(name, "zxdg_shell_v6", version, d)
 	return d
-	//return (*Seat)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_seat_interface, (C.uint32_t)(version)))
 }
 
 func DisplayConnect(name []byte) (*wl.Display, error) {
@@ -192,8 +158,9 @@ func DisplayGetFd(d *wl.Display) int {
 func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 	return d.GetRegistry()
 }
+
 func DisplayRun(d *wl.Display) error {
-	return d.Context().Run()
+	return d.Context().Run(nil)
 }
 func DisplayRoundtrip(d *wl.Display) error {
 	cb, err := d.Sync()
@@ -205,16 +172,4 @@ func DisplayRoundtrip(d *wl.Display) error {
 }
 func DisplayDisconnect(display *wl.Display) {
 	panic("not implemented")
-	//C.wl_display_disconnect((*C.struct_wl_display)(display))
-}
-func DisplayDispatchPending(d *wl.Display) int {
-	//println("DisplayDispatchPending: no-op")
-	return 0
-}
-
-var EAgain = syscall.EAGAIN
-
-func DisplayFlush(d *wl.Display) error {
-	//println("DisplayFlush: no-op")
-	return nil
 }

@@ -27,6 +27,7 @@ type Image struct {
 func (i *Image) GetBuffer() *wl.Buffer {
 	panic("unimplemented")
 }
+
 func (i *Image) GetWidth() int {
 	panic("unimplemented")
 }
@@ -41,7 +42,6 @@ func (i *Image) GetHotspotX() int {
 func (i *Image) GetHotspotY() int {
 	return 0
 }
-
 func LoadTheme(name []byte, size int, shm *wl.Shm) (t *Theme) {
 	println("LoadTheme: unimplemented")
 	return &Theme{}

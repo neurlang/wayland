@@ -48,7 +48,6 @@ type window struct {
 	xdg_surface        *zxdg.Surface
 	xdg_toplevel       *zxdg.Toplevel
 	buffers            [2]buffer
-	prev_buffer_id     int
 	callback           *wl.Callback
 	wait_for_configure bool
 }
