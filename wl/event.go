@@ -80,17 +80,17 @@ func (c *Context) readEvent() (*Event, error) {
 	return ev, nil
 }
 
-func (ev *Event) FD() uintptr {
+func (ev *Event) FD() (uintptr, error) {
 	if ev.scms == nil {
-		return 0
+		return 0, fmt.Errorf("no socket control messages")
 	}
 	fds, err := syscall.ParseUnixRights(&ev.scms[0])
 	if err != nil {
-		panic("unable to parse unix rights")
+		return 0, fmt.Errorf("unable to parse unix rights")
 	}
-	//TODO is this required
+	//TODO: is this required??????????????
 	ev.scms = append(ev.scms, ev.scms[1:]...)
-	return uintptr(fds[0])
+	return uintptr(fds[0]), nil
 }
 
 func (ev *Event) Uint32() uint32 {

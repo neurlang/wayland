@@ -138,37 +138,6 @@ type Display struct {
 	Bit32 Bit32
 }
 
-/*
-func (Display *Display) Run(events uint32) {
-	var ep syscall.EpollEvent
-
-	Display.display_fd_events = events
-
-	if (events&syscall.EPOLLERR != 0) || (events&syscall.EPOLLHUP != 0) {
-		Display.Exit()
-		return
-	}
-
-	if events&syscall.EPOLLIN != 0 {
-		err := wlclient.DisplayDispatch(Display.Display)
-		if err != nil {
-			fmt.Println(err)
-			Display.Exit()
-			return
-		}
-	}
-
-	if events&syscall.EPOLLOUT != 0 {
-		err := wlclient.DisplayFlush(Display.Display)
-		if err == nil {
-			ep.Events = syscall.EPOLLIN | syscall.EPOLLERR | syscall.EPOLLHUP
-
-			os.Epollctl(uintptr(Display.epoll_fd), syscall.EPOLL_CTL_MOD,
-				uintptr(Display.display_fd), uintptr(unsafe.Pointer(&ep)), &ep.Fd, &Display.display_task_new)
-		}
-	}
-}
-*/
 type rectangle struct {
 	x      int32
 	y      int32
@@ -371,7 +340,7 @@ type WidgetHandler interface {
 	Enter(Widget *Widget, Input *Input, x float32, y float32)
 	Leave(Widget *Widget, Input *Input)
 	Motion(Widget *Widget, Input *Input, time uint32, x float32, y float32) int
-	Button(Widget *Widget, Input *Input, time uint32, button uint32, state wl.PointerButtonState)
+	Button(Widget *Widget, Input *Input, time uint32, button uint32, state wl.PointerButtonState, data WidgetHandler)
 	TouchUp(Widget *Widget, Input *Input, serial uint32, time uint32, id int32)
 	TouchDown(Widget *Widget, Input *Input, serial uint32, time uint32, id int32, x float32, y float32)
 	TouchMotion(Widget *Widget, Input *Input, time uint32, id int32, x float32, y float32)
@@ -552,10 +521,32 @@ func (Input *Input) PointerMotion(wl_pointer *wl.Pointer, time uint32, surface_x
 }
 
 func (Input *Input) HandlePointerButton(ev wl.PointerButtonEvent) {
-
+	Input.PointerButton(ev.P, ev.Serial, ev.Time, ev.Button, ev.State)
 }
 
-func (*Input) PointerButton(wl_pointer *wl.Pointer, serial uint32, time uint32, button uint32, state uint32) {
+func (input *Input) PointerButton(wl_pointer *wl.Pointer, serial uint32, time uint32, button uint32, state_w uint32) {
+	var widget *Widget
+	var state = wl.PointerButtonState(state_w)
+
+	input.Display.serial = serial
+	if input.focus_widget != nil && input.grab == nil &&
+		state == wl.PointerButtonStatePressed {
+		input_grab(input, input.focus_widget, button)
+	}
+
+	widget = input.grab
+	if widget != nil && widget.Userdata != nil {
+		widget.Userdata.Button(widget,
+			input, time,
+			button, state,
+			input.grab.Userdata)
+	}
+
+	if input.grab != nil && input.grab_button == button &&
+		state == wl.PointerButtonStateReleased {
+		input_ungrab(input)
+	}
+
 }
 
 func (Input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
@@ -624,6 +615,25 @@ func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
 }
 func (*Input) SeatName(wl_seat *wl.Seat, name string) {
+}
+
+// line 2697
+func input_grab(input *Input, widget *Widget, button uint32) {
+	input.grab = widget
+	input.grab_button = button
+
+	input_set_focus_widget(input, widget, input.sx, input.sy)
+}
+
+// line 2706
+func input_ungrab(input *Input) {
+
+	input.grab = nil
+	if input.pointer_focus != nil {
+		var widget = window_find_widget(input.pointer_focus,
+			int32(input.sx), int32(input.sy))
+		input_set_focus_widget(input, widget, (input.sx), (input.sy))
+	}
 }
 
 type shm_surface_data struct {
@@ -2153,12 +2163,6 @@ func (Display *Display) Destroy() {
 
 	syscall.Close(int(Display.epoll_fd))
 
-	/*
-		if (Display.display_fd_events&syscall.EPOLLERR) == 0 &&
-			(Display.display_fd_events&syscall.EPOLLHUP) == 0 {
-			wlclient.DisplayFlush((Display.Display))
-		}
-	*/
 	wlclient.DisplayDisconnect((Display.Display))
 }
 

@@ -262,7 +262,7 @@ func (s *smoke) Motion(widget *window.Widget, input *window.Input, time uint32, 
 
 	return window.CURSOR_HAND1
 }
-func (*smoke) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState) {
+func (*smoke) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
 }
 func (*smoke) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
 }

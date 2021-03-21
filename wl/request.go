@@ -49,7 +49,7 @@ func (r *Request) Write(arg interface{}) {
 	case uintptr:
 		r.PutFd(t)
 	default:
-		panic("Invalid Wayland request parameter type.")
+		panic("invalid Wayland request parameter type")
 	}
 }
 

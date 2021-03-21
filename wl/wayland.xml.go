@@ -944,7 +944,8 @@ func (p *DataSource) RemoveTargetHandler(h DataSourceTargetHandler) {
 
 type DataSourceSendEvent struct {
 	MimeType string
-	Fd       uintptr
+	fd       uintptr
+	fdError  error
 }
 
 type DataSourceSendHandler interface {
@@ -1096,7 +1097,7 @@ func (p *DataSource) Dispatch(event *Event) {
 		if len(p.sendHandlers) > 0 {
 			ev := DataSourceSendEvent{}
 			ev.MimeType = event.String()
-			ev.Fd = event.FD()
+			ev.fd, ev.fdError = event.FD()
 			p.mu.RLock()
 			for _, h := range p.sendHandlers {
 				h.HandleDataSourceSend(ev)
@@ -2621,6 +2622,8 @@ func (p *Pointer) RemoveMotionHandler(h PointerMotionHandler) {
 }
 
 type PointerButtonEvent struct {
+	P *Pointer
+
 	Serial uint32
 	Time   uint32
 	Button uint32
@@ -2835,6 +2838,8 @@ func (p *Pointer) Dispatch(event *Event) {
 	case 3:
 		if len(p.buttonHandlers) > 0 {
 			ev := PointerButtonEvent{}
+			ev.P = p
+
 			ev.Serial = event.Uint32()
 			ev.Time = event.Uint32()
 			ev.Button = event.Uint32()
@@ -2995,9 +3000,10 @@ const (
 )
 
 type KeyboardKeymapEvent struct {
-	Format uint32
-	Fd     uintptr
-	Size   uint32
+	Format  uint32
+	fd      uintptr
+	Size    uint32
+	fdError error
 }
 
 type KeyboardKeymapHandler interface {
@@ -3181,7 +3187,7 @@ func (p *Keyboard) Dispatch(event *Event) {
 		if len(p.keymapHandlers) > 0 {
 			ev := KeyboardKeymapEvent{}
 			ev.Format = event.Uint32()
-			ev.Fd = event.FD()
+			ev.fd, ev.fdError = event.FD()
 			ev.Size = event.Uint32()
 			p.mu.RLock()
 			for _, h := range p.keymapHandlers {
