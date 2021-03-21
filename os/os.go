@@ -109,49 +109,65 @@ func Munmap32(arr []uint32) (err error) {
 // with a high-entropy alphanumeric sequence, if you want more entropic string
 // you can put more XXX (in multiples of 3 X) up to the recommended value of 27 X
 // shorter sequence of XXX will make your MkOsTemp more prone to the failure
-// the string *tmpname will be overwritten by the high entropic string
-func MkOsTemp(tmpname *string, flags int) (int, error) {
-
-	var randbuf [27]byte
-	rand.Read(randbuf[:])
-
-	var randbuf_i byte
-
+// the buffer tmpname will be overwritten by the high entropic buffer
+// x1, x2, x3 are the three X characters we are replacing, it can be another
+func MkOsTemp(tmpname []byte, flags int, x1 byte, x2 byte, x3 byte) (int, error) {
 	const alphabet = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	const XXX = "XXX"
+	var randbuf [5 * 9]byte
+	var randbuf_i byte
 
-	for i := range randbuf {
-		randbuf[i] = alphabet[randbuf[i]%byte(len(alphabet))]
-	}
+	for i := 3; i <= len(tmpname); i++ {
+		if (tmpname[i-3] == x1) && (tmpname[i-2] == x2) && (tmpname[i-1] == x3) {
 
-	for i := len(XXX); i <= len(*tmpname); i++ {
-		if ((*tmpname)[i-len(XXX)] == 'X') && ((*tmpname)[i-len(XXX):i] == XXX) {
-			*tmpname = (*tmpname)[0:i-len(XXX)] + string(randbuf[randbuf_i:randbuf_i+byte(len(XXX))]) + (*tmpname)[i:]
-			randbuf_i += byte(len(XXX))
-			if randbuf_i == byte(len(randbuf)) {
-				break
+			if randbuf_i == 0 {
+
+				rand.Read(randbuf[:])
+
+				for o := 0; o < 9; o++ {
+					n := (uint64(randbuf[5*o+0])) |
+						(uint64(randbuf[5*o+1]) << 8) |
+						(uint64(randbuf[5*o+2]) << 16) |
+						(uint64(randbuf[5*o+3]) << 24) |
+						(uint64(randbuf[5*o+4]) << 32)
+					randbuf[3*o+0] = alphabet[n%61]
+					n /= 61
+					randbuf[3*o+1] = alphabet[n%61]
+					n /= 61
+					randbuf[3*o+2] = alphabet[n%61]
+				}
+
 			}
-			i += len(XXX) - 1
+
+			for j := 0; j < 3; j++ {
+				tmpname[i-3] = randbuf[randbuf_i]
+				randbuf_i++
+				i++
+			}
+			i--
+			randbuf_i %= 27
 		}
 	}
 
-	//println(*tmpname)
+	//println(string(tmpname))
 
-	return syscall.Open((*tmpname), (flags & ^syscall.O_ACCMODE)|os.O_RDWR|os.O_CREATE|os.O_EXCL, syscall.S_IRUSR|syscall.S_IWUSR)
+	return syscall.Open(string(tmpname), (flags & ^syscall.O_ACCMODE)|os.O_RDWR|os.O_CREATE|os.O_EXCL, syscall.S_IRUSR|syscall.S_IWUSR)
 }
 
 // Creates Tmp file that will be cloexec. In case of the ErrUnlink error, the fd is valid.
 func CreateTmpfileCloexec(tmpname string) (int, error) {
-	var fd, err = MkOsTemp(&tmpname, syscall.O_CLOEXEC)
+
+	var namebuf = []byte(tmpname)
+
+	var fd, err = MkOsTemp(namebuf, syscall.O_CLOEXEC, 'X', 'X', 'X')
 	if fd < 0 {
 		return fd, fmt.Errorf("CreateTmpfileCloexec: fd=%d", fd)
 	}
 	if err != nil {
-		return fd, fmt.Errorf("CreateTmpfileCloexec(%s): %w", tmpname, err)
+		return fd, fmt.Errorf("CreateTmpfileCloexec(%s): %w", namebuf, err)
 	}
 
-	if syscall.Unlink(tmpname) != nil {
+	if syscall.Unlink(string(namebuf)) != nil {
 		return fd, ErrUnlink
 	}
 
