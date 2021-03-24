@@ -17,7 +17,7 @@ func init() {
 type Context struct {
 	mu           sync.RWMutex
 	conn         *net.UnixConn
-	SockFD       int
+	sockFD       int
 	currentId    ProxyId
 	objects      map[ProxyId]Proxy
 	dispatchChan chan struct{}

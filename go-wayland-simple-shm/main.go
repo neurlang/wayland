@@ -26,6 +26,7 @@ import zxdg "github.com/neurlang/wayland/xdg"
 import wlclient "github.com/neurlang/wayland/wlclient"
 import "fmt"
 import "github.com/neurlang/wayland/os"
+import "syscall"
 
 type display struct {
 	display    *wl.Display
@@ -37,7 +38,7 @@ type display struct {
 }
 type buffer struct {
 	buffer   *wl.Buffer
-	shm_data []uint32
+	shm_data []byte
 	busy     bool
 }
 
@@ -66,15 +67,15 @@ func create_shm_buffer(w *window, buffer *buffer, width int, height int, format 
 		return err
 	}
 
-	defer os.Close(fd)
+	defer fd.Close()
 
-	data, err := os.Mmap32(fd, 0,
+	data, err := syscall.Mmap(int(fd.Fd()), 0,
 		size, os.PROT_READ|os.PROT_WRITE, os.MAP_SHARED)
 	if err != nil {
 		return err
 	}
 
-	pool, err := w.display.shm.CreatePool(uintptr(fd), int32(size))
+	pool, err := w.display.shm.CreatePool(fd.Fd(), int32(size))
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func create_shm_buffer(w *window, buffer *buffer, width int, height int, format 
 
 	return nil
 }
-func (window *window) HandleXdgSurfaceConfigure(ev zxdg.XdgSurfaceConfigureEvent) {
+func (window *window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
 	window.SurfaceConfigure(window.xdg_surface, ev.Serial)
 }
 func (window *window) SurfaceConfigure(sf *zxdg.Surface, serial uint32) {
@@ -121,7 +122,7 @@ func (d *display) HandleShmFormat(ev wl.ShmFormatEvent) {
 
 }
 
-func (d *display) HandleXdgWmBasePing(ev zxdg.XdgWmBasePingEvent) {
+func (d *display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
 	d.shell.Pong(ev.Serial)
 }
 
@@ -207,7 +208,7 @@ func create_window(disp *display, width, height int) *window {
 	win.surface = surf
 
 	if disp.shell != nil {
-		xdg_surf, err := disp.shell.GetXdgSurface(win.surface)
+		xdg_surf, err := disp.shell.GetSurface(win.surface)
 		if err != nil {
 			panic("cannot get xdg surface")
 		}
@@ -259,7 +260,7 @@ func window_next_buffer(window *window) *buffer {
 
 		/* paint the padding */
 		for i := range buffer.shm_data {
-			buffer.shm_data[i] = uint32(0xffffffff)
+			buffer.shm_data[i] = 0xff
 		}
 	}
 
@@ -292,10 +293,18 @@ func (w *window) paintPixels(time uint32, buf *buffer) {
 			} else {
 				v = (x + int(time)/16) * 0x0080401
 			}
-			v &= 0x00ffffff
-
-			buf.shm_data[iter] = uint32(v)
-			iter = iter + 1
+			a := 0
+			r := v >> 16
+			g := v >> 8
+			b := v
+			buf.shm_data[iter] = byte(b)
+			iter++
+			buf.shm_data[iter] = byte(g)
+			iter++
+			buf.shm_data[iter] = byte(r)
+			iter++
+			buf.shm_data[iter] = byte(a)
+			iter++
 		}
 	}
 }

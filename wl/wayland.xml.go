@@ -100,16 +100,11 @@ type Display struct {
 	mu               sync.RWMutex
 	errorHandlers    []DisplayErrorHandler
 	deleteIdHandlers []DisplayDeleteIdHandler
-
-	Fd  int
-	Ctx *Context
 }
 
 func NewDisplay(ctx *Context) *Display {
 	ret := new(Display)
 	ctx.Register(ret)
-	ret.Fd = ctx.SockFD
-	ret.Ctx = ctx
 	return ret
 }
 

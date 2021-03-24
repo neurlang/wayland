@@ -1,4 +1,7 @@
+// Package xdg implements the stable XDG Window Manager Base protocol
 package xdg
+
+//go:generate ../../../../../bin/go-wayland-scanner -pkg xdg -i xdg-shell.xml -o xdg-shell.xml.go
 
 import "github.com/neurlang/wayland/wl"
 
@@ -6,9 +9,9 @@ type BaseProxy = wl.BaseProxy
 type Event = wl.Event
 type Context = wl.Context
 type Proxy = wl.Proxy
-type Surface = XdgSurface
 
-func (s *Surface) AddListener(h XdgSurfaceConfigureHandler) {
+
+func (s *Surface) AddListener(h SurfaceConfigureHandler) {
 	s.AddConfigureHandler(h)
 }
 
@@ -21,9 +24,10 @@ func NewShell(ctx *Context) *Shell {
 	return ret
 }
 
-type Shell = XdgWmBase
+// TODO: remove
+type Shell = WmBase
 
-func WmBaseAddListener(s *Shell, h XdgWmBasePingHandler) {
+func WmBaseAddListener(s *Shell, h WmBasePingHandler) {
 	s.AddPingHandler(h)
 }
 

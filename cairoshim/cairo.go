@@ -30,8 +30,7 @@ type Surface interface {
 	Reference() Surface
 	Destroy()
 	SetUserData(data func())
-	ImageSurfaceGetData(bytes int) interface{}
-	ImageSurfaceGetRawData() uintptr
+	ImageSurfaceGetData() []byte
 	ImageSurfaceGetWidth() int
 	ImageSurfaceGetHeight() int
 	ImageSurfaceGetStride() int
@@ -39,7 +38,7 @@ type Surface interface {
 type Format = enum
 
 type simulated_surface struct {
-	data   interface{}
+	data   []byte
 	width  int
 	height int
 	stride int
@@ -65,15 +64,11 @@ func (s *simulated_surface) Reference() Surface {
 func (s *simulated_surface) Destroy() {
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetData(bytes int) interface{} {
-	return s.surf.ImageSurfaceGetData(bytes)
+func (s *simulated_surface_ref) ImageSurfaceGetData() []byte {
+	return s.surf.ImageSurfaceGetData()
 }
 
-func (s *simulated_surface) ImageSurfaceGetRawData() uintptr {
-	return uintptr(0)
-}
-
-func (s *simulated_surface) ImageSurfaceGetData(bytes int) interface{} {
+func (s *simulated_surface) ImageSurfaceGetData() []byte {
 	return s.data
 }
 
@@ -90,10 +85,6 @@ func (s *simulated_surface) ImageSurfaceGetStride() int {
 	return s.stride
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetRawData() uintptr {
-	return s.surf.ImageSurfaceGetRawData()
-}
-
 func (s *simulated_surface_ref) ImageSurfaceGetWidth() int {
 	return s.surf.ImageSurfaceGetWidth()
 }
@@ -106,7 +97,7 @@ func (s *simulated_surface_ref) ImageSurfaceGetStride() int {
 	return s.surf.ImageSurfaceGetStride()
 }
 
-func ImageSurfaceCreateForData(data interface{}, cairo_format Format, width int, height int, stride int) Surface {
+func ImageSurfaceCreateForData(data []byte, cairo_format Format, width int, height int, stride int) Surface {
 	return &simulated_surface{data: data, width: width, height: height, stride: stride}
 }
 

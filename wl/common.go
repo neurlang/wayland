@@ -1,3 +1,4 @@
+// Package wl implements the stable Wayland protocol
 package wl
 
 type ProxyId uint32

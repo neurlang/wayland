@@ -6,6 +6,8 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/yalue/native_endian"
 )
 
 type Request struct {
@@ -28,7 +30,7 @@ func (context *Context) SendRequest(proxy Proxy, opcode uint32, args ...interfac
 	if context.conn != nil {
 		return writeRequest(context.conn, req)
 	} else {
-		return writeRequestUnix(context.SockFD, req)
+		return writeRequestUnix(context.sockFD, req)
 	}
 }
 
@@ -55,7 +57,7 @@ func (r *Request) Write(arg interface{}) {
 
 func (r *Request) PutUint32(u uint32) {
 	buf := bytePool.Take(4)
-	order.PutUint32(buf, u)
+	native_endian.NativeEndian().PutUint32(buf, u)
 	r.data = append(r.data, buf...)
 }
 
@@ -100,9 +102,9 @@ func writeRequest(conn *net.UnixConn, r Request) error {
 	// calculate message total size
 	size := uint32(len(r.data) + 8)
 	buf := make([]byte, 4)
-	order.PutUint32(buf, uint32(r.pid))
+	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	order.PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
+	native_endian.NativeEndian().PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
 	header = append(header, buf...)
 
 	d, c, err := conn.WriteMsgUnix(append(header, r.data...), r.oob, nil)
@@ -122,9 +124,9 @@ func writeRequestUnix(fd int, r Request) error {
 	// calculate message total size
 	size := uint32(len(r.data) + 8)
 	buf := make([]byte, 4)
-	order.PutUint32(buf, uint32(r.pid))
+	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	order.PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
+	native_endian.NativeEndian().PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
 	header = append(header, buf...)
 
 	// unix.

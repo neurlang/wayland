@@ -152,18 +152,12 @@ func render(smoke *smoke, surface cairo.Surface) {
 	var x, y int
 	var width, height, stride int
 	var c, a uint32
-	var dst32 []uint32
 	var dst8 []byte
 
+	dst8 = surface.ImageSurfaceGetData()
 	width = surface.ImageSurfaceGetWidth()
 	height = surface.ImageSurfaceGetHeight()
 	stride = surface.ImageSurfaceGetStride()
-	switch dst := surface.ImageSurfaceGetData(width * height).(type) {
-	case []byte:
-		dst8 = dst
-	case []uint32:
-		dst32 = dst
-	}
 
 	data := smoke.bb[int(smoke.current)].d
 
@@ -177,9 +171,6 @@ func render(smoke *smoke, surface cairo.Surface) {
 			a = c
 			if a < 0x33 {
 				a = 0x33
-			}
-			if dst32 != nil {
-				dst32[x+y*int(stride)/4] = (a << 24) | (c << 16) | (c << 8) | c
 			}
 			if dst8 != nil {
 				dst8[4*x+y*int(stride)+0] = byte(c)
@@ -297,8 +288,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	d.Bit32 = true
 
 	smoke.width = 200
 	smoke.height = 200

@@ -1,3 +1,4 @@
+// Package wlclient implements a wayland-client like api
 package wlclient
 
 import wl "github.com/neurlang/wayland/wl"
@@ -153,7 +154,7 @@ func DisplayConnect(name []byte) (*wl.Display, error) {
 	return wl.Connect(string(name))
 }
 func DisplayGetFd(d *wl.Display) int {
-	return d.Fd
+	panic("not implemented")
 }
 func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 	return d.GetRegistry()

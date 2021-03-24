@@ -90,7 +90,7 @@ type Display struct {
 	xdg_shell            *zxdg.Shell
 	serial               uint32
 
-	display_fd        int32
+	//display_fd        int32
 	display_fd_events uint32
 
 	//display_task task
@@ -134,8 +134,6 @@ type Display struct {
 
 	//display_task_new os.Runner
 	surface2window map[*wl.Surface]*Window
-
-	Bit32 Bit32
 }
 
 type rectangle struct {
@@ -243,7 +241,7 @@ type Window struct {
 	subsurface_list_new []*surface
 }
 
-func (Window *Window) HandleXdgSurfaceConfigure(ev zxdg.XdgSurfaceConfigureEvent) {
+func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
 	Window.SurfaceConfigure(Window.xdg_surface, ev.Serial)
 }
 
@@ -429,9 +427,9 @@ type output struct {
 
 type shm_pool struct {
 	pool *wl.ShmPool
-	size os.Length
+	size uintptr
 	used uintptr
-	data interface{}
+	data []byte
 }
 
 const CURSOR_DEFAULT = 100
@@ -650,34 +648,34 @@ func shm_surface_data_destroy(data *shm_surface_data) {
 }
 
 //line 744
-func make_shm_pool(Display *Display, size os.Length, data *interface{}) (pool *wl.ShmPool) {
+func make_shm_pool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPool) {
 	fd, err := os.CreateAnonymousFile(int64(size))
 	if err != nil {
 		println("creating a buffer file failed")
 		return nil
 	}
 
-	*data, err = os.Mmap(fd, 0, size, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
+	*data, err = syscall.Mmap(int(fd.Fd()), 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 		println("mmap failed")
-		syscall.Close(fd)
+		fd.Close()
 		return nil
 	}
 
-	pool, err = Display.shm.CreatePool(uintptr(fd), int32(size))
+	pool, err = Display.shm.CreatePool(uintptr(fd.Fd()), int32(size))
 	if err != nil {
 		println("create pool failed")
-		syscall.Close(fd)
+		fd.Close()
 		return nil
 	}
 
-	syscall.Close(fd)
+	fd.Close()
 
 	return pool
 }
 
 //line 772
-func shm_pool_create(Display *Display, size os.Length) *shm_pool {
+func shm_pool_create(Display *Display, size uintptr) *shm_pool {
 	var pool *shm_pool = &shm_pool{}
 
 	pool.pool = make_shm_pool(Display, size, &pool.data)
@@ -693,25 +691,16 @@ func shm_pool_create(Display *Display, size os.Length) *shm_pool {
 }
 
 //line 792
-func shm_pool_allocate(pool *shm_pool, size uintptr, offset *int) (ret interface{}) {
+func shm_pool_allocate(pool *shm_pool, size uintptr, offset *int) (ret []byte) {
 
-	if pool.used+size > uintptr(pool.size.Int()) {
+	if pool.used+size > uintptr(pool.size) {
 		return nil
 	}
 
-	if _, ok := pool.data.([]byte); ok {
-		*offset = int(pool.used)
-		ret = pool.data.([]byte)[uintptr(pool.used):]
-		pool.used += size
-		pool.data = pool.data.([]byte)[0:uintptr(pool.used)]
-	} else if _, ok := pool.data.([]uint32); ok {
-		*offset = int(pool.used)
-		ret = pool.data.([]uint32)[uintptr(pool.used):]
-		pool.used += size / 4
-		pool.data = pool.data.([]uint32)[0:uintptr(pool.used)]
-	} else {
-		return nil
-	}
+	*offset = int(pool.used)
+	ret = pool.data[uintptr(pool.used):]
+	pool.used += size
+	pool.data = pool.data[0:uintptr(pool.used)]
 
 	return ret
 }
@@ -720,7 +709,7 @@ func shm_pool_allocate(pool *shm_pool, size uintptr, offset *int) (ret interface
 /* destroy the pool. this does not unmap the memory though */
 func shm_pool_destroy(pool *shm_pool) {
 
-	err := os.Munmap(pool.data)
+	err := syscall.Munmap(pool.data)
 	if err != nil {
 		println(err)
 	}
@@ -732,16 +721,10 @@ func shm_pool_destroy(pool *shm_pool) {
 	pool.used = 0
 }
 
-type Bit32 bool
-
 //line 820
-func (b Bit32) data_length_for_shm_surface(rect *rectangle) os.Length {
+func data_length_for_shm_surface(rect *rectangle) uintptr {
 	var stride = int32(cairo.FormatStrideForWidth(cairo.FORMAT_ARGB32, int(rect.width)))
-
-	if b {
-		return os.Len32(int(stride * rect.height))
-	}
-	return os.Len8(int(stride * rect.height))
+	return uintptr(int(stride * rect.height))
 }
 
 func shm_pool_reset(pool *shm_pool) {
@@ -758,7 +741,7 @@ func display_create_shm_surface_from_pool(Display *Display,
 	var cairo_format cairo.Format
 	var stride, length int
 	var offset int
-	var map_ interface{}
+	var map_ []byte
 	var err error
 
 	if (flags&uint32(SURFACE_HINT_RGB565) != 0) && Display.has_rgb565 != 0 {
@@ -829,7 +812,7 @@ func display_create_shm_surface(Display *Display,
 		}
 	}
 
-	pool = shm_pool_create(Display, Display.Bit32.data_length_for_shm_surface(rectangle))
+	pool = shm_pool_create(Display, data_length_for_shm_surface(rectangle))
 
 	if pool == nil {
 		return nil
@@ -1054,7 +1037,7 @@ func shm_surface_create(Display *Display, wl_surface *wl.Surface,
 const lengthCursors = 16
 
 //line 1343
-func create_cursors(Display *Display) {
+func create_cursors(Display *Display) (err error) {
 
 	//line 1323
 	var Cursors = [lengthCursors][]string{
@@ -1078,7 +1061,11 @@ func create_cursors(Display *Display) {
 
 	var cursor *wlcursor.Cursor
 
-	Display.cursor_theme = wlcursor.LoadTheme(nil, 32, Display.shm)
+	theme, err := wlcursor.LoadTheme(32, Display.shm)
+	if err != nil {
+		return err
+	}
+	Display.cursor_theme = theme
 
 	var wlCursors = [lengthCursors]*wlcursor.Cursor{}
 
@@ -1087,13 +1074,15 @@ func create_cursors(Display *Display) {
 	for i := range Cursors {
 		for j := range Cursors[i] {
 
-			var str = []byte(Cursors[i][j])
+			var str = string(Cursors[i][j])
 
-			str = str[:len(str)-2]
+			str = str[:len(str)-1]
 
-			cursor = Display.cursor_theme.GetCursor(str)
+			cursor, err = Display.cursor_theme.GetCursor(str)
+			if err != nil {
+				println("could not get cursor")
 
-			if cursor != nil {
+			} else if cursor != nil {
 
 				(*Display.cursors)[i] = cursor
 				cursor = nil
@@ -1105,6 +1094,7 @@ func create_cursors(Display *Display) {
 			println("could not load cursor")
 		}
 	}
+	return nil
 }
 
 //line 1386
@@ -1283,7 +1273,7 @@ func (Widget *Widget) Destroy() {
 
 }
 
-func (d *Display) HandleXdgWmBasePing(ev zxdg.XdgWmBasePingEvent) {
+func (d *Display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
 	d.ShellPing(d.xdg_shell, ev.Serial)
 }
 
@@ -1309,8 +1299,6 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	global.name = id
 	global.iface = iface
 	global.version = version
-
-	println(iface)
 
 	switch iface {
 
@@ -1355,6 +1343,7 @@ func (d *Display) HandleShmFormat(e wl.ShmFormatEvent) {
 	d.ShmFormat(nil, e.Format)
 }
 func (d *Display) ShmFormat(wl_shm *wl.Shm, format uint32) {
+	print("SHM FORMAT: ")
 	println(format)
 }
 
@@ -1517,7 +1506,7 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 func input_set_pointer_image_index(Input *Input, index int) {
 	var buffer *wl.Buffer
 	var cursor *wlcursor.Cursor
-	var image *wlcursor.Image
+	var image wlcursor.Image
 
 	if Input.pointer == nil {
 		return
@@ -1649,7 +1638,9 @@ func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time ui
 		duration = 0
 		i = 0
 	} else {
-		i = cursor.FrameAndDuration(time-Input.cursor_anim_start, &duration)
+		frame_duration := cursor.FrameAndDuration(time - Input.cursor_anim_start)
+
+		i, duration = frame_duration.FrameIndex, frame_duration.FrameDuration
 	}
 
 	if cursor.ImageCount() > 1 {
@@ -1994,7 +1985,7 @@ func Create(Display *Display) *Window {
 	var Window = window_create_internal(Display, 0)
 
 	if Window.Display.xdg_shell != nil {
-		surf, err := Window.Display.xdg_shell.GetXdgSurface(Window.main_surface.surface_)
+		surf, err := Window.Display.xdg_shell.GetSurface(Window.main_surface.surface_)
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -2118,7 +2109,7 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
 	}
 
-	d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))
+	//d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))
 
 	//d.display_task_new = d
 

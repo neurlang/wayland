@@ -3,6 +3,7 @@ package wl
 import (
 	"bytes"
 	"fmt"
+	"github.com/yalue/native_endian"
 	"syscall"
 )
 
@@ -59,9 +60,9 @@ func (c *Context) readEvent() (*Event, error) {
 		ev.scms = scms
 	}
 
-	ev.Pid = ProxyId(order.Uint32(buf[0:4]))
-	ev.Opcode = uint32(order.Uint16(buf[4:6]))
-	size := uint32(order.Uint16(buf[6:8]))
+	ev.Pid = ProxyId(native_endian.NativeEndian().Uint32(buf[0:4]))
+	ev.Opcode = uint32(native_endian.NativeEndian().Uint16(buf[4:6]))
+	size := uint32(native_endian.NativeEndian().Uint16(buf[6:8]))
 
 	// subtract 8 bytes from header
 	data := bytePool.Take(int(size) - 8)
@@ -98,7 +99,7 @@ func (ev *Event) Uint32() uint32 {
 	if len(buf) != 4 {
 		panic("unable to read unsigned int")
 	}
-	return order.Uint32(buf)
+	return native_endian.NativeEndian().Uint32(buf)
 }
 
 func (ev *Event) Proxy(c *Context) Proxy {

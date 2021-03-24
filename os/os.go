@@ -22,87 +22,18 @@
 package os
 
 import "os"
-import "unsafe"
+import "io/ioutil"
 import "syscall"
 import "errors"
 import "crypto/rand"
 import "fmt"
 
+// Pages may be read
 const PROT_READ = syscall.PROT_READ
+// Pages may be written
 const PROT_WRITE = syscall.PROT_WRITE
+// Share this mapping
 const MAP_SHARED = syscall.MAP_SHARED
-
-// Length carries length and a bitness of a slice
-type Length int64
-
-// Create a 8bit length
-func Len8(n int) Length {
-	return Length(n)*16 + 1
-}
-
-// Create a 32bit length
-func Len32(n int) Length {
-	return Length(n)*16 + 4
-}
-
-// What returns the bitness of a Length
-func (l Length) What() byte {
-	return byte(int64(l) & 15)
-}
-
-// Int returns the length as an integer
-func (l Length) Int() int {
-	return int(int64(l) / 16)
-}
-
-// Error returned by Mmap
-var ErrUnsupportedBitness = errors.New("unsupported bitness")
-
-// Mmap maps a 32bit or a 8bit slice
-func Mmap(fd int, offset int64, length Length, prot int, flags int) (interface{}, error) {
-	switch length.What() {
-	case 1:
-		return syscall.Mmap(fd, offset, length.Int(), prot, flags)
-	case 4:
-		return Mmap32(fd, offset, length.Int(), prot, flags)
-	default:
-		return nil, ErrUnsupportedBitness
-	}
-}
-
-// Munmap unmaps a 32bit or a 8bit slice
-func Munmap(buf interface{}) error {
-	switch v := ((interface{})(buf)).(type) {
-	case []byte:
-		return syscall.Munmap(v)
-	case []uint32:
-		return Munmap32(v)
-	}
-	return nil
-}
-
-func mvetype(dst, src *interface{}) {
-	*(*uintptr)(unsafe.Pointer(dst)) = *(*uintptr)(unsafe.Pointer(src))
-}
-
-// Mmap32: Like MMap but for uint32 array
-func Mmap32(fd int, offset int64, length int, prot int, flags int) (ret []uint32, err error) {
-	data, err := syscall.Mmap(fd, offset, length, prot, flags)
-	if err != nil {
-		return nil, err
-	}
-	var a, b interface{} = data[: len(data)/4 : cap(data)/4], ret
-	mvetype(&a, &b)
-	return a.([]uint32), nil
-}
-
-// Munmap32: Like MUnmap but for uint32 array
-func Munmap32(arr []uint32) (err error) {
-	var data []byte
-	var a, b interface{} = data[: len(arr)*4 : cap(arr)*4], arr
-	mvetype(&a, &b)
-	return syscall.Munmap(a.([]byte))
-}
 
 // MkOsTemp: Golang version of the popular C library function call
 // The string can contain the patern consistng of XXX that will be replaced
@@ -111,7 +42,8 @@ func Munmap32(arr []uint32) (err error) {
 // shorter sequence of XXX will make your MkOsTemp more prone to the failure
 // the buffer tmpname will be overwritten by the high entropic buffer
 // x1, x2, x3 are the three X characters we are replacing, it can be another
-func MkOsTemp(tmpname []byte, flags int, x1 byte, x2 byte, x3 byte) (int, error) {
+// character alltogether.
+func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byte) (*os.File, error) {
 	const alphabet = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 	var randbuf [5 * 9]byte
@@ -151,23 +83,23 @@ func MkOsTemp(tmpname []byte, flags int, x1 byte, x2 byte, x3 byte) (int, error)
 
 	//println(string(tmpname))
 
-	return syscall.Open(string(tmpname), (flags & ^syscall.O_ACCMODE)|os.O_RDWR|os.O_CREATE|os.O_EXCL, syscall.S_IRUSR|syscall.S_IWUSR)
+	return ioutil.TempFile(tmpdir, string(tmpname))
 }
 
 // Creates Tmp file that will be cloexec. In case of the ErrUnlink error, the fd is valid.
-func CreateTmpfileCloexec(tmpname string) (int, error) {
+func CreateTmpfileCloexec(tmpdir, tmpname string) (*os.File, error) {
 
 	var namebuf = []byte(tmpname)
 
-	var fd, err = MkOsTemp(namebuf, syscall.O_CLOEXEC, 'X', 'X', 'X')
-	if fd < 0 {
-		return fd, fmt.Errorf("CreateTmpfileCloexec: fd=%d", fd)
-	}
+	var fd, err = MkOsTemp(tmpdir, namebuf, syscall.O_CLOEXEC, 'X', 'X', 'X')
 	if err != nil {
 		return fd, fmt.Errorf("CreateTmpfileCloexec(%s): %w", namebuf, err)
 	}
+	if fd == nil {
+		return fd, fmt.Errorf("CreateTmpfileCloexec: fd is nil")
+	}
 
-	if syscall.Unlink(string(namebuf)) != nil {
+	if os.Remove(fd.Name()) != nil {
 		return fd, ErrUnlink
 	}
 
@@ -180,27 +112,22 @@ var ErrUnlink = errors.New("CreateTmpfileCloexec: unlink error")
 // The file just isn't anonymous and can't be deleted. You can either ignore the ErrUnlink
 // error and proceed, but it is your responsibility to Close the fd.
 // In case of other errors, the fd is not valid and does not need to be closed.
-func CreateAnonymousFile(size int64) (fd int, err error) {
+func CreateAnonymousFile(size int64) (fd *os.File, err error) {
 
 	const template = "/go-lang-shared-XXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 	path := os.Getenv("XDG_RUNTIME_DIR")
 
-	fd, err = CreateTmpfileCloexec(path + template)
+	fd, err = CreateTmpfileCloexec(path, template)
 	if err != nil && err != ErrUnlink {
 		return fd, err
 	}
 
-	err2 := syscall.Fallocate(fd, 0, 0, size)
+	err2 := syscall.Fallocate(int(fd.Fd()), 0, 0, size)
 	if err2 != nil {
-		syscall.Close(fd)
-		return -1, err2
+		fd.Close()
+		return nil, err2
 	}
 
 	return fd, err
-}
-
-// Close the fd
-func Close(fd int) error {
-	return syscall.Close(fd)
 }
