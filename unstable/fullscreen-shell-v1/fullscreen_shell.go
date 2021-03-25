@@ -32,7 +32,7 @@ package fullscreen_shell
 import (
 	"sync"
 
-	"github.com/rajveermalviya/go-wayland/client"
+	client "github.com/neurlang/wayland/wl"
 )
 
 // ZwpFullscreenShellV1 : displays a single surface per output
@@ -150,7 +150,7 @@ func (i *ZwpFullscreenShellV1) Release() error {
 // scaling, so the buffer_scale property of the surface is effectively
 // ignored.
 //
-func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.WlSurface, method uint32, output *client.WlOutput) error {
+func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.Surface, method uint32, output *client.Output) error {
 	err := i.Context().SendRequest(i, 1, surface, method, output)
 	return err
 }
@@ -195,7 +195,7 @@ func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.WlSurface, method 
 // size or the surface size.  In either case, the surface will fill the
 // output.
 //
-func (i *ZwpFullscreenShellV1) PresentSurfaceForMode(surface *client.WlSurface, output *client.WlOutput, framerate int32) (*ZwpFullscreenShellModeFeedbackV1, error) {
+func (i *ZwpFullscreenShellV1) PresentSurfaceForMode(surface *client.Surface, output *client.Output, framerate int32) (*ZwpFullscreenShellModeFeedbackV1, error) {
 	feedback := NewZwpFullscreenShellModeFeedbackV1(i.Context())
 	err := i.Context().SendRequest(i, 2, surface, output, framerate, feedback)
 	return feedback, err

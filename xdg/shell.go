@@ -10,7 +10,6 @@ type Event = wl.Event
 type Context = wl.Context
 type Proxy = wl.Proxy
 
-
 func (s *Surface) AddListener(h SurfaceConfigureHandler) {
 	s.AddConfigureHandler(h)
 }

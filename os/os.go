@@ -30,8 +30,10 @@ import "fmt"
 
 // Pages may be read
 const PROT_READ = syscall.PROT_READ
+
 // Pages may be written
 const PROT_WRITE = syscall.PROT_WRITE
+
 // Share this mapping
 const MAP_SHARED = syscall.MAP_SHARED
 

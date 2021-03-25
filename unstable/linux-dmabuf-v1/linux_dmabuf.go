@@ -30,7 +30,7 @@ package linux_dmabuf
 import (
 	"sync"
 
-	"github.com/rajveermalviya/go-wayland/client"
+	client "github.com/neurlang/wayland/wl"
 )
 
 // ZwpLinuxDmabufV1 : factory for creating dmabuf-based wl_buffers
@@ -552,8 +552,8 @@ func (i *ZwpLinuxBufferParamsV1) Create(width, height int32, format, flags uint3
 // height: base plane height in pixels
 // format: DRM_FORMAT code
 // flags: see enum flags
-func (i *ZwpLinuxBufferParamsV1) CreateImmed(width, height int32, format, flags uint32) (*client.WlBuffer, error) {
-	bufferID := client.NewWlBuffer(i.Context())
+func (i *ZwpLinuxBufferParamsV1) CreateImmed(width, height int32, format, flags uint32) (*client.Buffer, error) {
+	bufferID := client.NewBuffer(i.Context())
 	err := i.Context().SendRequest(i, 3, bufferID, width, height, format, flags)
 	return bufferID, err
 }
@@ -596,7 +596,7 @@ const (
 // Upon receiving this event, the client should destroy the
 // zlinux_dmabuf_params object.
 type ZwpLinuxBufferParamsV1CreatedEvent struct {
-	Buffer *client.WlBuffer
+	Buffer *client.Buffer
 }
 
 type ZwpLinuxBufferParamsV1CreatedHandler interface {
@@ -686,7 +686,7 @@ func (i *ZwpLinuxBufferParamsV1) Dispatch(event *client.Event) {
 		i.mu.RUnlock()
 
 		e := ZwpLinuxBufferParamsV1CreatedEvent{
-			Buffer: event.Proxy(i.Context()).(*client.WlBuffer),
+			Buffer: event.Proxy(i.Context()).(*client.Buffer),
 		}
 
 		i.mu.RLock()

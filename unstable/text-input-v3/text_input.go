@@ -35,7 +35,7 @@ package text_input
 import (
 	"sync"
 
-	"github.com/rajveermalviya/go-wayland/client"
+	client "github.com/neurlang/wayland/wl"
 )
 
 // ZwpTextInputV3 : text input
@@ -395,7 +395,7 @@ const (
 // the keyboard focus. This event sets the current surface for the
 // text-input object.
 type ZwpTextInputV3EnterEvent struct {
-	Surface *client.WlSurface
+	Surface *client.Surface
 }
 
 type ZwpTextInputV3EnterHandler interface {
@@ -439,7 +439,7 @@ func (i *ZwpTextInputV3) RemoveEnterHandler(h ZwpTextInputV3EnterHandler) {
 // When the seat has the keyboard capability the text-input focus follows
 // the keyboard focus.
 type ZwpTextInputV3LeaveEvent struct {
-	Surface *client.WlSurface
+	Surface *client.Surface
 }
 
 type ZwpTextInputV3LeaveHandler interface {
@@ -677,7 +677,7 @@ func (i *ZwpTextInputV3) Dispatch(event *client.Event) {
 		i.mu.RUnlock()
 
 		e := ZwpTextInputV3EnterEvent{
-			Surface: event.Proxy(i.Context()).(*client.WlSurface),
+			Surface: event.Proxy(i.Context()).(*client.Surface),
 		}
 
 		i.mu.RLock()
@@ -698,7 +698,7 @@ func (i *ZwpTextInputV3) Dispatch(event *client.Event) {
 		i.mu.RUnlock()
 
 		e := ZwpTextInputV3LeaveEvent{
-			Surface: event.Proxy(i.Context()).(*client.WlSurface),
+			Surface: event.Proxy(i.Context()).(*client.Surface),
 		}
 
 		i.mu.RLock()
@@ -829,7 +829,7 @@ func (i *ZwpTextInputManagerV3) Destroy() error {
 //
 // Creates a new text-input object for a given seat.
 //
-func (i *ZwpTextInputManagerV3) GetTextInput(seat *client.WlSeat) (*ZwpTextInputV3, error) {
+func (i *ZwpTextInputManagerV3) GetTextInput(seat *client.Seat) (*ZwpTextInputV3, error) {
 	id := NewZwpTextInputV3(i.Context())
 	err := i.Context().SendRequest(i, 1, id, seat)
 	return id, err

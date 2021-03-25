@@ -30,8 +30,8 @@ package xdg_decoration
 import (
 	"sync"
 
-	"github.com/rajveermalviya/go-wayland/client"
-	xdg_shell "github.com/rajveermalviya/go-wayland/stable/xdg-shell"
+	client "github.com/neurlang/wayland/wl"
+	xdg_shell "github.com/neurlang/wayland/xdg"
 )
 
 // ZxdgDecorationManagerV1 : window decoration manager
@@ -113,7 +113,7 @@ func (i *ZxdgDecorationManagerV1) Destroy() error {
 // xdg_toplevel_decoration.configure event must also be treated as
 // errors.
 //
-func (i *ZxdgDecorationManagerV1) GetToplevelDecoration(toplevel *xdg_shell.XdgToplevel) (*ZxdgToplevelDecorationV1, error) {
+func (i *ZxdgDecorationManagerV1) GetToplevelDecoration(toplevel *xdg_shell.Toplevel) (*ZxdgToplevelDecorationV1, error) {
 	id := NewZxdgToplevelDecorationV1(i.Context())
 	err := i.Context().SendRequest(i, 1, id, toplevel)
 	return id, err
