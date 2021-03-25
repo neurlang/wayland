@@ -19,7 +19,7 @@
 // IN THE SOFTWARE.
 
 // Package window implements a convenient wayland windowing
-package Window
+package window
 
 import "syscall"
 
@@ -87,7 +87,7 @@ type Display struct {
 	shm                  *wl.Shm
 	data_device_manager  *wl.DataDeviceManager
 	text_cursor_position *struct{}
-	xdg_shell            *zxdg.Shell
+	xdg_shell            *zxdg.WmBase
 	serial               uint32
 
 	//display_fd        int32
@@ -105,7 +105,7 @@ type Display struct {
 
 	running int32
 
-	global_list []global
+	global_list []*global
 	//	pad9		uint64
 	//	pada		uint64
 	window_list [2]*Window
@@ -118,7 +118,7 @@ type Display struct {
 	//	padf		uint64
 	//	padg		uint64
 
-	theme        *struct{}
+	theme        *theme
 	cursor_theme *wlcursor.Theme
 	cursors      *[lengthCursors]*wlcursor.Cursor
 
@@ -134,6 +134,10 @@ type Display struct {
 
 	//display_task_new os.Runner
 	surface2window map[*wl.Surface]*Window
+
+	global_handler GlobalHandler
+
+	user_data interface{}
 }
 
 type rectangle struct {
@@ -188,7 +192,7 @@ type Window struct {
 	Display            *Display
 	window_output_list [2]uintptr
 
-	title *byte
+	title string
 
 	saved_allocation   rectangle
 	min_allocation     rectangle
@@ -234,11 +238,15 @@ type Window struct {
 
 	link [2]*Window
 
-	userdata WidgetHandler
+	Userdata WidgetHandler
 
 	redraw_runner runner
 
 	subsurface_list_new []*surface
+
+	keyboard_handler KeyboardHandler
+
+	frame *window_frame
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
@@ -250,6 +258,12 @@ func (Window *Window) SurfaceConfigure(zxdg_surface_v6 *zxdg.Surface, serial uin
 	Window.xdg_surface.AckConfigure(serial)
 
 	window_uninhibit_redraw(Window)
+
+}
+
+func (Window *Window) SetKeyboardHandler(handler KeyboardHandler) {
+
+	Window.keyboard_handler = handler
 
 }
 
@@ -285,14 +299,10 @@ func (Window *Window) ToplevelConfigure(zxdg_toplevel_v6 *zxdg.Toplevel, width i
 		 * on the shadow margin to get the difference. */
 		var margin int32 = 0
 
-		window_schedule_resize(Window,
-			width+margin*2,
-			height+margin*2)
+		Window.ScheduleResize(width+margin*2, height+margin*2)
 	} else if (Window.saved_allocation.width > 0) &&
 		(Window.saved_allocation.height > 0) {
-		window_schedule_resize(Window,
-			Window.saved_allocation.width,
-			Window.saved_allocation.height)
+		Window.ScheduleResize(Window.saved_allocation.width, Window.saved_allocation.height)
 	}
 
 }
@@ -315,8 +325,7 @@ type Widget struct {
 	Window     *Window
 	surface    *surface
 	tooltip    *struct{}
-	child_list [2]uintptr
-	link       [2]uintptr
+	child_list *widget_list
 	allocation rectangle
 
 	opaque         int32
@@ -330,6 +339,37 @@ type Widget struct {
 	use_cairo int32
 
 	Userdata WidgetHandler
+}
+
+type widget_list struct {
+	l []*Widget
+}
+
+func (l *widget_list) Add(w *Widget) {
+	(l.l) = append((l.l), w)
+}
+
+func (l *widget_list) Remove(w *Widget) {
+	if len(l.l) > 0 {
+		if (l.l)[0] == w {
+			(l.l) = (l.l)[1:]
+			return
+		}
+		if (l.l)[len(l.l)-1] == w {
+			(l.l) = (l.l)[0 : len(l.l)-1]
+			return
+		}
+	}
+
+	for i, v := range l.l {
+		if v == w {
+			(l.l) = append((l.l)[0:i], (l.l)[i+1:]...)
+		}
+	}
+}
+func (l *widget_list) Insert(w *Widget) {
+	w.child_list = l
+	l.Add(w)
 }
 
 type WidgetHandler interface {
@@ -402,15 +442,33 @@ type Input struct {
 	repeat_delay_nsec int32
 
 	//repeat_task     task
-	repeat_timer_fd int32
-	repeat_sym      uint32
-	repeat_key      uint32
-	repeat_time     uint32
-	seat_version    int32
+	repeat_sym   uint32
+	repeat_key   uint32
+	repeat_time  uint32
+	seat_version int32
 }
 
 func (i *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	i.CallbackDone(ev.C, ev.CallbackData)
+}
+
+type KeyboardHandler interface {
+	Key(window *Window, input *Input, time uint32, key uint32, unicode uint32, state wl.KeyboardKeyState, data WidgetHandler)
+	Focus(window *Window, device *Input)
+}
+
+func input_remove_keyboard_focus(input *Input) {
+	var window = input.keyboard_focus
+
+	if window == nil {
+		return
+	}
+
+	if window.keyboard_handler != nil {
+		window.keyboard_handler.Focus(window, nil)
+	}
+
+	input.keyboard_focus = nil
 }
 
 type output struct {
@@ -1242,7 +1300,7 @@ func widget_create(Window *Window, surface *surface, data WidgetHandler) *Widget
 	w.surface = surface
 	w.Userdata = data
 	w.allocation = surface.allocation
-
+	w.child_list = new(widget_list)
 	w.opaque = 0
 	w.tooltip = nil
 	w.tooltip_count = 0
@@ -1261,6 +1319,15 @@ func (Window *Window) AddWidget(data WidgetHandler) *Widget {
 	return w
 }
 
+//line 1702
+func (parent *Widget) AddWidget(data WidgetHandler) *Widget {
+	widget := widget_create(parent.Window, parent.surface, data)
+
+	parent.child_list.Insert(widget)
+
+	return widget
+}
+
 //line 1701
 func (Widget *Widget) Destroy() {
 
@@ -1277,7 +1344,7 @@ func (d *Display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
 	d.ShellPing(d.xdg_shell, ev.Serial)
 }
 
-func (d *Display) ShellPing(shell *zxdg.Shell, serial uint32) {
+func (d *Display) ShellPing(shell *zxdg.WmBase, serial uint32) {
 	shell.Pong(serial)
 }
 
@@ -1299,6 +1366,8 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	global.name = id
 	global.iface = iface
 	global.version = version
+
+	d.global_list = append(d.global_list, global)
 
 	switch iface {
 
@@ -1323,9 +1392,9 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 			d.data_device_manager_version)
 
 	//case "zxdg_shell_v6":
-	case "zxdg_shell_v6":
+	case "xdg_wm_base":
 
-		d.xdg_shell = wlclient.RegistryBindShellInterface(d.registry, id, 1)
+		d.xdg_shell = wlclient.RegistryBindWmBaseInterface(d.registry, id, 1)
 
 		zxdg.WmBaseAddListener(d.xdg_shell, d)
 
@@ -1335,10 +1404,29 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	default:
 
 	}
+	if d.global_handler != nil {
+		d.global_handler.HandleGlobal(d, id, iface, version, d.user_data)
+	}
+
 }
 func (d *Display) RegistryGlobalRemove(wl_registry *wl.Registry, name uint32) {
 
 }
+
+type GlobalHandler interface {
+	HandleGlobal(d *Display, id uint32, iface string, version uint32, data interface{})
+}
+
+func (d *Display) SetGlobalHandler(gh GlobalHandler) {
+	d.global_handler = gh
+	if gh == nil {
+		return
+	}
+	for _, v := range d.global_list {
+		d.global_handler.HandleGlobal(d, v.name, v.iface, v.version, d.user_data)
+	}
+}
+
 func (d *Display) HandleShmFormat(e wl.ShmFormatEvent) {
 	d.ShmFormat(nil, e.Format)
 }
@@ -1398,6 +1486,30 @@ func (Window *Window) WindowGetSurface() cairo.Surface {
 	var cairo_surface = widget_get_cairo_surface(Window.main_surface.Widget)
 
 	return cairo_surface.Reference()
+}
+
+func FrameCreate(window *Window, data WidgetHandler) *Widget {
+	var buttons uint32
+
+	if window.custom != 0 {
+		buttons = FRAME_BUTTON_NONE
+	} else {
+		buttons = FRAME_BUTTON_ALL
+	}
+
+	var frame = new(window_frame)
+	frame.frame = frame_create(window.Display.theme, 0, 0, buttons, window.title, nil)
+	if frame.frame == nil {
+		frame = nil
+		return nil
+	}
+
+	frame.widget = window.AddWidget(frame)
+	frame.child = frame.widget.AddWidget(data)
+
+	window.frame = frame
+
+	return frame.child
 }
 
 //line 2614
@@ -1721,7 +1833,7 @@ func idle_resize(Window *Window) {
 }
 
 //line 4223
-func window_schedule_resize(Window *Window, width int32, height int32) {
+func (Window *Window) ScheduleResize(width int32, height int32) {
 	/* We should probably get these numbers from the theme. */
 	const min_width = 200
 	const min_height = 200
@@ -1757,7 +1869,7 @@ func window_schedule_resize(Window *Window, width int32, height int32) {
 
 //line 4254
 func (Widget *Widget) ScheduleResize(width int32, height int32) {
-	window_schedule_resize(Widget.Window, width, height)
+	Widget.Window.ScheduleResize(width, height)
 }
 
 //line 4269
@@ -2131,6 +2243,14 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 	create_cursors(d)
 
 	return d, nil
+}
+
+func (Display *Display) BindUnstableInterface(name uint32, iface string, version uint32) wl.Proxy {
+	return wlclient.RegistryBindUnstableInterface(Display.registry, name, iface, version)
+}
+
+func (Display *Display) SetUserData(data interface{}) {
+	Display.user_data = data
 }
 
 //line 6387

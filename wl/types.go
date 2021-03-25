@@ -4,3 +4,4 @@ package wl
 type Fixed = int32
 
 type PointerButtonState int
+type KeyboardKeyState int

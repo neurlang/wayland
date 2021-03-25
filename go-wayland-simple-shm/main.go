@@ -32,7 +32,7 @@ type display struct {
 	display    *wl.Display
 	registry   *wl.Registry
 	compositor *wl.Compositor
-	shell      *zxdg.Shell
+	shell      *zxdg.WmBase
 	shm        *wl.Shm
 	has_xrgb   bool
 }
@@ -139,8 +139,8 @@ func (disp *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
 	case "wl_compositor":
 		disp.compositor = wlclient.RegistryBindCompositorInterface(disp.registry, goid, 1)
 
-	case "zxdg_shell_v6":
-		disp.shell = wlclient.RegistryBindShellInterface(disp.registry, goid, 1)
+	case "xdg_wm_base":
+		disp.shell = wlclient.RegistryBindWmBaseInterface(disp.registry, goid, 1)
 
 		zxdg.WmBaseAddListener((disp.shell), disp)
 

@@ -17,16 +17,13 @@ func (s *Surface) AddListener(h SurfaceConfigureHandler) {
 type Seat = wl.Seat
 type Output = wl.Output
 
-func NewShell(ctx *Context) *Shell {
-	ret := new(Shell)
+func NewShell(ctx *Context) *WmBase {
+	ret := new(WmBase)
 	ctx.Register(ret)
 	return ret
 }
 
-// TODO: remove
-type Shell = WmBase
-
-func WmBaseAddListener(s *Shell, h WmBasePingHandler) {
+func WmBaseAddListener(s *WmBase, h WmBasePingHandler) {
 	s.AddPingHandler(h)
 }
 

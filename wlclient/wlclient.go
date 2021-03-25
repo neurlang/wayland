@@ -3,6 +3,7 @@ package wlclient
 
 import wl "github.com/neurlang/wayland/wl"
 import xdg "github.com/neurlang/wayland/xdg"
+import unstable "github.com/neurlang/wayland/unstable"
 
 func DisplayDispatch(d *wl.Display) error {
 	return d.Context().Run(nil)
@@ -144,9 +145,18 @@ func RegistryBindSeatInterface(r *wl.Registry, name uint32, version uint32) *wl.
 	return d
 }
 
-func RegistryBindShellInterface(r *wl.Registry, name uint32, version uint32) *xdg.Shell {
+func RegistryBindWmBaseInterface(r *wl.Registry, name uint32, version uint32) *xdg.WmBase {
 	d := xdg.NewShell(r.Ctx)
-	r.Bind(name, "zxdg_shell_v6", version, d)
+	r.Bind(name, "xdg_wm_base", version, d)
+	return d
+}
+func RegistryBindUnstableInterface(r *wl.Registry, name uint32, iface string, version uint32) wl.Proxy {
+	function := unstable.GetNewFunc(iface)
+	if function == nil {
+		return nil
+	}
+	d := function(r.Ctx)
+	r.Bind(name, iface, version, d)
 	return d
 }
 
