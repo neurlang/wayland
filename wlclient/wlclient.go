@@ -6,7 +6,7 @@ import xdg "github.com/neurlang/wayland/xdg"
 import unstable "github.com/neurlang/wayland/unstable"
 
 func DisplayDispatch(d *wl.Display) error {
-	return d.Context().Run(nil)
+	return d.Context().Run()
 }
 func PointerSetUserData(p *wl.Pointer, data interface{}) {
 }
@@ -171,7 +171,7 @@ func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 }
 
 func DisplayRun(d *wl.Display) error {
-	return d.Context().Run(nil)
+	return d.Context().Run()
 }
 func DisplayRoundtrip(d *wl.Display) error {
 	cb, err := d.Sync()

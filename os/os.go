@@ -44,7 +44,7 @@ const MAP_SHARED = syscall.MAP_SHARED
 // shorter sequence of XXX will make your MkOsTemp more prone to the failure
 // the buffer tmpname will be overwritten by the high entropic buffer
 // x1, x2, x3 are the three X characters we are replacing, it can be another
-// character alltogether.
+// character altogether.
 func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byte) (*os.File, error) {
 	const alphabet = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

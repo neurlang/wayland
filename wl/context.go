@@ -14,16 +14,16 @@ func init() {
 	log.SetFlags(0)
 }
 
+// Context wraps the wayland connection together with the map of all Context objects (proxies)
 type Context struct {
-	mu           sync.RWMutex
-	conn         *net.UnixConn
-	sockFD       int
-	currentId    ProxyId
-	objects      map[ProxyId]Proxy
-	dispatchChan chan struct{}
-	exitChan     chan struct{}
+	mu        sync.RWMutex
+	conn      *net.UnixConn
+	sockFD    int
+	currentId ProxyId
+	objects   map[ProxyId]Proxy
 }
 
+// Register registers a proxy in the map of all Context objects (proxies)
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
@@ -33,6 +33,7 @@ func (ctx *Context) Register(proxy Proxy) {
 	ctx.objects[ctx.currentId] = proxy
 }
 
+// LookupProxy looks up a specific proxy by it's Id in the map of all Context objects (proxies)
 func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	ctx.mu.RLock()
 	defer ctx.mu.RUnlock()
@@ -43,10 +44,14 @@ func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	return proxy
 }
 
+// This error is returned by Connect when the operating system does not provide the required XDG_RUNTIME_DIR environment variable
+var ErrXdgRuntimeDirNotSet = errors.New("variable XDG_RUNTIME_DIR not set in the environment")
+
+// Connect connects to a Wayland compositor running on a specific wayland unix socket
 func Connect(addr string) (ret *Display, err error) {
 	runtime_dir := os.Getenv("XDG_RUNTIME_DIR")
 	if runtime_dir == "" {
-		return nil, errors.New("variable XDG_RUNTIME_DIR not set in the environment")
+		return nil, ErrXdgRuntimeDirNotSet
 	}
 	if addr == "" {
 		addr = os.Getenv("WAYLAND_DISPLAY")
@@ -58,23 +63,23 @@ func Connect(addr string) (ret *Display, err error) {
 	c := new(Context)
 	c.objects = make(map[ProxyId]Proxy)
 	c.currentId = 0
-	c.dispatchChan = make(chan struct{})
-	c.exitChan = make(chan struct{})
 	c.conn, err = net.DialUnix("unix", nil, &net.UnixAddr{Name: addr, Net: "unix"})
 	if err != nil {
 		return nil, err
 	}
 	c.conn.SetReadDeadline(time.Time{})
-	//dispatch events in separate gorutine
+	//DON'T dispatch events in separate gorutine
 	//go c.Run()
 	return NewDisplay(c), nil
 }
 
 var errFoundMyCallback = errors.New("run found my callback")
 
+// Context RunTill runs until a specific callback or an error occurs, see Context Run
+// for a description of a likely errors
 func (c *Context) RunTill(cb *Callback) (err error) {
 	for {
-		err = c.Run(cb)
+		err = c.run(cb)
 		if err == errFoundMyCallback {
 			return nil
 		}
@@ -85,20 +90,44 @@ func (c *Context) RunTill(cb *Callback) (err error) {
 	return nil
 }
 
-func (c *Context) Run(cb *Callback) error {
+// Context Run event reading error, use InternalError to get the underlying cause
+var ErrContextRunEventReadingError = errors.New("event reading error")
+
+// Context Run connection closed
+var ErrContextRunConnectionClosed = errors.New("connection closed")
+
+// Context Run timeout error
+var ErrContextRunTimeout = errors.New("timeout error")
+
+// Context Run protocol error, use InternalError to get the underlying cause
+var ErrContextRunProtocolError = errors.New("protocol error")
+
+// Context Run not dispatched
+var ErrContextRunNotDispatched = errors.New("not dispatched")
+
+// Context Run proxy nil
+var ErrContextRunProxyNil = errors.New("proxy nil")
+
+// Context Run reads and processes one event, a specific ErrContextRunXXX error
+// may be returned in case of failure
+func (c *Context) Run() error {
+	return c.run(nil)
+}
+
+func (c *Context) run(cb *Callback) error {
 	// ctx := context.Background()
 
 	ev, err := c.readEvent()
 	if err != nil {
 		if err == io.EOF {
-			return errors.New("connection closed")
+			return ErrContextRunConnectionClosed
 		}
 
 		if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-			return errors.New("timeout error")
+			return ErrContextRunTimeout
 		}
 
-		log.Fatal(err)
+		return combinedError{ErrContextRunEventReadingError, err}
 	}
 
 	proxy := c.LookupProxy(ev.Pid)
@@ -112,11 +141,15 @@ func (c *Context) Run(cb *Callback) error {
 			}
 			dispatcher.Dispatch(ev)
 			bytePool.Give(ev.Data)
+
+			if ev.err != nil {
+				return combinedError{ErrContextRunProtocolError, ev.err}
+			}
 		} else {
-			return errors.New("not dispatched")
+			return ErrContextRunNotDispatched
 		}
 	} else {
-		return errors.New("proxy NULL")
+		return ErrContextRunProxyNil
 	}
 	return nil
 }

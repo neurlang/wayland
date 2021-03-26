@@ -56,7 +56,7 @@ func LoadThemeOr(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 		themeName = name
 	}
 
-	themeSize := uint32(0)
+	var themeSize uint32
 	themeSizeEnv := os.Getenv("XCURSOR_SIZE")
 
 	themeSizeu64, err := strconv.ParseUint(themeSizeEnv, 10, 32)

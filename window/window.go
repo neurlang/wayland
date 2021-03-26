@@ -111,7 +111,7 @@ type Display struct {
 	window_list [2]*Window
 	//	padb		uint64
 	//	padc		uint64
-	input_list [2]*Input
+	input_list []*Input
 	//	padd		uint64
 	//	pade		uint64
 	output_list [2]*output
@@ -138,6 +138,8 @@ type Display struct {
 	global_handler GlobalHandler
 
 	user_data interface{}
+
+	seat_handler SeatHandler
 }
 
 type rectangle struct {
@@ -640,6 +642,11 @@ func (Input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
 func (*Input) PointerAxisDiscrete(wl_pointer *wl.Pointer, axis uint32, discrete int32) {
 }
 
+type SeatHandler interface {
+	Capabilities(i *Input, seat *wl.Seat, caps uint32)
+	Name(i *Input, seat *wl.Seat, name string)
+}
+
 func (input_ *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
 	input_.SeatCapabilities(input_.seat, ev.Capabilities)
 }
@@ -669,8 +676,15 @@ func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 		}
 	}
 
+	if input_.Display.seat_handler != nil {
+		input_.Display.seat_handler.Capabilities(input_, seat, caps)
+	}
+
 }
-func (*Input) SeatName(wl_seat *wl.Seat, name string) {
+func (i *Input) SeatName(wl_seat *wl.Seat, name string) {
+	if i.Display.seat_handler != nil {
+		i.Display.seat_handler.Name(i, wl_seat, name)
+	}
 }
 
 // line 2697
@@ -1143,7 +1157,6 @@ func create_cursors(Display *Display) (err error) {
 			} else if cursor != nil {
 
 				(*Display.cursors)[i] = cursor
-				cursor = nil
 				break
 			}
 		}
@@ -1340,6 +1353,10 @@ func (Widget *Widget) Destroy() {
 
 }
 
+func (d *Display) SetSeatHandler(h SeatHandler) {
+	d.seat_handler = h
+}
+
 func (d *Display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
 	d.ShellPing(d.xdg_shell, ev.Serial)
 }
@@ -1488,7 +1505,7 @@ func (Window *Window) WindowGetSurface() cairo.Surface {
 	return cairo_surface.Reference()
 }
 
-func FrameCreate(window *Window, data WidgetHandler) *Widget {
+func (window *Window) FrameCreate(data WidgetHandler) *Widget {
 	var buttons uint32
 
 	if window.custom != 0 {
@@ -1612,6 +1629,11 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 	_ = cursor
 
 	input_set_pointer_image(Input, cursor)
+}
+
+//line 3552
+func input_get_seat(Input *Input) *wl.Seat {
+	return Input.seat
 }
 
 //line 3754
@@ -2187,11 +2209,11 @@ func display_add_output(d *Display, id uint32) {
 func display_add_input(d *Display, id uint32, display_seat_version int) {
 
 	var input_ *Input
-	var seat_version = min(display_seat_version, 5)
+	var seat_version = min(display_seat_version, 7)
 
 	_ = seat_version
 
-	input_ = &Input{}
+	input_ = new(Input)
 
 	input_.Display = d
 	input_.seat = wlclient.RegistryBindSeatInterface(d.registry, id, uint32(seat_version))
@@ -2199,6 +2221,8 @@ func display_add_input(d *Display, id uint32, display_seat_version int) {
 	input_.pointer_focus = nil
 	input_.keyboard_focus = nil
 	input_.seat_version = int32(seat_version)
+
+	d.input_list = append(d.input_list, input_)
 
 	wlclient.SeatAddListener(input_.seat, input_)
 
