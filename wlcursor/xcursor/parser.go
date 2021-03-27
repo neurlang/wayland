@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/neurlang/wayland/internal/swizzle"
+	"github.com/neurlang/wayland/external/swizzle"
 )
 
 type Image struct {
@@ -46,7 +46,7 @@ func parseToc(buf *bytes.Buffer) toc {
 	}
 }
 
-func parseImg(b []byte) Image {
+func parseImg(b []byte) (*Image, error) {
 	buf := bytes.NewBuffer(b)
 	buf.Next(8) // skip header (header size, type)
 	size := binary.LittleEndian.Uint32(buf.Next(4))
@@ -59,13 +59,16 @@ func parseImg(b []byte) Image {
 
 	imageLength := 4 * width * height
 	pixRGBA := make([]uint8, imageLength)
-	_, _ = buf.Read(pixRGBA)
+	_, err := buf.Read(pixRGBA)
+	if err != nil {
+		return nil, err
+	}
 
 	pixBGRA := make([]uint8, imageLength)
 	copy(pixBGRA, pixRGBA)
 	swizzle.BGRA(pixBGRA)
 
-	return Image{
+	return &Image{
 		Size:     size,
 		Width:    width,
 		Height:   height,
@@ -74,23 +77,26 @@ func parseImg(b []byte) Image {
 		Delay:    delay,
 		PixRGBA:  pixRGBA,
 		PixBGRA:  pixBGRA,
-	}
+	}, nil
 }
 
-func ParseXcursor(content []byte) []Image {
+func ParseXcursor(content []byte) (imgs []*Image, err error) {
 	buf := bytes.NewBuffer(content)
 	ntoc := parseHeader(buf)
-	imgs := make([]Image, ntoc)
+	imgs = make([]*Image, ntoc)
 
 	for i := uint32(0); i < ntoc; i++ {
 		toc := parseToc(buf)
 
 		if toc.toctype == 0xfffd_0002 {
 			index := toc.pos
-			img := parseImg(content[index:])
+			img, err1 := parseImg(content[index:])
+			if err1 != nil {
+				err = err1
+			}
 			imgs[i] = img
 		}
 	}
 
-	return imgs
+	return imgs, err
 }

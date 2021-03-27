@@ -4,9 +4,7 @@ import (
 	"image"
 	"os"
 
-	syscall "golang.org/x/sys/unix"
-
-	"github.com/neurlang/wayland/internal/swizzle"
+	"github.com/neurlang/wayland/external/swizzle"
 	sys "github.com/neurlang/wayland/os"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
@@ -51,42 +49,17 @@ func main() {
 		log.Fatalf("usage: %s file.jpg", os.Args[0])
 	}
 
-	const (
-		clampedWidth  = 1920
-		clampedHeight = 1080
-	)
-
 	fileName := os.Args[1]
-
-	// Read the image file to *image.RGBA
-	pImage, err := rgbaImageFromFile(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Create a proxy image for large images, makes resizing a little better
-	if pImage.Rect.Dy() > pImage.Rect.Dx() && pImage.Rect.Dy() > clampedHeight {
-		pImage = resize.Resize(0, clampedHeight, pImage, resize.Bilinear).(*image.RGBA)
-		log.Print("creating proxy image, resizing by height clamped to", clampedHeight)
-	} else if pImage.Rect.Dx() > pImage.Rect.Dy() && pImage.Rect.Dx() > clampedWidth {
-		pImage = resize.Resize(clampedWidth, 0, pImage, resize.Bilinear).(*image.RGBA)
-		log.Print("creating proxy image, resizing by width clamped to", clampedWidth)
-	}
-
-	// Resize again, for first frame
-	frameImage := resize.Resize(0, 480, pImage, resize.Bilinear).(*image.RGBA)
-	frameRect := frameImage.Bounds()
 
 	app := &appState{
 		// Set the title to `cat.jpg - imageview`
 		title: fileName + " - imageviewer",
 		appID: "imageviewer",
 		// Keep proxy image in cache, for use in resizing
-		pImage:  pImage,
-		width:   int32(frameRect.Dx()),
-		height:  int32(frameRect.Dy()),
-		frame:   frameImage,
 		cursors: make(map[string]*cursorData),
 	}
+
+	app.loadImage(fileName)
 
 	// Connect to wayland server
 	display, err := wl.Connect("")
@@ -114,33 +87,18 @@ func main() {
 
 	// Release wl_seat handlers
 	if app.seat != nil {
-		app.seat.RemoveCapabilitiesHandler(app)
-		app.seat.RemoveNameHandler(app)
+		app.releaseSeatHandlers()
 
-		if err := app.seat.Release(); err != nil {
-			log.Println("unable to destroy wl_seat:", err)
-		}
-		app.seat = nil
 	}
 
 	// Release xdg_wmbase
 	if app.wmBase != nil {
-		app.wmBase.RemovePingHandler(app)
-
-		if err := app.wmBase.Destroy(); err != nil {
-			log.Println("unable to destroy xdg_wm_base:", err)
-		}
-		app.wmBase = nil
+		app.releaseXdgWmBase()
 	}
 
-	for _, c := range app.cursors {
-		if err := c.wlCursor.Destroy(); err != nil {
-			log.Println("unable to destroy cursor", c.wlCursor.Name, ":", err)
-		}
-
-		if err := c.surface.Destroy(); err != nil {
-			log.Println("unable to destroy wl_surface of cursor", c.wlCursor.Name, ":", err)
-		}
+	for i, c := range app.cursors {
+		app.CursorDestroy(c)
+		app.cursors[i] = nil
 	}
 
 	if app.cursorTheme != nil {
@@ -151,6 +109,38 @@ func main() {
 
 	// Close the wayland server connection
 	app.Context().Close()
+}
+
+func (app *appState) loadImage(fileName string) {
+
+	const (
+		clampedWidth  = 1920
+		clampedHeight = 1080
+	)
+
+	// Read the image file to *image.RGBA
+	pImage, err := rgbaImageFromFile(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Create a proxy image for large images, makes resizing a little better
+	if pImage.Rect.Dy() > pImage.Rect.Dx() && pImage.Rect.Dy() > clampedHeight {
+		pImage = resize.Resize(0, clampedHeight, pImage, resize.Bilinear).(*image.RGBA)
+		log.Print("creating proxy image, resizing by height clamped to", clampedHeight)
+	} else if pImage.Rect.Dx() > pImage.Rect.Dy() && pImage.Rect.Dx() > clampedWidth {
+		pImage = resize.Resize(clampedWidth, 0, pImage, resize.Bilinear).(*image.RGBA)
+		log.Print("creating proxy image, resizing by width clamped to", clampedWidth)
+	}
+
+	// Resize again, for first frame
+	frameImage := resize.Resize(0, 480, pImage, resize.Bilinear).(*image.RGBA)
+	frameRect := frameImage.Bounds()
+
+	app.frame = frameImage
+	app.pImage = pImage
+
+	app.width = int32(frameRect.Dx())
+	app.height = int32(frameRect.Dy())
 }
 
 func run(app *appState) {
@@ -164,7 +154,7 @@ func run(app *appState) {
 	// Add global interfaces registrar handler
 	registry.AddGlobalHandler(app)
 	// Wait for interfaces to register
-	wlclient.DisplayRoundtrip(app.display)
+	_ = wlclient.DisplayRoundtrip(app.display)
 
 	log.Print("all interfaces registered")
 
@@ -351,10 +341,10 @@ func (app *appState) loadCursors() {
 
 		// For now get the first image (there are multiple images because of animated cursors)
 		// will figure out cursor animation afterwards
-		image := c.Images[0]
+		firstImage := c.Images[0]
 
 		// Attach the first image to wl_surface
-		if err := surface.Attach(image.GetBuffer(), 0, 0); err != nil {
+		if err := surface.Attach(firstImage.GetBuffer(), 0, 0); err != nil {
 			log.Fatalf("unable to attach cursor image buffer to cursor suface: %v", err)
 		}
 		// Commit the surface state changes
@@ -381,7 +371,7 @@ func (app *appState) drawFrame() *wl.Buffer {
 		log.Fatalf("unable to create a temporary file: %v", err)
 	}
 
-	data, err := syscall.Mmap(int(file.Fd()), 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
+	data, err := sys.Mmap(int(file.Fd()), 0, int(size), sys.ProtRead|sys.ProtWrite, sys.MapShared)
 	if err != nil {
 		log.Fatalf("unable to create mapping: %v", err)
 	}
@@ -410,7 +400,7 @@ func (app *appState) drawFrame() *wl.Buffer {
 	// Copy image to buffer
 	copy(data, imgData)
 
-	if err := syscall.Munmap(data); err != nil {
+	if err := sys.Munmap(data); err != nil {
 		log.Printf("unable to delete mapping: %v", err)
 	}
 	buf.AddReleaseHandler(bufferReleaser{buf: buf})
@@ -460,10 +450,40 @@ func (*appState) HandleDisplayError(e wl.DisplayErrorEvent) {
 // HandleWmBasePing handles xdg ping by doing a Pong request
 func (app *appState) HandleWmBasePing(e xdg.WmBasePingEvent) {
 	log.Printf("xdg_wmbase ping: serial=%v", e.Serial)
-	app.wmBase.Pong(e.Serial)
+	_ = app.wmBase.Pong(e.Serial)
 	log.Print("xdg_wmbase pong sent")
 }
 
 func (app *appState) HandleToplevelClose(_ xdg.ToplevelCloseEvent) {
 	app.exit = true
+}
+
+func (app *appState) releaseSeatHandlers() {
+
+	app.seat.RemoveCapabilitiesHandler(app)
+	app.seat.RemoveNameHandler(app)
+
+	if err := app.seat.Release(); err != nil {
+		log.Println("unable to destroy wl_seat:", err)
+	}
+	app.seat = nil
+}
+
+func (app *appState) releaseXdgWmBase() {
+	app.wmBase.RemovePingHandler(app)
+
+	if err := app.wmBase.Destroy(); err != nil {
+		log.Println("unable to destroy xdg_wm_base:", err)
+	}
+	app.wmBase = nil
+}
+
+func (app *appState) CursorDestroy(c *cursorData) {
+	if err := c.wlCursor.Destroy(); err != nil {
+		log.Println("unable to destroy cursor", c.wlCursor.Name, ":", err)
+	}
+
+	if err := c.surface.Destroy(); err != nil {
+		log.Println("unable to destroy wl_surface of cursor", c.wlCursor.Name, ":", err)
+	}
 }

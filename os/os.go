@@ -82,7 +82,7 @@ func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byt
 	return ioutil.TempFile(tmpdir, string(tmpname))
 }
 
-// Creates Tmp file that will be cloexec. In case of the ErrUnlink error, the fd is valid.
+// CreateTmpfileCloexec creates a temp file that will be cloexec. In case of the ErrUnlink error, the fd is valid.
 func CreateTmpfileCloexec(tmpdir, tmpname string) (*os.File, error) {
 
 	var namebuf = []byte(tmpname)
@@ -102,7 +102,11 @@ func CreateTmpfileCloexec(tmpdir, tmpname string) (*os.File, error) {
 	return fd, nil
 }
 
+// ErrUnlink is a CreateTmpfileCloexec error that means a temp file
+// was created but couldn't be deleted to make it anonymous.
 var ErrUnlink = errors.New("CreateTmpfileCloexec: unlink error")
+
+// ErrFileIsNil error means a temp file could not be created
 var ErrFileIsNil = errors.New("CreateTmpfileCloexec: file is nil")
 
 // OsCreateAnonymousFile: in case of the ErrUnlink error, the fd is valid.
@@ -111,9 +115,11 @@ var ErrFileIsNil = errors.New("CreateTmpfileCloexec: file is nil")
 // In case of other errors, the fd is not valid and does not need to be closed.
 func CreateAnonymousFile(size int64) (fd *os.File, err error) {
 
-	const template = "/go-lang-shared-XXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	const template = "go-lang-shared-XXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 	path := os.Getenv("XDG_RUNTIME_DIR")
+
+	path += string(os.PathSeparator)
 
 	fd, err = CreateTmpfileCloexec(path, template)
 	if err != nil && err != ErrUnlink {

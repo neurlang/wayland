@@ -1,18 +1,14 @@
 package wl
 
-// Internal error extracts the internal error cause from within the error returned by this package
-func InternalError(e error) error {
-	if err, ok := e.(combinedError); ok {
-		return err[1]
-	}
-	return nil
-}
-
+// combinedError is a tuple of an External and an Internal error
 type combinedError [2]error
 
 func (c combinedError) Error() string {
 	return c[0].Error() + ": " + c[1].Error()
 }
 func (c combinedError) Unwrap() error {
+	return c[1]
+}
+func (c combinedError) External() error {
 	return c[0]
 }

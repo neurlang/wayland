@@ -776,6 +776,7 @@ func makeShmPool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPool
 	fd, err := os.CreateAnonymousFile(int64(size))
 	if err != nil {
 		println("creating a buffer file failed")
+		println(err.Error())
 		return nil
 	}
 
@@ -996,7 +997,7 @@ type shmSurface struct {
 	current *shmSurfaceLeaf
 }
 
-func shmSurfaceBufferRelease(surface *shmSurface, buffer *wl.Buffer) {
+func shmSurfaceBufferRelease(surface *shmSurface, buffer *wl.Buffer) error {
 	var leaf *shmSurfaceLeaf
 	var i int
 	var freeFound int
@@ -1009,7 +1010,7 @@ func shmSurfaceBufferRelease(surface *shmSurface, buffer *wl.Buffer) {
 		}
 	}
 	if i >= MaxLeaves {
-		panic("unknown buffer released")
+		return errors.New("unknown buffer released")
 	}
 
 	/* Leave one free leaf with storage, release others */
@@ -1028,6 +1029,7 @@ func shmSurfaceBufferRelease(surface *shmSurface, buffer *wl.Buffer) {
 
 		}
 	}
+	return nil
 }
 
 func (s *shmSurface) HandleBufferRelease(ev wl.BufferReleaseEvent) {

@@ -116,7 +116,10 @@ func (t *Theme) loadCursor(name string, size uint32) (*Cursor, error) {
 		return nil, err
 	}
 
-	images := xcursor.ParseXcursor(buf)
+	images, err := xcursor.ParseXcursor(buf)
+	if err != nil {
+		return nil, err
+	}
 
 	return newCursor(name, t, images, size)
 }
@@ -161,7 +164,7 @@ func (c *Cursor) GetCursorImage(n int) *ImageBuffer {
 	return c.Images[n]
 }
 
-func newCursor(name string, theme *Theme, images []xcursor.Image, size uint32) (*Cursor, error) {
+func newCursor(name string, theme *Theme, images []*xcursor.Image, size uint32) (*Cursor, error) {
 	totalDuration := uint32(0)
 
 	nImages := nearestImages(size, images)
@@ -199,7 +202,7 @@ func (c *Cursor) Destroy() (err error) {
 	return err
 }
 
-func nearestImages(size uint32, images []xcursor.Image) []xcursor.Image {
+func nearestImages(size uint32, images []*xcursor.Image) []*xcursor.Image {
 	index := 0
 	for i, image := range images {
 		if size == image.Size {
@@ -210,7 +213,7 @@ func nearestImages(size uint32, images []xcursor.Image) []xcursor.Image {
 
 	nearestImage := images[index]
 
-	var nImages []xcursor.Image
+	var nImages []*xcursor.Image
 
 	for _, image := range images {
 		if image.Width == nearestImage.Width && image.Height == nearestImage.Height {
@@ -253,7 +256,7 @@ type ImageBuffer struct {
 	height   uint32
 }
 
-func NewImageBuffer(theme *Theme, image xcursor.Image) (*ImageBuffer, error) {
+func NewImageBuffer(theme *Theme, image *xcursor.Image) (*ImageBuffer, error) {
 	buf := image.PixBGRA
 	offset, err := theme.File.Seek(0, 2)
 	if err != nil {
@@ -312,12 +315,7 @@ func (b *ImageBuffer) Destroy() error {
 	return b.buffer.Destroy()
 }
 
-func PointerSetCursor(
-	p *wl.Pointer,
-	serial uint32,
-	pointerSurface *wl.Surface,
-	hotspotX int32,
-	hotspotY int32,
-) {
-	_ = p.SetCursor(serial, pointerSurface, hotspotX, hotspotY)
+func PointerSetCursor(p *wl.Pointer, serial uint32, pointerSurface *wl.Surface,
+	hotspotX int32, hotspotY int32) error {
+	return p.SetCursor(serial, pointerSurface, hotspotX, hotspotY)
 }

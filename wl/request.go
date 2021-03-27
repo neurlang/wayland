@@ -29,7 +29,14 @@ func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{})
 	}
 
 	for _, arg := range args {
-		req.Write(arg)
+		err1 := req.Write(arg)
+		if err1 != nil {
+			err = err1
+		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if ctx.conn != nil {
@@ -40,7 +47,7 @@ func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{})
 }
 
 // Request Write writes a specific request argument to the compositor
-func (r *Request) Write(arg interface{}) {
+func (r *Request) Write(arg interface{}) error {
 	switch t := arg.(type) {
 	case Proxy:
 		r.PutProxy(t)
@@ -57,8 +64,9 @@ func (r *Request) Write(arg interface{}) {
 	case uintptr:
 		r.PutFd(t)
 	default:
-		panic("invalid Wayland request parameter type")
+		return errors.New("invalid Wayland request parameter type")
 	}
+	return nil
 }
 
 // Request PutUint32 writes an uint32 argument to the compositor

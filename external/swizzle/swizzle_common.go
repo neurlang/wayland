@@ -8,26 +8,35 @@
 // formats.
 package swizzle
 
+import "errors"
+
+var ErrSliceNot32Bit = errors.New("input slice length is not a multiple of 4")
+
 // BGRA converts a pixel buffer between Go's RGBA and other systems' BGRA byte
 // orders.
 //
-// It panics if the input slice length is not a multiple of 4.
-func BGRA(p []byte) {
+// It returns the error ErrSliceNot32Bit if the input slice length is not a multiple of 4.
+func BGRA(p []byte) error {
 	if len(p)%4 != 0 {
-		panic("input slice length is not a multiple of 4")
+		return ErrSliceNot32Bit
 	}
 
-	// Use asm code for 16- or 4-byte chunks, if supported.
-	if useBGRA16 {
+	// Use asm code for 32-, 16- or 4-byte chunks, if supported.
+	if useBGRA32 {
+		n := len(p) &^ (32 - 1)
+		bgra32(p[:n])
+		p = p[n:]
+	} else if useBGRA16 {
 		n := len(p) &^ (16 - 1)
 		bgra16(p[:n])
 		p = p[n:]
 	} else if useBGRA4 {
 		bgra4(p)
-		return
+		return nil
 	}
 
 	for i := 0; i < len(p); i += 4 {
 		p[i+0], p[i+2] = p[i+2], p[i+0]
 	}
+	return nil
 }

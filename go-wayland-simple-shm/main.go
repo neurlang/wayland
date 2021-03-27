@@ -24,7 +24,7 @@ package main
 import "github.com/neurlang/wayland/wl"
 import zxdg "github.com/neurlang/wayland/xdg"
 import "github.com/neurlang/wayland/wlclient"
-import "fmt"
+import "log"
 import "github.com/neurlang/wayland/os"
 
 type display struct {
@@ -50,6 +50,12 @@ type window struct {
 	buffers          [2]buffer
 	callback         *wl.Callback
 	waitForConfigure bool
+}
+
+func handle(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (mybuf *buffer) HandleBufferRelease(wl.BufferReleaseEvent) {
@@ -97,7 +103,7 @@ func (window *window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
 }
 func (window *window) SurfaceConfigure(sf *zxdg.Surface, serial uint32) {
 
-	_ = sf.AckConfigure(serial)
+	handle(sf.AckConfigure(serial))
 
 	if window.waitForConfigure {
 		redraw(window, nil, 0)
@@ -150,7 +156,7 @@ func (d *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
 		wlclient.ShmAddListener(d.shm, d)
 
 	default:
-		fmt.Println("Other register global", goFace)
+		log.Println("Other register global", goFace)
 	}
 }
 
@@ -164,28 +170,30 @@ func createDisplay() *display {
 	}
 	d, err := wlclient.DisplayConnect(nil)
 	if err != nil {
-		panic("Could not connect to Wayland.")
+		println("Could not connect to Wayland.")
+		handle(err)
 	}
 
 	disp.display = d
 
 	reg, err := disp.display.GetRegistry()
 	if err != nil {
-		panic("Could not get Registry.")
+		println("Could not get Registry.")
+		handle(err)
 	}
 
 	disp.registry = reg
 
 	wlclient.RegistryAddListener(disp.registry, disp)
-	_ = wlclient.DisplayRoundtrip(disp.display)
+	handle(wlclient.DisplayRoundtrip(disp.display))
 	if disp.shm == nil {
-		panic("No wl_shm global\n")
+		log.Fatal("No wl_shm global\n")
 	}
 
-	_ = wlclient.DisplayRoundtrip(disp.display)
+	handle(wlclient.DisplayRoundtrip(disp.display))
 
 	if !disp.hasXrgb {
-		panic("WL_SHM_FORMAT_XRGB32 not available\n")
+		log.Fatal("WL_SHM_FORMAT_XRGB32 not available\n")
 	}
 
 	return disp
@@ -202,14 +210,16 @@ func createWindow(disp *display, width, height int) *window {
 
 	surf, err := disp.compositor.CreateSurface()
 	if err != nil {
-		panic("cannot create surface")
+		println("cannot create surface")
+		handle(err)
 	}
 	win.surface = surf
 
 	if disp.shell != nil {
 		xdgSurf, err := disp.shell.GetSurface(win.surface)
 		if err != nil {
-			panic("cannot get xdg surface")
+			println("cannot get xdg surface")
+			handle(err)
 		}
 		win.xdgSurface = xdgSurf
 
@@ -217,21 +227,21 @@ func createWindow(disp *display, width, height int) *window {
 
 		xdgToplevel, err := win.xdgSurface.GetToplevel()
 		if err != nil {
-			panic("xdg toplevel is wrong")
+			println("xdg toplevel is wrong")
+			handle(err)
 		}
 
 		win.xdgToplevel = xdgToplevel
 
 		zxdg.ToplevelAddListener(win.xdgToplevel, win)
 
-		_ = win.xdgToplevel.SetTitle("Title")
+		handle(win.xdgToplevel.SetTitle("Title"))
 
-		_ = win.surface.Commit()
+		handle(win.surface.Commit())
 		win.waitForConfigure = true
 
 	} else {
-		print("Unknown shell\n")
-		panic("")
+		log.Fatal("Unknown shell\n")
 	}
 
 	return win
@@ -244,7 +254,7 @@ func windowNextBuffer(window *window) *buffer {
 	} else if !window.buffers[1].busy {
 		buffer = &window.buffers[1]
 	} else {
-		print("All Buffers Busy\n")
+		log.Println("All Buffers Busy")
 		return nil
 	}
 
@@ -253,7 +263,7 @@ func windowNextBuffer(window *window) *buffer {
 			window.width, window.height,
 			wl.ShmFormatXrgb8888)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return nil
 		}
 
@@ -319,22 +329,20 @@ func redraw(win *window, callback *wl.Callback, time uint32) {
 	buffer := windowNextBuffer(win)
 
 	win.paintPixels(time, buffer)
-	_ = win.surface.Attach(buffer.buffer, 0, 0)
-	_ = win.surface.Damage(0, 0,
-		int32(win.width), int32(win.height))
+	handle(win.surface.Attach(buffer.buffer, 0, 0))
+	handle(win.surface.Damage(0, 0,
+		int32(win.width), int32(win.height)))
 
 	if callback != nil {
 		wlclient.CallbackDestroy(callback)
 	}
 
 	cb, err := win.surface.Frame()
-	if err != nil {
-		panic("cannot get frame callback")
-	}
+	handle(err)
 	win.callback = cb
 
 	wlclient.CallbackAddListener(win.callback, win)
-	_ = win.surface.Commit()
+	handle(win.surface.Commit())
 	buffer.busy = true
 }
 
@@ -347,7 +355,7 @@ func main() {
 	}
 
 	// Initialise damage to full surface, so the padding gets painted
-	_ = window.surface.Damage((0), (0), int32(window.width), int32(window.height))
+	handle(window.surface.Damage((0), (0), int32(window.width), int32(window.height)))
 
 	if !window.waitForConfigure {
 		redraw(window, nil, 0)

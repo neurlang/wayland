@@ -189,7 +189,7 @@ func DisplayRoundtrip(d *wl.Display) error {
 	if err != nil {
 		return err
 	}
-	_ = d.Context().RunTill(cb)
+	err = d.Context().RunTill(cb)
 	return err
 }
 func DisplayDisconnect(display *wl.Display) {

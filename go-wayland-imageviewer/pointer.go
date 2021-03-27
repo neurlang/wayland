@@ -1,9 +1,9 @@
 package main
 
 import (
-	wl "github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wl"
 	cursor "github.com/neurlang/wayland/wlcursor"
-	xdg_shell "github.com/neurlang/wayland/xdg"
+	xdgshell "github.com/neurlang/wayland/xdg"
 
 	"log"
 )
@@ -142,23 +142,79 @@ var axisSource = map[uint32]string{
 }
 
 var cursorMap = map[uint32]string{
-	xdg_shell.ToplevelResizeEdgeTop:         cursor.TopSide,
-	xdg_shell.ToplevelResizeEdgeTopLeft:     cursor.TopLeftCorner,
-	xdg_shell.ToplevelResizeEdgeTopRight:    cursor.TopRightCorner,
-	xdg_shell.ToplevelResizeEdgeBottom:      cursor.BottomSide,
-	xdg_shell.ToplevelResizeEdgeBottomLeft:  cursor.BottomLeftCorner,
-	xdg_shell.ToplevelResizeEdgeBottomRight: cursor.BottomRightCorner,
-	xdg_shell.ToplevelResizeEdgeLeft:        cursor.LeftSide,
-	xdg_shell.ToplevelResizeEdgeRight:       cursor.RightSide,
-	xdg_shell.ToplevelResizeEdgeNone:        cursor.LeftPtr,
+	xdgshell.ToplevelResizeEdgeTop:         cursor.TopSide,
+	xdgshell.ToplevelResizeEdgeTopLeft:     cursor.TopLeftCorner,
+	xdgshell.ToplevelResizeEdgeTopRight:    cursor.TopRightCorner,
+	xdgshell.ToplevelResizeEdgeBottom:      cursor.BottomSide,
+	xdgshell.ToplevelResizeEdgeBottomLeft:  cursor.BottomLeftCorner,
+	xdgshell.ToplevelResizeEdgeBottomRight: cursor.BottomRightCorner,
+	xdgshell.ToplevelResizeEdgeLeft:        cursor.LeftSide,
+	xdgshell.ToplevelResizeEdgeRight:       cursor.RightSide,
+	xdgshell.ToplevelResizeEdgeNone:        cursor.LeftPtr,
 }
 
+func (app *appState) pointerFrameMotionEvent(e pointerEvent) {
+	log.Printf("motion %v, %v", e.surfaceX, e.surfaceY)
+
+	edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
+	cursorName, ok := cursorMap[edge]
+	if ok && cursorName != app.currentCursor {
+		app.setCursor(e.serial, cursorName)
+	}
+}
+func (app *appState) pointerFrameAxisEvent(e pointerEvent) {
+	for i := 0; i < 2; i++ {
+		if !e.axes[i].valid {
+			continue
+		}
+
+		log.Printf("%s axis ", axisName[i])
+		if (e.eventMask & pointerEventAxis) != 0 {
+			log.Printf("value %v", e.axes[i].value)
+		}
+		if (e.eventMask & pointerEventAxisDiscrete) != 0 {
+			log.Printf("discrete %d ", e.axes[i].discrete)
+		}
+		if (e.eventMask & pointerEventAxisSource) != 0 {
+			log.Printf("via %s", axisSource[e.axisSource])
+		}
+		if (e.eventMask & pointerEventAxisStop) != 0 {
+			log.Printf("(stopped)")
+		}
+
+	}
+}
+
+func (app *appState) pointerFrameButtonEvent(e pointerEvent) {
+	if e.state == wl.PointerButtonStateReleased {
+		log.Printf("button %d released", e.button)
+	} else {
+		log.Printf("button %d pressed", e.button)
+
+		switch e.button {
+		case BtnLeft:
+			edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
+			if edge != xdgshell.ToplevelResizeEdgeNone {
+				if err := app.xdgTopLevel.Resize(app.seat, e.serial, edge); err != nil {
+					log.Println("unable to start resize")
+				}
+			} else {
+				if err := app.xdgTopLevel.Move(app.seat, e.serial); err != nil {
+					log.Println("unable to start move")
+				}
+			}
+		case BtnRight:
+			if err := app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY)); err != nil {
+				log.Println("unable to show window menu")
+			}
+		}
+	}
+}
 func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	e := app.pointerEvent
 
 	if (e.eventMask & pointerEventEnter) != 0 {
 		log.Printf("entered %v, %v", e.surfaceX, e.surfaceY)
-
 		app.setCursor(e.serial, cursor.LeftPtr)
 	}
 
@@ -166,61 +222,16 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 		log.Print("leave")
 	}
 	if (e.eventMask & pointerEventMotion) != 0 {
-		log.Printf("motion %v, %v", e.surfaceX, e.surfaceY)
-
-		edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
-		cursorName, ok := cursorMap[edge]
-		if ok && cursorName != app.currentCursor {
-			app.setCursor(e.serial, cursorName)
-		}
+		app.pointerFrameMotionEvent(e)
 	}
 	if (e.eventMask & pointerEventButton) != 0 {
-		if e.state == wl.PointerButtonStateReleased {
-			log.Printf("button %d released", e.button)
-		} else {
-			log.Printf("button %d pressed", e.button)
-
-			switch e.button {
-			case BtnLeft:
-				edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
-				if edge != xdg_shell.ToplevelResizeEdgeNone {
-					if err := app.xdgTopLevel.Resize(app.seat, e.serial, edge); err != nil {
-						log.Println("unable to start resize")
-					}
-				} else {
-					if err := app.xdgTopLevel.Move(app.seat, e.serial); err != nil {
-						log.Println("unable to start move")
-					}
-				}
-			case BtnRight:
-				if err := app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY)); err != nil {
-					log.Println("unable to show window menu")
-				}
-			}
-		}
+		app.pointerFrameButtonEvent(e)
 	}
 
 	const axisEvents = pointerEventAxis | pointerEventAxisSource | pointerEventAxisStop | pointerEventAxisDiscrete
 
 	if (e.eventMask & axisEvents) != 0 {
-		for i := 0; i < 2; i++ {
-			if !e.axes[i].valid {
-				continue
-			}
-			log.Printf("%s axis ", axisName[i])
-			if (e.eventMask & pointerEventAxis) != 0 {
-				log.Printf("value %v", e.axes[i].value)
-			}
-			if (e.eventMask & pointerEventAxisDiscrete) != 0 {
-				log.Printf("discrete %d ", e.axes[i].discrete)
-			}
-			if (e.eventMask & pointerEventAxisSource) != 0 {
-				log.Printf("via %s", axisSource[e.axisSource])
-			}
-			if (e.eventMask & pointerEventAxisStop) != 0 {
-				log.Printf("(stopped)")
-			}
-		}
+		app.pointerFrameAxisEvent(e)
 	}
 }
 
@@ -233,34 +244,34 @@ func componentEdge(width, height, pointerX, pointerY, margin uint32) uint32 {
 	if top {
 		if left {
 			log.Print("ToplevelResizeEdgeTopLeft")
-			return xdg_shell.ToplevelResizeEdgeTopLeft
+			return xdgshell.ToplevelResizeEdgeTopLeft
 		} else if right {
 			log.Print("ToplevelResizeEdgeTopRight")
-			return xdg_shell.ToplevelResizeEdgeTopRight
+			return xdgshell.ToplevelResizeEdgeTopRight
 		} else {
 			log.Print("ToplevelResizeEdgeTop")
-			return xdg_shell.ToplevelResizeEdgeTop
+			return xdgshell.ToplevelResizeEdgeTop
 		}
 	} else if bottom {
 		if left {
 			log.Print("ToplevelResizeEdgeBottomLeft")
-			return xdg_shell.ToplevelResizeEdgeBottomLeft
+			return xdgshell.ToplevelResizeEdgeBottomLeft
 		} else if right {
 			log.Print("ToplevelResizeEdgeBottomRight")
-			return xdg_shell.ToplevelResizeEdgeBottomRight
+			return xdgshell.ToplevelResizeEdgeBottomRight
 		} else {
 			log.Print("ToplevelResizeEdgeBottom")
-			return xdg_shell.ToplevelResizeEdgeBottom
+			return xdgshell.ToplevelResizeEdgeBottom
 		}
 	} else if left {
 		log.Print("ToplevelResizeEdgeLeft")
-		return xdg_shell.ToplevelResizeEdgeLeft
+		return xdgshell.ToplevelResizeEdgeLeft
 	} else if right {
 		log.Print("ToplevelResizeEdgeRight")
-		return xdg_shell.ToplevelResizeEdgeRight
+		return xdgshell.ToplevelResizeEdgeRight
 	} else {
 		log.Print("ToplevelResizeEdgeNone")
-		return xdg_shell.ToplevelResizeEdgeNone
+		return xdgshell.ToplevelResizeEdgeNone
 	}
 }
 
@@ -273,7 +284,7 @@ type cursorData struct {
 func (app *appState) setCursor(serial uint32, cursorName string) {
 	c, ok := app.cursors[cursorName]
 	if !ok {
-		log.Print("unable to get %v cursor", cursorName)
+		log.Printf("unable to get %v cursor", cursorName)
 		return
 	}
 
