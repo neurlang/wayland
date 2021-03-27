@@ -193,5 +193,5 @@ func DisplayRoundtrip(d *wl.Display) error {
 	return err
 }
 func DisplayDisconnect(display *wl.Display) {
-	panic("not implemented")
+	display.Context().Close()
 }

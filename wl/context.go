@@ -156,3 +156,7 @@ func (ctx *Context) run(cb *Callback) error {
 	}
 	return nil
 }
+
+func (ctx *Context) Close() {
+	ctx.conn.Close()
+}
