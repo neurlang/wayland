@@ -1,5 +1,10 @@
 # wayland
 
+[![GoReportCard](https://goreportcard.com/badge/github.com/neurlang/wayland)](https://goreportcard.com/report/github.com/neurlang/wayland)
+
+[![GoDoc reference](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/neurlang/wayland)
+
+
 Golang Wayland
 
 ![Screenshot of Golang Wayland App](wayland.png?raw=true "Screenshot of Golang Wayland App")
@@ -13,7 +18,7 @@ None, this is a pure go implementation
 
 # Installation
 
-First of all you need a wayland-enabled Linux, if you don't have one, install
+First, you need a wayland-enabled Linux, if you don't have one, install
 the Wayland compositor weston that is useful for testing:
 
 ```
@@ -28,4 +33,4 @@ go install github.com/neurlang/wayland/go-wayland-simple-shm
 go install github.com/neurlang/wayland/go-wayland-smoke
 ```
 
-And finally run weston and the executables.
+Finally run weston and the executables.
