@@ -21,12 +21,10 @@
 // Package window implements a convenient wayland windowing
 package window
 
-import "syscall"
-
 //import zwp "github.com/neurlang/wayland/wayland"
-import wlclient "github.com/neurlang/wayland/wlclient"
-import wlcursor "github.com/neurlang/wayland/wlcursor"
-import wl "github.com/neurlang/wayland/wl"
+import "github.com/neurlang/wayland/wlclient"
+import "github.com/neurlang/wayland/wlcursor"
+import "github.com/neurlang/wayland/wl"
 import zxdg "github.com/neurlang/wayland/xdg"
 import cairo "github.com/neurlang/wayland/cairoshim"
 
@@ -40,38 +38,38 @@ type runner interface {
 	Run(uint32)
 }
 
-const SURFACE_OPAQUE = 0x01
-const SURFACE_SHM = 0x02
+const SurfaceOpaque = 0x01
+const SurfaceShm = 0x02
 
-const SURFACE_HINT_RESIZE = 0x10
-const SURFACE_HINT_RGB565 = 0x100
+const SurfaceHintResize = 0x10
+const SurfaceHintRgb565 = 0x100
 
-const WINDOW_PREFERRED_FORMAT_NONE = 0
-const WINDOW_PREFERRED_FORMAT_RGB565 = 1
+const WindowPreferredFormatNone = 0
+const WindowPreferredFormatRgb565 = 1
 
-const WINDOW_BUFFER_TYPE_EGL_WINDOW = 0
-const WINDOW_BUFFER_TYPE_SHM = 1
+const WindowBufferTypeEglWindow = 0
+const WindowBufferTypeShm = 1
 
-const CURSOR_BOTTOM_LEFT = 0
-const CURSOR_BOTTOM_RIGHT = 1
-const CURSOR_BOTTOM = 2
-const CURSOR_DRAGGING = 3
-const CURSOR_LEFT_PTR = 4
-const CURSOR_LEFT = 5
-const CURSOR_RIGHT = 6
-const CURSOR_TOP_LEFT = 7
-const CURSOR_TOP_RIGHT = 8
-const CURSOR_TOP = 9
-const CURSOR_IBEAM = 10
-const CURSOR_HAND1 = 11
-const CURSOR_WATCH = 12
-const CURSOR_DND_MOVE = 13
-const CURSOR_DND_COPY = 14
-const CURSOR_DND_FORBIDDEN = 15
-const CURSOR_BLANK = 16
+const CursorBottomLeft = 0
+const CursorBottomRight = 1
+const CursorBottom = 2
+const CursorDragging = 3
+const CursorLeftPtr = 4
+const CursorLeft = 5
+const CursorRight = 6
+const CursorTopLeft = 7
+const CursorTopRight = 8
+const CursorTop = 9
+const CursorIbeam = 10
+const CursorHand1 = 11
+const CursorWatch = 12
+const CursorDndMove = 13
+const CursorDndCopy = 14
+const CursorDndForbidden = 15
+const CursorBlank = 16
 
-const ZWP_RELATIVE_POINTER_MANAGER_V1_VERSION = 1
-const ZWP_POINTER_CONSTRAINTS_V1_VERSION = 1
+const ZwpRelativePointerManagerV1Version = 1
+const ZwpPointerConstraintsV1Version = 1
 
 type global struct {
 	name    uint32
@@ -80,66 +78,65 @@ type global struct {
 }
 
 type Display struct {
-	Display              *wl.Display
-	registry             *wl.Registry
-	compositor           *wl.Compositor
-	subcompositor        *wl.Subcompositor
-	shm                  *wl.Shm
-	data_device_manager  *wl.DataDeviceManager
-	text_cursor_position *struct{}
-	xdg_shell            *zxdg.WmBase
-	serial               uint32
+	Display            *wl.Display
+	registry           *wl.Registry
+	compositor         *wl.Compositor
+	subcompositor      *wl.Subcompositor
+	shm                *wl.Shm
+	dataDeviceManager  *wl.DataDeviceManager
+	textCursorPosition *struct{}
+	xdgShell           *zxdg.WmBase
+	serial             uint32
 
 	//display_fd        int32
-	display_fd_events uint32
+	displayFdEvents uint32
 
 	//display_task task
 	//	pad4		uint64
 	//	pad5		uint64
 	//	pad6		uint64
 
-	epoll_fd      int32
-	deferred_list [2]uintptr
+	deferredList [2]uintptr
 	//	pad7		uint64
 	//	pad8		uint64
 
 	running int32
 
-	global_list []*global
+	globalList []*global
 	//	pad9		uint64
 	//	pada		uint64
-	window_list [2]*Window
+	windowList [2]*Window
 	//	padb		uint64
 	//	padc		uint64
-	input_list []*Input
+	inputList []*Input
 	//	padd		uint64
 	//	pade		uint64
-	output_list [2]*output
+	outputList [2]*output
 	//	padf		uint64
 	//	padg		uint64
 
-	theme        *theme
-	cursor_theme *wlcursor.Theme
-	cursors      *[lengthCursors]*wlcursor.Cursor
+	theme       *theme
+	cursorTheme *wlcursor.Theme
+	cursors     *[lengthCursors]*wlcursor.Cursor
 
-	xkb_context *struct{}
+	xkbContext *struct{}
 
 	/* A hack to get text extents for tooltips */
-	dummy_surface *cairo.Surface
+	dummySurface *cairo.Surface
 
-	has_rgb565                  int32
-	data_device_manager_version uint32
+	hasRgb565                int32
+	dataDeviceManagerVersion uint32
 
-	deferred_list_new []runner
+	deferredListNew []runner
 
 	//display_task_new os.Runner
 	surface2window map[*wl.Surface]*Window
 
-	global_handler GlobalHandler
+	globalHandler GlobalHandler
 
-	user_data interface{}
+	userData interface{}
 
-	seat_handler SeatHandler
+	seatHandler SeatHandler
 }
 
 type rectangle struct {
@@ -151,8 +148,8 @@ type rectangle struct {
 
 type toysurface interface {
 	prepare(dx int, dy int, width int32, height int32, flags uint32,
-		buffer_transform uint32, buffer_scale int32) cairo.Surface
-	swap(buffer_transform uint32, buffer_scale int32, server_allocation *rectangle)
+		bufferTransform uint32, bufferScale int32) cairo.Surface
+	swap(bufferTransform uint32, bufferScale int32, serverAllocation *rectangle)
 	acquire(ctx *struct{}) int
 	release()
 	destroy()
@@ -161,29 +158,29 @@ type toysurface interface {
 type surface struct {
 	Window *Window
 
-	surface_             *wl.Surface
-	subsurface           *wl.Subsurface
-	synchronized         int32
-	synchronized_default int32
-	toysurface           *toysurface
-	Widget               *Widget
-	redraw_needed        int32
+	surface_            *wl.Surface
+	subsurface          *wl.Subsurface
+	synchronized        int32
+	synchronizedDefault int32
+	toysurface          *toysurface
+	Widget              *Widget
+	redrawNeeded        int32
 
-	frame_cb  *wl.Callback
-	last_time uint32
+	frameCb  *wl.Callback
+	lastTime uint32
 	//	pad1	uint32
 
-	allocation        rectangle
-	server_allocation rectangle
+	allocation       rectangle
+	serverAllocation rectangle
 
-	input_region  *wl.Region
-	opaque_region *wl.Region
+	inputRegion  *wl.Region
+	opaqueRegion *wl.Region
 
-	buffer_type      int32
-	buffer_transform int32
-	buffer_scale     int32
+	bufferType      int32
+	bufferTransform int32
+	bufferScale     int32
 
-	cairo_surface cairo.Surface
+	cairoSurface cairo.Surface
 }
 
 func (s *surface) HandleCallbackDone(ev wl.CallbackDoneEvent) {
@@ -191,50 +188,50 @@ func (s *surface) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 }
 
 type Window struct {
-	Display            *Display
-	window_output_list [2]uintptr
+	Display          *Display
+	windowOutputList [2]uintptr
 
 	title string
 
-	saved_allocation   rectangle
-	min_allocation     rectangle
-	pending_allocation rectangle
-	last_geometry      rectangle
+	savedAllocation   rectangle
+	minAllocation     rectangle
+	pendingAllocation rectangle
+	lastGeometry      rectangle
 
 	x, y int32
 
-	redraw_inhibited      int32
-	redraw_needed         int32
-	redraw_task_scheduled int32
+	redrawInhibited     int32
+	redrawNeeded        int32
+	redrawTaskScheduled int32
 
 	//redraw_task task
 
 	//	pad1	uint64
 	//	pad2	uint64
 
-	resize_needed int32
-	custom        int32
-	focused       int32
+	resizeNeeded int32
+	custom       int32
+	focused      int32
 
 	resizing int32
 
 	fullscreen int32
 	maximized  int32
 
-	preferred_format int
+	preferredFormat int
 
-	main_surface *surface
-	xdg_surface  *zxdg.Surface
-	xdg_toplevel *zxdg.Toplevel
-	xdg_popup    *zxdg.Popup
+	mainSurface *surface
+	xdgSurface  *zxdg.Surface
+	xdgToplevel *zxdg.Toplevel
+	xdgPopup    *zxdg.Popup
 
-	parent      *Window
-	last_parent *Window
+	parent     *Window
+	lastParent *Window
 
-	/* struct surface::link, contains also main_surface */
-	subsurface_list [2]*surface
+	/* struct surface::link, contains also mainSurface */
+	subsurfaceList [2]*surface
 
-	pointer_locked bool
+	pointerLocked bool
 
 	confined bool
 
@@ -242,38 +239,43 @@ type Window struct {
 
 	Userdata WidgetHandler
 
-	redraw_runner runner
+	redrawRunner runner
 
-	subsurface_list_new []*surface
+	subsurfaceListNew []*surface
 
-	keyboard_handler KeyboardHandler
+	keyboardHandler KeyboardHandler
 
-	frame *window_frame
+	frame *windowFrame
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
-	Window.SurfaceConfigure(Window.xdg_surface, ev.Serial)
+	Window.SurfaceConfigure(Window.xdgSurface, ev.Serial)
 }
 
-func (Window *Window) SurfaceConfigure(zxdg_surface_v6 *zxdg.Surface, serial uint32) {
+func (Window *Window) SurfaceConfigure(zxdgSurfaceV6 *zxdg.Surface, serial uint32) {
 
-	Window.xdg_surface.AckConfigure(serial)
+	_ = Window.xdgSurface.AckConfigure(serial)
 
-	window_uninhibit_redraw(Window)
+	windowUninhibitRedraw(Window)
 
 }
 
 func (Window *Window) SetKeyboardHandler(handler KeyboardHandler) {
 
-	Window.keyboard_handler = handler
+	Window.keyboardHandler = handler
 
 }
 
 func (Window *Window) HandleToplevelConfigure(ev zxdg.ToplevelConfigureEvent) {
-	Window.ToplevelConfigure(Window.xdg_toplevel, ev.Width, ev.Height, ev.States)
+	Window.ToplevelConfigure(Window.xdgToplevel, ev.Width, ev.Height, ev.States)
 }
 
-func (Window *Window) ToplevelConfigure(zxdg_toplevel_v6 *zxdg.Toplevel, width int32, height int32, states []int32) {
+func (Window *Window) ToplevelConfigure(
+	zxdgToplevelV6 *zxdg.Toplevel,
+	width int32,
+	height int32,
+	states []int32,
+) {
 
 	Window.maximized = 0
 	Window.fullscreen = 0
@@ -302,75 +304,75 @@ func (Window *Window) ToplevelConfigure(zxdg_toplevel_v6 *zxdg.Toplevel, width i
 		var margin int32 = 0
 
 		Window.ScheduleResize(width+margin*2, height+margin*2)
-	} else if (Window.saved_allocation.width > 0) &&
-		(Window.saved_allocation.height > 0) {
-		Window.ScheduleResize(Window.saved_allocation.width, Window.saved_allocation.height)
+	} else if (Window.savedAllocation.width > 0) &&
+		(Window.savedAllocation.height > 0) {
+		Window.ScheduleResize(Window.savedAllocation.width, Window.savedAllocation.height)
 	}
 
 }
 
 func (Window *Window) HandleToplevelClose(ev zxdg.ToplevelCloseEvent) {
-	Window.ToplevelClose(Window.xdg_toplevel)
+	Window.ToplevelClose(Window.xdgToplevel)
 }
 
-func (w *Window) ToplevelClose(zxdg_toplevel_v6 *zxdg.Toplevel) {
+func (Window *Window) ToplevelClose(zxdgToplevelV6 *zxdg.Toplevel) {
 
-	w.Display.Exit()
+	Window.Display.Exit()
 }
 
-func SurfaceEnter(wl_surface *wl.Surface, wl_output *wl.Output) {
+func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
-func SurfaceLeave(wl_surface *wl.Surface, wl_output *wl.Output) {
+func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
 
 type Widget struct {
 	Window     *Window
 	surface    *surface
 	tooltip    *struct{}
-	child_list *widget_list
+	childList  *widgetList
 	allocation rectangle
 
-	opaque         int32
-	tooltip_count  int32
-	default_cursor int32
+	opaque        int32
+	tooltipCount  int32
+	defaultCursor int32
 
 	/* If this is set to false then no cairo surface will be
 	 * created before redrawing the surface. This is useful if the
 	 * redraw handler is going to do completely custom rendering
 	 * such as using EGL directly */
-	use_cairo int32
+	useCairo int32
 
 	Userdata WidgetHandler
 }
 
-type widget_list struct {
+type widgetList struct {
 	l []*Widget
 }
 
-func (l *widget_list) Add(w *Widget) {
-	(l.l) = append((l.l), w)
+func (l *widgetList) Add(w *Widget) {
+	l.l = append(l.l, w)
 }
 
-func (l *widget_list) Remove(w *Widget) {
+func (l *widgetList) Remove(w *Widget) {
 	if len(l.l) > 0 {
 		if (l.l)[0] == w {
-			(l.l) = (l.l)[1:]
+			l.l = (l.l)[1:]
 			return
 		}
 		if (l.l)[len(l.l)-1] == w {
-			(l.l) = (l.l)[0 : len(l.l)-1]
+			l.l = (l.l)[0 : len(l.l)-1]
 			return
 		}
 	}
 
 	for i, v := range l.l {
 		if v == w {
-			(l.l) = append((l.l)[0:i], (l.l)[i+1:]...)
+			l.l = append((l.l)[0:i], (l.l)[i+1:]...)
 		}
 	}
 }
-func (l *widget_list) Insert(w *Widget) {
-	w.child_list = l
+func (l *widgetList) Insert(w *Widget) {
+	w.childList = l
 	l.Add(w)
 }
 
@@ -380,9 +382,24 @@ type WidgetHandler interface {
 	Enter(Widget *Widget, Input *Input, x float32, y float32)
 	Leave(Widget *Widget, Input *Input)
 	Motion(Widget *Widget, Input *Input, time uint32, x float32, y float32) int
-	Button(Widget *Widget, Input *Input, time uint32, button uint32, state wl.PointerButtonState, data WidgetHandler)
+	Button(
+		Widget *Widget,
+		Input *Input,
+		time uint32,
+		button uint32,
+		state wl.PointerButtonState,
+		data WidgetHandler,
+	)
 	TouchUp(Widget *Widget, Input *Input, serial uint32, time uint32, id int32)
-	TouchDown(Widget *Widget, Input *Input, serial uint32, time uint32, id int32, x float32, y float32)
+	TouchDown(
+		Widget *Widget,
+		Input *Input,
+		serial uint32,
+		time uint32,
+		id int32,
+		x float32,
+		y float32,
+	)
 	TouchMotion(Widget *Widget, Input *Input, time uint32, id int32, x float32, y float32)
 	TouchFrame(Widget *Widget, Input *Input)
 	TouchCancel(Widget *Widget, width int32, height int32)
@@ -393,61 +410,61 @@ type WidgetHandler interface {
 	PointerFrame(Widget *Widget, Input *Input)
 }
 
-type xkb_mod_mask_t uint32
+type xkbModMaskT uint32
 
 type Input struct {
-	Display              *Display
-	seat                 *wl.Seat
-	pointer              *wl.Pointer
-	keyboard             *wl.Keyboard
-	touch                *wl.Touch
-	touch_point_list     [2]uintptr
-	pointer_focus        *Window
-	keyboard_focus       *Window
-	touch_focus          int32
-	current_cursor       int32
-	cursor_anim_start    uint32
-	cursor_frame_cb      *wl.Callback
-	cursor_timer_start   uint32
-	cursor_anim_current  uint32
-	cursor_delay_fd      int32
-	cursor_timer_running bool
+	Display            *Display
+	seat               *wl.Seat
+	pointer            *wl.Pointer
+	keyboard           *wl.Keyboard
+	touch              *wl.Touch
+	touchPointList     [2]uintptr
+	pointerFocus       *Window
+	keyboardFocus      *Window
+	touchFocus         int32
+	currentCursor      int32
+	cursorAnimStart    uint32
+	cursorFrameCb      *wl.Callback
+	cursorTimerStart   uint32
+	cursorAnimCurrent  uint32
+	cursorDelayFd      int32
+	cursorTimerRunning bool
 	//cursor_task          task
-	pointer_surface      *wl.Surface
-	modifiers            uint32
-	pointer_enter_serial uint32
-	cursor_serial        uint32
-	sx                   float32
-	sy                   float32
+	pointerSurface     *wl.Surface
+	modifiers          uint32
+	pointerEnterSerial uint32
+	cursorSerial       uint32
+	sx                 float32
+	sy                 float32
 
-	focus_widget *Widget
-	grab         *Widget
-	grab_button  uint32
+	focusWidget *Widget
+	grab        *Widget
+	grabButton  uint32
 
-	data_device       *wl.DataDevice
-	touch_grab        uint32
-	touch_grab_id     int32
-	drag_x            float32
-	drag_y            float32
-	drag_focus        *Window
-	drag_enter_serial uint32
+	dataDevice      *wl.DataDevice
+	touchGrab       uint32
+	touchGrabId     int32
+	dragX           float32
+	dragY           float32
+	dragFocus       *Window
+	dragEnterSerial uint32
 
 	xkb struct {
-		control_mask xkb_mod_mask_t
-		alt_mask     xkb_mod_mask_t
-		shift_mask   xkb_mod_mask_t
+		controlMask xkbModMaskT
+		altMask     xkbModMaskT
+		shiftMask   xkbModMaskT
 	}
 
-	repeat_rate_sec   int32
-	repeat_rate_nsec  int32
-	repeat_delay_sec  int32
-	repeat_delay_nsec int32
+	repeatRateSec   int32
+	repeatRateNsec  int32
+	repeatDelaySec  int32
+	repeatDelayNsec int32
 
 	//repeat_task     task
-	repeat_sym   uint32
-	repeat_key   uint32
-	repeat_time  uint32
-	seat_version int32
+	repeatSym   uint32
+	repeatKey   uint32
+	repeatTime  uint32
+	seatVersion int32
 }
 
 func (i *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
@@ -455,50 +472,63 @@ func (i *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 }
 
 type KeyboardHandler interface {
-	Key(window *Window, input *Input, time uint32, key uint32, unicode uint32, state wl.KeyboardKeyState, data WidgetHandler)
+	Key(
+		window *Window,
+		input *Input,
+		time uint32,
+		key uint32,
+		unicode uint32,
+		state wl.KeyboardKeyState,
+		data WidgetHandler,
+	)
 	Focus(window *Window, device *Input)
 }
 
-func input_remove_keyboard_focus(input *Input) {
-	var window = input.keyboard_focus
+func inputRemoveKeyboardFocus(input *Input) {
+	var window = input.keyboardFocus
 
 	if window == nil {
 		return
 	}
 
-	if window.keyboard_handler != nil {
-		window.keyboard_handler.Focus(window, nil)
+	if window.keyboardHandler != nil {
+		window.keyboardHandler.Focus(window, nil)
 	}
 
-	input.keyboard_focus = nil
+	input.keyboardFocus = nil
 }
 
 type output struct {
-	Display          *Display
-	output           *wl.Output
-	server_output_id uint32
-	allocation       rectangle
-	link             [2]*output
-	transform        int32
-	scale            int32
-	maker            string
-	model            string
+	Display        *Display
+	output         *wl.Output
+	serverOutputId uint32
+	allocation     rectangle
+	link           [2]*output
+	transform      int32
+	scale          int32
+	maker          string
+	model          string
 }
 
-type shm_pool struct {
+type shmPool struct {
 	pool *wl.ShmPool
 	size uintptr
 	used uintptr
 	data []byte
 }
 
-const CURSOR_DEFAULT = 100
-const CURSOR_UNSET = 101
+const CursorDefault = 100
+const CursorUnset = 101
 
 //line 509
-func surface_to_buffer_size(buffer_transform uint32, buffer_scale int32, width *int32, height *int32) {
+func surfaceToBufferSize(
+	bufferTransform uint32,
+	bufferScale int32,
+	width *int32,
+	height *int32,
+) {
 
-	switch buffer_transform {
+	switch bufferTransform {
 	case wl.OutputTransform90:
 		fallthrough
 	case wl.OutputTransform270:
@@ -509,13 +539,18 @@ func surface_to_buffer_size(buffer_transform uint32, buffer_scale int32, width *
 		*width, *height = *height, *width
 	}
 
-	*width *= buffer_scale
-	*height *= buffer_scale
+	*width *= bufferScale
+	*height *= bufferScale
 }
 
 //line 532
-func buffer_to_surface_size(buffer_transform uint32, buffer_scale int32, width *int32, height *int32) {
-	switch buffer_transform {
+func bufferToSurfaceSize(
+	bufferTransform uint32,
+	bufferScale int32,
+	width *int32,
+	height *int32,
+) {
+	switch bufferTransform {
 	case wl.OutputTransform90:
 		fallthrough
 	case wl.OutputTransform270:
@@ -527,119 +562,136 @@ func buffer_to_surface_size(buffer_transform uint32, buffer_scale int32, width *
 
 	}
 
-	*width /= buffer_scale
-	*height /= buffer_scale
+	*width /= bufferScale
+	*height /= bufferScale
 }
 
-func (Input *Input) HandlePointerEnter(ev wl.PointerEnterEvent) {
-	Input.PointerEnter(nil, ev.Serial, ev.Surface, ev.SurfaceX, ev.SurfaceY)
+func (i *Input) HandlePointerEnter(ev wl.PointerEnterEvent) {
+	i.PointerEnter(nil, ev.Serial, ev.Surface, ev.SurfaceX, ev.SurfaceY)
 }
 
-func (Input *Input) PointerEnter(wl_pointer *wl.Pointer, serial uint32, surface *wl.Surface, sx float32, sy float32) {
+func (i *Input) PointerEnter(
+	wlPointer *wl.Pointer,
+	serial uint32,
+	surface *wl.Surface,
+	sx float32,
+	sy float32,
+) {
 
 	if nil == surface {
 		/* enter event for a Window we've just destroyed */
 		return
 	}
 
-	var Window = Input.Display.surface2window[surface]
+	var Window = i.Display.surface2window[surface]
 
-	if surface != Window.main_surface.surface_ {
+	if surface != Window.mainSurface.surface_ {
 		//		DBG("Ignoring Input event from subsurface %p\n", surface);
 		return
 	}
 
-	Input.Display.serial = serial
-	Input.pointer_enter_serial = serial
-	Input.pointer_focus = Window
+	i.Display.serial = serial
+	i.pointerEnterSerial = serial
+	i.pointerFocus = Window
 
-	Input.sx = sx
-	Input.sy = sy
-
-}
-
-func (Input *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
-	Input.PointerLeave(nil, ev.Serial, ev.Surface)
-}
-
-func (Input *Input) PointerLeave(wl_pointer *wl.Pointer, serial uint32, wl_surface *wl.Surface) {
-
-	Input.Display.serial = serial
-	input_remove_pointer_focus(Input)
+	i.sx = sx
+	i.sy = sy
 
 }
 
-func (Input *Input) HandlePointerMotion(ev wl.PointerMotionEvent) {
-	Input.PointerMotion(ev.P, ev.Time, ev.SurfaceX, ev.SurfaceY)
+func (i *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
+	i.PointerLeave(nil, ev.Serial, ev.Surface)
 }
 
-func (Input *Input) PointerMotion(wl_pointer *wl.Pointer, time uint32, surface_x float32, surface_y float32) {
+func (i *Input) PointerLeave(wlPointer *wl.Pointer, serial uint32, wlSurface *wl.Surface) {
 
-	pointer_handle_motion(Input, wl_pointer, time, surface_x, surface_y)
+	i.Display.serial = serial
+	inputRemovePointerFocus(i)
+
 }
 
-func (Input *Input) HandlePointerButton(ev wl.PointerButtonEvent) {
-	Input.PointerButton(ev.P, ev.Serial, ev.Time, ev.Button, ev.State)
+func (i *Input) HandlePointerMotion(ev wl.PointerMotionEvent) {
+	i.PointerMotion(ev.P, ev.Time, ev.SurfaceX, ev.SurfaceY)
 }
 
-func (input *Input) PointerButton(wl_pointer *wl.Pointer, serial uint32, time uint32, button uint32, state_w uint32) {
+func (i *Input) PointerMotion(
+	wlPointer *wl.Pointer,
+	time uint32,
+	surfaceX float32,
+	surfaceY float32,
+) {
+
+	pointerHandleMotion(i, wlPointer, time, surfaceX, surfaceY)
+}
+
+func (i *Input) HandlePointerButton(ev wl.PointerButtonEvent) {
+	i.PointerButton(ev.P, ev.Serial, ev.Time, ev.Button, ev.State)
+}
+
+func (i *Input) PointerButton(
+	wlPointer *wl.Pointer,
+	serial uint32,
+	time uint32,
+	button uint32,
+	stateW uint32,
+) {
 	var widget *Widget
-	var state = wl.PointerButtonState(state_w)
+	var state = wl.PointerButtonState(stateW)
 
-	input.Display.serial = serial
-	if input.focus_widget != nil && input.grab == nil &&
+	i.Display.serial = serial
+	if i.focusWidget != nil && i.grab == nil &&
 		state == wl.PointerButtonStatePressed {
-		input_grab(input, input.focus_widget, button)
+		inputGrab(i, i.focusWidget, button)
 	}
 
-	widget = input.grab
+	widget = i.grab
 	if widget != nil && widget.Userdata != nil {
 		widget.Userdata.Button(widget,
-			input, time,
+			i, time,
 			button, state,
-			input.grab.Userdata)
+			i.grab.Userdata)
 	}
 
-	if input.grab != nil && input.grab_button == button &&
+	if i.grab != nil && i.grabButton == button &&
 		state == wl.PointerButtonStateReleased {
-		input_ungrab(input)
+		inputUngrab(i)
 	}
 
 }
 
-func (Input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
+func (i *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
 
 }
 
-func (*Input) PointerAxis(wl_pointer *wl.Pointer, time uint32, axis uint32, value wl.Fixed) {
+func (*Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32, value wl.Fixed) {
 }
 
-func (Input *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
-
-}
-
-func (*Input) PointerFrame(wl_pointer *wl.Pointer) {
-}
-
-func (Input *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {
+func (i *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
 
 }
 
-func (*Input) PointerAxisSource(wl_pointer *wl.Pointer, axis_source uint32) {
+func (*Input) PointerFrame(wlPointer *wl.Pointer) {
 }
 
-func (Input *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {
-
-}
-
-func (*Input) PointerAxisStop(wl_pointer *wl.Pointer, time uint32, axis uint32) {
-}
-
-func (Input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
+func (i *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {
 
 }
 
-func (*Input) PointerAxisDiscrete(wl_pointer *wl.Pointer, axis uint32, discrete int32) {
+func (*Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) {
+}
+
+func (i *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {
+
+}
+
+func (*Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uint32) {
+}
+
+func (i *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
+
+}
+
+func (*Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, discrete int32) {
 }
 
 type SeatHandler interface {
@@ -647,94 +699,94 @@ type SeatHandler interface {
 	Name(i *Input, seat *wl.Seat, name string)
 }
 
-func (input_ *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
-	input_.SeatCapabilities(input_.seat, ev.Capabilities)
+func (i *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
+	i.SeatCapabilities(i.seat, ev.Capabilities)
 }
 
-func (input_ *Input) HandleSeatName(ev wl.SeatNameEvent) {
-	input_.SeatName(input_.seat, ev.Name)
+func (i *Input) HandleSeatName(ev wl.SeatNameEvent) {
+	i.SeatName(i.seat, ev.Name)
 }
 
-func (input_ *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
+func (i *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
-	if ((caps & wl.SeatCapabilityPointer) != 0) && (input_.pointer == nil) {
+	if ((caps & wl.SeatCapabilityPointer) != 0) && (i.pointer == nil) {
 		var err error
-		input_.pointer, err = seat.GetPointer()
+		i.pointer, err = seat.GetPointer()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		wlclient.PointerSetUserData(input_.pointer, input_)
-		wlclient.PointerAddListener(input_.pointer, input_)
+		wlclient.PointerSetUserData(i.pointer, i)
+		wlclient.PointerAddListener(i.pointer, i)
 
-	} else if ((caps & wl.SeatCapabilityPointer) == 0) && (nil != input_.pointer) {
-		if input_.seat_version >= wl.POINTER_RELEASE_SINCE_VERSION {
-			input_.pointer.Release()
+	} else if ((caps & wl.SeatCapabilityPointer) == 0) && (nil != i.pointer) {
+		if i.seatVersion >= wl.PointerReleaseSinceVersion {
+			_ = i.pointer.Release()
 		} else {
-			wlclient.PointerDestroy(input_.pointer)
-			input_.pointer = nil
+			wlclient.PointerDestroy(i.pointer)
+			i.pointer = nil
 		}
 	}
 
-	if input_.Display.seat_handler != nil {
-		input_.Display.seat_handler.Capabilities(input_, seat, caps)
+	if i.Display.seatHandler != nil {
+		i.Display.seatHandler.Capabilities(i, seat, caps)
 	}
 
 }
-func (i *Input) SeatName(wl_seat *wl.Seat, name string) {
-	if i.Display.seat_handler != nil {
-		i.Display.seat_handler.Name(i, wl_seat, name)
+func (i *Input) SeatName(wlSeat *wl.Seat, name string) {
+	if i.Display.seatHandler != nil {
+		i.Display.seatHandler.Name(i, wlSeat, name)
 	}
 }
 
 // line 2697
-func input_grab(input *Input, widget *Widget, button uint32) {
+func inputGrab(input *Input, widget *Widget, button uint32) {
 	input.grab = widget
-	input.grab_button = button
+	input.grabButton = button
 
-	input_set_focus_widget(input, widget, input.sx, input.sy)
+	inputSetFocusWidget(input, widget, input.sx, input.sy)
 }
 
 // line 2706
-func input_ungrab(input *Input) {
+func inputUngrab(input *Input) {
 
 	input.grab = nil
-	if input.pointer_focus != nil {
-		var widget = window_find_widget(input.pointer_focus,
+	if input.pointerFocus != nil {
+		var widget = windowFindWidget(input.pointerFocus,
 			int32(input.sx), int32(input.sy))
-		input_set_focus_widget(input, widget, (input.sx), (input.sy))
+		inputSetFocusWidget(input, widget, input.sx, input.sy)
 	}
 }
 
-type shm_surface_data struct {
+type shmSurfaceData struct {
 	buffer *wl.Buffer
-	pool   *shm_pool
+	pool   *shmPool
 }
 
 //line 734
-func shm_surface_data_destroy(data *shm_surface_data) {
+func shmSurfaceDataDestroy(data *shmSurfaceData) {
 	data.buffer.Destroy()
 	if data.pool != nil {
-		shm_pool_destroy(data.pool)
+		shmPoolDestroy(data.pool)
 	}
 }
 
 //line 744
-func make_shm_pool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPool) {
+func makeShmPool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPool) {
 	fd, err := os.CreateAnonymousFile(int64(size))
 	if err != nil {
 		println("creating a buffer file failed")
 		return nil
 	}
 
-	*data, err = syscall.Mmap(int(fd.Fd()), 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
+	*data, err = os.Mmap(int(fd.Fd()), 0, int(size), os.ProtRead|os.ProtWrite, os.MapShared)
 	if err != nil {
 		println("mmap failed")
 		fd.Close()
 		return nil
 	}
 
-	pool, err = Display.shm.CreatePool(uintptr(fd.Fd()), int32(size))
+	pool, err = Display.shm.CreatePool(fd.Fd(), int32(size))
 	if err != nil {
 		println("create pool failed")
 		fd.Close()
@@ -747,10 +799,10 @@ func make_shm_pool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPo
 }
 
 //line 772
-func shm_pool_create(Display *Display, size uintptr) *shm_pool {
-	var pool *shm_pool = &shm_pool{}
+func shmPoolCreate(Display *Display, size uintptr) *shmPool {
+	var pool = &shmPool{}
 
-	pool.pool = make_shm_pool(Display, size, &pool.data)
+	pool.pool = makeShmPool(Display, size, &pool.data)
 
 	if pool.pool == nil {
 		return nil
@@ -763,25 +815,25 @@ func shm_pool_create(Display *Display, size uintptr) *shm_pool {
 }
 
 //line 792
-func shm_pool_allocate(pool *shm_pool, size uintptr, offset *int) (ret []byte) {
+func shmPoolAllocate(pool *shmPool, size uintptr, offset *int) (ret []byte) {
 
-	if pool.used+size > uintptr(pool.size) {
+	if pool.used+size > pool.size {
 		return nil
 	}
 
 	*offset = int(pool.used)
-	ret = pool.data[uintptr(pool.used):]
+	ret = pool.data[pool.used:]
 	pool.used += size
-	pool.data = pool.data[0:uintptr(pool.used)]
+	pool.data = pool.data[0:pool.used]
 
 	return ret
 }
 
 //line 804
 /* destroy the pool. this does not unmap the memory though */
-func shm_pool_destroy(pool *shm_pool) {
+func shmPoolDestroy(pool *shmPool) {
 
-	err := syscall.Munmap(pool.data)
+	err := os.Munmap(pool.data)
 	if err != nil {
 		println(err)
 	}
@@ -794,60 +846,60 @@ func shm_pool_destroy(pool *shm_pool) {
 }
 
 //line 820
-func data_length_for_shm_surface(rect *rectangle) uintptr {
-	var stride = int32(cairo.FormatStrideForWidth(cairo.FORMAT_ARGB32, int(rect.width)))
+func dataLengthForShmSurface(rect *rectangle) uintptr {
+	var stride = int32(cairo.FormatStrideForWidth(cairo.FormatArgb32, int(rect.width)))
 	return uintptr(int(stride * rect.height))
 }
 
-func shm_pool_reset(pool *shm_pool) {
+func shmPoolReset(pool *shmPool) {
 	pool.used = 0
 }
 
 //line 829
-func display_create_shm_surface_from_pool(Display *Display,
+func displayCreateShmSurfaceFromPool(Display *Display,
 	rectangle *rectangle,
-	flags uint32, pool *shm_pool) (*cairo.Surface, *shm_surface_data) {
-	var data *shm_surface_data = &shm_surface_data{}
+	flags uint32, pool *shmPool) (*cairo.Surface, *shmSurfaceData) {
+	var data = &shmSurfaceData{}
 	var format uint32
 	var surface cairo.Surface
-	var cairo_format cairo.Format
+	var cairoFormat cairo.Format
 	var stride, length int
 	var offset int
 	var map_ []byte
 	var err error
 
-	if (flags&uint32(SURFACE_HINT_RGB565) != 0) && Display.has_rgb565 != 0 {
-		cairo_format = cairo.FORMAT_RGB16_565
+	if (flags&uint32(SurfaceHintRgb565) != 0) && Display.hasRgb565 != 0 {
+		cairoFormat = cairo.FormatRgb16565
 	} else {
-		cairo_format = cairo.FORMAT_ARGB32
+		cairoFormat = cairo.FormatArgb32
 	}
 
-	stride = cairo.FormatStrideForWidth(cairo_format, int(rectangle.width))
+	stride = cairo.FormatStrideForWidth(cairoFormat, int(rectangle.width))
 
 	length = stride * int(rectangle.height)
 	data.pool = nil
 
-	map_ = shm_pool_allocate(pool, uintptr(length), &offset)
+	map_ = shmPoolAllocate(pool, uintptr(length), &offset)
 
 	if map_ == nil {
 		return nil, nil
 	}
 
 	surface = cairo.ImageSurfaceCreateForData(map_,
-		cairo_format,
+		cairoFormat,
 		int(rectangle.width),
 		int(rectangle.height),
-		int(stride))
+		stride)
 
 	surface.SetUserData(func() {
 
-		shm_surface_data_destroy((data))
+		shmSurfaceDataDestroy(data)
 	})
 
-	if (flags&uint32(SURFACE_HINT_RGB565) != 0) && Display.has_rgb565 != 0 {
+	if (flags&uint32(SurfaceHintRgb565) != 0) && Display.hasRgb565 != 0 {
 		format = wl.ShmFormatRgb565
 	} else {
-		if flags&SURFACE_OPAQUE != 0 {
+		if flags&SurfaceOpaque != 0 {
 			format = wl.ShmFormatXrgb8888
 		} else {
 			format = wl.ShmFormatArgb8888
@@ -866,35 +918,40 @@ func display_create_shm_surface_from_pool(Display *Display,
 }
 
 //line 886
-func display_create_shm_surface(Display *Display,
+func displayCreateShmSurface(Display *Display,
 	rectangle *rectangle, flags uint32,
-	alternate_pool *shm_pool,
-	data_ret **shm_surface_data) *cairo.Surface {
-	var data *shm_surface_data
-	var pool *shm_pool
+	alternatePool *shmPool,
+	dataRet **shmSurfaceData) *cairo.Surface {
+	var data *shmSurfaceData
+	var pool *shmPool
 	var surface *cairo.Surface
 
-	if alternate_pool != nil {
-		shm_pool_reset(alternate_pool)
+	if alternatePool != nil {
+		shmPoolReset(alternatePool)
 
-		surface, data = display_create_shm_surface_from_pool(Display, rectangle, flags, alternate_pool)
+		surface, data = displayCreateShmSurfaceFromPool(
+			Display,
+			rectangle,
+			flags,
+			alternatePool,
+		)
 
 		if surface != nil {
 			goto out
 		}
 	}
 
-	pool = shm_pool_create(Display, data_length_for_shm_surface(rectangle))
+	pool = shmPoolCreate(Display, dataLengthForShmSurface(rectangle))
 
 	if pool == nil {
 		return nil
 	}
 
 	surface, data =
-		display_create_shm_surface_from_pool(Display, rectangle, flags, pool)
+		displayCreateShmSurfaceFromPool(Display, rectangle, flags, pool)
 
 	if surface == nil {
-		shm_pool_destroy(pool)
+		shmPoolDestroy(pool)
 		return nil
 	}
 
@@ -902,104 +959,104 @@ func display_create_shm_surface(Display *Display,
 	data.pool = pool
 
 out:
-	if data_ret != nil {
-		*data_ret = data
+	if dataRet != nil {
+		*dataRet = data
 	}
 
 	return surface
 }
 
-type shm_surface_leaf struct {
-	cairo_surface *cairo.Surface
+type shmSurfaceLeaf struct {
+	cairoSurface *cairo.Surface
 	/* 'data' is automatically destroyed, when 'cairo_surface' is */
-	data *shm_surface_data
+	data *shmSurfaceData
 
-	resize_pool *shm_pool
-	busy        int32
+	resizePool *shmPool
+	busy       int32
 }
 
-func shm_surface_leaf_release(leaf *shm_surface_leaf) {
-	if leaf.cairo_surface != nil {
-		(*leaf.cairo_surface).Destroy()
+func shmSurfaceLeafRelease(leaf *shmSurfaceLeaf) {
+	if leaf.cairoSurface != nil {
+		(*leaf.cairoSurface).Destroy()
 	}
 	/* leaf.data already destroyed via cairo private */
 }
 
-const MAX_LEAVES = 3
+const MaxLeaves = 3
 
 //line 983
-type shm_surface struct {
+type shmSurface struct {
 	Display *Display
 	surface *wl.Surface
 	flags   uint32
 	dx      int32
 	dy      int32
 
-	leaf    [MAX_LEAVES]shm_surface_leaf
-	current *shm_surface_leaf
+	leaf    [MaxLeaves]shmSurfaceLeaf
+	current *shmSurfaceLeaf
 }
 
-func shm_surface_buffer_release(surface *shm_surface, buffer *wl.Buffer) {
-	var leaf *shm_surface_leaf
+func shmSurfaceBufferRelease(surface *shmSurface, buffer *wl.Buffer) {
+	var leaf *shmSurfaceLeaf
 	var i int
-	var free_found int
+	var freeFound int
 
-	for i = 0; i < MAX_LEAVES; i++ {
+	for i = 0; i < MaxLeaves; i++ {
 		leaf = &surface.leaf[i]
 		if leaf.data != nil && leaf.data.buffer == buffer {
 			leaf.busy = 0
 			break
 		}
 	}
-	if i >= MAX_LEAVES {
+	if i >= MaxLeaves {
 		panic("unknown buffer released")
 	}
 
 	/* Leave one free leaf with storage, release others */
-	free_found = 0
-	for i = 0; i < MAX_LEAVES; i++ {
+	freeFound = 0
+	for i = 0; i < MaxLeaves; i++ {
 		leaf = &surface.leaf[i]
 
-		if (leaf.cairo_surface == nil) || (leaf.busy != 0) {
+		if (leaf.cairoSurface == nil) || (leaf.busy != 0) {
 			continue
 		}
 
-		if free_found == 0 {
-			free_found = 1
+		if freeFound == 0 {
+			freeFound = 1
 		} else {
-			shm_surface_leaf_release(leaf)
+			shmSurfaceLeafRelease(leaf)
 
 		}
 	}
 }
 
-func (s *shm_surface) HandleBufferRelease(ev wl.BufferReleaseEvent) {
+func (s *shmSurface) HandleBufferRelease(ev wl.BufferReleaseEvent) {
 	s.BufferRelease(ev.B)
 }
 
-func (s *shm_surface) BufferRelease(buf *wl.Buffer) {
-	shm_surface_buffer_release(s, buf)
+func (s *shmSurface) BufferRelease(buf *wl.Buffer) {
+	shmSurfaceBufferRelease(s, buf)
 
 }
 
-func (s *shm_surface) prepare(dx int, dy int, width int32, height int32, flags uint32,
-	buffer_transform uint32, buffer_scale int32) cairo.Surface {
+func (s *shmSurface) prepare(dx int, dy int, width int32, height int32, flags uint32,
+	bufferTransform uint32, bufferScale int32) cairo.Surface {
 
-	var resize_hint bool = (flags & SURFACE_HINT_RESIZE) != 0
+	var resizeHint = (flags & SurfaceHintResize) != 0
 	surface := s
 	var rect rectangle
-	var leaf *shm_surface_leaf
+	var leaf *shmSurfaceLeaf
 	var i int
 
 	surface.dx = int32(dx)
 	surface.dy = int32(dy)
 
-	for i = 0; i < MAX_LEAVES; i++ {
+	for i = 0; i < MaxLeaves; i++ {
 		if surface.leaf[i].busy != 0 {
 			continue
 		}
 
-		if leaf == nil || surface.leaf[i].cairo_surface != nil {
+		if leaf == nil || surface.leaf[i].cairoSurface != nil {
 			leaf = &surface.leaf[i]
 		}
 	}
@@ -1009,31 +1066,37 @@ func (s *shm_surface) prepare(dx int, dy int, width int32, height int32, flags u
 
 	}
 
-	if !resize_hint && (leaf.resize_pool != nil) {
-		(*leaf.cairo_surface).Destroy()
-		leaf.cairo_surface = nil
-		shm_pool_destroy(leaf.resize_pool)
-		leaf.resize_pool = nil
+	if !resizeHint && (leaf.resizePool != nil) {
+		(*leaf.cairoSurface).Destroy()
+		leaf.cairoSurface = nil
+		shmPoolDestroy(leaf.resizePool)
+		leaf.resizePool = nil
 	}
 
-	surface_to_buffer_size(buffer_transform, (buffer_scale), (&width), (&height))
+	surfaceToBufferSize(bufferTransform, bufferScale, &width, &height)
 
-	if (leaf.cairo_surface != nil) &&
-		(int32((*leaf.cairo_surface).ImageSurfaceGetWidth()) == width) &&
-		(int32((*leaf.cairo_surface).ImageSurfaceGetHeight()) == height) {
+	if (leaf.cairoSurface != nil) &&
+		(int32((*leaf.cairoSurface).ImageSurfaceGetWidth()) == width) &&
+		(int32((*leaf.cairoSurface).ImageSurfaceGetHeight()) == height) {
 		goto out
 	}
 
-	if leaf.cairo_surface != nil {
-		(*leaf.cairo_surface).Destroy()
+	if leaf.cairoSurface != nil {
+		(*leaf.cairoSurface).Destroy()
 	}
 
 	rect.width = width
 	rect.height = height
 
-	leaf.cairo_surface = display_create_shm_surface(surface.Display, &rect, surface.flags, leaf.resize_pool, &leaf.data)
+	leaf.cairoSurface = displayCreateShmSurface(
+		surface.Display,
+		&rect,
+		surface.flags,
+		leaf.resizePool,
+		&leaf.data,
+	)
 
-	if leaf.cairo_surface == nil {
+	if leaf.cairoSurface == nil {
 		return nil
 	}
 
@@ -1042,65 +1105,69 @@ func (s *shm_surface) prepare(dx int, dy int, width int32, height int32, flags u
 out:
 	surface.current = leaf
 
-	return (*leaf.cairo_surface).Reference()
+	return (*leaf.cairoSurface).Reference()
 }
 
 //line 1146
-func shm_surface_swap(surface *shm_surface, buffer_transform uint32,
-	buffer_scale int32, server_allocation *rectangle) {
-	var leaf *shm_surface_leaf = surface.current
+func shmSurfaceSwap(surface *shmSurface, bufferTransform uint32,
+	bufferScale int32, serverAllocation *rectangle) {
+	var leaf = surface.current
 
-	server_allocation.width =
-		int32((*leaf.cairo_surface).ImageSurfaceGetWidth())
-	server_allocation.height =
-		int32((*leaf.cairo_surface).ImageSurfaceGetHeight())
+	serverAllocation.width =
+		int32((*leaf.cairoSurface).ImageSurfaceGetWidth())
+	serverAllocation.height =
+		int32((*leaf.cairoSurface).ImageSurfaceGetHeight())
 
-	buffer_to_surface_size(buffer_transform, (buffer_scale),
-		(&server_allocation.width),
-		(&server_allocation.height))
+	bufferToSurfaceSize(bufferTransform, bufferScale,
+		&serverAllocation.width,
+		&serverAllocation.height)
 
-	surface.surface.Attach(leaf.data.buffer,
-		int32(surface.dx), int32(surface.dy))
-	surface.surface.Damage(0, 0,
-		server_allocation.width, server_allocation.height)
-	surface.surface.Commit()
+	_ = surface.surface.Attach(leaf.data.buffer,
+		surface.dx, surface.dy)
+	_ = surface.surface.Damage(0, 0,
+		serverAllocation.width, serverAllocation.height)
+	_ = surface.surface.Commit()
 
 	leaf.busy = 1
 	surface.current = nil
 }
 
-func (s *shm_surface) swap(buffer_transform uint32, buffer_scale int32, server_allocation *rectangle) {
-	shm_surface_swap(s, buffer_transform, buffer_scale, server_allocation)
+func (s *shmSurface) swap(
+	bufferTransform uint32,
+	bufferScale int32,
+	serverAllocation *rectangle,
+) {
+	shmSurfaceSwap(s, bufferTransform, bufferScale, serverAllocation)
 
 }
 
-func (*shm_surface) acquire(ctx *struct{}) int {
+func (*shmSurface) acquire(ctx *struct{}) int {
 	return -1
 }
 
-func (*shm_surface) release() {
+func (*shmSurface) release() {
 }
 
-func shm_surface_destroy(surface *shm_surface) {
+func shmSurfaceDestroy(surface *shmSurface) {
 	var i int
 
-	for i = 0; i < MAX_LEAVES; i++ {
-		shm_surface_leaf_release(&surface.leaf[i])
+	for i = 0; i < MaxLeaves; i++ {
+		shmSurfaceLeafRelease(&surface.leaf[i])
 	}
 }
 
-func (s *shm_surface) destroy() {
+func (s *shmSurface) destroy() {
 
-	shm_surface_destroy(s)
+	shmSurfaceDestroy(s)
 }
 
 //line 1199
-func shm_surface_create(Display *Display, wl_surface *wl.Surface,
+func shmSurfaceCreate(Display *Display, wlSurface *wl.Surface,
 	flags uint32, rectangle *rectangle) toysurface {
-	var surface = &shm_surface{}
+	var surface = &shmSurface{}
 
 	surface.Display = Display
-	surface.surface = wl_surface
+	surface.surface = wlSurface
 	surface.flags = flags
 
 	return surface
@@ -1109,7 +1176,7 @@ func shm_surface_create(Display *Display, wl_surface *wl.Surface,
 const lengthCursors = 16
 
 //line 1343
-func create_cursors(Display *Display) (err error) {
+func createCursors(Display *Display) (err error) {
 
 	//line 1323
 	var Cursors = [lengthCursors][]string{
@@ -1137,7 +1204,7 @@ func create_cursors(Display *Display) (err error) {
 	if err != nil {
 		return err
 	}
-	Display.cursor_theme = theme
+	Display.cursorTheme = theme
 
 	var wlCursors = [lengthCursors]*wlcursor.Cursor{}
 
@@ -1146,11 +1213,11 @@ func create_cursors(Display *Display) (err error) {
 	for i := range Cursors {
 		for j := range Cursors[i] {
 
-			var str = string(Cursors[i][j])
+			var str = Cursors[i][j]
 
 			str = str[:len(str)-1]
 
-			cursor, err = Display.cursor_theme.GetCursor(str)
+			cursor, err = Display.cursorTheme.GetCursor(str)
 			if err != nil {
 				println("could not get cursor")
 
@@ -1169,86 +1236,86 @@ func create_cursors(Display *Display) (err error) {
 }
 
 //line 1386
-func destroy_cursors(Display *Display) {
-	Display.cursor_theme.Destroy()
+func destroyCursors(Display *Display) {
+	Display.cursorTheme.Destroy()
 }
 
 //line 1402
-func surface_flush(surface *surface) {
-	if surface.cairo_surface == nil {
+func surfaceFlush(surface *surface) {
+	if surface.cairoSurface == nil {
 		return
 	}
 
-	if surface.opaque_region != nil {
-		surface.surface_.SetOpaqueRegion(surface.opaque_region)
-		surface.opaque_region.Destroy()
-		surface.opaque_region = nil
+	if surface.opaqueRegion != nil {
+		_ = surface.surface_.SetOpaqueRegion(surface.opaqueRegion)
+		surface.opaqueRegion.Destroy()
+		surface.opaqueRegion = nil
 	}
 
-	if surface.input_region != nil {
-		surface.surface_.SetInputRegion(surface.input_region)
-		surface.input_region.Destroy()
-		surface.input_region = nil
+	if surface.inputRegion != nil {
+		_ = surface.surface_.SetInputRegion(surface.inputRegion)
+		surface.inputRegion.Destroy()
+		surface.inputRegion = nil
 	}
 
-	(*surface.toysurface).swap(uint32(surface.buffer_transform), surface.buffer_scale,
-		&surface.server_allocation)
+	(*surface.toysurface).swap(uint32(surface.bufferTransform), surface.bufferScale,
+		&surface.serverAllocation)
 
-	surface.cairo_surface.Destroy()
-	surface.cairo_surface = nil
+	surface.cairoSurface.Destroy()
+	surface.cairoSurface = nil
 }
 
 //line 1462
-func surface_create_surface(surface *surface, flags uint32) {
-	var Display *Display = surface.Window.Display
-	var allocation rectangle = surface.allocation
+func surfaceCreateSurface(surface *surface, flags uint32) {
+	var Display = surface.Window.Display
+	var allocation = surface.allocation
 
 	if surface.toysurface == nil {
-		var toy = shm_surface_create(Display, surface.surface_, flags, &allocation)
+		var toy = shmSurfaceCreate(Display, surface.surface_, flags, &allocation)
 
 		surface.toysurface = &toy
 	}
 
-	surface.cairo_surface = (*surface.toysurface).prepare(
+	surface.cairoSurface = (*surface.toysurface).prepare(
 		0, 0,
 		allocation.width, allocation.height, flags,
-		uint32(surface.buffer_transform), surface.buffer_scale)
+		uint32(surface.bufferTransform), surface.bufferScale)
 
 }
 
 //line 1488
-func window_create_main_surface(Window *Window) {
-	var surface *surface = Window.main_surface
+func windowCreateMainSurface(Window *Window) {
+	var surface = Window.mainSurface
 	var flags uint32 = 0
 
 	if Window.resizing != 0 {
-		flags |= SURFACE_HINT_RESIZE
+		flags |= SurfaceHintResize
 	}
 
-	if Window.preferred_format == WINDOW_PREFERRED_FORMAT_RGB565 {
-		flags |= SURFACE_HINT_RGB565
+	if Window.preferredFormat == WindowPreferredFormatRgb565 {
+		flags |= SurfaceHintRgb565
 	}
 
-	surface_create_surface(surface, flags)
+	surfaceCreateSurface(surface, flags)
 
 }
 
 //line 1552
-func surface_destroy(surface *surface) {
-	if surface.frame_cb != nil {
-		wlclient.CallbackDestroy((surface.frame_cb))
+func surfaceDestroy(surface *surface) {
+	if surface.frameCb != nil {
+		wlclient.CallbackDestroy(surface.frameCb)
 	}
 
-	if surface.input_region != nil {
-		wlclient.RegionDestroy((surface.input_region))
+	if surface.inputRegion != nil {
+		wlclient.RegionDestroy(surface.inputRegion)
 	}
 
-	if surface.opaque_region != nil {
-		wlclient.RegionDestroy((surface.opaque_region))
+	if surface.opaqueRegion != nil {
+		wlclient.RegionDestroy(surface.opaqueRegion)
 	}
 
 	if surface.subsurface != nil {
-		wlclient.SubsurfaceDestroy((surface.subsurface))
+		wlclient.SubsurfaceDestroy(surface.subsurface)
 	}
 
 	surface.surface_.Destroy()
@@ -1262,22 +1329,22 @@ func surface_destroy(surface *surface) {
 //line 1577
 func (Window *Window) Destroy() {
 
-	if Window.xdg_toplevel != nil {
-		Window.xdg_toplevel.Destroy()
+	if Window.xdgToplevel != nil {
+		Window.xdgToplevel.Destroy()
 	}
-	if Window.xdg_popup != nil {
-		Window.xdg_popup.Destroy()
+	if Window.xdgPopup != nil {
+		Window.xdgPopup.Destroy()
 	}
-	if Window.xdg_surface != nil {
-		Window.xdg_surface.Destroy()
+	if Window.xdgSurface != nil {
+		Window.xdgSurface.Destroy()
 	}
 
-	surface_destroy(Window.main_surface)
+	surfaceDestroy(Window.mainSurface)
 
 }
 
 //line 1624
-func widget_find_widget(Widget *Widget, x int32, y int32) *Widget {
+func widgetFindWidget(Widget *Widget, x int32, y int32) *Widget {
 
 	if Widget.allocation.x <= x &&
 		x < Widget.allocation.x+Widget.allocation.width &&
@@ -1290,13 +1357,13 @@ func widget_find_widget(Widget *Widget, x int32, y int32) *Widget {
 }
 
 //line 1645
-func window_find_widget(Window *Window, x int32, y int32) *Widget {
+func windowFindWidget(Window *Window, x int32, y int32) *Widget {
 	var surface *surface
 	var Widget *Widget
 
-	for _, surface = range Window.subsurface_list_new {
+	for _, surface = range Window.subsurfaceListNew {
 
-		Widget = widget_find_widget(surface.Widget, x, y)
+		Widget = widgetFindWidget(surface.Widget, x, y)
 
 		if Widget != nil {
 			return Widget
@@ -1307,65 +1374,65 @@ func window_find_widget(Window *Window, x int32, y int32) *Widget {
 }
 
 //line 1655
-func widget_create(Window *Window, surface *surface, data WidgetHandler) *Widget {
+func widgetCreate(Window *Window, surface *surface, data WidgetHandler) *Widget {
 	var w = new(Widget)
 	w.Window = Window
 	w.surface = surface
 	w.Userdata = data
 	w.allocation = surface.allocation
-	w.child_list = new(widget_list)
+	w.childList = new(widgetList)
 	w.opaque = 0
 	w.tooltip = nil
-	w.tooltip_count = 0
-	w.default_cursor = CURSOR_LEFT_PTR
-	w.use_cairo = 1
+	w.tooltipCount = 0
+	w.defaultCursor = CursorLeftPtr
+	w.useCairo = 1
 
 	return w
 }
 
 //line 1675
 func (Window *Window) AddWidget(data WidgetHandler) *Widget {
-	var w = widget_create(Window, Window.main_surface, data)
+	var w = widgetCreate(Window, Window.mainSurface, data)
 
-	Window.main_surface.Widget = w
+	Window.mainSurface.Widget = w
 
 	return w
 }
 
 //line 1702
 func (parent *Widget) AddWidget(data WidgetHandler) *Widget {
-	widget := widget_create(parent.Window, parent.surface, data)
+	widget := widgetCreate(parent.Window, parent.surface, data)
 
-	parent.child_list.Insert(widget)
+	parent.childList.Insert(widget)
 
 	return widget
 }
 
 //line 1701
-func (Widget *Widget) Destroy() {
+func (parent *Widget) Destroy() {
 
-	var surface *surface = Widget.surface
+	var surface = parent.surface
 
 	/* Destroy the sub-surface along with the root Widget */
-	if (surface.Widget == Widget) && (surface.subsurface != nil) {
-		surface_destroy(Widget.surface)
+	if (surface.Widget == parent) && (surface.subsurface != nil) {
+		surfaceDestroy(parent.surface)
 	}
 
 }
 
 func (d *Display) SetSeatHandler(h SeatHandler) {
-	d.seat_handler = h
+	d.seatHandler = h
 }
 
 func (d *Display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
-	d.ShellPing(d.xdg_shell, ev.Serial)
+	d.ShellPing(d.xdgShell, ev.Serial)
 }
 
 func (d *Display) ShellPing(shell *zxdg.WmBase, serial uint32) {
 	shell.Pong(serial)
 }
 
-func min_u32(a, b uint32) uint32 {
+func minU32(a, b uint32) uint32 {
 	if a < b {
 		return a
 	}
@@ -1384,7 +1451,7 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	global.iface = iface
 	global.version = version
 
-	d.global_list = append(d.global_list, global)
+	d.globalList = append(d.globalList, global)
 
 	switch iface {
 
@@ -1393,27 +1460,27 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 
 	case "wl_output":
 
-		display_add_output(d, id)
+		displayAddOutput(d, id)
 		// TODO
 	case "wl_seat":
 
-		display_add_input(d, id, int(version))
+		displayAddInput(d, id, int(version))
 
 	case "wl_shm":
 		d.shm = wlclient.RegistryBindShmInterface(d.registry, id, 1)
 		wlclient.ShmAddListener(d.shm, d)
 	case "wl_data_device_manager":
-		d.data_device_manager_version = min_u32(version, 3)
+		d.dataDeviceManagerVersion = minU32(version, 3)
 
 		wlclient.RegistryBindDataDeviceManagerInterface(d.registry, id,
-			d.data_device_manager_version)
+			d.dataDeviceManagerVersion)
 
 	//case "zxdg_shell_v6":
 	case "xdg_wm_base":
 
-		d.xdg_shell = wlclient.RegistryBindWmBaseInterface(d.registry, id, 1)
+		d.xdgShell = wlclient.RegistryBindWmBaseInterface(d.registry, id, 1)
 
-		zxdg.WmBaseAddListener(d.xdg_shell, d)
+		zxdg.WmBaseAddListener(d.xdgShell, d)
 
 	case "text_cursor_position":
 	case "wl_subcompositor":
@@ -1421,12 +1488,12 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	default:
 
 	}
-	if d.global_handler != nil {
-		d.global_handler.HandleGlobal(d, id, iface, version, d.user_data)
+	if d.globalHandler != nil {
+		d.globalHandler.HandleGlobal(d, id, iface, version, d.userData)
 	}
 
 }
-func (d *Display) RegistryGlobalRemove(wl_registry *wl.Registry, name uint32) {
+func (d *Display) RegistryGlobalRemove(wlRegistry *wl.Registry, name uint32) {
 
 }
 
@@ -1435,113 +1502,113 @@ type GlobalHandler interface {
 }
 
 func (d *Display) SetGlobalHandler(gh GlobalHandler) {
-	d.global_handler = gh
+	d.globalHandler = gh
 	if gh == nil {
 		return
 	}
-	for _, v := range d.global_list {
-		d.global_handler.HandleGlobal(d, v.name, v.iface, v.version, d.user_data)
+	for _, v := range d.globalList {
+		d.globalHandler.HandleGlobal(d, v.name, v.iface, v.version, d.userData)
 	}
 }
 
 func (d *Display) HandleShmFormat(e wl.ShmFormatEvent) {
 	d.ShmFormat(nil, e.Format)
 }
-func (d *Display) ShmFormat(wl_shm *wl.Shm, format uint32) {
+func (d *Display) ShmFormat(wlShm *wl.Shm, format uint32) {
 	print("SHM FORMAT: ")
 	println(format)
 }
 
 //line 1733
-func widget_set_size(Widget *Widget, width int32, height int32) {
+func widgetSetSize(Widget *Widget, width int32, height int32) {
 	Widget.allocation.width = width
 	Widget.allocation.height = height
 }
 
 //line 1740
-func widget_set_allocation(Widget *Widget, x int32, y int32, width int32, height int32) {
+func widgetSetAllocation(Widget *Widget, x int32, y int32, width int32, height int32) {
 	Widget.allocation.x = x
 	Widget.allocation.y = y
-	widget_set_size(Widget, width, height)
+	widgetSetSize(Widget, width, height)
 }
 
 // line 1763
-func widget_get_cairo_surface(Widget *Widget) cairo.Surface {
-	var surface *surface = Widget.surface
-	var Window *Window = Widget.Window
+func widgetGetCairoSurface(Widget *Widget) cairo.Surface {
+	var surface = Widget.surface
+	var Window = Widget.Window
 
-	if Widget.use_cairo == 0 {
+	if Widget.useCairo == 0 {
 		panic("assert")
 	}
 
-	if nil == surface.cairo_surface {
-		if surface == Window.main_surface {
-			window_create_main_surface(Window)
+	if nil == surface.cairoSurface {
+		if surface == Window.mainSurface {
+			windowCreateMainSurface(Window)
 
 		} else {
-			surface_create_surface(surface, 0)
+			surfaceCreateSurface(surface, 0)
 
 		}
 	}
 
-	return surface.cairo_surface
+	return surface.cairoSurface
 }
 
 // line 1887
-func (w *Widget) WidgetGetLastTime() uint32 {
-	return w.surface.last_time
+func (parent *Widget) WidgetGetLastTime() uint32 {
+	return parent.surface.lastTime
 }
 
 //line 2013
-func (Widget *Widget) WidgetScheduleRedraw() {
-	Widget.surface.redraw_needed = 1
-	window_schedule_redraw_task(Widget.Window)
+func (parent *Widget) WidgetScheduleRedraw() {
+	parent.surface.redrawNeeded = 1
+	windowScheduleRedrawTask(parent.Window)
 }
 
 //line 2036
 func (Window *Window) WindowGetSurface() cairo.Surface {
-	var cairo_surface = widget_get_cairo_surface(Window.main_surface.Widget)
+	var cairoSurface = widgetGetCairoSurface(Window.mainSurface.Widget)
 
-	return cairo_surface.Reference()
+	return cairoSurface.Reference()
 }
 
-func (window *Window) FrameCreate(data WidgetHandler) *Widget {
+func (Window *Window) FrameCreate(data WidgetHandler) *Widget {
 	var buttons uint32
 
-	if window.custom != 0 {
-		buttons = FRAME_BUTTON_NONE
+	if Window.custom != 0 {
+		buttons = FrameButtonNone
 	} else {
-		buttons = FRAME_BUTTON_ALL
+		buttons = FrameButtonAll
 	}
 
-	var frame = new(window_frame)
-	frame.frame = frame_create(window.Display.theme, 0, 0, buttons, window.title, nil)
+	var frame = new(windowFrame)
+	frame.frame = frameCreate(Window.Display.theme, 0, 0, buttons, Window.title, nil)
 	if frame.frame == nil {
 		frame = nil
 		return nil
 	}
 
-	frame.widget = window.AddWidget(frame)
+	frame.widget = Window.AddWidget(frame)
 	frame.child = frame.widget.AddWidget(data)
 
-	window.frame = frame
+	Window.frame = frame
 
 	return frame.child
 }
 
 //line 2614
-func input_set_focus_widget(Input *Input, focus *Widget,
+func inputSetFocusWidget(Input *Input, focus *Widget,
 	x float32, y float32) {
 	var old, Widget *Widget
 	var cursor int
 
-	if focus == Input.focus_widget {
+	if focus == Input.focusWidget {
 		return
 	}
 
-	old = Input.focus_widget
+	old = Input.focusWidget
 	if old != nil {
-		Input.focus_widget = nil
+		Input.focusWidget = nil
 	}
 
 	if focus != nil {
@@ -1549,40 +1616,40 @@ func input_set_focus_widget(Input *Input, focus *Widget,
 		if Input.grab != nil {
 			Widget = Input.grab
 		}
-		Input.focus_widget = focus
-		cursor = int(Widget.default_cursor)
+		Input.focusWidget = focus
+		cursor = int(Widget.defaultCursor)
 
-		input_set_pointer_image(Input, cursor)
+		inputSetPointerImage(Input, cursor)
 	}
 }
 
 //line 2714
-func cancel_pointer_image_update(Input *Input) {
+func cancelPointerImageUpdate(Input *Input) {
 
 }
 
 // line 2718
-func input_remove_pointer_focus(input_ *Input) {
-	var Window = input_.pointer_focus
+func inputRemovePointerFocus(input_ *Input) {
+	var Window = input_.pointerFocus
 
 	if nil == Window {
 		return
 	}
 
-	input_set_focus_widget(input_, nil, 0, 0)
+	inputSetFocusWidget(input_, nil, 0, 0)
 
-	input_.pointer_focus = nil
-	input_.current_cursor = CURSOR_UNSET
+	input_.pointerFocus = nil
+	input_.currentCursor = CursorUnset
 
-	cancel_pointer_image_update(input_)
+	cancelPointerImageUpdate(input_)
 }
 
 // line 2776
-func pointer_handle_motion(data *Input, pointer *wl.Pointer,
+func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	time uint32, sx float32, sy float32) {
-	var Input *Input = data
+	var Input = data
 	_ = Input
-	var Window *Window = Input.pointer_focus
+	var Window = Input.pointerFocus
 	var Widget *Widget
 	var cursor int
 
@@ -1590,54 +1657,54 @@ func pointer_handle_motion(data *Input, pointer *wl.Pointer,
 		return
 	}
 
-	Input.sx = float32(sx)
-	Input.sy = float32(sy)
+	Input.sx = sx
+	Input.sy = sy
 
 	// when making the Window smaller - e.g. after an unmaximise we might
 	// * still have a pending motion event that the compositor has picked
 	// * based on the old surface dimensions. However, if we have an active
 	// * grab, we expect to see Input from outside the Window anyway.
 
-	if nil == Input.grab && (sx < float32(Window.main_surface.allocation.x) ||
-		sy < float32(Window.main_surface.allocation.y) ||
-		sx > float32(Window.main_surface.allocation.width) ||
-		sy > float32(Window.main_surface.allocation.height)) {
+	if nil == Input.grab && (sx < float32(Window.mainSurface.allocation.x) ||
+		sy < float32(Window.mainSurface.allocation.y) ||
+		sx > float32(Window.mainSurface.allocation.width) ||
+		sy > float32(Window.mainSurface.allocation.height)) {
 		return
 	}
 
-	if !(Input.grab != nil && Input.grab_button != 0) {
-		Widget = window_find_widget(Window, int32(sx), int32(sy))
-		input_set_focus_widget(Input, Widget, sx, sy)
+	if !(Input.grab != nil && Input.grabButton != 0) {
+		Widget = windowFindWidget(Window, int32(sx), int32(sy))
+		inputSetFocusWidget(Input, Widget, sx, sy)
 
 	}
 
 	if Input.grab != nil {
 		Widget = Input.grab
 	} else {
-		Widget = Input.focus_widget
+		Widget = Input.focusWidget
 	}
 	if Widget != nil {
 		if Widget.Userdata != nil {
-			cursor = Widget.Userdata.Motion(Input.focus_widget,
-				Input, time, float32(sx), float32(sy))
+			cursor = Widget.Userdata.Motion(Input.focusWidget,
+				Input, time, sx, sy)
 		} else {
-			cursor = int(Widget.default_cursor)
+			cursor = int(Widget.defaultCursor)
 		}
 	} else {
-		cursor = int(CURSOR_LEFT_PTR)
+		cursor = CursorLeftPtr
 	}
 	_ = cursor
 
-	input_set_pointer_image(Input, cursor)
+	inputSetPointerImage(Input, cursor)
 }
 
 //line 3552
-func input_get_seat(Input *Input) *wl.Seat {
+func inputGetSeat(Input *Input) *wl.Seat {
 	return Input.seat
 }
 
 //line 3754
-func input_set_pointer_image_index(Input *Input, index int) {
+func inputSetPointerImageIndex(Input *Input, index int) {
 	var buffer *wl.Buffer
 	var cursor *wlcursor.Cursor
 	var image wlcursor.Image
@@ -1646,7 +1713,7 @@ func input_set_pointer_image_index(Input *Input, index int) {
 		return
 	}
 
-	cursor = Input.Display.cursors[Input.current_cursor]
+	cursor = Input.Display.cursors[Input.currentCursor]
 	if cursor == nil {
 		return
 	}
@@ -1662,25 +1729,25 @@ func input_set_pointer_image_index(Input *Input, index int) {
 		return
 	}
 
-	Input.pointer_surface.Attach(buffer, 0, 0)
-	Input.pointer_surface.Damage(0, 0,
+	_ = Input.pointerSurface.Attach(buffer, 0, 0)
+	_ = Input.pointerSurface.Damage(0, 0,
 		int32(image.GetWidth()), int32(image.GetHeight()))
-	Input.pointer_surface.Commit()
-	wlcursor.PointerSetCursor(Input.pointer, Input.pointer_enter_serial, Input.pointer_surface,
+	_ = Input.pointerSurface.Commit()
+	wlcursor.PointerSetCursor(Input.pointer, Input.pointerEnterSerial, Input.pointerSurface,
 		int32(image.GetHotspotX()), int32(image.GetHotspotY()))
 
 }
 
 //line 3789
-func input_set_pointer_special(Input *Input) bool {
-	if Input.current_cursor == CURSOR_BLANK {
-		wlcursor.PointerSetCursor((Input.pointer),
-			(Input.pointer_enter_serial),
+func inputSetPointerSpecial(Input *Input) bool {
+	if Input.currentCursor == CursorBlank {
+		wlcursor.PointerSetCursor(Input.pointer,
+			Input.pointerEnterSerial,
 			nil, 0, 0)
 		return true
 	}
 
-	if Input.current_cursor == CURSOR_UNSET {
+	if Input.currentCursor == CursorUnset {
 		return true
 	}
 
@@ -1688,10 +1755,10 @@ func input_set_pointer_special(Input *Input) bool {
 }
 
 //line 3805
-func schedule_pointer_image_update(Input *Input,
+func schedulePointerImageUpdate(Input *Input,
 	cursor *wlcursor.Cursor,
 	duration uint32,
-	force_frame bool) {
+	forceFrame bool) {
 	/* Some silly cursor sets have enormous pauses in them.  In these
 	 * cases it's better to use a timer even if it results in less
 	 * accurate presentation, since it will save us having to set the
@@ -1704,56 +1771,56 @@ func schedule_pointer_image_update(Input *Input,
 	 * We use force_frame to ensure we don't accumulate large timing
 	 * errors by running off the wrong clock.
 	 */
-	if !force_frame && (duration > 100) {
+	if !forceFrame && (duration > 100) {
 		return
 	}
 
 	/* for short durations we'll just spin on frame callbacks for
 	 * accurate timing - the way any kind of timing sensitive animation
 	 * should really be done. */
-	cb, err := Input.pointer_surface.Frame()
+	cb, err := Input.pointerSurface.Frame()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	Input.cursor_frame_cb = cb
+	Input.cursorFrameCb = cb
 
-	wlclient.CallbackAddListener(Input.cursor_frame_cb, Input)
+	wlclient.CallbackAddListener(Input.cursorFrameCb, Input)
 
 }
 
-func (Input *Input) CallbackDone(wl_callback *wl.Callback, callback_data uint32) {
-	pointer_surface_frame_callback(Input, wl_callback, callback_data)
+func (i *Input) CallbackDone(wlCallback *wl.Callback, callbackData uint32) {
+	pointerSurfaceFrameCallback(i, wlCallback, callbackData)
 }
 
 //line 3842
-func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time uint32) {
+func pointerSurfaceFrameCallback(Input *Input, callback *wl.Callback, time uint32) {
 	var cursor *wlcursor.Cursor
 	var i int
 	var duration uint32
-	var force_frame = true
+	var forceFrame = true
 
-	cancel_pointer_image_update(Input)
+	cancelPointerImageUpdate(Input)
 
 	if callback != nil {
-		if callback != Input.cursor_frame_cb {
+		if callback != Input.cursorFrameCb {
 			panic("assert")
 		}
 		wlclient.CallbackDestroy(callback)
-		Input.cursor_frame_cb = nil
-		force_frame = false
+		Input.cursorFrameCb = nil
+		forceFrame = false
 	}
 
 	if Input.pointer == nil {
 		return
 	}
 
-	if input_set_pointer_special(Input) {
+	if inputSetPointerSpecial(Input) {
 		return
 	}
 
-	cursor = Input.Display.cursors[Input.current_cursor]
+	cursor = Input.Display.cursors[Input.currentCursor]
 	if cursor == nil {
 		return
 	}
@@ -1761,51 +1828,51 @@ func pointer_surface_frame_callback(Input *Input, callback *wl.Callback, time ui
 	/* FIXME We don't have the current time on the first call so we set
 	 * the animation start to the time of the first frame callback. */
 	if time == 0 {
-		Input.cursor_anim_start = 0
-	} else if Input.cursor_anim_start == 0 {
-		Input.cursor_anim_start = time
+		Input.cursorAnimStart = 0
+	} else if Input.cursorAnimStart == 0 {
+		Input.cursorAnimStart = time
 	}
 
-	Input.cursor_anim_current = time
+	Input.cursorAnimCurrent = time
 
-	if time == 0 || Input.cursor_anim_start == 0 {
+	if time == 0 || Input.cursorAnimStart == 0 {
 		duration = 0
 		i = 0
 	} else {
-		frame_duration := cursor.FrameAndDuration(time - Input.cursor_anim_start)
+		frameDuration := cursor.FrameAndDuration(time - Input.cursorAnimStart)
 
-		i, duration = frame_duration.FrameIndex, frame_duration.FrameDuration
+		i, duration = frameDuration.FrameIndex, frameDuration.FrameDuration
 	}
 
 	if cursor.ImageCount() > 1 {
-		schedule_pointer_image_update(Input, cursor, duration,
-			force_frame)
+		schedulePointerImageUpdate(Input, cursor, duration,
+			forceFrame)
 	}
 
-	input_set_pointer_image_index(Input, i)
+	inputSetPointerImageIndex(Input, i)
 }
 
 //line 3925
-func input_set_pointer_image(Input *Input, pointer int) {
+func inputSetPointerImage(Input *Input, pointer int) {
 	var force bool
 
 	if Input.pointer == nil {
 		return
 	}
 
-	if Input.pointer_enter_serial > Input.cursor_serial {
+	if Input.pointerEnterSerial > Input.cursorSerial {
 		force = true
 	}
 
-	if !force && pointer == int(Input.current_cursor) {
+	if !force && pointer == int(Input.currentCursor) {
 		return
 	}
 
-	Input.current_cursor = int32(pointer)
-	Input.cursor_serial = Input.pointer_enter_serial
-	if Input.cursor_frame_cb == nil {
-		pointer_surface_frame_callback(Input, nil, 0)
-	} else if force && (!input_set_pointer_special(Input)) {
+	Input.currentCursor = int32(pointer)
+	Input.cursorSerial = Input.pointerEnterSerial
+	if Input.cursorFrameCb == nil {
+		pointerSurfaceFrameCallback(Input, nil, 0)
+	} else if force && (!inputSetPointerSpecial(Input)) {
 		/* The current frame callback may be stuck if, for instance,
 		 * the set cursor request was processed by the server after
 		 * this client lost the focus. In this case the cursor surface
@@ -1813,17 +1880,17 @@ func input_set_pointer_image(Input *Input, pointer int) {
 		 * complete. Send a set_cursor and attach to try to map the
 		 * cursor surface again so that the callback will finish */
 
-		input_set_pointer_image_index(Input, 0)
+		inputSetPointerImageIndex(Input, 0)
 	}
 }
 
 // line 4104
-func surface_resize(surface *surface) {
-	var Widget *Widget = surface.Widget
+func surfaceResize(surface *surface) {
+	var Widget = surface.Widget
 
 	if (surface.allocation.width != Widget.allocation.width) ||
 		(surface.allocation.height != Widget.allocation.height) {
-		window_schedule_redraw(Widget.Window)
+		windowScheduleRedraw(Widget.Window)
 
 	}
 
@@ -1832,188 +1899,188 @@ func surface_resize(surface *surface) {
 }
 
 //line 4144
-func window_do_resize(Window *Window) {
-	widget_set_allocation(Window.main_surface.Widget,
-		Window.pending_allocation.x,
-		Window.pending_allocation.y,
-		Window.pending_allocation.width,
-		Window.pending_allocation.height)
+func windowDoResize(Window *Window) {
+	widgetSetAllocation(Window.mainSurface.Widget,
+		Window.pendingAllocation.x,
+		Window.pendingAllocation.y,
+		Window.pendingAllocation.width,
+		Window.pendingAllocation.height)
 
-	surface_resize(Window.main_surface)
+	surfaceResize(Window.mainSurface)
 
 	if (Window.fullscreen != 0) && (Window.maximized != 0) {
-		Window.saved_allocation = Window.pending_allocation
+		Window.savedAllocation = Window.pendingAllocation
 	}
 }
 
 //line 4191
-func idle_resize(Window *Window) {
-	Window.resize_needed = 0
-	Window.redraw_needed = 1
+func idleResize(Window *Window) {
+	Window.resizeNeeded = 0
+	Window.redrawNeeded = 1
 
-	window_do_resize(Window)
+	windowDoResize(Window)
 }
 
 //line 4223
 func (Window *Window) ScheduleResize(width int32, height int32) {
 	/* We should probably get these numbers from the theme. */
-	const min_width = 200
-	const min_height = 200
+	const minWidth = 200
+	const minHeight = 200
 
-	Window.pending_allocation.x = 0
-	Window.pending_allocation.y = 0
-	Window.pending_allocation.width = width
-	Window.pending_allocation.height = height
+	Window.pendingAllocation.x = 0
+	Window.pendingAllocation.y = 0
+	Window.pendingAllocation.width = width
+	Window.pendingAllocation.height = height
 
-	if Window.min_allocation.width == 0 {
-		if width < min_width {
-			Window.min_allocation.width = min_width
+	if Window.minAllocation.width == 0 {
+		if width < minWidth {
+			Window.minAllocation.width = minWidth
 		} else {
-			Window.min_allocation.width = width
+			Window.minAllocation.width = width
 		}
-		if height < min_height {
-			Window.min_allocation.height = min_height
+		if height < minHeight {
+			Window.minAllocation.height = minHeight
 		} else {
-			Window.min_allocation.height = height
+			Window.minAllocation.height = height
 		}
 	}
 
-	if Window.pending_allocation.width < Window.min_allocation.width {
-		Window.pending_allocation.width = Window.min_allocation.width
+	if Window.pendingAllocation.width < Window.minAllocation.width {
+		Window.pendingAllocation.width = Window.minAllocation.width
 	}
-	if Window.pending_allocation.height < Window.min_allocation.height {
-		Window.pending_allocation.height = Window.min_allocation.height
+	if Window.pendingAllocation.height < Window.minAllocation.height {
+		Window.pendingAllocation.height = Window.minAllocation.height
 	}
 
-	Window.resize_needed = 1
-	window_schedule_redraw(Window)
+	Window.resizeNeeded = 1
+	windowScheduleRedraw(Window)
 }
 
 //line 4254
-func (Widget *Widget) ScheduleResize(width int32, height int32) {
-	Widget.Window.ScheduleResize(width, height)
+func (parent *Widget) ScheduleResize(width int32, height int32) {
+	parent.Window.ScheduleResize(width, height)
 }
 
 //line 4269
-func window_inhibit_redraw(Window *Window) {
-	Window.redraw_inhibited = 1
-	Window.redraw_task_scheduled = 0
+func windowInhibitRedraw(Window *Window) {
+	Window.redrawInhibited = 1
+	Window.redrawTaskScheduled = 0
 }
 
 // line 4284
-func window_uninhibit_redraw(Window *Window) {
-	Window.redraw_inhibited = 0
-	if (Window.redraw_needed != 0) || (Window.resize_needed != 0) {
-		window_schedule_redraw_task(Window)
+func windowUninhibitRedraw(Window *Window) {
+	Window.redrawInhibited = 0
+	if (Window.redrawNeeded != 0) || (Window.resizeNeeded != 0) {
+		windowScheduleRedrawTask(Window)
 	}
 }
 
 //line 4521
-func window_get_allocation(Window *Window, allocation *rectangle) {
-	*allocation = Window.main_surface.allocation
+func windowGetAllocation(Window *Window, allocation *rectangle) {
+	*allocation = Window.mainSurface.allocation
 }
 
 //line 4445
-func window_get_geometry(Window *Window, geometry *rectangle) {
+func windowGetGeometry(Window *Window, geometry *rectangle) {
 	if Window.fullscreen != 0 {
-		window_get_allocation(Window, geometry)
+		windowGetAllocation(Window, geometry)
 	}
 }
 
 //line 4458
-func window_sync_geometry(Window *Window) {
+func windowSyncGeometry(Window *Window) {
 	var geometry rectangle
 
-	if Window.xdg_surface == nil {
+	if Window.xdgSurface == nil {
 		return
 	}
 
-	window_get_geometry(Window, &geometry)
+	windowGetGeometry(Window, &geometry)
 
-	if geometry.x == Window.last_geometry.x &&
-		geometry.y == Window.last_geometry.y &&
-		geometry.width == Window.last_geometry.width &&
-		geometry.height == Window.last_geometry.height {
+	if geometry.x == Window.lastGeometry.x &&
+		geometry.y == Window.lastGeometry.y &&
+		geometry.width == Window.lastGeometry.width &&
+		geometry.height == Window.lastGeometry.height {
 		return
 	}
 
-	Window.xdg_surface.SetWindowGeometry(
+	_ = Window.xdgSurface.SetWindowGeometry(
 		geometry.x,
 		geometry.y,
 		geometry.width,
 		geometry.height)
-	Window.last_geometry = geometry
+	Window.lastGeometry = geometry
 }
 
 // line 4480
-func window_flush(Window *Window) {
+func windowFlush(Window *Window) {
 
-	if Window.redraw_inhibited != 0 {
+	if Window.redrawInhibited != 0 {
 		panic("assert\n")
 	}
 
 	if Window.custom == 0 {
-		if Window.xdg_surface != nil {
-			window_sync_geometry(Window)
+		if Window.xdgSurface != nil {
+			windowSyncGeometry(Window)
 
 		}
 
 	}
 
-	surface_flush(Window.main_surface)
+	surfaceFlush(Window.mainSurface)
 
 }
 
 // line 4505
-func widget_redraw(Widget *Widget) {
+func widgetRedraw(Widget *Widget) {
 	if Widget.Userdata != nil {
 		Widget.Userdata.Redraw(Widget)
 	}
 }
 
 //line 4517
-func (surface *surface) CallbackDone(callback *wl.Callback, time uint32) {
+func (s *surface) CallbackDone(callback *wl.Callback, time uint32) {
 	wlclient.CallbackDestroy(callback)
-	surface.frame_cb = nil
+	s.frameCb = nil
 
-	surface.last_time = time
+	s.lastTime = time
 
-	if (surface.redraw_needed != 0) || (surface.Window.redraw_needed != 0) {
+	if (s.redrawNeeded != 0) || (s.Window.redrawNeeded != 0) {
 
-		window_schedule_redraw_task(surface.Window)
+		windowScheduleRedrawTask(s.Window)
 	}
 }
 
 //line 4545
-func surface_redraw(surface *surface) int {
+func surfaceRedraw(surface *surface) int {
 
-	if (surface.Window.redraw_needed == 0) && (surface.redraw_needed == 0) {
+	if (surface.Window.redrawNeeded == 0) && (surface.redrawNeeded == 0) {
 		return 0
 	}
 
 	// Whole-Window redraw forces a redraw even if the previous has
 	// not yet hit the screen
-	if nil != surface.frame_cb {
-		if surface.Window.redraw_needed == 0 {
+	if nil != surface.frameCb {
+		if surface.Window.redrawNeeded == 0 {
 			return 0
 		}
 
-		wlclient.CallbackDestroy(surface.frame_cb)
+		wlclient.CallbackDestroy(surface.frameCb)
 	}
 
 	cb, err := surface.surface_.Frame()
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		surface.frame_cb = cb
+		surface.frameCb = cb
 
 		// add listener here
-		wlclient.CallbackAddListener(surface.frame_cb, surface)
+		wlclient.CallbackAddListener(surface.frameCb, surface)
 	}
 
-	surface.redraw_needed = 0
+	surface.redrawNeeded = 0
 
-	widget_redraw(surface.Widget)
+	widgetRedraw(surface.Widget)
 
 	return 0
 }
@@ -2022,55 +2089,55 @@ func surface_redraw(surface *surface) int {
 // line 4617
 func (Window *Window) Run(events uint32) {
 
-	Window.redraw_task_scheduled = 0
+	Window.redrawTaskScheduled = 0
 
-	if Window.resize_needed != 0 {
-		if nil != Window.main_surface.frame_cb {
+	if Window.resizeNeeded != 0 {
+		if nil != Window.mainSurface.frameCb {
 			return
 		}
 
-		idle_resize(Window)
+		idleResize(Window)
 
 	}
 
-	surface_redraw(Window.main_surface)
+	surfaceRedraw(Window.mainSurface)
 
-	Window.redraw_needed = 0
-	window_flush(Window)
+	Window.redrawNeeded = 0
+	windowFlush(Window)
 
 }
 
 //line 4619
 
-func window_schedule_redraw_task(Window *Window) {
-	if Window.redraw_inhibited != 0 {
+func windowScheduleRedrawTask(Window *Window) {
+	if Window.redrawInhibited != 0 {
 		return
 	}
 
-	if Window.redraw_task_scheduled == 0 {
+	if Window.redrawTaskScheduled == 0 {
 
-		Window.redraw_runner = Window
-		display_defer(Window.Display /*&Window.redraw_task,*/, Window)
-		Window.redraw_task_scheduled = 1
+		Window.redrawRunner = Window
+		displayDefer(Window.Display /*&Window.redraw_task,*/, Window)
+		Window.redrawTaskScheduled = 1
 	}
 }
 
 // line 4636
-func window_schedule_redraw(Window *Window) {
-	window_schedule_redraw_task(Window)
+func windowScheduleRedraw(Window *Window) {
+	windowScheduleRedrawTask(Window)
 }
 
 // line 4793
 func (Window *Window) SetTitle(title string) {
 
-	if Window.xdg_toplevel != nil {
-		Window.xdg_toplevel.SetTitle(title)
+	if Window.xdgToplevel != nil {
+		_ = Window.xdgToplevel.SetTitle(title)
 	}
 }
 
 // line 5178
-func surface_create(Window *Window) *surface {
-	var Display *Display = Window.Display
+func surfaceCreate(Window *Window) *surface {
+	var Display = Window.Display
 	var surface = &surface{}
 	surface.Window = Window
 	surf, err := Display.compositor.CreateSurface()
@@ -2080,33 +2147,33 @@ func surface_create(Window *Window) *surface {
 	}
 	surface.surface_ = surf
 
-	surface.buffer_scale = 1
+	surface.bufferScale = 1
 	wlclient.SurfaceAddListener(surface.surface_, SurfaceEnter, SurfaceLeave)
 
-	Window.subsurface_list_new = append(Window.subsurface_list_new, surface)
+	Window.subsurfaceListNew = append(Window.subsurfaceListNew, surface)
 
 	return surface
 }
 
 // line 5219
-func window_create_internal(Display *Display, custom int) *Window {
+func windowCreateInternal(Display *Display, custom int) *Window {
 
 	var Window = &Window{}
 	var surface_ *surface
 
 	Window.Display = Display
-	surface_ = surface_create(Window)
+	surface_ = surfaceCreate(Window)
 
-	Window.main_surface = (*surface)(surface_)
+	Window.mainSurface = surface_
 
-	if (custom > 0) || (Display.xdg_shell != nil) {
+	if (custom > 0) || (Display.xdgShell != nil) {
 	} else {
 		panic("assertion failed")
 	}
 	Window.custom = (int32)(custom)
-	Window.preferred_format = WINDOW_PREFERRED_FORMAT_NONE
+	Window.preferredFormat = WindowPreferredFormatNone
 
-	surface_.buffer_type = WINDOW_BUFFER_TYPE_SHM
+	surface_.bufferType = WindowBufferTypeShm
 
 	wlclient.SurfaceSetUserData(surface_.surface_, uintptr(0))
 	Display.surface2window[surface_.surface_] = Window
@@ -2116,32 +2183,32 @@ func window_create_internal(Display *Display, custom int) *Window {
 
 //line 5250
 func Create(Display *Display) *Window {
-	var Window = window_create_internal(Display, 0)
+	var Window = windowCreateInternal(Display, 0)
 
-	if Window.Display.xdg_shell != nil {
-		surf, err := Window.Display.xdg_shell.GetSurface(Window.main_surface.surface_)
+	if Window.Display.xdgShell != nil {
+		surf, err := Window.Display.xdgShell.GetSurface(Window.mainSurface.surface_)
 		if err != nil {
 			fmt.Println(err)
 			return nil
 		} else {
-			Window.xdg_surface = surf
+			Window.xdgSurface = surf
 		}
 
-		Window.xdg_surface.AddListener(Window)
+		Window.xdgSurface.AddListener(Window)
 
-		tl, err := Window.xdg_surface.GetToplevel()
+		tl, err := Window.xdgSurface.GetToplevel()
 		if err != nil {
 			fmt.Println(err)
 			return nil
 		} else {
-			Window.xdg_toplevel = tl
+			Window.xdgToplevel = tl
 		}
 
-		zxdg.ToplevelAddListener(Window.xdg_toplevel, Window)
+		zxdg.ToplevelAddListener(Window.xdgToplevel, Window)
 
-		window_inhibit_redraw(Window)
+		windowInhibitRedraw(Window)
 
-		Window.main_surface.surface_.Commit()
+		_ = Window.mainSurface.surface_.Commit()
 	}
 
 	return Window
@@ -2149,7 +2216,7 @@ func Create(Display *Display) *Window {
 
 // line 5592
 func (Window *Window) SetBufferType(t int32) {
-	Window.main_surface.buffer_type = t
+	Window.mainSurface.bufferType = t
 }
 
 func min(a, b int) int {
@@ -2173,56 +2240,63 @@ func (o *output) HandleOutputScale(ev wl.OutputScaleEvent) {
 	o.OutputScale(o.output, ev.Factor)
 }
 
-func (o *output) OutputGeometry(wl_output *wl.Output, x int, y int, physical_width int,
-	physical_height int, subpixel int, maker string, model string, transform int) {
+func (o *output) OutputGeometry(wlOutput *wl.Output, x int, y int, physicalWidth int,
+	physicalHeight int, subpixel int, maker string, model string, transform int) {
 
 	o.maker = maker
 	o.model = model
 
 }
-func (o *output) OutputDone(wl_output *wl.Output) {
+func (o *output) OutputDone(wlOutput *wl.Output) {
 
 }
-func (o *output) OutputScale(wl_output *wl.Output, factor int32) {
+func (o *output) OutputScale(wlOutput *wl.Output, factor int32) {
 
 }
-func (o *output) OutputMode(wl_output *wl.Output, flags uint32, width int, height int, refresh int) {
+
+func (o *output) OutputMode(
+	wlOutput *wl.Output,
+	flags uint32,
+	width int,
+	height int,
+	refresh int,
+) {
 
 }
 
 // line 5771
-func display_add_output(d *Display, id uint32) {
+func displayAddOutput(d *Display, id uint32) {
 
-	var output *output = &output{}
+	var output = &output{}
 
 	output.Display = d
 	output.scale = 1
 	output.output = wlclient.RegistryBindOutputInterface(d.registry, id, 2)
 
-	output.server_output_id = id
+	output.serverOutputId = id
 
 	wlclient.OutputAddListener(output.output, output)
 
 }
 
 //line 5925
-func display_add_input(d *Display, id uint32, display_seat_version int) {
+func displayAddInput(d *Display, id uint32, displaySeatVersion int) {
 
 	var input_ *Input
-	var seat_version = min(display_seat_version, 7)
+	var seatVersion = min(displaySeatVersion, 7)
 
-	_ = seat_version
+	_ = seatVersion
 
 	input_ = new(Input)
 
 	input_.Display = d
-	input_.seat = wlclient.RegistryBindSeatInterface(d.registry, id, uint32(seat_version))
-	input_.touch_focus = 0
-	input_.pointer_focus = nil
-	input_.keyboard_focus = nil
-	input_.seat_version = int32(seat_version)
+	input_.seat = wlclient.RegistryBindSeatInterface(d.registry, id, uint32(seatVersion))
+	input_.touchFocus = 0
+	input_.pointerFocus = nil
+	input_.keyboardFocus = nil
+	input_.seatVersion = int32(seatVersion)
 
-	d.input_list = append(d.input_list, input_)
+	d.inputList = append(d.inputList, input_)
 
 	wlclient.SeatAddListener(input_.seat, input_)
 
@@ -2230,7 +2304,7 @@ func display_add_input(d *Display, id uint32, display_seat_version int) {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		input_.pointer_surface = ps
+		input_.pointerSurface = ps
 	}
 
 }
@@ -2264,47 +2338,45 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, errors.New("failed to process Wayland connection")
 	}
 
-	create_cursors(d)
+	_ = createCursors(d)
 
 	return d, nil
 }
 
-func (Display *Display) BindUnstableInterface(name uint32, iface string, version uint32) wl.Proxy {
-	return wlclient.RegistryBindUnstableInterface(Display.registry, name, iface, version)
+func (d *Display) BindUnstableInterface(name uint32, iface string, version uint32) wl.Proxy {
+	return wlclient.RegistryBindUnstableInterface(d.registry, name, iface, version)
 }
 
-func (Display *Display) SetUserData(data interface{}) {
-	Display.user_data = data
+func (d *Display) SetUserData(data interface{}) {
+	d.userData = data
 }
 
 //line 6387
-func (Display *Display) Destroy() {
+func (d *Display) Destroy() {
 
-	if Display.dummy_surface != nil {
-		(*Display.dummy_surface).Destroy()
+	if d.dummySurface != nil {
+		(*d.dummySurface).Destroy()
 	}
 
-	destroy_cursors(Display)
+	destroyCursors(d)
 
-	if Display.xdg_shell != nil {
-		Display.xdg_shell.Destroy()
+	if d.xdgShell != nil {
+		d.xdgShell.Destroy()
 	}
 
-	if Display.shm != nil {
-		wlclient.ShmDestroy((Display.shm))
+	if d.shm != nil {
+		wlclient.ShmDestroy(d.shm)
 	}
 
-	wlclient.RegistryDestroy((Display.registry))
+	wlclient.RegistryDestroy(d.registry)
 
-	syscall.Close(int(Display.epoll_fd))
-
-	wlclient.DisplayDisconnect((Display.Display))
+	wlclient.DisplayDisconnect(d.Display)
 }
 
 //line 6478
-func display_defer(Display *Display /*task *task,*/, fun runner) {
+func displayDefer(Display *Display /*task *task,*/, fun runner) {
 
-	Display.deferred_list_new = append(Display.deferred_list_new, (fun))
+	Display.deferredListNew = append(Display.deferredListNew, fun)
 }
 
 //line 6501
@@ -2313,11 +2385,11 @@ func DisplayRun(Display *Display) {
 	Display.running = 1
 	for {
 
-		for len(Display.deferred_list_new) > 0 {
+		for len(Display.deferredListNew) > 0 {
 
-			Display.deferred_list_new[0].Run(0)
+			Display.deferredListNew[0].Run(0)
 
-			Display.deferred_list_new = Display.deferred_list_new[1:]
+			Display.deferredListNew = Display.deferredListNew[1:]
 
 		}
 
@@ -2332,6 +2404,6 @@ func DisplayRun(Display *Display) {
 	}
 }
 
-func (Display *Display) Exit() {
-	Display.running = 0
+func (d *Display) Exit() {
+	d.running = 0
 }

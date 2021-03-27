@@ -28,15 +28,6 @@ import "errors"
 import "crypto/rand"
 import "fmt"
 
-// Pages may be read
-const PROT_READ = syscall.PROT_READ
-
-// Pages may be written
-const PROT_WRITE = syscall.PROT_WRITE
-
-// Share this mapping
-const MAP_SHARED = syscall.MAP_SHARED
-
 // MkOsTemp: Golang version of the popular C library function call
 // The string can contain the patern consistng of XXX that will be replaced
 // with a high-entropy alphanumeric sequence, if you want more entropic string
@@ -49,14 +40,17 @@ func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byt
 	const alphabet = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 	var randbuf [5 * 9]byte
-	var randbuf_i byte
+	var randbufI byte
 
 	for i := 3; i <= len(tmpname); i++ {
 		if (tmpname[i-3] == x1) && (tmpname[i-2] == x2) && (tmpname[i-1] == x3) {
 
-			if randbuf_i == 0 {
+			if randbufI == 0 {
 
-				rand.Read(randbuf[:])
+				_, err := rand.Read(randbuf[:])
+				if err != nil {
+					return nil, fmt.Errorf("MkOsTemp: random read error: %w", err)
+				}
 
 				for o := 0; o < 9; o++ {
 					n := (uint64(randbuf[5*o+0])) |
@@ -74,12 +68,12 @@ func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byt
 			}
 
 			for j := 0; j < 3; j++ {
-				tmpname[i-3] = randbuf[randbuf_i]
-				randbuf_i++
+				tmpname[i-3] = randbuf[randbufI]
+				randbufI++
 				i++
 			}
 			i--
-			randbuf_i %= 27
+			randbufI %= 27
 		}
 	}
 
@@ -109,6 +103,7 @@ func CreateTmpfileCloexec(tmpdir, tmpname string) (*os.File, error) {
 }
 
 var ErrUnlink = errors.New("CreateTmpfileCloexec: unlink error")
+var ErrFileIsNil = errors.New("CreateTmpfileCloexec: file is nil")
 
 // OsCreateAnonymousFile: in case of the ErrUnlink error, the fd is valid.
 // The file just isn't anonymous and can't be deleted. You can either ignore the ErrUnlink
@@ -124,10 +119,13 @@ func CreateAnonymousFile(size int64) (fd *os.File, err error) {
 	if err != nil && err != ErrUnlink {
 		return fd, err
 	}
+	if fd == nil {
+		return fd, ErrFileIsNil
+	}
 
-	err2 := syscall.Fallocate(int(fd.Fd()), 0, 0, size)
+	err2 := fallocate(int(fd.Fd()), 0, 0, size)
 	if err2 != nil {
-		fd.Close()
+		_ = fd.Close()
 		return nil, err2
 	}
 

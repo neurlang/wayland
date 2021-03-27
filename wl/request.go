@@ -2,10 +2,8 @@ package wl
 
 import (
 	"errors"
+	"github.com/neurlang/wayland/os"
 	"net"
-	"syscall"
-
-	"golang.org/x/sys/unix"
 
 	"github.com/yalue/native_endian"
 )
@@ -20,10 +18,11 @@ type Request struct {
 
 var ErrContextSendRequestUnix = errors.New("unable to send request using unix")
 var ErrContextSendRequestConn = errors.New("unable to send request using conn")
+
 var ErrContextSendRequestUnixLength = errors.New("unable to send request using unix, WriteMsgUnix length check failed")
 
 // Context SendRequest sends a specific request with arguments to the compositor
-func (context *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{}) (err error) {
+func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{}) (err error) {
 	req := Request{
 		pid:    proxy.Id(),
 		Opcode: opcode,
@@ -33,10 +32,10 @@ func (context *Context) SendRequest(proxy Proxy, opcode uint32, args ...interfac
 		req.Write(arg)
 	}
 
-	if context.conn != nil {
-		return writeRequest(context.conn, req)
+	if ctx.conn != nil {
+		return writeRequest(ctx.conn, req)
 	} else {
-		return writeRequestUnix(context.sockFD, req)
+		return writeRequestUnix(ctx.sockFD, req)
 	}
 }
 
@@ -107,7 +106,7 @@ func (r *Request) PutArray(a []int32) {
 
 // Request PutFd writes a file descriptor argument to the compositor
 func (r *Request) PutFd(fd uintptr) {
-	rights := syscall.UnixRights(int(fd))
+	rights := os.UnixRights(int(fd))
 	r.oob = append(r.oob, rights...)
 }
 
@@ -118,7 +117,7 @@ func writeRequest(conn *net.UnixConn, r Request) error {
 	buf := make([]byte, 4)
 	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	native_endian.NativeEndian().PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
+	native_endian.NativeEndian().PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
 	header = append(header, buf...)
 
 	d, c, err := conn.WriteMsgUnix(append(header, r.data...), r.oob, nil)
@@ -140,12 +139,12 @@ func writeRequestUnix(fd int, r Request) error {
 	buf := make([]byte, 4)
 	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	native_endian.NativeEndian().PutUint32(buf, uint32(size<<16|r.Opcode&0x0000ffff))
+	native_endian.NativeEndian().PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
 	header = append(header, buf...)
 
 	// unix.
-	var addr unix.Sockaddr
-	err := unix.Sendmsg(fd, append(header, r.data...), r.oob, addr, 0)
+	var addr os.Sockaddr
+	err := os.Sendmsg(fd, append(header, r.data...), r.oob, addr, 0)
 	if err != nil {
 		return combinedError{ErrContextSendRequestUnix, err}
 	}

@@ -4,6 +4,8 @@
 
 // Code copied from "golang.org/x/exp/shiny/driver/internal/swizzle"
 
+// +build !codeanalysis
+
 #include "textflag.h"
 
 // func haveSSSE3() bool

@@ -1,9 +1,9 @@
 // Package wlclient implements a wayland-client like api
 package wlclient
 
-import wl "github.com/neurlang/wayland/wl"
-import xdg "github.com/neurlang/wayland/xdg"
-import unstable "github.com/neurlang/wayland/unstable"
+import "github.com/neurlang/wayland/wl"
+import "github.com/neurlang/wayland/xdg"
+import "github.com/neurlang/wayland/unstable"
 
 func DisplayDispatch(d *wl.Display) error {
 	return d.Context().Run()
@@ -99,7 +99,11 @@ func (el *SurfaceEnterLeave) HandleSurfaceLeave(le wl.SurfaceLeaveEvent) {
 	el.callbacks[1](el.surface, le.Output)
 }
 
-func SurfaceAddListener(s *wl.Surface, enter func(*wl.Surface, *wl.Output), leave func(*wl.Surface, *wl.Output)) {
+func SurfaceAddListener(
+	s *wl.Surface,
+	enter func(*wl.Surface, *wl.Output),
+	leave func(*wl.Surface, *wl.Output),
+) {
 	el := &SurfaceEnterLeave{surface: s, callbacks: [2]func(*wl.Surface, *wl.Output){enter, leave}}
 	s.AddEnterHandler(el)
 	s.AddLeaveHandler(el)
@@ -117,54 +121,61 @@ func SubsurfaceDestroy(p *wl.Subsurface) {
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
 	c := wl.NewCompositor(r.Ctx)
-	r.Bind(name, "wl_compositor", version, c)
+	_ = r.Bind(name, "wl_compositor", version, c)
 	return c
 }
 
 func RegistryBindShmInterface(r *wl.Registry, name uint32, version uint32) *wl.Shm {
 	s := wl.NewShm(r.Ctx)
-	r.Bind(name, "wl_shm", version, s)
+	_ = r.Bind(name, "wl_shm", version, s)
 	return s
 }
 
-func RegistryBindDataDeviceManagerInterface(r *wl.Registry, name uint32, version uint32) *wl.DataDeviceManager {
+func RegistryBindDataDeviceManagerInterface(
+	r *wl.Registry,
+	name uint32,
+	version uint32,
+) *wl.DataDeviceManager {
 	d := wl.NewDataDeviceManager(r.Ctx)
-	r.Bind(name, "wl_data_device_manager", version, d)
+	_ = r.Bind(name, "wl_data_device_manager", version, d)
 	return d
 }
 
 func RegistryBindOutputInterface(r *wl.Registry, name uint32, version uint32) *wl.Output {
 	d := wl.NewOutput(r.Ctx)
-	r.Bind(name, "wl_output", version, d)
+	_ = r.Bind(name, "wl_output", version, d)
 	return d
 }
 
 func RegistryBindSeatInterface(r *wl.Registry, name uint32, version uint32) *wl.Seat {
 	d := wl.NewSeat(r.Ctx)
-	r.Bind(name, "wl_seat", version, d)
+	_ = r.Bind(name, "wl_seat", version, d)
 	return d
 }
 
 func RegistryBindWmBaseInterface(r *wl.Registry, name uint32, version uint32) *xdg.WmBase {
 	d := xdg.NewShell(r.Ctx)
-	r.Bind(name, "xdg_wm_base", version, d)
+	_ = r.Bind(name, "xdg_wm_base", version, d)
 	return d
 }
-func RegistryBindUnstableInterface(r *wl.Registry, name uint32, iface string, version uint32) wl.Proxy {
+
+func RegistryBindUnstableInterface(
+	r *wl.Registry,
+	name uint32,
+	iface string,
+	version uint32,
+) wl.Proxy {
 	function := unstable.GetNewFunc(iface)
 	if function == nil {
 		return nil
 	}
 	d := function(r.Ctx)
-	r.Bind(name, iface, version, d)
+	_ = r.Bind(name, iface, version, d)
 	return d
 }
 
 func DisplayConnect(name []byte) (*wl.Display, error) {
 	return wl.Connect(string(name))
-}
-func DisplayGetFd(d *wl.Display) int {
-	panic("not implemented")
 }
 func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 	return d.GetRegistry()
@@ -178,7 +189,7 @@ func DisplayRoundtrip(d *wl.Display) error {
 	if err != nil {
 		return err
 	}
-	d.Context().RunTill(cb)
+	_ = d.Context().RunTill(cb)
 	return err
 }
 func DisplayDisconnect(display *wl.Display) {

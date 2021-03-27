@@ -585,8 +585,8 @@ func NewSurface(ctx *wl.Context) *Surface {
 // Destroy the surface object. An surface must only be destroyed
 // after its role object has been destroyed.
 //
-func (i *Surface) Destroy() error {
-	err := i.Context().SendRequest(i, 0)
+func (s *Surface) Destroy() error {
+	err := s.Context().SendRequest(s, 0)
 	return err
 }
 
@@ -598,9 +598,9 @@ func (i *Surface) Destroy() error {
 // See the documentation of toplevel for more details about what an
 // toplevel is and how it is used.
 //
-func (i *Surface) GetToplevel() (*Toplevel, error) {
-	id := NewToplevel(i.Context())
-	err := i.Context().SendRequest(i, 1, id)
+func (s *Surface) GetToplevel() (*Toplevel, error) {
+	id := NewToplevel(s.Context())
+	err := s.Context().SendRequest(s, 1, id)
 	return id, err
 }
 
@@ -615,9 +615,9 @@ func (i *Surface) GetToplevel() (*Toplevel, error) {
 // See the documentation of popup for more details about what an
 // popup is and how it is used.
 //
-func (i *Surface) GetPopup(parent *Surface, positioner *Positioner) (*Popup, error) {
-	id := NewPopup(i.Context())
-	err := i.Context().SendRequest(i, 2, id, parent, positioner)
+func (s *Surface) GetPopup(parent *Surface, positioner *Positioner) (*Popup, error) {
+	id := NewPopup(s.Context())
+	err := s.Context().SendRequest(s, 2, id, parent, positioner)
 	return id, err
 }
 
@@ -653,8 +653,8 @@ func (i *Surface) GetPopup(parent *Surface, positioner *Positioner) (*Popup, err
 // combined geometry of the surface of the surface and the associated
 // subsurfaces.
 //
-func (i *Surface) SetWindowGeometry(x, y, width, height int32) error {
-	err := i.Context().SendRequest(i, 3, x, y, width, height)
+func (s *Surface) SetWindowGeometry(x, y, width, height int32) error {
+	err := s.Context().SendRequest(s, 3, x, y, width, height)
 	return err
 }
 
@@ -681,8 +681,8 @@ func (i *Surface) SetWindowGeometry(x, y, width, height int32) error {
 // event the client really is responding to.
 //
 //  serial: the serial from the configure event
-func (i *Surface) AckConfigure(serial uint32) error {
-	err := i.Context().SendRequest(i, 4, serial)
+func (s *Surface) AckConfigure(serial uint32) error {
+	err := s.Context().SendRequest(s, 4, serial)
 	return err
 }
 
@@ -720,51 +720,51 @@ type SurfaceConfigureHandler interface {
 }
 
 // AddConfigureHandler: adds handler for SurfaceConfigureEvent
-func (i *Surface) AddConfigureHandler(h SurfaceConfigureHandler) {
+func (s *Surface) AddConfigureHandler(h SurfaceConfigureHandler) {
 	if h == nil {
 		return
 	}
 
-	i.mu.Lock()
-	i.configureHandlers = append(i.configureHandlers, h)
-	i.mu.Unlock()
+	s.mu.Lock()
+	s.configureHandlers = append(s.configureHandlers, h)
+	s.mu.Unlock()
 }
 
-func (i *Surface) RemoveConfigureHandler(h SurfaceConfigureHandler) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
+func (s *Surface) RemoveConfigureHandler(h SurfaceConfigureHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	for j, e := range i.configureHandlers {
+	for j, e := range s.configureHandlers {
 		if e == h {
-			i.configureHandlers = append(i.configureHandlers[:j], i.configureHandlers[j+1:]...)
+			s.configureHandlers = append(s.configureHandlers[:j], s.configureHandlers[j+1:]...)
 			break
 		}
 	}
 }
 
-func (i *Surface) Dispatch(event *wl.Event) {
+func (s *Surface) Dispatch(event *wl.Event) {
 	switch event.Opcode {
 	case 0:
-		i.mu.RLock()
-		if len(i.configureHandlers) == 0 {
-			i.mu.RUnlock()
+		s.mu.RLock()
+		if len(s.configureHandlers) == 0 {
+			s.mu.RUnlock()
 			break
 		}
-		i.mu.RUnlock()
+		s.mu.RUnlock()
 
 		e := SurfaceConfigureEvent{
 			Serial: event.Uint32(),
 		}
 
-		i.mu.RLock()
-		for _, h := range i.configureHandlers {
-			i.mu.RUnlock()
+		s.mu.RLock()
+		for _, h := range s.configureHandlers {
+			s.mu.RUnlock()
 
 			h.HandleSurfaceConfigure(e)
 
-			i.mu.RLock()
+			s.mu.RLock()
 		}
-		i.mu.RUnlock()
+		s.mu.RUnlock()
 	}
 }
 

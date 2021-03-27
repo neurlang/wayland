@@ -23,8 +23,8 @@ package cairo
 
 type enum = int64
 
-const FORMAT_ARGB32 enum = 0
-const FORMAT_RGB16_565 enum = 4
+const FormatArgb32 enum = 0
+const FormatRgb16565 enum = 4
 
 type Surface interface {
 	Reference() Surface
@@ -37,76 +37,82 @@ type Surface interface {
 }
 type Format = enum
 
-type simulated_surface struct {
+type simulatedSurface struct {
 	data   []byte
 	width  int
 	height int
 	stride int
 }
 
-type simulated_surface_ref struct {
-	surf *simulated_surface
+type simulatedSurfaceRef struct {
+	surf *simulatedSurface
 }
 
-func (s simulated_surface_ref) Destroy() {
+func (s simulatedSurfaceRef) Destroy() {
 	s.surf.Destroy()
 	s.surf = nil
 }
 
-func (s simulated_surface_ref) Reference() Surface {
+func (s simulatedSurfaceRef) Reference() Surface {
 	return s.surf.Reference()
 }
 
-func (s *simulated_surface) Reference() Surface {
-	return &simulated_surface_ref{surf: s}
+func (s *simulatedSurface) Reference() Surface {
+	return &simulatedSurfaceRef{surf: s}
 }
 
-func (s *simulated_surface) Destroy() {
+func (s *simulatedSurface) Destroy() {
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetData() []byte {
+func (s *simulatedSurfaceRef) ImageSurfaceGetData() []byte {
 	return s.surf.ImageSurfaceGetData()
 }
 
-func (s *simulated_surface) ImageSurfaceGetData() []byte {
+func (s *simulatedSurface) ImageSurfaceGetData() []byte {
 	return s.data
 }
 
-func (s *simulated_surface) ImageSurfaceGetWidth() int {
+func (s *simulatedSurface) ImageSurfaceGetWidth() int {
 	return s.width
 }
 
-func (s *simulated_surface) ImageSurfaceGetHeight() int {
+func (s *simulatedSurface) ImageSurfaceGetHeight() int {
 	return s.height
 }
 
-func (s *simulated_surface) ImageSurfaceGetStride() int {
+func (s *simulatedSurface) ImageSurfaceGetStride() int {
 
 	return s.stride
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetWidth() int {
+func (s *simulatedSurfaceRef) ImageSurfaceGetWidth() int {
 	return s.surf.ImageSurfaceGetWidth()
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetHeight() int {
+func (s *simulatedSurfaceRef) ImageSurfaceGetHeight() int {
 	return s.surf.ImageSurfaceGetHeight()
 }
 
-func (s *simulated_surface_ref) ImageSurfaceGetStride() int {
+func (s *simulatedSurfaceRef) ImageSurfaceGetStride() int {
 	return s.surf.ImageSurfaceGetStride()
 }
 
-func ImageSurfaceCreateForData(data []byte, cairo_format Format, width int, height int, stride int) Surface {
-	return &simulated_surface{data: data, width: width, height: height, stride: stride}
+func ImageSurfaceCreateForData(
+	data []byte,
+	cairoFormat Format,
+	width int,
+	height int,
+	stride int,
+) Surface {
+	return &simulatedSurface{data: data, width: width, height: height, stride: stride}
 }
 
-func FormatStrideForWidth(cairo_format Format, width int) int {
+func FormatStrideForWidth(cairoFormat Format, width int) int {
 	return width * 4
 }
 
-func (surface *simulated_surface) SetUserData(data func()) {
+func (s *simulatedSurface) SetUserData(data func()) {
 }
-func (surface *simulated_surface_ref) SetUserData(data func()) {
-	surface.surf.SetUserData(data)
+func (s *simulatedSurfaceRef) SetUserData(data func()) {
+	s.surf.SetUserData(data)
 }

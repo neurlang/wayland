@@ -15,5 +15,5 @@ var useBGRA16 = haveSSSE3()
 
 const useBGRA4 = true
 
-func bgra16(p []byte)
-func bgra4(p []byte)
+func bgra16([]byte)
+func bgra4([]byte)

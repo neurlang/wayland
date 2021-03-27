@@ -44,13 +44,14 @@ func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	return proxy
 }
 
-// This error is returned by Connect when the operating system does not provide the required XDG_RUNTIME_DIR environment variable
+// This error is returned by Connect when the operating system does not provide the required
+// XDG_RUNTIME_DIR environment variable
 var ErrXdgRuntimeDirNotSet = errors.New("variable XDG_RUNTIME_DIR not set in the environment")
 
 // Connect connects to a Wayland compositor running on a specific wayland unix socket
 func Connect(addr string) (ret *Display, err error) {
-	runtime_dir := os.Getenv("XDG_RUNTIME_DIR")
-	if runtime_dir == "" {
+	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+	if runtimeDir == "" {
 		return nil, ErrXdgRuntimeDirNotSet
 	}
 	if addr == "" {
@@ -59,7 +60,7 @@ func Connect(addr string) (ret *Display, err error) {
 	if addr == "" {
 		addr = "wayland-0"
 	}
-	addr = runtime_dir + "/" + addr
+	addr = runtimeDir + "/" + addr
 	c := new(Context)
 	c.objects = make(map[ProxyId]Proxy)
 	c.currentId = 0
@@ -67,8 +68,11 @@ func Connect(addr string) (ret *Display, err error) {
 	if err != nil {
 		return nil, err
 	}
-	c.conn.SetReadDeadline(time.Time{})
-	//DON'T dispatch events in separate gorutine
+	err = c.conn.SetReadDeadline(time.Time{})
+	if err != nil {
+		return nil, err
+	}
+	//DON'T dispatch events in separate goroutine
 	//go c.Run()
 	return NewDisplay(c), nil
 }
@@ -77,9 +81,9 @@ var errFoundMyCallback = errors.New("run found my callback")
 
 // Context RunTill runs until a specific callback or an error occurs, see Context Run
 // for a description of a likely errors
-func (c *Context) RunTill(cb *Callback) (err error) {
+func (ctx *Context) RunTill(cb *Callback) (err error) {
 	for {
-		err = c.run(cb)
+		err = ctx.run(cb)
 		if err == errFoundMyCallback {
 			return nil
 		}
@@ -87,7 +91,6 @@ func (c *Context) RunTill(cb *Callback) (err error) {
 			return err
 		}
 	}
-	return nil
 }
 
 // Context Run event reading error, use InternalError to get the underlying cause
@@ -110,14 +113,14 @@ var ErrContextRunProxyNil = errors.New("proxy nil")
 
 // Context Run reads and processes one event, a specific ErrContextRunXXX error
 // may be returned in case of failure
-func (c *Context) Run() error {
-	return c.run(nil)
+func (ctx *Context) Run() error {
+	return ctx.run(nil)
 }
 
-func (c *Context) run(cb *Callback) error {
+func (ctx *Context) run(cb *Callback) error {
 	// ctx := context.Background()
 
-	ev, err := c.readEvent()
+	ev, err := ctx.readEvent()
 	if err != nil {
 		if err == io.EOF {
 			return ErrContextRunConnectionClosed
@@ -130,11 +133,11 @@ func (c *Context) run(cb *Callback) error {
 		return combinedError{ErrContextRunEventReadingError, err}
 	}
 
-	proxy := c.LookupProxy(ev.Pid)
+	proxy := ctx.LookupProxy(ev.Pid)
 	if proxy != nil {
-		if dispatcher, ok := proxy.(Dispatcher); ok {
-			if found_cb, ok := dispatcher.(*Callback); dispatcher != nil && ok {
-				if found_cb == cb {
+		if dispatcher, ok := proxy.(Dispatcher); dispatcher != nil && ok {
+			if foundCb, ok := dispatcher.(*Callback); ok {
+				if foundCb == cb {
 					bytePool.Give(ev.Data)
 					return errFoundMyCallback
 				}

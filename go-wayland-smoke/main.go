@@ -25,8 +25,8 @@ import "time"
 import "math/rand"
 
 import cairo "github.com/neurlang/wayland/cairoshim"
-import wl "github.com/neurlang/wayland/wl"
-import window "github.com/neurlang/wayland/window"
+import "github.com/neurlang/wayland/wl"
+import "github.com/neurlang/wayland/window"
 
 import "fmt"
 
@@ -64,7 +64,14 @@ func diffuse(smoke *smoke, time uint32, source []float32, dest []float32) {
 	}
 }
 
-func advect(smoke *smoke, time uint32, uu []float32, vv []float32, source []float32, dest []float32) {
+func advect(
+	smoke *smoke,
+	time uint32,
+	uu []float32,
+	vv []float32,
+	source []float32,
+	dest []float32,
+) {
 
 	var s, d []float32
 	var u, v []float32
@@ -149,34 +156,29 @@ func (*smoke) Resize(widget *window.Widget, width int32, height int32) {
 }
 
 func render(smoke *smoke, surface cairo.Surface) {
-	var x, y int
-	var width, height, stride int
-	var c, a uint32
-	var dst8 []byte
+	var dst8 = surface.ImageSurfaceGetData()
+	var width = surface.ImageSurfaceGetWidth()
+	var height = surface.ImageSurfaceGetHeight()
+	var stride = surface.ImageSurfaceGetStride()
 
-	dst8 = surface.ImageSurfaceGetData()
-	width = surface.ImageSurfaceGetWidth()
-	height = surface.ImageSurfaceGetHeight()
-	stride = surface.ImageSurfaceGetStride()
+	data := smoke.bb[smoke.current].d
 
-	data := smoke.bb[int(smoke.current)].d
+	for y := 1; y < height-1; y++ {
+		for x := 1; x < width-1; x++ {
 
-	for y = 1; y < int(height)-1; y++ {
-		for x = 1; x < int(width)-1; x++ {
-
-			c = uint32(data[x+y*int(smoke.height)] * 800.)
+			var c = uint32(data[x+y*int(smoke.height)] * 800.)
 			if c > 255 {
 				c = 255
 			}
-			a = c
+			var a = c
 			if a < 0x33 {
 				a = 0x33
 			}
 			if dst8 != nil {
-				dst8[4*x+y*int(stride)+0] = byte(c)
-				dst8[4*x+y*int(stride)+1] = byte(c)
-				dst8[4*x+y*int(stride)+2] = byte(c)
-				dst8[4*x+y*int(stride)+3] = byte(a)
+				dst8[4*x+y*stride+0] = byte(c)
+				dst8[4*x+y*stride+1] = byte(c)
+				dst8[4*x+y*stride+2] = byte(c)
+				dst8[4*x+y*stride+3] = byte(a)
 			}
 		}
 	}
@@ -184,30 +186,28 @@ func render(smoke *smoke, surface cairo.Surface) {
 
 func (smoke *smoke) Redraw(widget *window.Widget) {
 
-	var time = (uint32)(smoke.widget.WidgetGetLastTime())
+	var lastTime = smoke.widget.WidgetGetLastTime()
 
-	diffuse(smoke, time/30, smoke.bb[0].u, smoke.bb[1].u)
-	diffuse(smoke, time/30, smoke.bb[0].v, smoke.bb[1].v)
-	project(smoke, time/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[0].u, smoke.bb[0].v)
-	advect(smoke, time/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].u, smoke.bb[0].u)
-	advect(smoke, time/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].v, smoke.bb[0].v)
-	project(smoke, time/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].u, smoke.bb[1].v)
-	diffuse(smoke, time/30, smoke.bb[0].d, smoke.bb[1].d)
-	advect(smoke, time/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].d, smoke.bb[0].d)
+	diffuse(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[1].u)
+	diffuse(smoke, lastTime/30, smoke.bb[0].v, smoke.bb[1].v)
+	project(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[0].u, smoke.bb[0].v)
+	advect(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].u, smoke.bb[0].u)
+	advect(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].v, smoke.bb[0].v)
+	project(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].u, smoke.bb[1].v)
+	diffuse(smoke, lastTime/30, smoke.bb[0].d, smoke.bb[1].d)
+	advect(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].d, smoke.bb[0].d)
 
 	var surface = smoke.window.WindowGetSurface()
 
 	if surface != nil {
 
 		render(smoke, surface)
-
+		surface.Destroy()
 	}
-
-	surface.Destroy()
 
 	smoke.widget.WidgetScheduleRedraw()
 }
-func smoke_motion_handler(smoke *smoke, x float32, y float32) {
+func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 	var i0, i1, j0, j1 float32
 	var k, i, j int
 	var d float32 = 5
@@ -236,8 +236,8 @@ func smoke_motion_handler(smoke *smoke, x float32, y float32) {
 	for i = int(i0); i < int(i1); i++ {
 		for j = int(j0); j < int(j1); j++ {
 			k = j*int(smoke.width) + i
-			smoke.bb[0].u[k] += float32(256 - (int(rand.Int()) & 512))
-			smoke.bb[0].v[k] += float32(256 - (int(rand.Int()) & 512))
+			smoke.bb[0].u[k] += float32(256 - (rand.Int() & 512))
+			smoke.bb[0].v[k] += float32(256 - (rand.Int() & 512))
 			smoke.bb[0].d[k] += float32(1)
 		}
 	}
@@ -247,34 +247,86 @@ func (*smoke) Enter(widget *window.Widget, input *window.Input, x float32, y flo
 }
 func (*smoke) Leave(widget *window.Widget, input *window.Input) {
 }
-func (s *smoke) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
 
-	smoke_motion_handler(s, x, y)
+func (smoke *smoke) Motion(
+	widget *window.Widget,
+	input *window.Input,
+	time uint32,
+	x float32,
+	y float32,
+) int {
 
-	return window.CURSOR_HAND1
-}
-func (*smoke) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
-}
-func (*smoke) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
-}
-func (*smoke) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
-}
-func (s *smoke) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+	smokeMotionHandler(smoke, x, y)
 
-	smoke_motion_handler(s, x, y)
+	return window.CursorHand1
+}
+
+func (*smoke) Button(
+	widget *window.Widget,
+	input *window.Input,
+	time uint32,
+	button uint32,
+	state wl.PointerButtonState,
+	data window.WidgetHandler,
+) {
+}
+
+func (*smoke) TouchUp(
+	widget *window.Widget,
+	input *window.Input,
+	serial uint32,
+	time uint32,
+	id int32,
+) {
+}
+
+func (*smoke) TouchDown(
+	widget *window.Widget,
+	input *window.Input,
+	serial uint32,
+	time uint32,
+	id int32,
+	x float32,
+	y float32,
+) {
+}
+
+func (smoke *smoke) TouchMotion(
+	widget *window.Widget,
+	input *window.Input,
+	time uint32,
+	id int32,
+	x float32,
+	y float32,
+) {
+
+	smokeMotionHandler(smoke, x, y)
 
 }
 func (*smoke) TouchFrame(widget *window.Widget, input *window.Input) {
 }
 func (*smoke) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
-func (*smoke) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
+
+func (*smoke) Axis(
+	widget *window.Widget,
+	input *window.Input,
+	time uint32,
+	axis uint32,
+	value wl.Fixed,
+) {
 }
 func (*smoke) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
 }
 func (*smoke) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
 }
-func (*smoke) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+
+func (*smoke) AxisDiscrete(
+	widget *window.Widget,
+	input *window.Input,
+	axis uint32,
+	discrete int32,
+) {
 }
 func (*smoke) PointerFrame(widget *window.Widget, input *window.Input) {
 }
@@ -297,7 +349,7 @@ func main() {
 	smoke.widget = smoke.window.AddWidget(&smoke)
 
 	smoke.window.SetTitle("smoke")
-	smoke.window.SetBufferType(window.WINDOW_BUFFER_TYPE_SHM)
+	smoke.window.SetBufferType(window.WindowBufferTypeShm)
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	smoke.current = 0

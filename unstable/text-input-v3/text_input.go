@@ -605,7 +605,8 @@ func (i *ZwpTextInputV3) RemoveDeleteSurroundingTextHandler(h ZwpTextInputV3Dele
 
 	for j, e := range i.deleteSurroundingTextHandlers {
 		if e == h {
-			i.deleteSurroundingTextHandlers = append(i.deleteSurroundingTextHandlers[:j], i.deleteSurroundingTextHandlers[j+1:]...)
+			i.deleteSurroundingTextHandlers = append(i.deleteSurroundingTextHandlers[:j],
+				i.deleteSurroundingTextHandlers[j+1:]...)
 			break
 		}
 	}

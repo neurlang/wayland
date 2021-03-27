@@ -34,7 +34,7 @@ type cursorTheme struct {
 }
 
 func load(name string, searchPaths []string) *cursorTheme {
-	paths := []string{}
+	var paths []string
 
 	for _, p := range searchPaths {
 		p = path.Join(p, name)
@@ -64,7 +64,11 @@ func load(name string, searchPaths []string) *cursorTheme {
 	}
 }
 
-func (c *cursorTheme) loadIcon(iconName string, searchPaths []string, walkedThemes map[string]struct{}) string {
+func (c *cursorTheme) loadIcon(
+	iconName string,
+	searchPaths []string,
+	walkedThemes map[string]struct{},
+) string {
 	for _, p := range c.paths {
 		pdir, _ := path.Split(p)
 		iconPath := path.Join(pdir, "cursors", iconName)
@@ -99,7 +103,7 @@ func (c *cursorTheme) loadIcon(iconName string, searchPaths []string, walkedThem
 }
 
 func themeSearchPaths() []string {
-	xcursorPaths := []string{}
+	var xcursorPaths []string
 
 	xcursorPathEnv := os.Getenv("XCURSOR_PATH")
 	if xcursorPathEnv == "" {
@@ -129,7 +133,12 @@ func themeSearchPaths() []string {
 		xcursorPaths = append(xcursorPaths, xdgDataHome...)
 		xcursorPaths = append(xcursorPaths, "~/.icons")
 		xcursorPaths = append(xcursorPaths, xdgDataDirs...)
-		xcursorPaths = append(xcursorPaths, "/usr/share/pixmaps", "~/.cursors", "/usr/share/cursors/xorg-x11")
+		xcursorPaths = append(
+			xcursorPaths,
+			"/usr/share/pixmaps",
+			"~/.cursors",
+			"/usr/share/cursors/xorg-x11",
+		)
 	} else {
 		xcursorPaths = strings.Split(xcursorPathEnv, ":")
 	}

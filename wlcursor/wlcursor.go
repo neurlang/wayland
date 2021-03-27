@@ -4,7 +4,7 @@ package wlcursor
 import (
 	"fmt"
 	sys "github.com/neurlang/wayland/os"
-	wl "github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wl"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -77,7 +77,7 @@ func LoadThemeFromName(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 		return nil, err
 	}
 
-	pool, err := shm.CreatePool(uintptr(file.Fd()), initialPoolSize)
+	pool, err := shm.CreatePool(file.Fd(), initialPoolSize)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,8 @@ func (t *Theme) Destroy() (err error) {
 
 	err = t.Pool.Destroy()
 	if err != nil {
-		return fmt.Errorf("error when destroying theme: %w: %w", err, t.File.Close())
+		t.File.Close()
+		return fmt.Errorf("error when destroying theme: %w", err)
 	}
 	err = t.File.Close()
 	return err
@@ -209,7 +210,7 @@ func nearestImages(size uint32, images []xcursor.Image) []xcursor.Image {
 
 	nearestImage := images[index]
 
-	nImages := []xcursor.Image{}
+	var nImages []xcursor.Image
 
 	for _, image := range images {
 		if image.Width == nearestImage.Width && image.Height == nearestImage.Height {
@@ -311,6 +312,12 @@ func (b *ImageBuffer) Destroy() error {
 	return b.buffer.Destroy()
 }
 
-func PointerSetCursor(p *wl.Pointer, serial uint32, pointer_surface *wl.Surface, hotspotX int32, hotspotY int32) {
-	p.SetCursor(serial, pointer_surface, hotspotX, hotspotY)
+func PointerSetCursor(
+	p *wl.Pointer,
+	serial uint32,
+	pointerSurface *wl.Surface,
+	hotspotX int32,
+	hotspotY int32,
+) {
+	_ = p.SetCursor(serial, pointerSurface, hotspotX, hotspotY)
 }

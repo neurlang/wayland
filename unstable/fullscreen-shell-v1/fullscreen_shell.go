@@ -195,7 +195,8 @@ func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.Surface, method ui
 // size or the surface size.  In either case, the surface will fill the
 // output.
 //
-func (i *ZwpFullscreenShellV1) PresentSurfaceForMode(surface *client.Surface, output *client.Output, framerate int32) (*ZwpFullscreenShellModeFeedbackV1, error) {
+func (i *ZwpFullscreenShellV1) PresentSurfaceForMode(surface *client.Surface, output *client.Output,
+	framerate int32) (*ZwpFullscreenShellModeFeedbackV1, error) {
 	feedback := NewZwpFullscreenShellModeFeedbackV1(i.Context())
 	err := i.Context().SendRequest(i, 2, surface, output, framerate, feedback)
 	return feedback, err

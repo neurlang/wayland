@@ -574,7 +574,8 @@ const (
 	ZwpLinuxBufferParamsV1ErrorInvalidDimensions = 5
 	// ZwpLinuxBufferParamsV1ErrorOutOfBounds : offset + stride * height goes out of dmabuf bounds
 	ZwpLinuxBufferParamsV1ErrorOutOfBounds = 6
-	// ZwpLinuxBufferParamsV1ErrorInvalidWlBuffer : invalid wl_buffer resulted from importing dmabufs via the create_immed request on given buffer_params
+	// ZwpLinuxBufferParamsV1ErrorInvalidWlBuffer : invalid wl_buffer resulted from importing dmabufs via the
+	// create_immed request on given buffer_params
 	ZwpLinuxBufferParamsV1ErrorInvalidWlBuffer = 7
 )
 

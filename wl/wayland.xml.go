@@ -205,7 +205,9 @@ func (p *Registry) RemoveGlobalRemoveHandler(h RegistryGlobalRemoveHandler) {
 
 	for i, e := range p.globalRemoveHandlers {
 		if e == h {
-			p.globalRemoveHandlers = append(p.globalRemoveHandlers[:i], p.globalRemoveHandlers[i+1:]...)
+			p.globalRemoveHandlers = append(
+				p.globalRemoveHandlers[:i],
+				p.globalRemoveHandlers[i+1:]...)
 			break
 		}
 	}
@@ -376,7 +378,13 @@ func NewShmPool(ctx *Context) *ShmPool {
 // so it is valid to destroy the pool immediately after creating
 // a buffer from it.
 //
-func (p *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format uint32) (*Buffer, error) {
+func (p *ShmPool) CreateBuffer(
+	offset int32,
+	width int32,
+	height int32,
+	stride int32,
+	format uint32,
+) (*Buffer, error) {
 	ret := NewBuffer(p.Context())
 	return ret, p.Context().SendRequest(p, 0, Proxy(ret), offset, width, height, stride, format)
 }
@@ -704,7 +712,9 @@ func (p *DataOffer) RemoveSourceActionsHandler(h DataOfferSourceActionsHandler) 
 
 	for i, e := range p.sourceActionsHandlers {
 		if e == h {
-			p.sourceActionsHandlers = append(p.sourceActionsHandlers[:i], p.sourceActionsHandlers[i+1:]...)
+			p.sourceActionsHandlers = append(
+				p.sourceActionsHandlers[:i],
+				p.sourceActionsHandlers[i+1:]...)
 			break
 		}
 	}
@@ -805,8 +815,8 @@ func NewDataOffer(ctx *Context) *DataOffer {
 // wl_data_source.cancelled. Clients may still use this event in
 // conjunction with wl_data_source.action for feedback.
 //
-func (p *DataOffer) Accept(serial uint32, mime_type string) error {
-	return p.Context().SendRequest(p, 0, serial, mime_type)
+func (p *DataOffer) Accept(serial uint32, mimeType string) error {
+	return p.Context().SendRequest(p, 0, serial, mimeType)
 }
 
 // Receive will request that the data is transferred.
@@ -828,8 +838,8 @@ func (p *DataOffer) Accept(serial uint32, mime_type string) error {
 // clients may preemptively fetch data or examine it more closely to
 // determine acceptance.
 //
-func (p *DataOffer) Receive(mime_type string, fd uintptr) error {
-	return p.Context().SendRequest(p, 1, mime_type, fd)
+func (p *DataOffer) Receive(mimeType string, fd uintptr) error {
+	return p.Context().SendRequest(p, 1, mimeType, fd)
 }
 
 // Destroy will destroy data offer.
@@ -898,8 +908,8 @@ func (p *DataOffer) Finish() error {
 // This request can only be made on drag-and-drop offers, a protocol error
 // will be raised otherwise.
 //
-func (p *DataOffer) SetActions(dnd_actions uint32, preferred_action uint32) error {
-	return p.Context().SendRequest(p, 4, dnd_actions, preferred_action)
+func (p *DataOffer) SetActions(dndActions uint32, preferredAction uint32) error {
+	return p.Context().SendRequest(p, 4, dndActions, preferredAction)
 }
 
 const (
@@ -1015,7 +1025,9 @@ func (p *DataSource) RemoveDndDropPerformedHandler(h DataSourceDndDropPerformedH
 
 	for i, e := range p.dndDropPerformedHandlers {
 		if e == h {
-			p.dndDropPerformedHandlers = append(p.dndDropPerformedHandlers[:i], p.dndDropPerformedHandlers[i+1:]...)
+			p.dndDropPerformedHandlers = append(
+				p.dndDropPerformedHandlers[:i],
+				p.dndDropPerformedHandlers[i+1:]...)
 			break
 		}
 	}
@@ -1042,7 +1054,9 @@ func (p *DataSource) RemoveDndFinishedHandler(h DataSourceDndFinishedHandler) {
 
 	for i, e := range p.dndFinishedHandlers {
 		if e == h {
-			p.dndFinishedHandlers = append(p.dndFinishedHandlers[:i], p.dndFinishedHandlers[i+1:]...)
+			p.dndFinishedHandlers = append(
+				p.dndFinishedHandlers[:i],
+				p.dndFinishedHandlers[i+1:]...)
 			break
 		}
 	}
@@ -1163,8 +1177,8 @@ func NewDataSource(ctx *Context) *DataSource {
 // advertised to targets.  Can be called several times to offer
 // multiple types.
 //
-func (p *DataSource) Offer(mime_type string) error {
-	return p.Context().SendRequest(p, 0, mime_type)
+func (p *DataSource) Offer(mimeType string) error {
+	return p.Context().SendRequest(p, 0, mimeType)
 }
 
 // Destroy will destroy the data source.
@@ -1193,8 +1207,8 @@ func (p *DataSource) Destroy() error {
 // wl_data_device.start_drag. Attempting to use the source other than
 // for drag-and-drop will raise a protocol error.
 //
-func (p *DataSource) SetActions(dnd_actions uint32) error {
-	return p.Context().SendRequest(p, 2, dnd_actions)
+func (p *DataSource) SetActions(dndActions uint32) error {
+	return p.Context().SendRequest(p, 2, dndActions)
 }
 
 const (
@@ -1492,7 +1506,12 @@ func NewDataDevice(ctx *Context) *DataDevice {
 // as an icon ends, the current and pending input regions become
 // undefined, and the wl_surface is unmapped.
 //
-func (p *DataDevice) StartDrag(source *DataSource, origin *Surface, icon *Surface, serial uint32) error {
+func (p *DataDevice) StartDrag(
+	source *DataSource,
+	origin *Surface,
+	icon *Surface,
+	serial uint32,
+) error {
 	return p.Context().SendRequest(p, 0, source, origin, icon, serial)
 }
 
@@ -1847,7 +1866,14 @@ func (p *ShellSurface) SetFullscreen(method uint32, framerate uint32, output *Ou
 // corner of the surface relative to the upper left corner of the
 // parent surface, in surface-local coordinates.
 //
-func (p *ShellSurface) SetPopup(seat *Seat, serial uint32, parent *Surface, x int32, y int32, flags uint32) error {
+func (p *ShellSurface) SetPopup(
+	seat *Seat,
+	serial uint32,
+	parent *Surface,
+	x int32,
+	y int32,
+	flags uint32,
+) error {
 	return p.Context().SendRequest(p, 6, seat, serial, parent, x, y, flags)
 }
 
@@ -2381,7 +2407,9 @@ func (p *Seat) RemoveCapabilitiesHandler(h SeatCapabilitiesHandler) {
 
 	for i, e := range p.capabilitiesHandlers {
 		if e == h {
-			p.capabilitiesHandlers = append(p.capabilitiesHandlers[:i], p.capabilitiesHandlers[i+1:]...)
+			p.capabilitiesHandlers = append(
+				p.capabilitiesHandlers[:i],
+				p.capabilitiesHandlers[i+1:]...)
 			break
 		}
 	}
@@ -2786,7 +2814,9 @@ func (p *Pointer) RemoveAxisDiscreteHandler(h PointerAxisDiscreteHandler) {
 
 	for i, e := range p.axisDiscreteHandlers {
 		if e == h {
-			p.axisDiscreteHandlers = append(p.axisDiscreteHandlers[:i], p.axisDiscreteHandlers[i+1:]...)
+			p.axisDiscreteHandlers = append(
+				p.axisDiscreteHandlers[:i],
+				p.axisDiscreteHandlers[i+1:]...)
 			break
 		}
 	}
@@ -2956,8 +2986,13 @@ func NewPointer(ctx *Context) *Pointer {
 // cursor ends, the current and pending input regions become
 // undefined, and the wl_surface is unmapped.
 //
-func (p *Pointer) SetCursor(serial uint32, surface *Surface, hotspot_x int32, hotspot_y int32) error {
-	return p.Context().SendRequest(p, 0, serial, surface, hotspot_x, hotspot_y)
+func (p *Pointer) SetCursor(
+	serial uint32,
+	surface *Surface,
+	hotspotX int32,
+	hotspotY int32,
+) error {
+	return p.Context().SendRequest(p, 0, serial, surface, hotspotX, hotspotY)
 }
 
 // Release will release the pointer object.
@@ -3489,7 +3524,9 @@ func (p *Touch) RemoveOrientationHandler(h TouchOrientationHandler) {
 
 	for i, e := range p.orientationHandlers {
 		if e == h {
-			p.orientationHandlers = append(p.orientationHandlers[:i], p.orientationHandlers[i+1:]...)
+			p.orientationHandlers = append(
+				p.orientationHandlers[:i],
+				p.orientationHandlers[i+1:]...)
 			break
 		}
 	}

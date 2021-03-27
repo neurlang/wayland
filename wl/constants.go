@@ -1,34 +1,34 @@
 package wl
 
 // Version since when POINTER_ENTER is used
-const POINTER_ENTER_SINCE_VERSION = 1
+const PointerEnterSinceVersion = 1
 
 // Version since when POINTER_LEAVE is used
-const POINTER_LEAVE_SINCE_VERSION = 1
+const PointerLeaveSinceVersion = 1
 
 // Version since when POINTER_MOTION is used
-const POINTER_MOTION_SINCE_VERSION = 1
+const PointerMotionSinceVersion = 1
 
 // Version since when POINTER_BUTTON is used
-const POINTER_BUTTON_SINCE_VERSION = 1
+const PointerButtonSinceVersion = 1
 
 // Version since when POINTER_AXIS is used
-const POINTER_AXIS_SINCE_VERSION = 1
+const PointerAxisSinceVersion = 1
 
 // Version since when POINTER_FRAME is used
-const POINTER_FRAME_SINCE_VERSION = 5
+const PointerFrameSinceVersion = 5
 
 // Version since when POINTER_AXIS_SOURCE is used
-const POINTER_AXIS_SOURCE_SINCE_VERSION = 5
+const PointerAxisSourceSinceVersion = 5
 
 // Version since when POINTER_AXIS_STOP is used
-const POINTER_AXIS_STOP_SINCE_VERSION = 5
+const PointerAxisStopSinceVersion = 5
 
 // Version since when POINTER_AXIS_DISCRETE is used
-const POINTER_AXIS_DISCRETE_SINCE_VERSION = 5
+const PointerAxisDiscreteSinceVersion = 5
 
 // Version since when POINTER_SET_CURSOR is used
-const POINTER_SET_CURSOR_SINCE_VERSION = 1
+const PointerSetCursorSinceVersion = 1
 
 // Version since when POINTER_RELEASE is used
-const POINTER_RELEASE_SINCE_VERSION = 3
+const PointerReleaseSinceVersion = 3

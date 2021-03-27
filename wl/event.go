@@ -3,8 +3,8 @@ package wl
 import (
 	"bytes"
 	"errors"
+	"github.com/neurlang/wayland/os"
 	"github.com/yalue/native_endian"
-	"syscall"
 )
 
 // Event is the Wayland event (e.g. a response) from the compositor
@@ -12,7 +12,7 @@ type Event struct {
 	Pid    ProxyId
 	Opcode uint32
 	Data   []byte
-	scms   []syscall.SocketControlMessage
+	scms   []os.SocketControlMessage
 	off    int
 	err    error
 }
@@ -39,7 +39,8 @@ type Event struct {
 		ev.Fd = p.Context().NextFD()
 */
 
-// Error unable to read message header is returned when it is not possible to read enough bytes from the unix socket, use InternalError to get the underlying cause
+// Error unable to read message header is returned when it is not possible to read enough bytes from the unix socket,
+// use InternalError to get the underlying cause
 var ErrReadHeader = errors.New("unable to read message header")
 
 // Error size of message header is wrong is returned when the returned size of message heaer is not 8 bytes
@@ -48,20 +49,22 @@ var ErrSizeOfHeaderWrong = errors.New("size of message header is wrong")
 // Error unsufficient control msg buffer is returned when the oobn is bigger than the control message buffer
 var ErrControlMsgBuffer = errors.New("unsufficient control msg buffer")
 
-// Error control message parse error is returned when the unix socket control message cannot be parsed, use InternalError to get the underlying cause
+// Error control message parse error is returned when the unix socket control message cannot be parsed, use
+// InternalError to get the underlying cause
 var ErrControlMsgParseError = errors.New("control message parse error")
 
 // Error invalid message size is returned when the payload message size read from the unix socket is incorrect
 var ErrInvalidMsgSize = errors.New("invalid message size")
 
-// Error cannot read message is returned when the payload message cannot be read, use InternalError to get the underlying cause
+// Error cannot read message is returned when the payload message cannot be read, use InternalError to get the
+// underlying cause
 var ErrReadPayload = errors.New("cannot read message")
 
-func (c *Context) readEvent() (*Event, error) {
+func (ctx *Context) readEvent() (*Event, error) {
 	buf := bytePool.Take(8)
 	control := bytePool.Take(24)
 
-	n, oobn, _, _, err := c.conn.ReadMsgUnix(buf[:], control)
+	n, oobn, _, _, err := ctx.conn.ReadMsgUnix(buf[:], control)
 	if err != nil {
 		return nil, combinedError{ErrReadHeader, err}
 	}
@@ -73,7 +76,7 @@ func (c *Context) readEvent() (*Event, error) {
 		if oobn > len(control) {
 			return nil, ErrControlMsgBuffer
 		}
-		scms, err := syscall.ParseSocketControlMessage(control)
+		scms, err := os.ParseSocketControlMessage(control)
 		if err != nil {
 			return nil, combinedError{ErrControlMsgParseError, err}
 		}
@@ -86,7 +89,7 @@ func (c *Context) readEvent() (*Event, error) {
 
 	// subtract 8 bytes from header
 	data := bytePool.Take(int(size) - 8)
-	n, err = c.conn.Read(data)
+	n, err = ctx.conn.Read(data)
 	if err != nil {
 		return nil, combinedError{ErrReadPayload, err}
 	}
@@ -111,7 +114,7 @@ func (ev *Event) FD() (uintptr, error) {
 	if ev.scms == nil {
 		return 0, ErrNoControlMsgs
 	}
-	fds, err := syscall.ParseUnixRights(&ev.scms[0])
+	fds, err := os.ParseUnixRights(&ev.scms[0])
 	if err != nil {
 		return 0, ErrUnableToParseUnixRights
 	}
