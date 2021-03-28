@@ -420,7 +420,7 @@ func (b bufferReleaser) HandleBufferRelease(e wl.BufferReleaseEvent) {
 }
 
 func (app *appState) HandleSeatCapabilities(e wl.SeatCapabilitiesEvent) {
-	havePointer := (e.Capabilities * wl.SeatCapabilityPointer) != 0
+	havePointer := (e.Capabilities & wl.SeatCapabilityPointer) != 0
 
 	if havePointer && app.pointer == nil {
 		app.attachPointer()
@@ -428,7 +428,7 @@ func (app *appState) HandleSeatCapabilities(e wl.SeatCapabilitiesEvent) {
 		app.releasePointer()
 	}
 
-	haveKeyboard := (e.Capabilities * wl.SeatCapabilityKeyboard) != 0
+	haveKeyboard := (e.Capabilities & wl.SeatCapabilityKeyboard) != 0
 
 	if haveKeyboard && app.keyboard == nil {
 		app.attachKeyboard()
