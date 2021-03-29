@@ -5,6 +5,54 @@ import (
 	"log"
 )
 
+const (
+	keyboardEventEnter = 1 << 8
+	keyboardEventLeave = 1 << 9
+)
+
+func (app *appState) Focused() bool {
+	return (app.pointerEvent.eventMask & keyboardEventLeave) != 0
+}
+
+func (app *appState) redecorate() {
+	if app.decoration != nil {
+
+		app.decoration.clientSideDecoration(app, true)
+
+		// Draw frame
+		buffer := app.drawFrame()
+
+		// Attach new frame to the surface
+		if err := app.surface.Attach(buffer, 0, 0); err != nil {
+			log.Fatalf("unable to attach buffer to surface: %v", err)
+		}
+
+		// Damage the surface
+		if err := app.surface.DamageBuffer(0, 0, app.width, app.height); err != nil {
+			log.Fatalf("unable to damage buffer: %v", err)
+		}
+
+		// Commit the surface state
+		if err := app.surface.Commit(); err != nil {
+			log.Fatalf("unable to commit surface state: %v", err)
+		}
+	}
+}
+
+func (app *appState) HandleKeyboardEnter(wl.KeyboardEnterEvent) {
+	app.pointerEvent.eventMask &= ^keyboardEventLeave
+	app.pointerEvent.eventMask |= keyboardEventEnter
+
+	app.redecorate()
+}
+
+func (app *appState) HandleKeyboardLeave(wl.KeyboardLeaveEvent) {
+	app.pointerEvent.eventMask &= ^keyboardEventEnter
+	app.pointerEvent.eventMask |= keyboardEventLeave
+
+	app.redecorate()
+
+}
 func (app *appState) attachKeyboard() {
 	keyboard, err := app.seat.GetKeyboard()
 	if err != nil {
@@ -13,6 +61,8 @@ func (app *appState) attachKeyboard() {
 	app.keyboard = keyboard
 
 	keyboard.AddKeyHandler(app)
+	keyboard.AddEnterHandler(app)
+	keyboard.AddLeaveHandler(app)
 
 	log.Print("keyboard interface registered")
 }

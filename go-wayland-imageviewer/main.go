@@ -42,6 +42,8 @@ type appState struct {
 	cursorTheme   *wlcursor.Theme
 	cursors       map[string]*cursorData
 	currentCursor string
+
+	decoration *Decoration
 }
 
 func main() {
@@ -111,6 +113,33 @@ func main() {
 	app.Context().Close()
 }
 
+
+// for csd
+func (app *appState) Stride() int {
+	return app.frame.Stride
+}
+func (app *appState) Pix() *[]uint8 {
+	return &app.frame.Pix
+}
+func (app *appState) Width() int {
+	return int(app.width)
+}
+func (app *appState) FrameImage() image.Image {
+	return app.frame
+}
+func (app *appState) SetImage(to *image.RGBA) {
+	app.frame = to
+}
+func (app *appState) Height() int {
+	return int(app.height)
+}
+func (app *appState) IncreaseHeight(by int) {
+	app.height += int32(by)
+	app.frame.Rect.Max.Y += by
+}
+
+
+
 func (app *appState) loadImage(fileName string) {
 
 	const (
@@ -141,6 +170,11 @@ func (app *appState) loadImage(fileName string) {
 
 	app.width = int32(frameRect.Dx())
 	app.height = int32(frameRect.Dy())
+
+	// TODO: enable, when we're ready for csd
+	//app.decoration = new(Decoration)
+	//app.decoration.Title = fileName
+	//app.decoration.clientSideDecoration(app, false)
 }
 
 func run(app *appState) {
@@ -290,6 +324,19 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 		return
 	}
 
+	if app.decoration != nil {
+
+		height -= 2*Border + Titlebar
+
+		if width <= 2*Border {
+			width = 2 * Border
+		}
+		if height <= 1 {
+			height = 1
+		}
+
+	}
+
 	if width == app.width && height == app.height {
 		// No need to resize
 		return
@@ -304,6 +351,11 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 	// Update app size
 	app.width = width
 	app.height = height
+
+	// perform client side decoration
+	if app.decoration != nil {
+		app.decoration.clientSideDecoration(app, false)
+	}
 }
 
 func (app *appState) loadCursors() {
@@ -388,17 +440,15 @@ func (app *appState) drawFrame() *wl.Buffer {
 	if err := pool.Destroy(); err != nil {
 		log.Printf("unable to destroy shm pool: %v", err)
 	}
+	pool.Unregister()
+	pool = nil
 	if err := file.Close(); err != nil {
 		log.Printf("unable to close file: %v", err)
 	}
 
 	// Convert RGBA to BGRA
-	imgData := make([]byte, len(app.frame.Pix))
-	copy(imgData, app.frame.Pix)
-	swizzle.BGRA(imgData)
-
-	// Copy image to buffer
-	copy(data, imgData)
+	copy(data, app.frame.Pix)
+	swizzle.BGRA(data)
 
 	if err := sys.Munmap(data); err != nil {
 		log.Printf("unable to delete mapping: %v", err)
@@ -417,6 +467,7 @@ func (b bufferReleaser) HandleBufferRelease(e wl.BufferReleaseEvent) {
 	if err := b.buf.Destroy(); err != nil {
 		log.Printf("unable to destroy buffer: %v", err)
 	}
+	b.buf.Unregister()
 }
 
 func (app *appState) HandleSeatCapabilities(e wl.SeatCapabilitiesEvent) {

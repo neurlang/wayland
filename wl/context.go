@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	//"reflect"
 )
 
 func init() {
@@ -157,6 +158,21 @@ func (ctx *Context) run(cb *Callback) error {
 	return nil
 }
 
-func (ctx *Context) Close() error {
-	return ctx.conn.Close()
+func (ctx *Context) Close() (err error) {
+	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
+	err = ctx.conn.Close()
+	ctx.conn = nil
+	ctx.sockFD = -1
+	/*
+		for i, v := range ctx.objects {
+			print("close-time garbage: ")
+			print(i)
+			print(": ")
+			print(reflect.TypeOf(v).String())
+			print(": ")
+			println(v.Name())
+		}
+	*/
+	return err
 }

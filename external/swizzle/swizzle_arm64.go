@@ -12,4 +12,4 @@ const useBGRA4 = false
 
 func bgra32([]byte)
 func bgra16([]byte) { return }
-func bgra4([]byte) { return }
+func bgra4([]byte)  { return }

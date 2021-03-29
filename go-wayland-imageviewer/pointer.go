@@ -73,12 +73,14 @@ func (app *appState) releasePointer() {
 	if err := app.pointer.Release(); err != nil {
 		log.Println("unable to release pointer interface")
 	}
+	app.pointer.Unregister()
 	app.pointer = nil
 
 	log.Print("pointer interface released")
 }
 
 func (app *appState) HandlePointerEnter(e wl.PointerEnterEvent) {
+	app.pointerEvent.eventMask &= ^pointerEventLeave
 	app.pointerEvent.eventMask |= pointerEventEnter
 	app.pointerEvent.serial = e.Serial
 	app.pointerEvent.surfaceX = uint32(e.SurfaceX)
@@ -86,6 +88,7 @@ func (app *appState) HandlePointerEnter(e wl.PointerEnterEvent) {
 }
 
 func (app *appState) HandlePointerLeave(e wl.PointerLeaveEvent) {
+	app.pointerEvent.eventMask &= ^pointerEventEnter
 	app.pointerEvent.eventMask |= pointerEventLeave
 	app.pointerEvent.serial = e.Serial
 }
@@ -156,7 +159,7 @@ var cursorMap = map[uint32]string{
 func (app *appState) pointerFrameMotionEvent(e pointerEvent) {
 	log.Printf("motion %v, %v", e.surfaceX, e.surfaceY)
 
-	edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
+	edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, Border)
 	cursorName, ok := cursorMap[edge]
 	if ok && cursorName != app.currentCursor {
 		app.setCursor(e.serial, cursorName)
@@ -214,23 +217,28 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	e := app.pointerEvent
 
 	if (e.eventMask & pointerEventEnter) != 0 {
+		app.pointerEvent.eventMask &= ^pointerEventEnter
 		log.Printf("entered %v, %v", e.surfaceX, e.surfaceY)
 		app.setCursor(e.serial, cursor.LeftPtr)
 	}
 
 	if (e.eventMask & pointerEventLeave) != 0 {
+		app.pointerEvent.eventMask &= ^pointerEventLeave
 		log.Print("leave")
 	}
 	if (e.eventMask & pointerEventMotion) != 0 {
+		app.pointerEvent.eventMask &= ^pointerEventMotion
 		app.pointerFrameMotionEvent(e)
 	}
 	if (e.eventMask & pointerEventButton) != 0 {
+		app.pointerEvent.eventMask &= ^pointerEventButton
 		app.pointerFrameButtonEvent(e)
 	}
 
 	const axisEvents = pointerEventAxis | pointerEventAxisSource | pointerEventAxisStop | pointerEventAxisDiscrete
 
 	if (e.eventMask & axisEvents) != 0 {
+		app.pointerEvent.eventMask &= ^axisEvents
 		app.pointerFrameAxisEvent(e)
 	}
 }
@@ -296,5 +304,5 @@ func (app *appState) setCursor(serial uint32, cursorName string) {
 		log.Print("unable to set cursor")
 	}
 
-	app.currentCursor = cursorName
+	//app.currentCursor = cursorName
 }

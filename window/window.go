@@ -450,6 +450,9 @@ type Input struct {
 	dragEnterSerial uint32
 
 	xkb struct {
+		keymap *struct{}
+		state  *struct{}
+
 		controlMask xkbModMaskT
 		altMask     xkbModMaskT
 		shiftMask   xkbModMaskT
@@ -707,30 +710,181 @@ func (i *Input) HandleSeatName(ev wl.SeatNameEvent) {
 	i.SeatName(i.seat, ev.Name)
 }
 
-func (i *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
+func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
-	if ((caps & wl.SeatCapabilityPointer) != 0) && (i.pointer == nil) {
+	if ((caps & wl.SeatCapabilityPointer) != 0) && (input.pointer == nil) {
 		var err error
-		i.pointer, err = seat.GetPointer()
+		input.pointer, err = seat.GetPointer()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		wlclient.PointerSetUserData(i.pointer, i)
-		wlclient.PointerAddListener(i.pointer, i)
+		wlclient.PointerSetUserData(input.pointer, input)
+		wlclient.PointerAddListener(input.pointer, input)
 
-	} else if ((caps & wl.SeatCapabilityPointer) == 0) && (nil != i.pointer) {
-		if i.seatVersion >= wl.PointerReleaseSinceVersion {
-			_ = i.pointer.Release()
+	} else if ((caps & wl.SeatCapabilityPointer) == 0) && (nil != input.pointer) {
+		if input.seatVersion >= wl.PointerReleaseSinceVersion {
+			_ = input.pointer.Release()
 		} else {
-			wlclient.PointerDestroy(i.pointer)
-			i.pointer = nil
+			wlclient.PointerDestroy(input.pointer)
 		}
+		input.pointer = nil
 	}
 
-	if i.Display.seatHandler != nil {
-		i.Display.seatHandler.Capabilities(i, seat, caps)
+	if ((caps & wl.SeatCapabilityKeyboard) != 0) && input.keyboard == nil {
+		var err error
+		input.keyboard, err = seat.GetKeyboard()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		wlclient.KeyboardSetUserData(input.keyboard, input)
+		wlclient.KeyboardAddListener(input.keyboard, input)
+	} else if 0 == (caps&wl.SeatCapabilityKeyboard) && input.keyboard != nil {
+		if input.seatVersion >= wl.KeyboardReleaseSinceVersion {
+			_ = input.keyboard.Release()
+		} else {
+			wlclient.KeyboardDestroy(input.keyboard)
+		}
+		input.keyboard = nil
 	}
+
+	if ((caps & wl.SeatCapabilityTouch) != 0) && input.touch == nil {
+		var err error
+		input.touch, err = seat.GetTouch()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		wlclient.TouchSetUserData(input.touch, input)
+		wlclient.TouchAddListener(input.touch, input)
+	} else if 0 == (caps&wl.SeatCapabilityTouch) && input.touch != nil {
+		if input.seatVersion >= wl.TouchReleaseSinceVersion {
+			input.touch.Release()
+		} else {
+			wlclient.TouchDestroy(input.touch)
+		}
+		input.touch = nil
+	}
+
+	if input.Display.seatHandler != nil {
+		input.Display.seatHandler.Capabilities(input, seat, caps)
+	}
+
+}
+
+func (input *Input) HandleKeyboardEnter(e wl.KeyboardEnterEvent) {
+	println("ENTER")
+}
+
+func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
+	serial uint32, time uint32, key uint32,
+	state_w uint32) {
+	var window *Window = input.keyboardFocus
+	var state = wl.KeyboardKeyState(state_w)
+
+	input.Display.serial = serial
+	var code = key + 8
+	if window == nil || input.xkb.state == nil {
+		return
+	}
+
+	/* We only use input grabs for pointer events for now, so just
+	 * ignore key presses if a grab is active.  We expand the key
+	 * event delivery mechanism to route events to widgets to
+	 * properly handle key grabs.  In the meantime, this prevents
+	 * key event delivery while a grab is active. */
+	if input.grab != nil && input.grabButton == 0 {
+		return
+	}
+
+	_ = state
+	_ = code
+
+	//TODO:
+	//num_syms = xkb_state_key_get_syms(input.xkb.state, code, &syms);
+	/*
+		sym = XKB_KEY_NoSymbol;
+		if (num_syms == 1) {
+			sym = syms[0];
+		}
+
+
+		if (sym == XKB_KEY_F5 && input.modifiers == MOD_ALT_MASK) {
+			if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+				window_set_maximized(window, !window.maximized);
+			}
+		} else if (sym == XKB_KEY_F11 &&
+			   window.fullscreen_handler &&
+			   state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+			window.fullscreen_handler(window, window.user_data);
+		} else if (sym == XKB_KEY_F4 &&
+			   input.modifiers == MOD_ALT_MASK &&
+			   state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+			window_close(window);
+		} else if (window.key_handler) {
+			if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+				sym = process_key_press(sym, input);
+			}
+
+			(*window.key_handler)(window, input, time, key,
+					       sym, state, window.user_data);
+		}
+
+		if (state == WL_KEYBOARD_KEY_STATE_RELEASED &&
+		    key == input.repeat_key) {
+			toytimer_disarm(&input.repeat_timer);
+		} else if (state == WL_KEYBOARD_KEY_STATE_PRESSED &&
+			   xkb_keymap_key_repeats(input.xkb.keymap, code)) {
+			input.repeat_sym = sym;
+			input.repeat_key = key;
+			input.repeat_time = time;
+			its.it_interval.tv_sec = input.repeat_rate_sec;
+			its.it_interval.tv_nsec = input.repeat_rate_nsec;
+			its.it_value.tv_sec = input.repeat_delay_sec;
+			its.it_value.tv_nsec = input.repeat_delay_nsec;
+			toytimer_arm(&input.repeat_timer, &its);
+		}
+	*/
+}
+
+func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
+	input.keyboard_handle_key(nil, e.Serial, e.Time, e.Key, e.State)
+}
+
+func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
+
+}
+func (input *Input) HandleKeyboardLeave(e wl.KeyboardLeaveEvent) {
+	println("LEAVE")
+}
+func (input *Input) HandleKeyboardModifiers(e wl.KeyboardModifiersEvent) {
+
+}
+func (input *Input) HandleKeyboardRepeatInfo(e wl.KeyboardRepeatInfoEvent) {
+
+}
+func (input *Input) HandleTouchCancel(e wl.TouchCancelEvent) {
+
+}
+
+func (input *Input) HandleTouchDown(e wl.TouchDownEvent) {
+
+}
+
+func (input *Input) HandleTouchFrame(e wl.TouchFrameEvent) {
+
+}
+func (input *Input) HandleTouchMotion(e wl.TouchMotionEvent) {
+
+}
+func (input *Input) HandleTouchOrientation(e wl.TouchOrientationEvent) {
+
+}
+func (input *Input) HandleTouchShape(e wl.TouchShapeEvent) {
+
+}
+func (input *Input) HandleTouchUp(e wl.TouchUpEvent) {
 
 }
 func (i *Input) SeatName(wlSeat *wl.Seat, name string) {

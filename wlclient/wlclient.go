@@ -85,6 +85,52 @@ func RegistryAddListener(r *wl.Registry, data RegistryListener) {
 	r.AddGlobalHandler(data)
 	r.AddGlobalRemoveHandler(data)
 }
+func KeyboardSetUserData(*wl.Keyboard, interface{}) {
+}
+
+type KeyboardListener interface {
+	wl.KeyboardKeymapHandler
+	wl.KeyboardEnterHandler
+	wl.KeyboardLeaveHandler
+	wl.KeyboardKeyHandler
+	wl.KeyboardModifiersHandler
+	wl.KeyboardRepeatInfoHandler
+}
+
+func KeyboardAddListener(kb *wl.Keyboard, l KeyboardListener) {
+	kb.AddKeymapHandler(l)
+	kb.AddEnterHandler(l)
+	kb.AddLeaveHandler(l)
+	kb.AddKeyHandler(l)
+	kb.AddModifiersHandler(l)
+	kb.AddRepeatInfoHandler(l)
+}
+func KeyboardDestroy(*wl.Keyboard) {
+}
+func TouchSetUserData(*wl.Touch, interface{}) {
+}
+
+type TouchListener interface {
+	wl.TouchDownHandler
+	wl.TouchUpHandler
+	wl.TouchMotionHandler
+	wl.TouchFrameHandler
+	wl.TouchCancelHandler
+	wl.TouchShapeHandler
+	wl.TouchOrientationHandler
+}
+
+func TouchAddListener(to *wl.Touch, tl TouchListener) {
+	to.AddDownHandler(tl)
+	to.AddUpHandler(tl)
+	to.AddMotionHandler(tl)
+	to.AddFrameHandler(tl)
+	to.AddCancelHandler(tl)
+	to.AddShapeHandler(tl)
+	to.AddOrientationHandler(tl)
+}
+func TouchDestroy(*wl.Touch) {
+}
 
 type SurfaceEnterLeave struct {
 	surface   *wl.Surface

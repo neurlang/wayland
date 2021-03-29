@@ -4,6 +4,7 @@
 // https://github.com/dkolbly/wl-scanner
 // from: input-method-unstable-v1.xml
 // on 2021-03-28 12:39:56 +0200
+
 package input_method
 
 import (

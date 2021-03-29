@@ -15,12 +15,15 @@ type Proxy interface {
 	SetContext(c *Context)
 	Id() ProxyId
 	SetId(id ProxyId)
+	//Name() string
+	//SetName(name string)
 }
 
 // Base Proxy is a struct that stores Context and ProxyId explicitly
 type BaseProxy struct {
 	id  ProxyId
 	ctx *Context
+	//name string
 }
 
 // BaseProxy implements Id to get ProxyId
@@ -43,10 +46,19 @@ func (p *BaseProxy) SetContext(c *Context) {
 	p.ctx = c
 }
 
+// BaseProxy implements Name
+//func (p *BaseProxy) Name() string {
+//	return p.name
+//}
+
+// BaseProxy implements SetName
+//func (p *BaseProxy) SetName(name string) {
+//	p.name = name
+//}
+
 // BaseProxy Unregister removes this BaseProxy from the map of all Context objects
-func (p *BaseProxy) Unregister(s string) {
-	if p.ctx != nil {
-		// fmt.Println("Removing object", p.id, s)
+func (p *BaseProxy) Unregister() {
+	if p != nil && p.ctx != nil {
 		delete(p.ctx.objects, p.id)
 	}
 }
