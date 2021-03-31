@@ -161,9 +161,12 @@ func (app *appState) pointerFrameMotionEvent(e pointerEvent) {
 
 	edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, Border)
 	cursorName, ok := cursorMap[edge]
-	if ok && cursorName != app.currentCursor {
-		app.setCursor(e.serial, cursorName)
+	if ok {
+		app.trySetCursor(e.serial, cursorName)
+	} else {
+		println("cursor not in map")
 	}
+
 }
 func (app *appState) pointerFrameAxisEvent(e pointerEvent) {
 	for i := 0; i < 2; i++ {
@@ -188,14 +191,49 @@ func (app *appState) pointerFrameAxisEvent(e pointerEvent) {
 	}
 }
 
-func (app *appState) pointerFrameButtonEvent(e pointerEvent) {
-	if e.state == wl.PointerButtonStateReleased {
+func (app *appState) pointerFrameButtonEvent() {
+	e := &app.pointerEvent
+	if wl.PointerButtonState(e.state) == wl.PointerButtonStateReleased {
 		log.Printf("button %d released", e.button)
+		
+		if app.decoration != nil {
+			app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
+			if app.decoration.RightActive == 1 {
+				app.exit = true
+			}
+			
+			if app.decoration.RightActive == 2 {
+				if app.decoration.Maximized {
+				
+					if nil == app.xdgTopLevel.UnsetMaximized() {
+						app.decoration.Maximized = false
+					}
+				} else {
+					if nil == app.xdgTopLevel.SetMaximized() {
+						app.decoration.Maximized = true
+					}
+				}
+			}
+			
+			app.decoration.LeftActive, app.decoration.RightActive = 0, 0
+			
+			app.redecorate()
+		}
+		
 	} else {
 		log.Printf("button %d pressed", e.button)
 
 		switch e.button {
 		case BtnLeft:
+		
+			if app.decoration != nil {
+				app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
+				if app.decoration.LeftActive != 0 || app.decoration.RightActive != 0 {
+					app.redecorate()
+					break
+				}
+			}
+		
 			edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
 			if edge != xdgshell.ToplevelResizeEdgeNone {
 				if err := app.xdgTopLevel.Resize(app.seat, e.serial, edge); err != nil {
@@ -219,7 +257,7 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	if (e.eventMask & pointerEventEnter) != 0 {
 		app.pointerEvent.eventMask &= ^pointerEventEnter
 		log.Printf("entered %v, %v", e.surfaceX, e.surfaceY)
-		app.setCursor(e.serial, cursor.LeftPtr)
+		//app.trySetCursor(e.serial, cursor.LeftPtr)
 	}
 
 	if (e.eventMask & pointerEventLeave) != 0 {
@@ -232,7 +270,7 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	}
 	if (e.eventMask & pointerEventButton) != 0 {
 		app.pointerEvent.eventMask &= ^pointerEventButton
-		app.pointerFrameButtonEvent(e)
+		app.pointerFrameButtonEvent()
 	}
 
 	const axisEvents = pointerEventAxis | pointerEventAxisSource | pointerEventAxisStop | pointerEventAxisDiscrete
@@ -288,7 +326,13 @@ type cursorData struct {
 
 	surface *wl.Surface
 }
-
+func (app *appState) trySetCursor(serial uint32, cursorName string) {
+	//if cursorName != app.currentCursor {
+		print("SERIAL: ")
+		println(serial)
+		app.setCursor(serial, cursorName)
+	//}
+}
 func (app *appState) setCursor(serial uint32, cursorName string) {
 	c, ok := app.cursors[cursorName]
 	if !ok {
@@ -303,6 +347,9 @@ func (app *appState) setCursor(serial uint32, cursorName string) {
 	); err != nil {
 		log.Print("unable to set cursor")
 	}
+	c.surface.Attach(image.GetBuffer(), 0,0)
+	c.surface.Damage(0,0,int32(image.GetWidth()),int32(image.GetHeight()))
+	c.surface.Commit()
 
-	//app.currentCursor = cursorName
+	app.currentCursor = cursorName
 }

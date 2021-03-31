@@ -17,7 +17,15 @@ func (app *appState) Focused() bool {
 func (app *appState) redecorate() {
 	if app.decoration != nil {
 
+		app.frame.Rect.Min.X = 0
+		app.frame.Rect.Min.Y = 0
+		app.frame.Rect.Max.X = int(app.width)
+		app.frame.Rect.Max.Y = int(app.height)
+
 		app.decoration.clientSideDecoration(app, true)
+
+		app.width = int32(app.frame.Rect.Max.X)
+		app.height = int32(app.frame.Rect.Max.Y)
 
 		// Draw frame
 		buffer := app.drawFrame()

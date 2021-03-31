@@ -11,7 +11,10 @@ import (
 	"github.com/neurlang/wayland/wlcursor"
 	"github.com/neurlang/wayland/xdg"
 	"github.com/nfnt/resize"
-
+	
+	zxdgDecoration "github.com/neurlang/wayland/unstable/xdg-decoration-v1"
+	"github.com/neurlang/wayland/unstable"
+	
 	"log"
 )
 
@@ -44,6 +47,8 @@ type appState struct {
 	currentCursor string
 
 	decoration *Decoration
+	decorationManager *zxdgDecoration.ZxdgDecorationManagerV1
+	toplevelDecoration *zxdgDecoration.ZxdgToplevelDecorationV1
 }
 
 func main() {
@@ -92,6 +97,13 @@ func main() {
 		app.releaseSeatHandlers()
 
 	}
+	
+	if app.toplevelDecoration != nil {
+		app.releaseToplevelDecoration()
+	}
+	if app.decorationManager != nil {
+		app.releaseDecorationManager()
+	}
 
 	// Release xdg_wmbase
 	if app.wmBase != nil {
@@ -115,29 +127,12 @@ func main() {
 
 
 // for csd
-func (app *appState) Stride() int {
-	return app.frame.Stride
-}
-func (app *appState) Pix() *[]uint8 {
-	return &app.frame.Pix
-}
-func (app *appState) Width() int {
-	return int(app.width)
-}
-func (app *appState) FrameImage() image.Image {
+func (app *appState) GetImage() *image.RGBA {
 	return app.frame
 }
 func (app *appState) SetImage(to *image.RGBA) {
 	app.frame = to
 }
-func (app *appState) Height() int {
-	return int(app.height)
-}
-func (app *appState) IncreaseHeight(by int) {
-	app.height += int32(by)
-	app.frame.Rect.Max.Y += by
-}
-
 
 
 func (app *appState) loadImage(fileName string) {
@@ -168,13 +163,24 @@ func (app *appState) loadImage(fileName string) {
 	app.frame = frameImage
 	app.pImage = pImage
 
-	app.width = int32(frameRect.Dx())
-	app.height = int32(frameRect.Dy())
+	app.frame.Rect.Min.X = 0
+	app.frame.Rect.Min.Y = 0
+	app.frame.Rect.Max.X = int(frameRect.Dx())
+	app.frame.Rect.Max.Y = int(frameRect.Dy())
 
-	// TODO: enable, when we're ready for csd
-	//app.decoration = new(Decoration)
-	//app.decoration.Title = fileName
-	//app.decoration.clientSideDecoration(app, false)
+	app.spawnDecoration(fileName)
+
+	app.width = int32(app.frame.Rect.Max.X)
+	app.height = int32(app.frame.Rect.Max.Y)
+}
+
+func (app *appState) spawnDecoration(fileName string) {
+	app.decoration = new(Decoration)
+	app.decoration.Title = fileName
+	app.decoration.Titlebar = 20
+	app.decoration.LeftButtons = []DecorationButton{{"#", 40, false}}
+	app.decoration.RightButtons = []DecorationButton{{"×", 40, false}, {"▫", 40, false}, {"_", 40, false}}
+	app.decoration.clientSideDecoration(app, false)
 }
 
 func run(app *appState) {
@@ -221,6 +227,16 @@ func run(app *appState) {
 	app.xdgTopLevel = xdgTopLevel
 	log.Print("got xdg_toplevel")
 
+	if app.decorationManager != nil {
+		tld, err := app.decorationManager.GetToplevelDecoration(xdgTopLevel)
+		if err != nil {
+			log.Fatalf("unable to get GetToplevelDecoration: %v", err)
+		}
+		app.toplevelDecoration = tld
+		
+		tld.AddConfigureHandler(app)
+	}
+	
 	// Add xdg_toplevel configure handler for window resizing
 	xdgTopLevel.AddConfigureHandler(app)
 	// Add xdg_toplevel close handler
@@ -293,6 +309,16 @@ func (app *appState) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 		// Add Keyboard & Pointer handlers
 		seat.AddCapabilitiesHandler(app)
 		seat.AddNameHandler(app)
+	case "zxdg_decoration_v1":
+		app.decorationManager = unstable.GetNewFunc(e.Interface)(app.Context()).(*zxdgDecoration.ZxdgDecorationManagerV1)
+	}
+}
+
+func (app *appState) HandleZxdgToplevelDecorationV1Configure(e zxdgDecoration.ZxdgToplevelDecorationV1ConfigureEvent) {
+	if e.Mode == zxdgDecoration.ZxdgToplevelDecorationV1ModeServerSide {
+		app.decoration = nil
+	} else if e.Mode == zxdgDecoration.ZxdgToplevelDecorationV1ModeClientSide {
+		app.spawnDecoration("Client Side Decoration")
 	}
 }
 
@@ -326,7 +352,7 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 
 	if app.decoration != nil {
 
-		height -= 2*Border + Titlebar
+		height -= 2*Border + int32(app.decoration.Titlebar)
 
 		if width <= 2*Border {
 			width = 2 * Border
@@ -348,14 +374,20 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 	app.frame = resize.Resize(uint(width), uint(height), app.pImage, resize.Bilinear).(*image.RGBA)
 	log.Print("done resizing frame")
 
-	// Update app size
-	app.width = width
-	app.height = height
+
+	app.frame.Rect.Min.X = 0
+	app.frame.Rect.Min.Y = 0
+	app.frame.Rect.Max.X = int(width)
+	app.frame.Rect.Max.Y = int(height)
+	
 
 	// perform client side decoration
 	if app.decoration != nil {
 		app.decoration.clientSideDecoration(app, false)
 	}
+	
+	app.width = int32(app.frame.Rect.Max.X)
+	app.height = int32(app.frame.Rect.Max.Y)
 }
 
 func (app *appState) loadCursors() {
@@ -519,7 +551,22 @@ func (app *appState) releaseSeatHandlers() {
 	}
 	app.seat = nil
 }
+func (app *appState) releaseToplevelDecoration() {
+	app.toplevelDecoration.RemoveConfigureHandler(app)
 
+	if err := app.toplevelDecoration.Destroy(); err != nil {
+		log.Println("unable to destroy toplevelDecoration:", err)
+	}
+	app.toplevelDecoration.Unregister()
+	app.toplevelDecoration = nil
+}
+func (app *appState) releaseDecorationManager() {
+	if err := app.decorationManager.Destroy(); err != nil {
+		log.Println("unable to destroy decorationManager:", err)
+	}
+	app.decorationManager.Unregister()
+	app.decorationManager = nil
+}
 func (app *appState) releaseXdgWmBase() {
 	app.wmBase.RemovePingHandler(app)
 
