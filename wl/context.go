@@ -27,17 +27,27 @@ type Context struct {
 // Register registers a proxy in the map of all Context objects (proxies)
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
-	defer ctx.mu.Unlock()
 	ctx.currentId += 1
 	proxy.SetId(ctx.currentId)
 	proxy.SetContext(ctx)
 	ctx.objects[ctx.currentId] = proxy
+	ctx.mu.Unlock()
 }
-
+// Unregister unregisters a proxy in the map of all Context objects (proxies)
+func (ctx *Context) Unregister(id ProxyId) {
+	ctx.mu.Lock()
+	if ctx.objects != nil {
+		delete(ctx.objects, id)
+	}
+	ctx.mu.Unlock()
+}
 // LookupProxy looks up a specific proxy by it's Id in the map of all Context objects (proxies)
 func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	ctx.mu.RLock()
 	defer ctx.mu.RUnlock()
+	if id > ctx.currentId {
+		return nil
+	}
 	proxy, ok := ctx.objects[id]
 	if !ok {
 		return nil
@@ -160,7 +170,6 @@ func (ctx *Context) run(cb *Callback) error {
 
 func (ctx *Context) Close() (err error) {
 	ctx.mu.Lock()
-	defer ctx.mu.Unlock()
 	err = ctx.conn.Close()
 	ctx.conn = nil
 	ctx.sockFD = -1
@@ -174,5 +183,7 @@ func (ctx *Context) Close() (err error) {
 			println(v.Name())
 		}
 	*/
+	ctx.mu.Unlock()
+	ctx.objects = nil
 	return err
 }

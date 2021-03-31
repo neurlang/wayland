@@ -12,7 +12,7 @@ func PointerSetUserData(p *wl.Pointer, data interface{}) {
 }
 
 func SurfaceSetUserData(p *wl.Surface, data interface{}) {
-	p.UserData = data
+	//p.UserData = data
 }
 
 type PointerListener interface {
@@ -40,10 +40,16 @@ func PointerAddListener(p *wl.Pointer, h PointerListener) {
 
 }
 func PointerDestroy(p *wl.Pointer) {
+	//p.Destroy()
+	p.Unregister()
 }
 func ShmDestroy(p *wl.Shm) {
+	//p.Destroy()
+	p.Unregister()
 }
 func RegistryDestroy(p *wl.Registry) {
+	//p.Destroy()
+	p.Unregister()
 }
 func BufferAddListener(b *wl.Buffer, data wl.BufferReleaseHandler) {
 	b.AddReleaseHandler(data)
@@ -105,7 +111,9 @@ func KeyboardAddListener(kb *wl.Keyboard, l KeyboardListener) {
 	kb.AddModifiersHandler(l)
 	kb.AddRepeatInfoHandler(l)
 }
-func KeyboardDestroy(*wl.Keyboard) {
+func KeyboardDestroy(p *wl.Keyboard) {
+	//p.Destroy()
+	p.Unregister()
 }
 func TouchSetUserData(*wl.Touch, interface{}) {
 }
@@ -129,7 +137,9 @@ func TouchAddListener(to *wl.Touch, tl TouchListener) {
 	to.AddShapeHandler(tl)
 	to.AddOrientationHandler(tl)
 }
-func TouchDestroy(*wl.Touch) {
+func TouchDestroy(p *wl.Touch) {
+	//p.Destroy()
+	p.Unregister()
 }
 
 type SurfaceEnterLeave struct {
@@ -159,10 +169,16 @@ func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
 	p.AddFormatHandler(data)
 }
 func RegionDestroy(p *wl.Region) {
+	p.Destroy()
+	p.Unregister()
 }
 func CallbackDestroy(p *wl.Callback) {
+	//p.Destroy()
+	p.Unregister()
 }
 func SubsurfaceDestroy(p *wl.Subsurface) {
+	p.Destroy()
+	p.Unregister()
 }
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {

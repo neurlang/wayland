@@ -59,6 +59,6 @@ func (p *BaseProxy) SetContext(c *Context) {
 // BaseProxy Unregister removes this BaseProxy from the map of all Context objects
 func (p *BaseProxy) Unregister() {
 	if p != nil && p.ctx != nil {
-		delete(p.ctx.objects, p.id)
+		p.ctx.Unregister(p.id)
 	}
 }

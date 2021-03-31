@@ -3,6 +3,7 @@ package unstable
 import "github.com/neurlang/wayland/wl"
 import tiv3 "github.com/neurlang/wayland/unstable/text-input-v3"
 import imv1 "github.com/neurlang/wayland/unstable/input-method-v1"
+import xdgd1 "github.com/neurlang/wayland/unstable/xdg-decoration-v1"
 
 func GetNewFunc(iface string) func(*wl.Context) wl.Proxy {
 	switch iface {
@@ -13,6 +14,10 @@ func GetNewFunc(iface string) func(*wl.Context) wl.Proxy {
 	case "zwp_input_method_v1":
 		return func(ctx *wl.Context) wl.Proxy {
 			return imv1.NewZwpInputMethodV1(ctx)
+		}
+	case "zwp_decoration_v1":
+		return func(ctx *wl.Context) wl.Proxy {
+			return xdgd1.NewZxdgDecorationManagerV1(ctx)
 		}
 	// TODO: add more
 	default:
