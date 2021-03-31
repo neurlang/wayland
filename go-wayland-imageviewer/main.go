@@ -11,10 +11,10 @@ import (
 	"github.com/neurlang/wayland/wlcursor"
 	"github.com/neurlang/wayland/xdg"
 	"github.com/nfnt/resize"
-	
-	zxdgDecoration "github.com/neurlang/wayland/unstable/xdg-decoration-v1"
+
 	"github.com/neurlang/wayland/unstable"
-	
+	zxdgDecoration "github.com/neurlang/wayland/unstable/xdg-decoration-v1"
+
 	"log"
 )
 
@@ -46,8 +46,8 @@ type appState struct {
 	cursors       map[string]*cursorData
 	currentCursor string
 
-	decoration *Decoration
-	decorationManager *zxdgDecoration.ZxdgDecorationManagerV1
+	decoration         *Decoration
+	decorationManager  *zxdgDecoration.ZxdgDecorationManagerV1
 	toplevelDecoration *zxdgDecoration.ZxdgToplevelDecorationV1
 }
 
@@ -97,7 +97,7 @@ func main() {
 		app.releaseSeatHandlers()
 
 	}
-	
+
 	if app.toplevelDecoration != nil {
 		app.releaseToplevelDecoration()
 	}
@@ -125,7 +125,6 @@ func main() {
 	app.Context().Close()
 }
 
-
 // for csd
 func (app *appState) GetImage() *image.RGBA {
 	return app.frame
@@ -133,7 +132,6 @@ func (app *appState) GetImage() *image.RGBA {
 func (app *appState) SetImage(to *image.RGBA) {
 	app.frame = to
 }
-
 
 func (app *appState) loadImage(fileName string) {
 
@@ -233,10 +231,10 @@ func run(app *appState) {
 			log.Fatalf("unable to get GetToplevelDecoration: %v", err)
 		}
 		app.toplevelDecoration = tld
-		
+
 		tld.AddConfigureHandler(app)
 	}
-	
+
 	// Add xdg_toplevel configure handler for window resizing
 	xdgTopLevel.AddConfigureHandler(app)
 	// Add xdg_toplevel close handler
@@ -374,18 +372,16 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 	app.frame = resize.Resize(uint(width), uint(height), app.pImage, resize.Bilinear).(*image.RGBA)
 	log.Print("done resizing frame")
 
-
 	app.frame.Rect.Min.X = 0
 	app.frame.Rect.Min.Y = 0
 	app.frame.Rect.Max.X = int(width)
 	app.frame.Rect.Max.Y = int(height)
-	
 
 	// perform client side decoration
 	if app.decoration != nil {
 		app.decoration.clientSideDecoration(app, false)
 	}
-	
+
 	app.width = int32(app.frame.Rect.Max.X)
 	app.height = int32(app.frame.Rect.Max.Y)
 }

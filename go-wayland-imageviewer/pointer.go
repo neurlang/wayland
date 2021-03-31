@@ -195,16 +195,16 @@ func (app *appState) pointerFrameButtonEvent() {
 	e := &app.pointerEvent
 	if wl.PointerButtonState(e.state) == wl.PointerButtonStateReleased {
 		log.Printf("button %d released", e.button)
-		
+
 		if app.decoration != nil {
 			app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
 			if app.decoration.RightActive == 1 {
 				app.exit = true
 			}
-			
+
 			if app.decoration.RightActive == 2 {
 				if app.decoration.Maximized {
-				
+
 					if nil == app.xdgTopLevel.UnsetMaximized() {
 						app.decoration.Maximized = false
 					}
@@ -214,18 +214,18 @@ func (app *appState) pointerFrameButtonEvent() {
 					}
 				}
 			}
-			
+
 			app.decoration.LeftActive, app.decoration.RightActive = 0, 0
-			
+
 			app.redecorate()
 		}
-		
+
 	} else {
 		log.Printf("button %d pressed", e.button)
 
 		switch e.button {
 		case BtnLeft:
-		
+
 			if app.decoration != nil {
 				app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
 				if app.decoration.LeftActive != 0 || app.decoration.RightActive != 0 {
@@ -233,7 +233,7 @@ func (app *appState) pointerFrameButtonEvent() {
 					break
 				}
 			}
-		
+
 			edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, 8)
 			if edge != xdgshell.ToplevelResizeEdgeNone {
 				if err := app.xdgTopLevel.Resize(app.seat, e.serial, edge); err != nil {
@@ -326,11 +326,12 @@ type cursorData struct {
 
 	surface *wl.Surface
 }
+
 func (app *appState) trySetCursor(serial uint32, cursorName string) {
 	//if cursorName != app.currentCursor {
-		print("SERIAL: ")
-		println(serial)
-		app.setCursor(serial, cursorName)
+	print("SERIAL: ")
+	println(serial)
+	app.setCursor(serial, cursorName)
 	//}
 }
 func (app *appState) setCursor(serial uint32, cursorName string) {
@@ -347,8 +348,8 @@ func (app *appState) setCursor(serial uint32, cursorName string) {
 	); err != nil {
 		log.Print("unable to set cursor")
 	}
-	c.surface.Attach(image.GetBuffer(), 0,0)
-	c.surface.Damage(0,0,int32(image.GetWidth()),int32(image.GetHeight()))
+	c.surface.Attach(image.GetBuffer(), 0, 0)
+	c.surface.Damage(0, 0, int32(image.GetWidth()), int32(image.GetHeight()))
 	c.surface.Commit()
 
 	app.currentCursor = cursorName

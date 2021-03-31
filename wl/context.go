@@ -33,6 +33,7 @@ func (ctx *Context) Register(proxy Proxy) {
 	ctx.objects[ctx.currentId] = proxy
 	ctx.mu.Unlock()
 }
+
 // Unregister unregisters a proxy in the map of all Context objects (proxies)
 func (ctx *Context) Unregister(id ProxyId) {
 	ctx.mu.Lock()
@@ -41,6 +42,7 @@ func (ctx *Context) Unregister(id ProxyId) {
 	}
 	ctx.mu.Unlock()
 }
+
 // LookupProxy looks up a specific proxy by it's Id in the map of all Context objects (proxies)
 func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	ctx.mu.RLock()
