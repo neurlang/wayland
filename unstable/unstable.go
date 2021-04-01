@@ -15,7 +15,7 @@ func GetNewFunc(iface string) func(*wl.Context) wl.Proxy {
 		return func(ctx *wl.Context) wl.Proxy {
 			return imv1.NewZwpInputMethodV1(ctx)
 		}
-	case "zxdg_decoration_v1":
+	case "zxdg_decoration_manager_v1":
 		return func(ctx *wl.Context) wl.Proxy {
 			return xdgd1.NewZxdgDecorationManagerV1(ctx)
 		}

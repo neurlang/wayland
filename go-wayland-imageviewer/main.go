@@ -1,3 +1,4 @@
+// Go Wayland ImageViewer demo
 package main
 
 import (
@@ -12,7 +13,6 @@ import (
 	"github.com/neurlang/wayland/xdg"
 	"github.com/nfnt/resize"
 
-	"github.com/neurlang/wayland/unstable"
 	zxdgDecoration "github.com/neurlang/wayland/unstable/xdg-decoration-v1"
 
 	"log"
@@ -46,9 +46,10 @@ type appState struct {
 	cursors       map[string]*cursorData
 	currentCursor string
 
-	decoration         *Decoration
-	decorationManager  *zxdgDecoration.ZxdgDecorationManagerV1
-	toplevelDecoration *zxdgDecoration.ZxdgToplevelDecorationV1
+	decoration            *Decoration
+	haveDecorationManager bool
+	decorationManager     *zxdgDecoration.ZxdgDecorationManagerV1
+	toplevelDecoration    *zxdgDecoration.ZxdgToplevelDecorationV1
 }
 
 func main() {
@@ -191,6 +192,7 @@ func run(app *appState) {
 
 	// Add global interfaces registrar handler
 	registry.AddGlobalHandler(app)
+
 	// Wait for interfaces to register
 	_ = wlclient.DisplayRoundtrip(app.display)
 
@@ -226,15 +228,18 @@ func run(app *appState) {
 	log.Print("got xdg_toplevel")
 
 	if app.decorationManager != nil {
-		tld, err := app.decorationManager.GetToplevelDecoration(xdgTopLevel)
-		if err != nil {
-			log.Fatalf("unable to get GetToplevelDecoration: %v", err)
-		}
-		app.toplevelDecoration = tld
+		//tld, err := app.decorationManager.GetToplevelDecoration(xdgTopLevel)
+		//if err != nil {
+		//	log.Fatalf("unable to get GetToplevelDecoration: %v", err)
+		//}
 
-		tld.AddConfigureHandler(app)
+		//println(tld)
+
+		//app.toplevelDecoration = tld
+		//tld.SetMode(zxdgDecoration.ZxdgToplevelDecorationV1ModeServerSide)
+		//tld.AddConfigureHandler(app)
+
 	}
-
 	// Add xdg_toplevel configure handler for window resizing
 	xdgTopLevel.AddConfigureHandler(app)
 	// Add xdg_toplevel close handler
@@ -248,6 +253,7 @@ func run(app *appState) {
 	if err2 := xdgTopLevel.SetAppID(app.appID); err2 != nil {
 		log.Fatalf("unable to set toplevel appID: %v", err2)
 	}
+
 	// Commit the state changes (title & appID) to the server
 	if err2 := app.surface.Commit(); err2 != nil {
 		log.Fatalf("unable to commit surface state: %v", err2)
@@ -307,8 +313,12 @@ func (app *appState) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 		// Add Keyboard & Pointer handlers
 		seat.AddCapabilitiesHandler(app)
 		seat.AddNameHandler(app)
-	case "zxdg_decoration_v1":
-		app.decorationManager = unstable.GetNewFunc(e.Interface)(app.Context()).(*zxdgDecoration.ZxdgDecorationManagerV1)
+	case "zxdg_decoration_manager_v1":
+		//_ = unstable.GetNewFunc
+		//app.haveDecorationManager = true
+		//if app.haveDecorationManager {
+		//	app.decorationManager = unstable.GetNewFunc("zxdg_decoration_manager_v1")(app.Context()).(*zxdgDecoration.ZxdgDecorationManagerV1)
+		//}
 	}
 }
 

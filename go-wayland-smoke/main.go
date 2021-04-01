@@ -152,7 +152,21 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 	}
 }
 
-func (*smoke) Resize(widget *window.Widget, width int32, height int32) {
+func (smoke *smoke) Resize(widget *window.Widget, width int32, height int32) {
+
+	size := int(width) * int(height)
+
+	smoke.width = width
+	smoke.height = height
+
+	smoke.bb[0].d = make([]float32, size)
+	smoke.bb[0].u = make([]float32, size)
+	smoke.bb[0].v = make([]float32, size)
+	smoke.bb[1].d = make([]float32, size)
+	smoke.bb[1].u = make([]float32, size)
+	smoke.bb[1].v = make([]float32, size)
+
+	//smoke.widget.ScheduleResize(smoke.width, smoke.height)
 }
 
 func render(smoke *smoke, surface cairo.Surface) {
@@ -166,7 +180,7 @@ func render(smoke *smoke, surface cairo.Surface) {
 	for y := 1; y < height-1; y++ {
 		for x := 1; x < width-1; x++ {
 
-			var c = uint32(data[x+y*int(smoke.height)] * 800.)
+			var c = uint32(data[x+y*int(smoke.width)] * 800.)
 			if c > 255 {
 				c = 255
 			}

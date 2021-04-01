@@ -1358,6 +1358,7 @@ func createCursors(Display *Display) (err error) {
 
 	theme, err := wlcursor.LoadTheme(32, Display.shm)
 	if err != nil {
+		println(err.Error())
 		return err
 	}
 	Display.cursorTheme = theme
@@ -1861,27 +1862,26 @@ func inputGetSeat(Input *Input) *wl.Seat {
 
 //line 3754
 func inputSetPointerImageIndex(Input *Input, index int) {
-	var buffer *wl.Buffer
-	var cursor *wlcursor.Cursor
-	var image wlcursor.Image
-
 	if Input.pointer == nil {
+		print("input has no pointer\n")
 		return
 	}
 
-	cursor = Input.Display.cursors[Input.currentCursor]
+	var cursor = Input.Display.cursors[Input.currentCursor]
 	if cursor == nil {
+		print("current cursor index out of range\n")
 		return
 	}
 
-	image = cursor.GetCursorImage(index)
+	var image = cursor.GetCursorImage(index)
 	if image == nil {
 		print("cursor index out of range\n")
 		return
 	}
 
-	buffer = image.GetBuffer()
+	var buffer = image.GetBuffer()
 	if buffer == nil {
+		print("cursor buffer is nil\n")
 		return
 	}
 
@@ -2013,6 +2013,7 @@ func inputSetPointerImage(Input *Input, pointer int) {
 	var force bool
 
 	if Input.pointer == nil {
+		print("input has no pointer\n")
 		return
 	}
 
@@ -2043,6 +2044,12 @@ func inputSetPointerImage(Input *Input, pointer int) {
 // line 4104
 func surfaceResize(surface *surface) {
 	var Widget = surface.Widget
+
+	if Widget.Userdata != nil {
+		Widget.Userdata.Resize(Widget,
+			Widget.allocation.width,
+			Widget.allocation.height)
+	}
 
 	if (surface.allocation.width != Widget.allocation.width) ||
 		(surface.allocation.height != Widget.allocation.height) {

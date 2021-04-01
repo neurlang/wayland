@@ -12,6 +12,11 @@ Golang Wayland
 This includes two sample apps that render into a shared memory. Tested on pc
 (x64) and raspberry pi (arm64). The smoke app reacts on mouse input.
 
+![Screenshot of Golang Wayland Image Viewer](gophers.png?raw=true "Screenshot of Golang Wayland Image Viewer")
+
+These gophers (in this image) are courtesy of Copyright (c) 2019 Maria Letta
+
+
 # Dependencies
 
 None, this is a pure go implementation

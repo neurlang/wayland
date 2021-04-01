@@ -215,6 +215,17 @@ func (app *appState) pointerFrameButtonEvent() {
 				}
 			}
 
+			if app.decoration.RightActive == 3 {
+				err := app.xdgTopLevel.SetMinimized()
+				if err != nil {
+					println(err.Error())
+				}
+			}
+
+			if app.decoration.LeftActive == 1 {
+				app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY))
+			}
+
 			app.decoration.LeftActive, app.decoration.RightActive = 0, 0
 
 			app.redecorate()
@@ -328,11 +339,11 @@ type cursorData struct {
 }
 
 func (app *appState) trySetCursor(serial uint32, cursorName string) {
-	//if cursorName != app.currentCursor {
-	print("SERIAL: ")
-	println(serial)
-	app.setCursor(serial, cursorName)
-	//}
+	if cursorName != app.currentCursor {
+		print("SERIAL: ")
+		println(serial)
+		app.setCursor(serial, cursorName)
+	}
 }
 func (app *appState) setCursor(serial uint32, cursorName string) {
 	c, ok := app.cursors[cursorName]
@@ -342,15 +353,17 @@ func (app *appState) setCursor(serial uint32, cursorName string) {
 	}
 
 	image := c.wlCursor.Images[0]
+
+	c.surface.Attach(image.GetBuffer(), 0, 0)
+	c.surface.Damage(0, 0, int32(image.GetWidth()), int32(image.GetHeight()))
+	c.surface.Commit()
+
 	if err := app.pointer.SetCursor(
 		serial, c.surface,
 		int32(image.GetHotspotX()), int32(image.GetHotspotY()),
 	); err != nil {
 		log.Print("unable to set cursor")
 	}
-	c.surface.Attach(image.GetBuffer(), 0, 0)
-	c.surface.Damage(0, 0, int32(image.GetWidth()), int32(image.GetHeight()))
-	c.surface.Commit()
 
 	app.currentCursor = cursorName
 }
