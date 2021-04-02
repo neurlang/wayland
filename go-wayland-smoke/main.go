@@ -157,7 +157,7 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 	}
 }
 
-func (smoke *smoke) Resize(widget *window.Widget, width int32, height int32) {
+func (smoke *smoke) Resize(widget *window.Widget, _ int32, _ int32, width int32, height int32) {
 
 	size := int(width) * int(height)
 

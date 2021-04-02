@@ -8,7 +8,8 @@ import (
 	"os"
 	"sync"
 	"time"
-	//"reflect"
+
+	sys "github.com/neurlang/wayland/os"
 )
 
 func init() {
@@ -22,6 +23,7 @@ type Context struct {
 	sockFD    int
 	currentId ProxyId
 	objects   map[ProxyId]Proxy
+	scms      []sys.SocketControlMessage
 }
 
 // Register registers a proxy in the map of all Context objects (proxies)
@@ -191,5 +193,6 @@ func (ctx *Context) Close() (err error) {
 	*/
 	ctx.mu.Unlock()
 	ctx.objects = nil
+	ctx.scms = nil
 	return err
 }

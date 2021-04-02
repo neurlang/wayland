@@ -12,32 +12,10 @@ type Event struct {
 	Pid    ProxyId
 	Opcode uint32
 	Data   []byte
-	scms   []os.SocketControlMessage
 	off    int
 	err    error
+	ctx    *Context
 }
-
-/*
-	Okay, so if you pass a file descriptor across a
-	UNIX domain socket, you may actually receive it
-	on an earlier call to recvmsg. If we don't do
-	anything about this we end up getting a file
-	descriptor on the wrong wayland protocol message.
-
-	See https://keithp.com/blogs/fd-passing/
-
-	This is a hacky solution:
-	- have a map from client fd to list of receive fds
-	- when we receive a fd over the socket add it to
-	  the clients list of fds
-	- when we call event.FD() take the earliest FD
-	  from the list
-
-	UPDATE: Scratch the above. The actual solution is to
-	store a lists of incoming fds in the Context
-	and modify the generator to set FDs like:
-		ev.Fd = p.Context().NextFD()
-*/
 
 // ErrReadHeader (Error unable to read message header) is returned when it is not possible to read enough bytes from the unix socket,
 // use Unwrap() to get the underlying cause and GetExternal to get this cause
@@ -72,6 +50,7 @@ func (ctx *Context) readEvent() (*Event, error) {
 		return nil, ErrSizeOfHeaderWrong
 	}
 	ev := new(Event)
+	ev.ctx = ctx
 	if oobn > 0 {
 		if oobn > len(control) {
 			return nil, ErrControlMsgBuffer
@@ -80,7 +59,8 @@ func (ctx *Context) readEvent() (*Event, error) {
 		if err != nil {
 			return nil, combinedError{ErrControlMsgParseError, err}
 		}
-		ev.scms = scms
+		ctx.scms = append(ctx.scms, scms...)
+		scms = nil
 	}
 
 	ev.Pid = ProxyId(native_endian.NativeEndian().Uint32(buf[0:4]))
@@ -112,15 +92,18 @@ var ErrUnableToParseUnixRights = errors.New("unable to parse unix rights")
 
 // FD (Event FD) ectracts the file descriptor and an optional error
 func (ev *Event) FD() (uintptr, error) {
-	if ev.scms == nil {
+	if ev.err != nil {
+		return 0, ev.err
+	}
+	if len(ev.ctx.scms) == 0 {
 		return 0, ErrNoControlMsgs
 	}
-	fds, err := os.ParseUnixRights(&ev.scms[0])
+	fds, err := os.ParseUnixRights(&ev.ctx.scms[0])
 	if err != nil {
 		return 0, ErrUnableToParseUnixRights
 	}
 	//TODO: is this required??????????????
-	ev.scms = append(ev.scms, ev.scms[1:]...)
+	ev.ctx.scms = ev.ctx.scms[1:]
 	return uintptr(fds[0]), nil
 }
 

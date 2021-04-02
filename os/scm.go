@@ -46,6 +46,11 @@ func Munmap(data []byte) error {
 	return ErrUnsupportedOS
 }
 
+// Close closes the fd
+func Close(fd int) error {
+	return ErrUnsupportedOS
+}
+
 // ProtRead Pages may be read
 const ProtRead = 0x1
 
@@ -54,3 +59,6 @@ const ProtWrite = 0x2
 
 // MapShared Share this mapping
 const MapShared = 0x01
+
+// MapPrivate Private mapping
+const MapPrivate = 0x02

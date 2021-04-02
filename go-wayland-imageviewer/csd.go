@@ -106,7 +106,7 @@ func (d *Decoration) activeLeftRight(a DecoratedRgbaWindow, x, y float64) (l int
 	}
 	return
 }
-func (d *Decoration) clientSideDecorationLeftButtons() {
+func (d *Decoration) clientSideDecorationLeftButtons(dc *gg.Context, w, x_rd float64) float64 {
 
 	var x_d float64
 	for i, v := range d.LeftButtons {
@@ -143,8 +143,9 @@ func (d *Decoration) clientSideDecorationLeftButtons() {
 		_ = v
 		x_d += float64(v.Width) + Border
 	}
+	return x_d
 }
-func (d *Decoration) clientSideDecorationRightButtons() {
+func (d *Decoration) clientSideDecorationRightButtons(dc *gg.Context, w float64) float64 {
 
 	var x_rd float64
 	for i, v := range d.RightButtons {
@@ -181,6 +182,7 @@ func (d *Decoration) clientSideDecorationRightButtons() {
 		_ = v
 		x_rd -= float64(v.Width) + Border
 	}
+	return x_rd
 }
 
 func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border bool) {
@@ -225,11 +227,11 @@ func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border boo
 			break
 		}
 	}
-	clientSideDecorationRightButtons()
-	clientSideDecorationLeftButtons()
+	x_rd := d.clientSideDecorationRightButtons(dc, w)
+	x_ld := d.clientSideDecorationLeftButtons(dc, w, x_rd)
 
 	dc.SetRGB(0, 0, 0)
-	dc.DrawStringAnchored(cutString(dc, (w-x_d+x_rd)-2*Border, d.Title), (w-x_d+x_rd)/2+x_d, Border+float64(d.Titlebar)/3, 0.5, 0.5)
+	dc.DrawStringAnchored(cutString(dc, (w-x_ld+x_rd)-2*Border, d.Title), (w-x_ld+x_rd)/2+x_ld, Border+float64(d.Titlebar)/3, 0.5, 0.5)
 
 	a.SetImage(dc.Image().(*image.RGBA))
 }

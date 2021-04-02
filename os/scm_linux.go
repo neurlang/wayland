@@ -46,6 +46,11 @@ func Munmap(data []byte) error {
 	return syscall.Munmap(data)
 }
 
+// Close closes the fd
+func Close(fd int) error {
+	return syscall.Close(fd)
+}
+
 // ProtRead Pages may be read
 const ProtRead = syscall.PROT_READ
 
@@ -54,3 +59,6 @@ const ProtWrite = syscall.PROT_WRITE
 
 // MapShared Share this mapping
 const MapShared = syscall.MAP_SHARED
+
+// MapPrivate Private mapping
+const MapPrivate = syscall.MAP_PRIVATE

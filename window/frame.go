@@ -30,10 +30,10 @@ type windowFrame struct {
 	child  *Widget
 }
 
-func (*windowFrame) Resize(Widget *Widget, width int32, height int32)         {}
-func (*windowFrame) Redraw(Widget *Widget)                                    {}
-func (*windowFrame) Enter(Widget *Widget, Input *Input, x float32, y float32) {}
-func (*windowFrame) Leave(Widget *Widget, Input *Input)                       {}
+func (*windowFrame) Resize(Widget *Widget, width int32, height int32, pwidth int32, pheight int32) {}
+func (*windowFrame) Redraw(Widget *Widget)                                                         {}
+func (*windowFrame) Enter(Widget *Widget, Input *Input, x float32, y float32)                      {}
+func (*windowFrame) Leave(Widget *Widget, Input *Input)                                            {}
 func (*windowFrame) Motion(Widget *Widget, Input *Input, time uint32, x float32, y float32) int {
 	return CursorWatch
 }

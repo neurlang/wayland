@@ -28,8 +28,10 @@ import "github.com/neurlang/wayland/wl"
 import zxdg "github.com/neurlang/wayland/xdg"
 import cairo "github.com/neurlang/wayland/cairoshim"
 
-import "github.com/neurlang/wayland/os"
+import "os"
 
+import sys "github.com/neurlang/wayland/os"
+import xkb "github.com/neurlang/wayland/xkbcommon"
 import "errors"
 
 import "fmt"
@@ -187,6 +189,12 @@ func (s *surface) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	s.CallbackDone(ev.C, ev.CallbackData)
 }
 
+type FullscreenHandler interface {
+	Fullscreen(*Window, WidgetHandler)
+}
+type CloseHandler interface {
+	Close()
+}
 type Window struct {
 	Display          *Display
 	windowOutputList [2]uintptr
@@ -216,7 +224,7 @@ type Window struct {
 	resizing int32
 
 	fullscreen int32
-	maximized  int32
+	maximized  bool
 
 	preferredFormat int
 
@@ -246,6 +254,9 @@ type Window struct {
 	keyboardHandler KeyboardHandler
 
 	frame *windowFrame
+
+	fullscreenHandler FullscreenHandler
+	closeHandler      CloseHandler
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
@@ -265,6 +276,16 @@ func (Window *Window) SetKeyboardHandler(handler KeyboardHandler) {
 	Window.keyboardHandler = handler
 
 }
+func (Window *Window) SetFullscreenHandler(handler FullscreenHandler) {
+
+	Window.fullscreenHandler = handler
+
+}
+func (Window *Window) SetCloseHandler(handler CloseHandler) {
+
+	Window.closeHandler = handler
+
+}
 
 func (Window *Window) HandleToplevelConfigure(ev zxdg.ToplevelConfigureEvent) {
 	Window.ToplevelConfigure(Window.xdgToplevel, ev.Width, ev.Height, ev.States)
@@ -276,8 +297,7 @@ func (Window *Window) ToplevelConfigure(
 	height int32,
 	states []int32,
 ) {
-
-	Window.maximized = 0
+	Window.maximized = false
 	Window.fullscreen = 0
 	Window.resizing = 0
 	Window.focused = 0
@@ -285,7 +305,7 @@ func (Window *Window) ToplevelConfigure(
 	for i := range states {
 		switch states[i] {
 		case zxdg.ToplevelStateMaximized:
-			Window.maximized = 1
+			Window.maximized = true
 		case zxdg.ToplevelStateFullscreen:
 			Window.fullscreen = 1
 		case zxdg.ToplevelStateResizing:
@@ -377,7 +397,7 @@ func (l *widgetList) Insert(w *Widget) {
 }
 
 type WidgetHandler interface {
-	Resize(Widget *Widget, width int32, height int32)
+	Resize(Widget *Widget, width int32, height int32, pwidth int32, pheight int32)
 	Redraw(Widget *Widget)
 	Enter(Widget *Widget, Input *Input, x float32, y float32)
 	Leave(Widget *Widget, Input *Input)
@@ -450,8 +470,10 @@ type Input struct {
 	dragEnterSerial uint32
 
 	xkb struct {
-		keymap *struct{}
-		state  *struct{}
+		keymap       *xkb.Keymap
+		state        *xkb.State
+		composeTable *xkb.ComposeTable
+		composeState *xkb.ComposeState
 
 		controlMask xkbModMaskT
 		altMask     xkbModMaskT
@@ -783,7 +805,48 @@ func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 }
 
 func (input *Input) HandleKeyboardEnter(e wl.KeyboardEnterEvent) {
-	println("ENTER")
+	var window *Window
+	var surface = e.Surface
+	var serial = e.Serial
+
+	if surface == nil {
+		/* enter event for a window we've just destroyed */
+		return
+	}
+
+	input.Display.serial = serial
+	input.keyboardFocus = (surface.UserData).(*Window)
+
+	window = input.keyboardFocus
+	if window != nil && window.keyboardHandler != nil {
+		window.keyboardHandler.Focus(window, input)
+	}
+
+}
+
+/* Translate symbols appropriately if a compose sequence is being entered */
+func process_key_press(sym uint32, input *Input) uint32 {
+	if input.xkb.composeState == nil {
+		return sym
+	}
+	if sym == xkb.KEY_NoSymbol {
+		return sym
+	}
+	if xkb.ComposeStateFeed(input.xkb.composeState, sym) != xkb.COMPOSE_FEED_ACCEPTED {
+		return sym
+	}
+	switch xkb.ComposeStateGetStatus(input.xkb.composeState) {
+	case xkb.COMPOSE_COMPOSING:
+		return xkb.KEY_NoSymbol
+	case xkb.COMPOSE_COMPOSED:
+		return xkb.ComposeStateGetOneSym(input.xkb.composeState)
+	case xkb.COMPOSE_CANCELLED:
+		return xkb.KEY_NoSymbol
+	case xkb.COMPOSE_NOTHING:
+		return sym
+	default:
+		return sym
+	}
 }
 
 func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
@@ -807,54 +870,40 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 		return
 	}
 
-	_ = state
-	_ = code
+	var syms = xkb.StateKeyGetSyms(input.xkb.state, code)
+	var sym = xkb.KEY_NoSymbol
+	if len(syms) == 1 {
+		sym = syms[0]
+	}
 
-	//TODO:
-	//num_syms = xkb_state_key_get_syms(input.xkb.state, code, &syms);
-	/*
-		sym = XKB_KEY_NoSymbol;
-		if (num_syms == 1) {
-			sym = syms[0];
+	if sym == xkb.KEY_F5 && input.modifiers == xkb.MOD_ALT_MASK {
+		if state == wl.KeyboardKeyStatePressed {
+			window_set_maximized(window, !window.maximized)
+		}
+	} else if sym == xkb.KEY_F11 &&
+		window.fullscreenHandler != nil &&
+		state == wl.KeyboardKeyStatePressed {
+		window.fullscreenHandler.Fullscreen(window, window.Userdata)
+	} else if sym == xkb.KEY_F4 &&
+		input.modifiers == xkb.MOD_ALT_MASK &&
+		state == wl.KeyboardKeyStatePressed {
+		window_close(window)
+	} else if window.keyboardHandler != nil {
+		if state == wl.KeyboardKeyStatePressed {
+			sym = process_key_press(sym, input)
 		}
 
+		window.keyboardHandler.Key(window, input, time, key,
+			sym, state, window.Userdata)
+	}
 
-		if (sym == XKB_KEY_F5 && input.modifiers == MOD_ALT_MASK) {
-			if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-				window_set_maximized(window, !window.maximized);
-			}
-		} else if (sym == XKB_KEY_F11 &&
-			   window.fullscreen_handler &&
-			   state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-			window.fullscreen_handler(window, window.user_data);
-		} else if (sym == XKB_KEY_F4 &&
-			   input.modifiers == MOD_ALT_MASK &&
-			   state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-			window_close(window);
-		} else if (window.key_handler) {
-			if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-				sym = process_key_press(sym, input);
-			}
-
-			(*window.key_handler)(window, input, time, key,
-					       sym, state, window.user_data);
-		}
-
-		if (state == WL_KEYBOARD_KEY_STATE_RELEASED &&
-		    key == input.repeat_key) {
-			toytimer_disarm(&input.repeat_timer);
-		} else if (state == WL_KEYBOARD_KEY_STATE_PRESSED &&
-			   xkb_keymap_key_repeats(input.xkb.keymap, code)) {
-			input.repeat_sym = sym;
-			input.repeat_key = key;
-			input.repeat_time = time;
-			its.it_interval.tv_sec = input.repeat_rate_sec;
-			its.it_interval.tv_nsec = input.repeat_rate_nsec;
-			its.it_value.tv_sec = input.repeat_delay_sec;
-			its.it_value.tv_nsec = input.repeat_delay_nsec;
-			toytimer_arm(&input.repeat_timer, &its);
-		}
-	*/
+	if state == wl.KeyboardKeyStateReleased &&
+		key == input.repeatKey {
+		// FIXME: Disarm repeat timer
+	} else if state == wl.KeyboardKeyStatePressed &&
+		xkb.KeymapKeyRepeats(input.xkb.keymap, code) {
+		// FIXME: Arm repeat timer
+	}
 }
 
 func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
@@ -863,9 +912,115 @@ func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
 
 func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 
+	var fd, err = e.Fd()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	var format = e.Format
+	var size = e.Size
+
+	var keymap *xkb.Keymap
+	var state *xkb.State
+	var compose_table *xkb.ComposeTable
+	var compose_state *xkb.ComposeState
+
+	var locale string
+
+	if input == nil {
+		sys.Close(int(fd))
+		return
+	}
+
+	if format != wl.KeyboardKeymapFormatXkbV1 {
+		sys.Close(int(fd))
+		return
+	}
+
+	map_str, err := sys.Mmap(int(fd), 0, int(size), sys.ProtRead, sys.MapPrivate)
+	if err != nil {
+		sys.Close(int(fd))
+		return
+	}
+
+	/* Set up XKB keymap */
+	keymap = xkb.KeymapNewFromString(input.Display.xkbContext,
+		map_str,
+		xkb.KEYMAP_FORMAT_TEXT_V1,
+		0)
+	sys.Munmap(map_str)
+	sys.Close(int(fd))
+
+	if keymap == nil {
+		println("failed to compile keymap")
+		return
+	}
+
+	/* Set up XKB state */
+	state = xkb.StateNew(keymap)
+	if state == nil {
+		println("failed to create XKB state")
+		xkb.KeymapUnref(keymap)
+		return
+	}
+
+	/* Look up the preferred locale, falling back to "C" as default */
+	locale = os.Getenv("LC_ALL")
+	if locale == "" {
+		locale = os.Getenv("LC_CTYPE")
+		if locale == "" {
+			locale = os.Getenv("LANG")
+			if locale == "" {
+				locale = "C"
+			}
+		}
+	}
+
+	/* Set up XKB compose table */
+	compose_table =
+		xkb.ComposeTableNewFromLocale(input.Display.xkbContext,
+			locale,
+			xkb.COMPOSE_COMPILE_NO_FLAGS)
+	if compose_table == nil {
+		print("locale ")
+		print(locale)
+		println(": could not create XKB compose table for locale. Disabiling compose.")
+	} else {
+		/* Set up XKB compose state */
+		compose_state = xkb.ComposeStateNew(compose_table,
+			xkb.COMPOSE_STATE_NO_FLAGS)
+		if compose_state == nil {
+			println("could not create XKB compose state. Disabiling compose.")
+			xkb.ComposeTableUnref(compose_table)
+			compose_table = nil
+
+		} else {
+			xkb.ComposeStateUnref(input.xkb.composeState)
+			xkb.ComposeTableUnref(input.xkb.composeTable)
+			input.xkb.composeState = compose_state
+			input.xkb.composeTable = compose_table
+		}
+	}
+
+	xkb.KeymapUnref(input.xkb.keymap)
+	xkb.StateUnref(input.xkb.state)
+	input.xkb.keymap = keymap
+	input.xkb.state = state
+
+	input.xkb.controlMask =
+		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Control")
+	input.xkb.altMask =
+		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Mod1")
+	input.xkb.shiftMask =
+		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Shift")
+
 }
 func (input *Input) HandleKeyboardLeave(e wl.KeyboardLeaveEvent) {
-	println("LEAVE")
+	var serial = e.Serial
+	input.Display.serial = serial
+	inputRemoveKeyboardFocus(input)
+
 }
 func (input *Input) HandleKeyboardModifiers(e wl.KeyboardModifiersEvent) {
 
@@ -936,14 +1091,15 @@ func shmSurfaceDataDestroy(data *shmSurfaceData) {
 
 //line 744
 func makeShmPool(Display *Display, size uintptr, data *[]byte) (pool *wl.ShmPool) {
-	fd, err := os.CreateAnonymousFile(int64(size))
+	fd, err := sys.CreateAnonymousFile(int64(size))
 	if err != nil {
 		println("creating a buffer file failed")
+		println(size)
 		println(err.Error())
 		return nil
 	}
 
-	*data, err = os.Mmap(int(fd.Fd()), 0, int(size), os.ProtRead|os.ProtWrite, os.MapShared)
+	*data, err = sys.Mmap(int(fd.Fd()), 0, int(size), sys.ProtRead|sys.ProtWrite, sys.MapShared)
 	if err != nil {
 		println("mmap failed")
 		fd.Close()
@@ -997,7 +1153,7 @@ func shmPoolAllocate(pool *shmPool, size uintptr, offset *int) (ret []byte) {
 /* destroy the pool. this does not unmap the memory though */
 func shmPoolDestroy(pool *shmPool) {
 
-	err := os.Munmap(pool.data)
+	err := sys.Munmap(pool.data)
 	if err != nil {
 		println(err)
 	}
@@ -1431,6 +1587,14 @@ func surfaceFlush(surface *surface) {
 	surface.cairoSurface = nil
 }
 
+func window_close(window *Window) {
+	if window.closeHandler != nil {
+		window.closeHandler.Close()
+	} else {
+		window.Display.Exit()
+	}
+}
+
 //line 1462
 func surfaceCreateSurface(surface *surface, flags uint32) {
 	var Display = surface.Window.Display
@@ -1692,7 +1856,7 @@ func widgetSetSize(Widget *Widget, width int32, height int32) {
 }
 
 //line 1740
-func widgetSetAllocation(Widget *Widget, x int32, y int32, width int32, height int32) {
+func WidgetSetAllocation(Widget *Widget, x int32, y int32, width int32, height int32) {
 	Widget.allocation.x = x
 	Widget.allocation.y = y
 	widgetSetSize(Widget, width, height)
@@ -1734,7 +1898,9 @@ func (parent *Widget) WidgetScheduleRedraw() {
 //line 2036
 func (Window *Window) WindowGetSurface() cairo.Surface {
 	var cairoSurface = widgetGetCairoSurface(Window.mainSurface.Widget)
-
+	if cairoSurface == nil {
+		return nil
+	}
 	return cairoSurface.Reference()
 }
 
@@ -2057,7 +2223,9 @@ func surfaceResize(surface *surface) {
 	if Widget.Userdata != nil {
 		Widget.Userdata.Resize(Widget,
 			Widget.allocation.width,
-			Widget.allocation.height)
+			Widget.allocation.height,
+			Widget.Window.pendingAllocation.width,
+			Widget.Window.pendingAllocation.height)
 	}
 
 	if (surface.allocation.width != Widget.allocation.width) ||
@@ -2072,7 +2240,8 @@ func surfaceResize(surface *surface) {
 
 //line 4144
 func windowDoResize(Window *Window) {
-	widgetSetAllocation(Window.mainSurface.Widget,
+
+	WidgetSetAllocation(Window.mainSurface.Widget,
 		Window.pendingAllocation.x,
 		Window.pendingAllocation.y,
 		Window.pendingAllocation.width,
@@ -2080,7 +2249,7 @@ func windowDoResize(Window *Window) {
 
 	surfaceResize(Window.mainSurface)
 
-	if (Window.fullscreen != 0) && (Window.maximized != 0) {
+	if (Window.fullscreen != 0) && (Window.maximized) {
 		Window.savedAllocation = Window.pendingAllocation
 	}
 }
@@ -2095,26 +2264,22 @@ func idleResize(Window *Window) {
 
 //line 4223
 func (Window *Window) ScheduleResize(width int32, height int32) {
-	/* We should probably get these numbers from the theme. */
-	const minWidth = 200
-	const minHeight = 200
+	// this is an explicit change from upstream wayland/weston
+	const minWidth = 32
+	const minHeight = 32
 
 	Window.pendingAllocation.x = 0
 	Window.pendingAllocation.y = 0
 	Window.pendingAllocation.width = width
 	Window.pendingAllocation.height = height
 
-	if Window.minAllocation.width == 0 {
-		if width < minWidth {
-			Window.minAllocation.width = minWidth
-		} else {
-			Window.minAllocation.width = width
-		}
-		if height < minHeight {
-			Window.minAllocation.height = minHeight
-		} else {
-			Window.minAllocation.height = height
-		}
+	// this is an explicit change from upstream wayland/weston
+	if Window.minAllocation.width < minWidth {
+		Window.minAllocation.width = minWidth
+	}
+	// this is an explicit change from upstream wayland/weston
+	if Window.minAllocation.width < minHeight {
+		Window.minAllocation.height = minHeight
 	}
 
 	if Window.pendingAllocation.width < Window.minAllocation.width {
@@ -2299,6 +2464,22 @@ func windowScheduleRedraw(Window *Window) {
 	windowScheduleRedrawTask(Window)
 }
 
+func window_set_maximized(window *Window, maximized bool) {
+	if window.xdgToplevel == nil {
+		return
+	}
+
+	if window.maximized == maximized {
+		return
+	}
+
+	if maximized {
+		window.xdgToplevel.SetMaximized()
+	} else {
+		window.xdgToplevel.UnsetMaximized()
+	}
+}
+
 // line 4793
 func (Window *Window) SetTitle(title string) {
 
@@ -2347,7 +2528,7 @@ func windowCreateInternal(Display *Display, custom int) *Window {
 
 	surface_.bufferType = WindowBufferTypeShm
 
-	wlclient.SurfaceSetUserData(surface_.surface_, uintptr(0))
+	wlclient.SurfaceSetUserData(surface_.surface_, Window)
 	Display.surface2window[surface_.surface_] = Window
 
 	return Window

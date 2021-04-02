@@ -12,7 +12,7 @@ func PointerSetUserData(p *wl.Pointer, data interface{}) {
 }
 
 func SurfaceSetUserData(p *wl.Surface, data interface{}) {
-	//p.UserData = data
+	p.UserData = data
 }
 
 type PointerListener interface {

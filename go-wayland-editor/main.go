@@ -105,7 +105,7 @@ func (*text_entry) TouchFrame(widget *window.Widget, input *window.Input) {
 func (*text_entry) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
 
-func (*text_entry) Resize(widget *window.Widget, width int32, height int32) {
+func (*text_entry) Resize(widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
 }
 func (*text_entry) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
 }
@@ -191,7 +191,7 @@ func (*editor) AxisDiscrete(widget *window.Widget, input *window.Input, axis uin
 }
 func (*editor) PointerFrame(widget *window.Widget, input *window.Input) {
 }
-func (*editor) Resize(Widget *window.Widget, width int32, height int32) {
+func (*editor) Resize(Widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
 }
 func (editor *editor) HandleGlobal(display *window.Display, name uint32,
 	iface string, version uint32, data interface{}) {
