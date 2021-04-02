@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CursorTheme representes an Xcursor theme
+// CursorTheme represents an Xcursor theme
 type CursorTheme struct {
 	theme       *cursorTheme
 	SearchPaths []string

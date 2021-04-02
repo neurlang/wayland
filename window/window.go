@@ -121,7 +121,7 @@ type Display struct {
 	cursorTheme *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor
 
-	xkbContext *struct{}
+	xkbContext *xkb.Context
 
 	/* A hack to get text extents for tooltips */
 	dummySurface *cairo.Surface
@@ -451,7 +451,7 @@ type Input struct {
 	cursorTimerRunning bool
 	//cursor_task          task
 	pointerSurface     *wl.Surface
-	modifiers          uint32
+	modifiers          uint8
 	pointerEnterSerial uint32
 	cursorSerial       uint32
 	sx                 float32
@@ -848,7 +848,30 @@ func process_key_press(sym uint32, input *Input) uint32 {
 		return sym
 	}
 }
+func (input *Input) keyboard_handle_key_internal(keyboard *wl.Keyboard,
+	window *Window, sym uint32, state wl.KeyboardKeyState,
+	time uint32, key uint32) {
+	if sym == xkb.KEY_F5 && input.modifiers == xkb.MOD_ALT_MASK {
+		if state == wl.KeyboardKeyStatePressed {
+			window_set_maximized(window, !window.maximized)
+		}
+	} else if sym == xkb.KEY_F11 &&
+		window.fullscreenHandler != nil &&
+		state == wl.KeyboardKeyStatePressed {
+		window.fullscreenHandler.Fullscreen(window, window.Userdata)
+	} else if sym == xkb.KEY_F4 &&
+		input.modifiers == xkb.MOD_ALT_MASK &&
+		state == wl.KeyboardKeyStatePressed {
+		window_close(window)
+	} else if window.keyboardHandler != nil {
+		if state == wl.KeyboardKeyStatePressed {
+			sym = process_key_press(sym, input)
+		}
 
+		window.keyboardHandler.Key(window, input, time, key,
+			sym, state, window.Userdata)
+	}
+}
 func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 	serial uint32, time uint32, key uint32,
 	state_w uint32) {
@@ -871,31 +894,12 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 	}
 
 	var syms = xkb.StateKeyGetSyms(input.xkb.state, code)
-	var sym = xkb.KEY_NoSymbol
+	var sym = uint32(xkb.KEY_NoSymbol)
 	if len(syms) == 1 {
 		sym = syms[0]
 	}
 
-	if sym == xkb.KEY_F5 && input.modifiers == xkb.MOD_ALT_MASK {
-		if state == wl.KeyboardKeyStatePressed {
-			window_set_maximized(window, !window.maximized)
-		}
-	} else if sym == xkb.KEY_F11 &&
-		window.fullscreenHandler != nil &&
-		state == wl.KeyboardKeyStatePressed {
-		window.fullscreenHandler.Fullscreen(window, window.Userdata)
-	} else if sym == xkb.KEY_F4 &&
-		input.modifiers == xkb.MOD_ALT_MASK &&
-		state == wl.KeyboardKeyStatePressed {
-		window_close(window)
-	} else if window.keyboardHandler != nil {
-		if state == wl.KeyboardKeyStatePressed {
-			sym = process_key_press(sym, input)
-		}
-
-		window.keyboardHandler.Key(window, input, time, key,
-			sym, state, window.Userdata)
-	}
+	input.keyboard_handle_key_internal(keyboard, window, sym, state, time, key)
 
 	if state == wl.KeyboardKeyStateReleased &&
 		key == input.repeatKey {
@@ -993,7 +997,6 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 		if compose_state == nil {
 			println("could not create XKB compose state. Disabiling compose.")
 			xkb.ComposeTableUnref(compose_table)
-			compose_table = nil
 
 		} else {
 			xkb.ComposeStateUnref(input.xkb.composeState)

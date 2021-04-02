@@ -190,6 +190,37 @@ func (app *appState) pointerFrameAxisEvent(e pointerEvent) {
 
 	}
 }
+func (app *appState) pointerFrameButtonClicked() {
+	e := &app.pointerEvent
+
+	if app.decoration.RightActive == 1 {
+		app.exit = true
+	}
+
+	if app.decoration.RightActive == 2 {
+		if app.decoration.Maximized {
+
+			if nil == app.xdgTopLevel.UnsetMaximized() {
+				app.decoration.Maximized = false
+			}
+		} else {
+			if nil == app.xdgTopLevel.SetMaximized() {
+				app.decoration.Maximized = true
+			}
+		}
+	}
+
+	if app.decoration.RightActive == 3 {
+		err := app.xdgTopLevel.SetMinimized()
+		if err != nil {
+			println(err.Error())
+		}
+	}
+
+	if app.decoration.LeftActive == 1 {
+		app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY))
+	}
+}
 
 func (app *appState) pointerFrameButtonEvent() {
 	e := &app.pointerEvent
@@ -198,33 +229,7 @@ func (app *appState) pointerFrameButtonEvent() {
 
 		if app.decoration != nil {
 			app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
-			if app.decoration.RightActive == 1 {
-				app.exit = true
-			}
-
-			if app.decoration.RightActive == 2 {
-				if app.decoration.Maximized {
-
-					if nil == app.xdgTopLevel.UnsetMaximized() {
-						app.decoration.Maximized = false
-					}
-				} else {
-					if nil == app.xdgTopLevel.SetMaximized() {
-						app.decoration.Maximized = true
-					}
-				}
-			}
-
-			if app.decoration.RightActive == 3 {
-				err := app.xdgTopLevel.SetMinimized()
-				if err != nil {
-					println(err.Error())
-				}
-			}
-
-			if app.decoration.LeftActive == 1 {
-				app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY))
-			}
+			app.pointerFrameButtonClicked()
 
 			app.decoration.LeftActive, app.decoration.RightActive = 0, 0
 

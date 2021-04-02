@@ -60,7 +60,6 @@ func (ctx *Context) readEvent() (*Event, error) {
 			return nil, combinedError{ErrControlMsgParseError, err}
 		}
 		ctx.scms = append(ctx.scms, scms...)
-		scms = nil
 	}
 
 	ev.Pid = ProxyId(native_endian.NativeEndian().Uint32(buf[0:4]))

@@ -1,5 +1,7 @@
 package xkbcommon
 
+type Context struct {
+}
 type Keymap struct {
 }
 
