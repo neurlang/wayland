@@ -4,8 +4,10 @@ package os
 
 import "errors"
 
-// SocketControlMessage
+// SocketControlMessage is a socket control message
 type SocketControlMessage struct{}
+
+// Sockaddr is a socket address
 type Sockaddr struct{}
 
 var ErrUnsupportedOS = errors.New("unsupported os")
@@ -39,16 +41,16 @@ func Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, e
 	return nil, ErrUnsupportedOS
 }
 
-// Mmap calls the system call to unmap memory
+// Munmap calls the system call to unmap memory
 func Munmap(data []byte) error {
 	return ErrUnsupportedOS
 }
 
-// Pages may be read
+// ProtRead Pages may be read
 const ProtRead = 0x1
 
-// Pages may be written
+// ProtWrite Pages may be written
 const ProtWrite = 0x2
 
-// Share this mapping
+// MapShared Share this mapping
 const MapShared = 0x01

@@ -106,6 +106,82 @@ func (d *Decoration) activeLeftRight(a DecoratedRgbaWindow, x, y float64) (l int
 	}
 	return
 }
+func (d *Decoration) clientSideDecorationLeftButtons() {
+
+	var x_d float64
+	for i, v := range d.LeftButtons {
+		lpos := x_d + Border + 1
+
+		if lpos+float64(v.Width)+Border >= w+x_rd {
+			break
+		}
+
+		pear := 0.
+		if !v.Pear {
+			pear = 1.
+		}
+		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
+		dc.SetRGB255(0, 0, 0)
+		dc.SetLineWidth(2.)
+		dc.StrokePreserve()
+		if ((i + 1) == d.LeftActive) != (!v.Pear) {
+			dc.SetRGB255(192, 192, 192)
+		} else {
+			dc.SetRGB255(255, 255, 255)
+		}
+		dc.Fill()
+		dc.ClearPath()
+
+		icon := 0.125
+		if v.Text != "_" {
+			icon = 0.25
+		}
+
+		dc.SetRGB(0, 0, 0)
+		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
+		_ = i
+		_ = v
+		x_d += float64(v.Width) + Border
+	}
+}
+func (d *Decoration) clientSideDecorationRightButtons() {
+
+	var x_rd float64
+	for i, v := range d.RightButtons {
+
+		lpos := x_rd + w - Border - 1 - float64(v.Width)
+
+		if lpos < Border {
+			break
+		}
+		pear := 0.
+		if !v.Pear {
+			pear = 1.
+		}
+		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
+		dc.SetRGB255(0, 0, 0)
+		dc.SetLineWidth(2.)
+		dc.StrokePreserve()
+		if ((i + 1) == d.RightActive) != (!v.Pear) {
+			dc.SetRGB255(192, 192, 192)
+		} else {
+			dc.SetRGB255(255, 255, 255)
+		}
+		dc.Fill()
+		dc.ClearPath()
+
+		icon := 0.125
+		if v.Text != "_" {
+			icon = 0.25
+		}
+
+		dc.SetRGB(0, 0, 0)
+		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
+		_ = i
+		_ = v
+		x_rd -= float64(v.Width) + Border
+	}
+}
 
 func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border bool) {
 
@@ -149,78 +225,8 @@ func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border boo
 			break
 		}
 	}
-
-	var x_rd float64
-	for i, v := range d.RightButtons {
-
-		lpos := x_rd + w - Border - 1 - float64(v.Width)
-
-		if lpos < Border {
-			break
-		}
-		pear := 0.
-		if !v.Pear {
-			pear = 1.
-		}
-		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
-		dc.SetRGB255(0, 0, 0)
-		dc.SetLineWidth(2.)
-		dc.StrokePreserve()
-		if ((i + 1) == d.RightActive) != (!v.Pear) {
-			dc.SetRGB255(192, 192, 192)
-		} else {
-			dc.SetRGB255(255, 255, 255)
-		}
-		dc.Fill()
-		dc.ClearPath()
-
-		icon := 0.125
-		if v.Text != "_" {
-			icon = 0.25
-		}
-
-		dc.SetRGB(0, 0, 0)
-		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
-		_ = i
-		_ = v
-		x_rd -= float64(v.Width) + Border
-	}
-
-	var x_d float64
-	for i, v := range d.LeftButtons {
-		lpos := x_d + Border + 1
-
-		if lpos+float64(v.Width)+Border >= w+x_rd {
-			break
-		}
-
-		pear := 0.
-		if !v.Pear {
-			pear = 1.
-		}
-		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
-		dc.SetRGB255(0, 0, 0)
-		dc.SetLineWidth(2.)
-		dc.StrokePreserve()
-		if ((i + 1) == d.LeftActive) != (!v.Pear) {
-			dc.SetRGB255(192, 192, 192)
-		} else {
-			dc.SetRGB255(255, 255, 255)
-		}
-		dc.Fill()
-		dc.ClearPath()
-
-		icon := 0.125
-		if v.Text != "_" {
-			icon = 0.25
-		}
-
-		dc.SetRGB(0, 0, 0)
-		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
-		_ = i
-		_ = v
-		x_d += float64(v.Width) + Border
-	}
+	clientSideDecorationRightButtons()
+	clientSideDecorationLeftButtons()
 
 	dc.SetRGB(0, 0, 0)
 	dc.DrawStringAnchored(cutString(dc, (w-x_d+x_rd)-2*Border, d.Title), (w-x_d+x_rd)/2+x_d, Border+float64(d.Titlebar)/3, 0.5, 0.5)

@@ -109,7 +109,7 @@ var ErrUnlink = errors.New("CreateTmpfileCloexec: unlink error")
 // ErrFileIsNil error means a temp file could not be created
 var ErrFileIsNil = errors.New("CreateTmpfileCloexec: file is nil")
 
-// OsCreateAnonymousFile creates anon fd, in case of the ErrUnlink error, the fd is valid.
+// CreateAnonymousFile creates anon fd, in case of the ErrUnlink error, the fd is valid.
 // The file just isn't anonymous and can't be deleted. You can either ignore the ErrUnlink
 // error and proceed, but it is your responsibility to Close the fd.
 // In case of other errors, the fd is not valid and does not need to be closed.

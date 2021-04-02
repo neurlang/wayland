@@ -92,7 +92,7 @@ func Connect(addr string) (ret *Display, err error) {
 
 var errFoundMyCallback = errors.New("run found my callback")
 
-// Context RunTill runs until a specific callback or an error occurs, see Context Run
+// RunTill (Context RunTill) runs until a specific callback or an error occurs, see Context Run
 // for a description of a likely errors
 func (ctx *Context) RunTill(cb *Callback) (err error) {
 	for {

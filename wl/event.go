@@ -110,6 +110,7 @@ var ErrNoControlMsgs = errors.New("no socket control messages")
 // ErrUnableToParseUnixRights (Error unable to parse unix rights)
 var ErrUnableToParseUnixRights = errors.New("unable to parse unix rights")
 
+// FD (Event FD) ectracts the file descriptor and an optional error
 func (ev *Event) FD() (uintptr, error) {
 	if ev.scms == nil {
 		return 0, ErrNoControlMsgs
@@ -126,6 +127,7 @@ func (ev *Event) FD() (uintptr, error) {
 // ErrUnableToParseUint32 (Error unable to read unsigned int) is returned when the buffer is too short to contain a specific unsigned int
 var ErrUnableToParseUint32 = errors.New("unable to read unsigned int")
 
+// Uint32 (Event Uint32) decodes an Uint32 from the Event
 func (ev *Event) Uint32() uint32 {
 	buf := ev.next(4)
 	if len(buf) != 4 {
@@ -138,11 +140,10 @@ func (ev *Event) Uint32() uint32 {
 // Proxy (Event Proxy) decodes Proxy by it's Id from the Event
 func (ev *Event) Proxy(c *Context) Proxy {
 	id := ev.Uint32()
-	if id == 0 {
-		return nil
-	} else {
+	if id != 0 {
 		return c.LookupProxy(ProxyId(id))
 	}
+	return nil
 }
 
 // ErrUnableToParseString (Error unable to parse string) is returned when the buffer is too short to contain a specific string

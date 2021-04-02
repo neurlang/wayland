@@ -709,8 +709,7 @@ func (i *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
 func (i *Input) HandleSeatName(ev wl.SeatNameEvent) {
 	i.SeatName(i.seat, ev.Name)
 }
-
-func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
+func (input *Input) seat_capabilities_pointer(seat *wl.Seat, caps uint32) {
 
 	if ((caps & wl.SeatCapabilityPointer) != 0) && (input.pointer == nil) {
 		var err error
@@ -730,7 +729,8 @@ func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 		}
 		input.pointer = nil
 	}
-
+}
+func (input *Input) seat_capabilities_keyboard(seat *wl.Seat, caps uint32) {
 	if ((caps & wl.SeatCapabilityKeyboard) != 0) && input.keyboard == nil {
 		var err error
 		input.keyboard, err = seat.GetKeyboard()
@@ -748,6 +748,8 @@ func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 		}
 		input.keyboard = nil
 	}
+}
+func (input *Input) seat_capabilities_touch(seat *wl.Seat, caps uint32) {
 
 	if ((caps & wl.SeatCapabilityTouch) != 0) && input.touch == nil {
 		var err error
@@ -766,6 +768,13 @@ func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 		}
 		input.touch = nil
 	}
+}
+
+func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
+
+	input.seat_capabilities_pointer(seat, caps)
+	input.seat_capabilities_keyboard(seat, caps)
+	input.seat_capabilities_touch(seat, caps)
 
 	if input.Display.seatHandler != nil {
 		input.Display.seatHandler.Capabilities(input, seat, caps)

@@ -5,8 +5,10 @@ package os
 import "golang.org/x/sys/unix"
 import "syscall"
 
-// SocketControlMessage
+// SocketControlMessage is a socket control message
 type SocketControlMessage = syscall.SocketControlMessage
+
+// Sockaddr is a socket address
 type Sockaddr = unix.Sockaddr
 
 // ParseSocketControlMessage calls a system call to parse a Socket Control Message
@@ -39,16 +41,16 @@ func Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, e
 	return syscall.Mmap(fd, offset, length, prot, flags)
 }
 
-// Mmap calls the system call to unmap memory
+// Munmap calls the system call to unmap memory
 func Munmap(data []byte) error {
 	return syscall.Munmap(data)
 }
 
-// Pages may be read
+// ProtRead Pages may be read
 const ProtRead = syscall.PROT_READ
 
-// Pages may be written
+// ProtWrite Pages may be written
 const ProtWrite = syscall.PROT_WRITE
 
-// Share this mapping
+// MapShared Share this mapping
 const MapShared = syscall.MAP_SHARED

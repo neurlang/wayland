@@ -73,7 +73,7 @@ func LoadThemeOr(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	return LoadThemeFromName(themeName, themeSize, shm)
 }
 
-// LoadThemeOr loads a named theme with size and shm pool
+// LoadThemeFromName loads a named theme with size and shm pool
 func LoadThemeFromName(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	const initialPoolSize = 16 * 16 * 4
 

@@ -23,10 +23,11 @@ package cairo
 
 type enum = int64
 
-// FormatArgb32
+// FormatArgb32 pixel is a 32-bit quantity, with alpha in the upper 8 bits, then red, then green, then blue. The 32-bit quantities are stored native-endian. Pre-multiplied alpha is used. (That is, 50% transparent red is 0x80800000, not 0x80ff0000.)
+
 const FormatArgb32 enum = 0
 
-// FormatRgb16565
+// FormatRgb16565 pixel is a 16-bit quantity, with red in the upper 5 bits, then green in the next 6, then blue in the lowest 5 bits
 const FormatRgb16565 enum = 4
 
 // Surface is a Cairo Surface
