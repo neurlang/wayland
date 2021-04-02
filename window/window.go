@@ -502,6 +502,7 @@ type KeyboardHandler interface {
 		input *Input,
 		time uint32,
 		key uint32,
+		notUnicode uint32,
 		unicode uint32,
 		state wl.KeyboardKeyState,
 		data WidgetHandler,
@@ -869,7 +870,7 @@ func (input *Input) keyboard_handle_key_internal(keyboard *wl.Keyboard,
 		}
 
 		window.keyboardHandler.Key(window, input, time, key,
-			sym, state, window.Userdata)
+			sym, xkb.KeysymToUtf32(sym), state, window.Userdata)
 	}
 }
 func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
@@ -893,7 +894,7 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 		return
 	}
 
-	var sym = xkb.StateKeyGetOneSym(input.xkb.state, code)
+	var sym, _ = xkb.StateKeyGetSyms(input.xkb.state, code)
 
 	input.keyboard_handle_key_internal(keyboard, window, sym, state, time, key)
 

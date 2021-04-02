@@ -370,7 +370,21 @@ func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 		smoke.bb[0].vv <- uv[1]
 	}
 }
+func (smoke *smoke) Key(
+	window *window.Window,
+	input *window.Input,
+	time uint32,
+	key uint32,
+	notUnicode uint32,
+	unicode uint32,
+	state wl.KeyboardKeyState,
+	data window.WidgetHandler,
+) {
+	fmt.Println(string(rune(unicode)))
+}
+func (*smoke) Focus(window *window.Window, device *window.Input) {
 
+}
 func (*smoke) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
 }
 func (*smoke) Leave(widget *window.Widget, input *window.Input) {
@@ -477,6 +491,7 @@ func main() {
 
 	smoke.window.SetTitle("smoke")
 	smoke.window.SetBufferType(window.WindowBufferTypeShm)
+	smoke.window.SetKeyboardHandler(&smoke)
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	smoke.current = 0

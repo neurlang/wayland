@@ -205,7 +205,7 @@ func (editor *editor) HandleGlobal(display *window.Display, name uint32,
 
 }
 
-func (editor *editor) Key(window *window.Window, input *window.Input, time uint32, key uint32, unicode uint32, state wl.KeyboardKeyState, data window.WidgetHandler) {
+func (editor *editor) Key(window *window.Window, input *window.Input, time uint32, key uint32, notUnicode uint32, unicode uint32, state wl.KeyboardKeyState, data window.WidgetHandler) {
 
 }
 
