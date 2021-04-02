@@ -30,7 +30,7 @@
 // ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 
-package text_input
+package textinput
 
 import (
 	"sync"

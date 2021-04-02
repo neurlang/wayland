@@ -27,7 +27,7 @@ type externalError interface {
 	External() error
 }
 
-// External extracts the external (outermost) error cause from within the
+// GetExternal extracts the external (outermost) error cause from within the
 // error returned, or nil in case the error is not external.
 func GetExternal(e error) error {
 	if err, ok := e.(externalError); ok {

@@ -10,6 +10,7 @@ package swizzle
 
 import "errors"
 
+// ErrSliceNot32Bit is an error returned by BGRA in case the slice is not a multiple of 4
 var ErrSliceNot32Bit = errors.New("input slice length is not a multiple of 4")
 
 // BGRA converts a pixel buffer between Go's RGBA and other systems' BGRA byte

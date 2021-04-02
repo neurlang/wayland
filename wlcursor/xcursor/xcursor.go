@@ -9,11 +9,13 @@ import (
 	"strings"
 )
 
+// CursorTheme representes an Xcursor theme
 type CursorTheme struct {
 	theme       *cursorTheme
 	SearchPaths []string
 }
 
+// Load loads an Xcursor theme by name
 func Load(name string) *CursorTheme {
 	searchPaths := themeSearchPaths()
 	theme := load(name, searchPaths)
@@ -24,6 +26,7 @@ func Load(name string) *CursorTheme {
 	}
 }
 
+// LoadIcon loads an Xcursor icon path by icon name from theme
 func (c *CursorTheme) LoadIcon(iconName string) string {
 	return c.theme.loadIcon(iconName, c.SearchPaths, map[string]struct{}{})
 }

@@ -23,9 +23,13 @@ package cairo
 
 type enum = int64
 
+// FormatArgb32
 const FormatArgb32 enum = 0
+
+// FormatRgb16565
 const FormatRgb16565 enum = 4
 
+// Surface is a Cairo Surface
 type Surface interface {
 	Reference() Surface
 	Destroy()
@@ -35,6 +39,8 @@ type Surface interface {
 	ImageSurfaceGetHeight() int
 	ImageSurfaceGetStride() int
 }
+
+// Format represents an enum
 type Format = enum
 
 type simulatedSurface struct {
@@ -48,55 +54,68 @@ type simulatedSurfaceRef struct {
 	surf *simulatedSurface
 }
 
+// Destroy destroys a simulatedSurfaceRef
 func (s simulatedSurfaceRef) Destroy() {
 	s.surf.Destroy()
 	s.surf = nil
 }
 
+// References a simulatedSurfaceRef
 func (s simulatedSurfaceRef) Reference() Surface {
 	return s.surf.Reference()
 }
 
+// References a simulatedSurface
 func (s *simulatedSurface) Reference() Surface {
 	return &simulatedSurfaceRef{surf: s}
 }
 
+// Destroy destroys a simulatedSurface
 func (s *simulatedSurface) Destroy() {
 }
 
+// ImageSurfaceGetData gets the raw image surface data
 func (s *simulatedSurfaceRef) ImageSurfaceGetData() []byte {
 	return s.surf.ImageSurfaceGetData()
 }
 
+// ImageSurfaceGetData gets the raw image surface data
 func (s *simulatedSurface) ImageSurfaceGetData() []byte {
 	return s.data
 }
 
+// ImageSurfaceGetWidth gets width
 func (s *simulatedSurface) ImageSurfaceGetWidth() int {
 	return s.width
 }
 
+// ImageSurfaceGetHeight gets height
 func (s *simulatedSurface) ImageSurfaceGetHeight() int {
 	return s.height
 }
 
+// ImageSurfaceGetHeight gets stride
 func (s *simulatedSurface) ImageSurfaceGetStride() int {
 
 	return s.stride
 }
 
+// ImageSurfaceGetWidth gets width
 func (s *simulatedSurfaceRef) ImageSurfaceGetWidth() int {
 	return s.surf.ImageSurfaceGetWidth()
 }
 
+// ImageSurfaceGetHeight gets height
 func (s *simulatedSurfaceRef) ImageSurfaceGetHeight() int {
 	return s.surf.ImageSurfaceGetHeight()
 }
 
+// ImageSurfaceGetHeight gets height
 func (s *simulatedSurfaceRef) ImageSurfaceGetStride() int {
 	return s.surf.ImageSurfaceGetStride()
 }
 
+// ImageSurfaceCreateForData creates a simulatedSurface
 func ImageSurfaceCreateForData(
 	data []byte,
 	cairoFormat Format,
@@ -107,12 +126,16 @@ func ImageSurfaceCreateForData(
 	return &simulatedSurface{data: data, width: width, height: height, stride: stride}
 }
 
+// FormatStrideForWidth gets the stride for a concrete image
 func FormatStrideForWidth(cairoFormat Format, width int) int {
 	return width * 4
 }
 
+// SetUserData sets User Data, unused
 func (s *simulatedSurface) SetUserData(data func()) {
 }
+
+// SetUserData sets User Data, unused
 func (s *simulatedSurfaceRef) SetUserData(data func()) {
 	s.surf.SetUserData(data)
 }

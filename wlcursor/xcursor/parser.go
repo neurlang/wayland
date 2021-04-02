@@ -7,6 +7,7 @@ import (
 	"github.com/neurlang/wayland/external/swizzle"
 )
 
+// Image represents an Xcursor cursor
 type Image struct {
 	PixRGBA  []uint8
 	PixBGRA  []uint8
@@ -80,6 +81,7 @@ func parseImg(b []byte) (*Image, error) {
 	}, nil
 }
 
+// ParseXcursor parses X cursor data
 func ParseXcursor(content []byte) (imgs []*Image, err error) {
 	buf := bytes.NewBuffer(content)
 	ntoc := parseHeader(buf)

@@ -28,7 +28,7 @@ import "errors"
 import "crypto/rand"
 import "fmt"
 
-// MkOsTemp: Golang version of the popular C library function call
+// MkOsTemp is a Golang version of the popular C library function call
 // The string can contain the patern consistng of XXX that will be replaced
 // with a high-entropy alphanumeric sequence, if you want more entropic string
 // you can put more XXX (in multiples of 3 X) up to the recommended value of 27 X
@@ -109,7 +109,7 @@ var ErrUnlink = errors.New("CreateTmpfileCloexec: unlink error")
 // ErrFileIsNil error means a temp file could not be created
 var ErrFileIsNil = errors.New("CreateTmpfileCloexec: file is nil")
 
-// OsCreateAnonymousFile: in case of the ErrUnlink error, the fd is valid.
+// OsCreateAnonymousFile creates anon fd, in case of the ErrUnlink error, the fd is valid.
 // The file just isn't anonymous and can't be deleted. You can either ignore the ErrUnlink
 // error and proceed, but it is your responsibility to Close the fd.
 // In case of other errors, the fd is not valid and does not need to be closed.

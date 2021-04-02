@@ -12,6 +12,7 @@ import (
 	"github.com/neurlang/wayland/wlcursor/xcursor"
 )
 
+// Image is a wlCursor cursor image
 type Image interface {
 	GetBuffer() *wl.Buffer
 	GetWidth() int
@@ -37,6 +38,7 @@ const (
 	Watch             = "watch"
 )
 
+// Theme is a wlCursor cursor image theme
 type Theme struct {
 	Pool     *wl.ShmPool
 	File     *os.File
@@ -46,10 +48,12 @@ type Theme struct {
 	PoolSize int32
 }
 
+// LoadTheme loads a default-named theme with default size and shm pool, based on environment
 func LoadTheme(size uint32, shm *wl.Shm) (*Theme, error) {
 	return LoadThemeOr("default", size, shm)
 }
 
+// LoadThemeOr loads a named theme with size and shm pool, based on environment
 func LoadThemeOr(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	themeName := os.Getenv("XCURSOR_THEME")
 	if themeName == "" {
@@ -69,6 +73,7 @@ func LoadThemeOr(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	return LoadThemeFromName(themeName, themeSize, shm)
 }
 
+// LoadThemeOr loads a named theme with size and shm pool
 func LoadThemeFromName(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	const initialPoolSize = 16 * 16 * 4
 
@@ -91,6 +96,7 @@ func LoadThemeFromName(name string, size uint32, shm *wl.Shm) (*Theme, error) {
 	}, nil
 }
 
+// GetCursor gets a Theme cursor by name
 func (t *Theme) GetCursor(name string) (*Cursor, error) {
 	for _, cursor := range t.Cursors {
 		if cursor.Name == name {
@@ -140,6 +146,7 @@ func (t *Theme) grow(size int32) error {
 	return nil
 }
 
+// Destroy destroys a Theme
 func (t *Theme) Destroy() (err error) {
 
 	err = t.Pool.Destroy()
@@ -151,12 +158,14 @@ func (t *Theme) Destroy() (err error) {
 	return err
 }
 
+// Cursor is a Theme cursor
 type Cursor struct {
 	Name          string
 	Images        []*ImageBuffer
 	TotalDuration uint32
 }
 
+// GetCursorImage gets the n-th image from cursor or nil
 func (c *Cursor) GetCursorImage(n int) *ImageBuffer {
 	if n >= len(c.Images) {
 		return nil
@@ -189,6 +198,7 @@ func newCursor(name string, theme *Theme, images []*xcursor.Image, size uint32) 
 	}, nil
 }
 
+// Destroy destroys a Cursor
 func (c *Cursor) Destroy() (err error) {
 	if len(c.Images) > 0 {
 		for _, buf := range c.Images {
@@ -224,11 +234,13 @@ func nearestImages(size uint32, images []*xcursor.Image) []*xcursor.Image {
 	return nImages
 }
 
+// FrameAndDuration carries information about a frame and duration that should be used
 type FrameAndDuration struct {
 	FrameIndex    int
 	FrameDuration uint32
 }
 
+// FrameAndDuration informs which frame and duration should be used at a specific time
 func (c *Cursor) FrameAndDuration(millis uint32) FrameAndDuration {
 	millis %= c.TotalDuration
 
@@ -247,6 +259,7 @@ func (c *Cursor) FrameAndDuration(millis uint32) FrameAndDuration {
 	}
 }
 
+// ImageBuffer is a Wayland buffer for cursor
 type ImageBuffer struct {
 	buffer   *wl.Buffer
 	Delay    uint32
@@ -256,6 +269,7 @@ type ImageBuffer struct {
 	height   uint32
 }
 
+// NewImageBuffer creates a new ImageBuffer from Theme and cursor Image
 func NewImageBuffer(theme *Theme, image *xcursor.Image) (*ImageBuffer, error) {
 	buf := image.PixBGRA
 	offset, err := theme.File.Seek(0, 2)
@@ -292,29 +306,43 @@ func NewImageBuffer(theme *Theme, image *xcursor.Image) (*ImageBuffer, error) {
 		height:   image.Height,
 	}, nil
 }
+
+// GetBuffer gets buffer
 func (b *ImageBuffer) GetBuffer() *wl.Buffer {
 	return b.buffer
 }
+
+// ImageCount returns image count
 func (c *Cursor) ImageCount() int {
 	return len(c.Images)
 }
+
+// GetHotspotX gets hotspot x
 func (b *ImageBuffer) GetHotspotX() int {
 	return int(b.hotspotX)
 }
+
+// GetHotspotY gets hotspot Y
 func (b *ImageBuffer) GetHotspotY() int {
 	return int(b.hotspotY)
 }
+
+// GetWidth gets width
 func (b *ImageBuffer) GetWidth() int {
 	return int(b.width)
 }
+
+// GetHeight gets height
 func (b *ImageBuffer) GetHeight() int {
 	return int(b.height)
 }
 
+// Destroy destroys the ImageBuffer
 func (b *ImageBuffer) Destroy() error {
 	return b.buffer.Destroy()
 }
 
+// PointerSetCursor sets Cursor of Pointer
 func PointerSetCursor(p *wl.Pointer, serial uint32, pointerSurface *wl.Surface,
 	hotspotX int32, hotspotY int32) error {
 	return p.SetCursor(serial, pointerSurface, hotspotX, hotspotY)

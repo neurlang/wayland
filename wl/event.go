@@ -39,25 +39,25 @@ type Event struct {
 		ev.Fd = p.Context().NextFD()
 */
 
-// Error unable to read message header is returned when it is not possible to read enough bytes from the unix socket,
-// use InternalError to get the underlying cause
+// ErrReadHeader (Error unable to read message header) is returned when it is not possible to read enough bytes from the unix socket,
+// use Unwrap() to get the underlying cause and GetExternal to get this cause
 var ErrReadHeader = errors.New("unable to read message header")
 
-// Error size of message header is wrong is returned when the returned size of message heaer is not 8 bytes
+// ErrSizeOfHeaderWrong (Error size of message header is wrong) is returned when the returned size of message heaer is not 8 bytes
 var ErrSizeOfHeaderWrong = errors.New("size of message header is wrong")
 
-// Error unsufficient control msg buffer is returned when the oobn is bigger than the control message buffer
+// ErrControlMsgBuffer (Error unsufficient control msg buffer) is returned when the oobn is bigger than the control message buffer
 var ErrControlMsgBuffer = errors.New("unsufficient control msg buffer")
 
-// Error control message parse error is returned when the unix socket control message cannot be parsed, use
-// InternalError to get the underlying cause
+// ErrControlMsgParseError (Error control message parse error) is returned when the unix socket control message cannot be parsed, use
+// Unwrap() to get the underlying cause and GetExternal to get this cause
 var ErrControlMsgParseError = errors.New("control message parse error")
 
-// Error invalid message size is returned when the payload message size read from the unix socket is incorrect
+// ErrInvalidMsgSize (Error invalid message size) is returned when the payload message size read from the unix socket is incorrect
 var ErrInvalidMsgSize = errors.New("invalid message size")
 
-// Error cannot read message is returned when the payload message cannot be read, use InternalError to get the
-// underlying cause
+// ErrReadPayload (Error cannot read message) is returned when the payload message cannot be read, use Unwrap() to get the
+// underlying cause and GetExternal to get this cause
 var ErrReadPayload = errors.New("cannot read message")
 
 func (ctx *Context) readEvent() (*Event, error) {
@@ -104,10 +104,10 @@ func (ctx *Context) readEvent() (*Event, error) {
 	return ev, nil
 }
 
-// Error no socket control messages
+// ErrNoControlMsgs (Error no socket control messages)
 var ErrNoControlMsgs = errors.New("no socket control messages")
 
-// Error unable to parse unix rights
+// ErrUnableToParseUnixRights (Error unable to parse unix rights)
 var ErrUnableToParseUnixRights = errors.New("unable to parse unix rights")
 
 func (ev *Event) FD() (uintptr, error) {
@@ -123,7 +123,7 @@ func (ev *Event) FD() (uintptr, error) {
 	return uintptr(fds[0]), nil
 }
 
-// Error unable to read unsigned int is returned when the buffer is too short to contain a specific unsigned int
+// ErrUnableToParseUint32 (Error unable to read unsigned int) is returned when the buffer is too short to contain a specific unsigned int
 var ErrUnableToParseUint32 = errors.New("unable to read unsigned int")
 
 func (ev *Event) Uint32() uint32 {
@@ -135,7 +135,7 @@ func (ev *Event) Uint32() uint32 {
 	return native_endian.NativeEndian().Uint32(buf)
 }
 
-// Event Proxy decodes Proxy by it's Id from the Event
+// Proxy (Event Proxy) decodes Proxy by it's Id from the Event
 func (ev *Event) Proxy(c *Context) Proxy {
 	id := ev.Uint32()
 	if id == 0 {
@@ -145,10 +145,10 @@ func (ev *Event) Proxy(c *Context) Proxy {
 	}
 }
 
-// Error unable to parse string is returned when the buffer is too short to contain a specific string
+// ErrUnableToParseString (Error unable to parse string) is returned when the buffer is too short to contain a specific string
 var ErrUnableToParseString = errors.New("unable to parse string")
 
-// Event String decodes a string from the Event
+// String (Event String) decodes a string from the Event
 func (ev *Event) String() string {
 	l := int(ev.Uint32())
 	buf := ev.next(l)
@@ -164,17 +164,17 @@ func (ev *Event) String() string {
 	return ret
 }
 
-// Event Int32 decodes an Int32 from the Event
+// Int32 (Event Int32) decodes an Int32 from the Event
 func (ev *Event) Int32() int32 {
 	return int32(ev.Uint32())
 }
 
-// Event Float32 decodes a Float32 from the Event
+// Float32 (Event Float32) decodes a Float32 from the Event
 func (ev *Event) Float32() float32 {
 	return float32(FixedToFloat(ev.Int32()))
 }
 
-// Event Array decodes an Array from the Event
+// Array (Event Array) decodes an Array from the Event
 func (ev *Event) Array() []int32 {
 	l := int(ev.Uint32())
 	arr := make([]int32, l/4)

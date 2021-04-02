@@ -57,7 +57,7 @@ func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	return proxy
 }
 
-// This error is returned by Connect when the operating system does not provide the required
+// ErrXdgRuntimeDirNotSet is returned by Connect when the operating system does not provide the required
 // XDG_RUNTIME_DIR environment variable
 var ErrXdgRuntimeDirNotSet = errors.New("variable XDG_RUNTIME_DIR not set in the environment")
 
@@ -106,25 +106,25 @@ func (ctx *Context) RunTill(cb *Callback) (err error) {
 	}
 }
 
-// Context Run event reading error, use InternalError to get the underlying cause
+// ErrContextRunEventReadingError (Context Run event reading error), use InternalError to get the underlying cause
 var ErrContextRunEventReadingError = errors.New("event reading error")
 
-// Context Run connection closed
+// ErrContextRunConnectionClosed (Context Run connection closed)
 var ErrContextRunConnectionClosed = errors.New("connection closed")
 
-// Context Run timeout error
+// ErrContextRunTimeout (Context Run timeout error)
 var ErrContextRunTimeout = errors.New("timeout error")
 
-// Context Run protocol error, use InternalError to get the underlying cause
+// ErrContextRunProtocolError (Context Run protocol error), use InternalError to get the underlying cause
 var ErrContextRunProtocolError = errors.New("protocol error")
 
-// Context Run not dispatched
+// ErrContextRunNotDispatched (Context Run not dispatched)
 var ErrContextRunNotDispatched = errors.New("not dispatched")
 
-// Context Run proxy nil
+// ErrContextRunProxyNil (Context Run proxy nil)
 var ErrContextRunProxyNil = errors.New("proxy nil")
 
-// Context Run reads and processes one event, a specific ErrContextRunXXX error
+// Run (Context Run) reads and processes one event, a specific ErrContextRunXXX error
 // may be returned in case of failure
 func (ctx *Context) Run() error {
 	return ctx.run(nil)
@@ -170,7 +170,11 @@ func (ctx *Context) run(cb *Callback) error {
 	return nil
 }
 
+// Close (Context Close) closes Wayland connection
 func (ctx *Context) Close() (err error) {
+	if ctx == nil {
+		return
+	}
 	ctx.mu.Lock()
 	err = ctx.conn.Close()
 	ctx.conn = nil

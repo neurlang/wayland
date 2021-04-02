@@ -16,12 +16,16 @@ type Request struct {
 	oob    []byte
 }
 
+// ErrContextSendRequestUnix is raised in case sending wl request fails
 var ErrContextSendRequestUnix = errors.New("unable to send request using unix")
+
+// ErrContextSendRequestConn is raised in case sending wl request fails
 var ErrContextSendRequestConn = errors.New("unable to send request using conn")
 
+// ErrContextSendRequestUnixLength is raised in case sending wl request fails
 var ErrContextSendRequestUnixLength = errors.New("unable to send request using unix, WriteMsgUnix length check failed")
 
-// Context SendRequest sends a specific request with arguments to the compositor
+// SendRequest (Context SendRequest) sends a specific request with arguments to the compositor
 func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{}) (err error) {
 	req := Request{
 		pid:    proxy.Id(),
@@ -46,7 +50,7 @@ func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{})
 	}
 }
 
-// Request Write writes a specific request argument to the compositor
+// Write (Request Write) writes a specific request argument to the compositor
 func (r *Request) Write(arg interface{}) error {
 	switch t := arg.(type) {
 	case Proxy:
@@ -69,30 +73,30 @@ func (r *Request) Write(arg interface{}) error {
 	return nil
 }
 
-// Request PutUint32 writes an uint32 argument to the compositor
+// PutUint32 (Request PutUint32) writes an uint32 argument to the compositor
 func (r *Request) PutUint32(u uint32) {
 	buf := bytePool.Take(4)
 	native_endian.NativeEndian().PutUint32(buf, u)
 	r.data = append(r.data, buf...)
 }
 
-// Request PutProxy writes a proxy argument to the compositor
+// PutProxy (Request PutProxy) writes a proxy argument to the compositor
 func (r *Request) PutProxy(p Proxy) {
 	r.PutUint32(uint32(p.Id()))
 }
 
-// Request PutInt32 writes an int32 argument to the compositor
+// PutInt32 (Request PutInt32) writes an int32 argument to the compositor
 func (r *Request) PutInt32(i int32) {
 	r.PutUint32(uint32(i))
 }
 
-// Request PutFloat32 writes a float32 argument to the compositor
+// PutFloat32 (Request PutFloat32) writes a float32 argument to the compositor
 func (r *Request) PutFloat32(f float32) {
 	fx := FloatToFixed(float64(f))
 	r.PutUint32(uint32(fx))
 }
 
-// Request PutString writes a string argument to the compositor
+// PutString (Request PutString) writes a string argument to the compositor
 func (r *Request) PutString(s string) {
 	tail := 4 - (len(s) & 0x3)
 	r.PutUint32(uint32(len(s) + tail))
@@ -104,7 +108,7 @@ func (r *Request) PutString(s string) {
 	}
 }
 
-// Request PutArray writes an array argument to the compositor
+// PutArray (Request PutArray) writes an array argument to the compositor
 func (r *Request) PutArray(a []int32) {
 	r.PutUint32(uint32(len(a)))
 	for _, e := range a {
@@ -112,7 +116,7 @@ func (r *Request) PutArray(a []int32) {
 	}
 }
 
-// Request PutFd writes a file descriptor argument to the compositor
+// PutFd (Request PutFd) writes a file descriptor argument to the compositor
 func (r *Request) PutFd(fd uintptr) {
 	rights := os.UnixRights(int(fd))
 	r.oob = append(r.oob, rights...)

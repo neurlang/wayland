@@ -20,7 +20,7 @@ var (
 	}
 )
 
-// BytePool Take takes a specific number of bytes from the pool
+// Take (BytePool Take) takes a specific number of bytes from the pool
 func (bp *BytePool) Take(n int) []byte {
 	buf := bp.Get().([]byte)
 	if cap(buf) < n {
@@ -31,7 +31,7 @@ func (bp *BytePool) Take(n int) []byte {
 	return buf[:n]
 }
 
-// BytePool Give returns a specific number of bytes to the pool
+// Give (BytePool Give) returns a specific number of bytes to the pool
 func (bp *BytePool) Give(b []byte) {
 	bp.Put(b)
 }
