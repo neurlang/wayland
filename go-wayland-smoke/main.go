@@ -31,31 +31,35 @@ import "github.com/neurlang/wayland/window"
 import "fmt"
 
 type smoke struct {
-	display       *window.Display
-	window        *window.Window
-	widget        *window.Widget
-	width, height int32
-	current       int
-	bb            [2]struct {
-		d []float32
-		u []float32
-		v []float32
+	display             *window.Display
+	window              *window.Window
+	widget              *window.Widget
+	width, height       int32
+	bigwidth, bigheight int32
+	current             int
+	bb                  [2]struct {
+		d  []float32
+		uv chan [2][]float32
+		uu chan []float32
+		vv chan []float32
 	}
+	pipe   bool
+	lx, ly float32
 }
 
-func diffuse(smoke *smoke, time uint32, source []float32, dest []float32) {
+func diffuse(smoke *smoke, time uint32, source []float32, dest []float32, width int32, height int32) {
 	var s, d []float32
 	var x, y, k, stride int32
 	var t float32
 	var a float32 = 0.0002
 
-	stride = smoke.width
+	stride = width
 
 	for k = 0; k < 5; k++ {
-		for y = 1; y < smoke.height-1; y++ {
+		for y = 1; y < height-1; y++ {
 			s = source[y*stride:]
 			d = dest[y*stride-stride:]
-			for x = 1; x < smoke.width-1; x++ {
+			for x = 1; x < width-1; x++ {
 				t = d[x-1+stride] + d[x+1+stride] +
 					d[x] + d[x+stride+stride]
 				d[x+stride] = (s[x] + a*t) / (1 + 4*a) * 0.995
@@ -71,6 +75,7 @@ func advect(
 	vv []float32,
 	source []float32,
 	dest []float32,
+	width int32, height int32,
 ) {
 
 	var s, d []float32
@@ -79,14 +84,14 @@ func advect(
 	var i, j int
 	var px, py, fx, fy float32
 
-	stride = int(smoke.width)
+	stride = int(width)
 
-	for y = 1; y < int(smoke.height)-1; y++ {
+	for y = 1; y < int(height)-1; y++ {
 		d = dest[y*stride:]
 		u = uu[y*stride:]
 		v = vv[y*stride:]
 
-		for x = 1; x < int(smoke.width)-1; x++ {
+		for x = 1; x < int(width)-1; x++ {
 			px = float32(x) - u[x]
 			py = float32(y) - v[x]
 			if px < 0.5 {
@@ -95,11 +100,11 @@ func advect(
 			if py < 0.5 {
 				py = 0.5
 			}
-			if px > float32(smoke.width)-1.5 {
-				px = float32(smoke.width) - 1.5
+			if px > float32(width)-1.5 {
+				px = float32(width) - 1.5
 			}
-			if py > float32(smoke.height)-1.5 {
-				py = float32(smoke.height) - 1.5
+			if py > float32(height)-1.5 {
+				py = float32(height) - 1.5
 			}
 			i = (int)(px)
 			j = (int)(py)
@@ -113,17 +118,17 @@ func advect(
 
 }
 
-func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, div []float32) {
+func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, div []float32, width int32, height int32) {
 	var x, y, k, l, s int
-	var h = 1.0 / float32(smoke.width)
+	var h = 1.0 / float32(width)
 
-	s = int(smoke.width)
-	for i := 0; i < int(smoke.height*smoke.width); i++ {
+	s = int(width)
+	for i := 0; i < int(height*width); i++ {
 		p[i] = 0.
 	}
-	for y = 1; y < int(smoke.height)-1; y++ {
+	for y = 1; y < int(height)-1; y++ {
 		l = y * s
-		for x = 1; x < int(smoke.width)-1; x++ {
+		for x = 1; x < int(width)-1; x++ {
 			div[l+x] = -0.5 * h * (u[l+x+1] - u[l+x-1] +
 				v[l+x+s] - v[l+x-s])
 			p[l+x] = 0
@@ -131,9 +136,9 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 	}
 
 	for k = 0; k < 5; k++ {
-		for y = 1; y < int(smoke.height)-1; y++ {
+		for y = 1; y < int(height)-1; y++ {
 			l = y * s
-			for x = 1; x < int(smoke.width)-1; x++ {
+			for x = 1; x < int(width)-1; x++ {
 				p[l+x] = (div[l+x] +
 					p[l+x-1] +
 					p[l+x+1] +
@@ -143,9 +148,9 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 		}
 	}
 
-	for y = 1; y < int(smoke.height)-1; y++ {
+	for y = 1; y < int(height)-1; y++ {
 		l = y * s
-		for x = 1; x < int(smoke.width)-1; x++ {
+		for x = 1; x < int(width)-1; x++ {
 			u[l+x] -= 0.5 * (p[l+x+1] - p[l+x-1]) / h
 			v[l+x] -= 0.5 * (p[l+x+s] - p[l+x-s]) / h
 		}
@@ -156,17 +161,38 @@ func (smoke *smoke) Resize(widget *window.Widget, width int32, height int32) {
 
 	size := int(width) * int(height)
 
-	smoke.width = width
-	smoke.height = height
+	var olduv = smoke.bb[0].uv
 
 	smoke.bb[0].d = make([]float32, size)
-	smoke.bb[0].u = make([]float32, size)
-	smoke.bb[0].v = make([]float32, size)
 	smoke.bb[1].d = make([]float32, size)
-	smoke.bb[1].u = make([]float32, size)
-	smoke.bb[1].v = make([]float32, size)
+
+	if smoke.pipe {
+		<-olduv
+		smoke.bb[0].uu <- nil
+		smoke.bb[0].vv <- nil
+		<-olduv
+	}
+	smoke.bb[0].uv = make(chan [2][]float32, 1)
+	if width > 512 {
+		smoke.bigwidth = width
+		smoke.width = 512
+	} else {
+		smoke.bigwidth = width
+		smoke.width = width
+	}
+	if height > 512 {
+		smoke.bigheight = height
+		smoke.height = 512
+	} else {
+		smoke.bigheight = height
+		smoke.height = height
+	}
+	smoke.pipeline(smoke.width, smoke.height)
+	smoke.bb[0].uu <- make([]float32, size)
+	smoke.bb[0].vv <- make([]float32, size)
 
 	//smoke.widget.ScheduleResize(smoke.width, smoke.height)
+	smoke.pipe = true
 }
 
 func render(smoke *smoke, surface cairo.Surface) {
@@ -178,9 +204,10 @@ func render(smoke *smoke, surface cairo.Surface) {
 	data := smoke.bb[smoke.current].d
 
 	for y := 1; y < height-1; y++ {
+		var yy = y * int(smoke.height) / int(smoke.bigheight)
 		for x := 1; x < width-1; x++ {
 
-			var c = uint32(data[x+y*int(smoke.width)] * 800.)
+			var c = uint32(data[x*int(smoke.width)/int(smoke.bigwidth)+yy*int(smoke.width)] * 800.)
 			if c > 255 {
 				c = 255
 			}
@@ -197,19 +224,81 @@ func render(smoke *smoke, surface cairo.Surface) {
 		}
 	}
 }
+func (smoke *smoke) pipeline(width int32, height int32) {
+	const lastTime = 600000
+	/*	go func() {
+			for {
+				var uv [2][]float32
+				uv = <-smoke.bb[0].uv
+				if uv[0] == nil || uv[1] == nil {
+					smoke.bb[0].uu <- nil
+					smoke.bb[0].vv <- nil
+					return
+				}
+				smoke.bb[0].uu <- uv[0]
+				smoke.bb[0].vv <- uv[1]
+			}
+		}()
+	*/go func() {
+		for {
+			var u0 []float32
+			u0 = <-smoke.bb[0].uu
+			if u0 == nil {
+				smoke.bb[1].uu <- nil
+				return
+			}
+			u1 := make([]float32, len(u0))
+			diffuse(smoke, lastTime, u0, u1, width, height)
+			smoke.bb[1].uu <- u1
+		}
+	}()
+	go func() {
+		for {
+			var v0 []float32
+			v0 = <-smoke.bb[0].vv
+			if v0 == nil {
+				smoke.bb[1].vv <- nil
+				return
+			}
+			v1 := make([]float32, len(v0))
+			diffuse(smoke, lastTime, v0, v1, width, height)
+			smoke.bb[1].vv <- v1
+		}
+	}()
 
+	go func() {
+		for {
+			u1 := <-smoke.bb[1].uu
+			v1 := <-smoke.bb[1].vv
+			if u1 == nil || v1 == nil {
+				smoke.bb[0].uv <- [2][]float32{nil, nil}
+				return
+			}
+			u0 := make([]float32, len(u1))
+			v0 := make([]float32, len(v1))
+
+			project(smoke, lastTime, u1, v1, u0, v0, width, height)
+			advect(smoke, lastTime, u1, v1, u1, u0, width, height)
+			advect(smoke, lastTime, u1, v1, v1, v0, width, height)
+			project(smoke, lastTime, u0, v0, u1, v1, width, height)
+			smoke.bb[0].uv <- [2][]float32{u0, v0}
+		}
+	}()
+
+}
 func (smoke *smoke) Redraw(widget *window.Widget) {
-
 	var lastTime = smoke.widget.WidgetGetLastTime()
 
-	diffuse(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[1].u)
-	diffuse(smoke, lastTime/30, smoke.bb[0].v, smoke.bb[1].v)
-	project(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[0].u, smoke.bb[0].v)
-	advect(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].u, smoke.bb[0].u)
-	advect(smoke, lastTime/30, smoke.bb[1].u, smoke.bb[1].v, smoke.bb[1].v, smoke.bb[0].v)
-	project(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].u, smoke.bb[1].v)
-	diffuse(smoke, lastTime/30, smoke.bb[0].d, smoke.bb[1].d)
-	advect(smoke, lastTime/30, smoke.bb[0].u, smoke.bb[0].v, smoke.bb[1].d, smoke.bb[0].d)
+	uv := <-smoke.bb[0].uv
+
+	if len(uv[0]) == len(smoke.bb[0].d) && len(uv[1]) == len(smoke.bb[1].d) {
+
+		diffuse(smoke, lastTime/30, smoke.bb[0].d, smoke.bb[1].d, smoke.width, smoke.height)
+		advect(smoke, lastTime/30, uv[0], uv[1], smoke.bb[1].d, smoke.bb[0].d, smoke.width, smoke.height)
+
+	}
+	smoke.bb[0].uu <- uv[0]
+	smoke.bb[0].vv <- uv[1]
 
 	var surface = smoke.window.WindowGetSurface()
 
@@ -222,6 +311,17 @@ func (smoke *smoke) Redraw(widget *window.Widget) {
 	smoke.widget.WidgetScheduleRedraw()
 }
 func smokeMotionHandler(smoke *smoke, x float32, y float32) {
+
+	dx := smoke.lx - x
+	dy := smoke.ly - y
+
+	dt := 0.8 / (dx*dx + dy*dy)
+
+	smoke.lx = x
+	smoke.ly = y
+
+	x *= float32(smoke.width) / float32(smoke.bigwidth)
+	y *= float32(smoke.height) / float32(smoke.bigheight)
 	var i0, i1, j0, j1 float32
 	var k, i, j int
 	var d float32 = 5
@@ -250,10 +350,24 @@ func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 	for i = int(i0); i < int(i1); i++ {
 		for j = int(j0); j < int(j1); j++ {
 			k = j*int(smoke.width) + i
-			smoke.bb[0].u[k] += float32(256 - (rand.Int() & 512))
-			smoke.bb[0].v[k] += float32(256 - (rand.Int() & 512))
-			smoke.bb[0].d[k] += float32(1)
+
+			smoke.bb[0].d[k] += float32(dt)
 		}
+	}
+	if rand.Int()&7 == 0 {
+		uv := <-smoke.bb[0].uv
+
+		for i = int(i0); i < int(i1); i++ {
+			for j = int(j0); j < int(j1); j++ {
+				k = j*int(smoke.width) + i
+
+				uv[0][k] += float32(512 - (rand.Int() & 1023))
+				uv[1][k] += float32(512 - (rand.Int() & 1023))
+			}
+		}
+
+		smoke.bb[0].uu <- uv[0]
+		smoke.bb[0].vv <- uv[1]
 	}
 }
 
@@ -269,7 +383,6 @@ func (smoke *smoke) Motion(
 	x float32,
 	y float32,
 ) int {
-
 	smokeMotionHandler(smoke, x, y)
 
 	return window.CursorHand1
@@ -370,11 +483,14 @@ func main() {
 	var size = int(smoke.height * smoke.width)
 
 	smoke.bb[0].d = make([]float32, size)
-	smoke.bb[0].u = make([]float32, size)
-	smoke.bb[0].v = make([]float32, size)
+	smoke.bb[0].uv = make(chan [2][]float32, 1)
 	smoke.bb[1].d = make([]float32, size)
-	smoke.bb[1].u = make([]float32, size)
-	smoke.bb[1].v = make([]float32, size)
+	smoke.bb[1].uu = make(chan []float32, 1)
+	smoke.bb[1].vv = make(chan []float32, 1)
+	smoke.bb[0].uu = make(chan []float32, 1)
+	smoke.bb[0].vv = make(chan []float32, 1)
+
+	//smoke.bb[0].uv <- [2][]float32{make([]float32, size), make([]float32, size)}
 
 	smoke.widget.Userdata = &smoke
 
