@@ -893,11 +893,7 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 		return
 	}
 
-	var syms = xkb.StateKeyGetSyms(input.xkb.state, code)
-	var sym = uint32(xkb.KEY_NoSymbol)
-	if len(syms) == 1 {
-		sym = syms[0]
-	}
+	var sym = xkb.StateKeyGetOneSym(input.xkb.state, code)
 
 	input.keyboard_handle_key_internal(keyboard, window, sym, state, time, key)
 
@@ -2673,6 +2669,11 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 	d.Display, e = wlclient.DisplayConnect(nil)
 	if e != nil {
 		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
+	}
+
+	d.xkbContext = xkb.ContextNew(xkb.CONTEXT_NO_FLAGS)
+	if d.xkbContext == nil {
+		return nil, fmt.Errorf("failed to create XKB context: %w", e)
 	}
 
 	//d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))

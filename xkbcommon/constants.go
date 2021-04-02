@@ -7,6 +7,7 @@ const MOD_SHIFT_MASK uint8 = 0x01
 const MOD_ALT_MASK uint8 = 0x02
 const MOD_CONTROL_MASK uint8 = 0x04
 
+const CONTEXT_NO_FLAGS = 0
 const COMPOSE_COMPILE_NO_FLAGS = 0
 const COMPOSE_STATE_NO_FLAGS = 0
 

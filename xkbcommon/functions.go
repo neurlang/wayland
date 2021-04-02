@@ -1,5 +1,14 @@
 package xkbcommon
 
+/*
+#cgo pkg-config: xkbcommon
+#cgo LDFLAGS: -ldl
+
+#include <xkbcommon/xkbcommon-compose.h>
+#include <xkbcommon/xkbcommon.h>
+*/
+import "C"
+
 /**
  * ComposeTableNewFromLocale Creates a compose table for a given locale.
  *
@@ -36,8 +45,8 @@ package xkbcommon
  *
  * @memberof xkb_compose_table
  */
-func ComposeTableNewFromLocale(*Context, string, int) *ComposeTable {
-	return new(ComposeTable)
+func ComposeTableNewFromLocale(context *Context, locale string, flags uint32) *ComposeTable {
+	return C.xkb_compose_table_new_from_locale(context, C.CString(locale), flags)
 }
 
 /**
@@ -52,8 +61,8 @@ func ComposeTableNewFromLocale(*Context, string, int) *ComposeTable {
  *
  * @memberof xkb_compose_state
  */
-func ComposeStateNew(*ComposeTable, int) *ComposeState {
-	return new(ComposeState)
+func ComposeStateNew(table *ComposeTable, flags uint32) *ComposeState {
+	return C.xkb_compose_state_new(table, flags)
 }
 
 /**
@@ -63,8 +72,8 @@ func ComposeStateNew(*ComposeTable, int) *ComposeState {
  *
  * @memberof xkb_compose_table
  */
-func ComposeTableUnref(*ComposeTable) {
-
+func ComposeTableUnref(table *ComposeTable) {
+	C.xkb_compose_table_unref(table)
 }
 
 /**
@@ -75,8 +84,8 @@ func ComposeTableUnref(*ComposeTable) {
  * @memberof xkb_compose_state
  */
 
-func ComposeStateUnref(*ComposeState) {
-
+func ComposeStateUnref(state *ComposeState) {
+	C.xkb_compose_state_unref(state)
 }
 
 /**
@@ -86,8 +95,8 @@ func ComposeStateUnref(*ComposeState) {
  * @memberof xkb_compose_state
  **/
 
-func ComposeStateGetStatus(*ComposeState) ComposeStatus {
-	return 0
+func ComposeStateGetStatus(state *ComposeState) ComposeStatus {
+	return ComposeStatus(C.xkb_compose_state_get_status(state))
 }
 
 /**
@@ -101,8 +110,8 @@ func ComposeStateGetStatus(*ComposeState) ComposeStatus {
  *
  * @memberof xkb_compose_state
  **/
-func ComposeStateGetOneSym(*ComposeState) uint32 {
-	return 0
+func ComposeStateGetOneSym(state *ComposeState) uint32 {
+	return uint32(uint(C.xkb_compose_state_get_one_sym(state)))
 }
 
 /**
@@ -149,8 +158,8 @@ func ComposeStateGetOneSym(*ComposeState) uint32 {
 *
 * @memberof xkb_compose_state
 */
-func ComposeStateFeed(*ComposeState, uint32) ComposeFeedResult {
-	return 0
+func ComposeStateFeed(state *ComposeState, keysym uint32) ComposeFeedResult {
+	return ComposeFeedResult(C.xkb_compose_state_feed(state, C.uint(keysym)))
 }
 
 /**
@@ -160,8 +169,8 @@ func ComposeStateFeed(*ComposeState, uint32) ComposeFeedResult {
  *
  * @memberof xkb_keymap
  */
-func KeymapUnref(*Keymap) {
-
+func KeymapUnref(keymap *Keymap) {
+	C.xkb_keymap_unref(keymap)
 }
 
 /**
@@ -173,8 +182,8 @@ func KeymapUnref(*Keymap) {
  * @see xkb_keymap_new_from_file()
  * @memberof xkb_keymap
  */
-func KeymapNewFromString(*Context, []byte, int, int) *Keymap {
-	return new(Keymap)
+func KeymapNewFromString(context *Context, str []byte, a uint32, b uint32) *Keymap {
+	return C.xkb_keymap_new_from_string(context, C.CString(string(str)), a, b)
 }
 
 /**
@@ -186,19 +195,19 @@ func KeymapNewFromString(*Context, []byte, int, int) *Keymap {
  *
  * @memberof xkb_state
  */
-func StateNew(*Keymap) *State {
-	return new(State)
+func StateNew(keymap *Keymap) *State {
+	return C.xkb_state_new(keymap)
 }
 
 /**
- * StateUnref Releases a reference on a keybaord state object, and possibly free it.
+ * StateUnref Releases a reference on a keyboard state object, and possibly free it.
  *
  * @param state The state.  If it is NULL, this function does nothing.
  *
  * @memberof xkb_state
  */
-func StateUnref(*State) {
-
+func StateUnref(state *State) {
+	C.xkb_state_unref(state)
 }
 
 /**
@@ -210,38 +219,29 @@ func StateUnref(*State) {
  * @sa xkb_mod_index_t
  * @memberof xkb_keymap
  */
-func KeymapModGetIndex(*Keymap, string) uint {
-	return 0
+func KeymapModGetIndex(keymap *Keymap, mod string) uint {
+	return uint(C.xkb_keymap_mod_get_index(keymap, C.CString(mod)))
 }
 
 /**
- * StateKeyGetSyms Gets the keysyms obtained from pressing a particular key in a given
- * keyboard state.
+ * StateKeyGetOneSym Gets the single keysym obtained from pressing a particular key in a
+ * given keyboard state.
  *
- * Get the keysyms for a key according to the current active layout,
- * modifiers and shift level for the key, as determined by a keyboard
- * state.
+ * This function is similar to xkb_state_key_get_syms(), but intended
+ * for users which cannot or do not want to handle the case where
+ * multiple keysyms are returned (in which case this function is
+ * preferred).
  *
- * @param[in]  state    The keyboard state object.
- * @param[in]  key      The keycode of the key.
- * @param[out] syms_out An immutable array of keysyms corresponding the
- * key in the given keyboard state.
+ * @returns The keysym.  If the key does not have exactly one keysym,
+ * returns XKB_KEY_NoSymbol
  *
- * As an extension to XKB, this function can return more than one keysym.
- * If you do not want to handle this case, you can use
- * xkb_state_key_get_one_sym() for a simpler interface.
+ * This function performs Capitalization @ref keysym-transformations.
  *
- * This function does not perform any @ref keysym-transformations.
- * (This might change).
- *
- * @returns The number of keysyms in the syms_out array.  If no keysyms
- * are produced by the key in the given keyboard state, returns 0 and sets
- * syms_out to NULL.
- *
+ * @sa xkb_state_key_get_syms()
  * @memberof xkb_state
  */
-func StateKeyGetSyms(state *State, code uint32) []uint32 {
-	return []uint32{code}
+func StateKeyGetOneSym(state *State, code uint32) uint32 {
+	return uint32(C.xkb_state_key_get_one_sym(state, C.uint(code)))
 }
 
 /**
@@ -260,5 +260,18 @@ func StateKeyGetSyms(state *State, code uint32) []uint32 {
  * @memberof xkb_keymap
  */
 func KeymapKeyRepeats(keymap *Keymap, code uint32) bool {
-	return true
+	return int(C.xkb_keymap_key_repeats(keymap, C.uint(code))) != 0
+}
+
+/**
+ * ContextNew Creates a new context.
+ *
+ * @param flags Optional flags for the context, or 0.
+ *
+ * @returns A new context, or NULL on failure.
+ *
+ * @memberof xkb_context
+ */
+func ContextNew(flags uint32) *Context {
+	return C.xkb_context_new(flags)
 }
