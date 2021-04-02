@@ -8,6 +8,9 @@ package xkbcommon
 #include <xkbcommon/xkbcommon.h>
 */
 import "C"
+import "runtime"
+
+var Refs int
 
 /*
 ComposeTableNewFromLocale Creates a compose table for a given locale.
@@ -43,8 +46,12 @@ Optional flags for the compose table, or 0.
 It returns A compose table for the given locale, or NULL if the
 compilation failed or a Compose file was not found.
 */
-func ComposeTableNewFromLocale(context *Context, locale string, flags uint32) *ComposeTable {
-	return C.xkb_compose_table_new_from_locale(context, C.CString(locale), flags)
+func ComposeTableNewFromLocale(context *Context, locale string, flags uint32) (ct *ComposeTable) {
+	ct = new(ComposeTable)
+	Refs++
+	ct.ct = C.xkb_compose_table_new_from_locale(context.cx, C.CString(locale), flags)
+	runtime.SetFinalizer(ct, composeTableUnref)
+	return ct
 }
 
 /*
@@ -57,8 +64,12 @@ Optional flags for the compose state, or 0.
 
 It returns A new compose state, or NULL on failure.
 */
-func ComposeStateNew(table *ComposeTable, flags uint32) *ComposeState {
-	return C.xkb_compose_state_new(table, flags)
+func ComposeStateNew(table *ComposeTable, flags uint32) (cs *ComposeState) {
+	cs = new(ComposeState)
+	Refs++
+	cs.cs = C.xkb_compose_state_new(table.ct, flags)
+	runtime.SetFinalizer(cs, composeStateUnref)
+	return cs
 }
 
 /*
@@ -67,7 +78,12 @@ ComposeTableUnref Releases a reference on a compose table, and possibly free it.
 Parameter table The object.  If it is NULL, this function does nothing.
 */
 func ComposeTableUnref(table *ComposeTable) {
-	C.xkb_compose_table_unref(table)
+}
+
+func composeTableUnref(table *ComposeTable) {
+	Refs--
+	C.xkb_compose_table_unref(table.ct)
+	table.ct = nil
 }
 
 /*
@@ -75,9 +91,13 @@ ComposeStateUnref Releases a reference on a compose state object, and possibly f
 
 Parameter state The object.  If NULL, do nothing.
 */
-
 func ComposeStateUnref(state *ComposeState) {
-	C.xkb_compose_state_unref(state)
+}
+
+func composeStateUnref(state *ComposeState) {
+	Refs--
+	C.xkb_compose_state_unref(state.cs)
+	state.cs = nil
 }
 
 /*
@@ -87,7 +107,7 @@ See xkb_compose_status
 */
 
 func ComposeStateGetStatus(state *ComposeState) ComposeStatus {
-	return ComposeStatus(C.xkb_compose_state_get_status(state))
+	return ComposeStatus(C.xkb_compose_state_get_status(state.cs))
 }
 
 /*
@@ -100,7 +120,7 @@ It returns The result keysym.  If the sequence is not complete, or does
 not specify a result keysym, returns XKB_KEY_NoSymbol.
 */
 func ComposeStateGetOneSym(state *ComposeState) uint32 {
-	return uint32(uint(C.xkb_compose_state_get_one_sym(state)))
+	return uint32(uint(C.xkb_compose_state_get_one_sym(state.cs)))
 }
 
 /*
@@ -146,7 +166,7 @@ It returns Whether the keysym was ignored.  This is useful, for example,
 if you want to keep a record of the sequence matched thus far.
 */
 func ComposeStateFeed(state *ComposeState, keysym uint32) ComposeFeedResult {
-	return ComposeFeedResult(C.xkb_compose_state_feed(state, C.uint(keysym)))
+	return ComposeFeedResult(C.xkb_compose_state_feed(state.cs, C.uint(keysym)))
 }
 
 /*
@@ -155,7 +175,12 @@ KeymapUnref Releases a reference on a keymap, and possibly free it.
 Parameter keymap The keymap.  If it is NULL, this function does nothing.
 */
 func KeymapUnref(keymap *Keymap) {
-	C.xkb_keymap_unref(keymap)
+}
+
+func keymapUnref(keymap *Keymap) {
+	Refs--
+	C.xkb_keymap_unref(keymap.km)
+	keymap.km = nil
 }
 
 /*
@@ -166,8 +191,13 @@ the keymap as one enormous string.
 
 See xkb_keymap_new_from_file()
 */
-func KeymapNewFromString(context *Context, str []byte, a uint32, b uint32) *Keymap {
-	return C.xkb_keymap_new_from_string(context, C.CString(string(str)), a, b)
+func KeymapNewFromString(context *Context, str []byte, a uint32, b uint32) (km *Keymap) {
+
+	km = new(Keymap)
+	Refs++
+	km.km = C.xkb_keymap_new_from_string(context.cx, C.CString(string(str)), a, b)
+	runtime.SetFinalizer(km, keymapUnref)
+	return km
 }
 
 /*
@@ -177,8 +207,13 @@ Parameter keymap The keymap which the state will use.
 
 It returns A new keyboard state object, or NULL on failure.
 */
-func StateNew(keymap *Keymap) *State {
-	return C.xkb_state_new(keymap)
+func StateNew(keymap *Keymap) (st *State) {
+
+	st = new(State)
+	Refs++
+	st.st = C.xkb_state_new(keymap.km)
+	runtime.SetFinalizer(st, stateUnref)
+	return st
 }
 
 /*
@@ -187,7 +222,11 @@ StateUnref Releases a reference on a keyboard state object, and possibly free it
 Parameter state The state.  If it is NULL, this function does nothing.
 */
 func StateUnref(state *State) {
-	C.xkb_state_unref(state)
+}
+func stateUnref(state *State) {
+	Refs--
+	C.xkb_state_unref(state.st)
+	state.st = nil
 }
 
 /*
@@ -199,7 +238,7 @@ XKB_MOD_INVALID.
 see also xkb_mod_index_t
 */
 func KeymapModGetIndex(keymap *Keymap, mod string) uint {
-	return uint(C.xkb_keymap_mod_get_index(keymap, C.CString(mod)))
+	return uint(C.xkb_keymap_mod_get_index(keymap.km, C.CString(mod)))
 }
 
 /*
@@ -229,7 +268,7 @@ syms_out to NULL.
 func StateKeyGetSyms(state *State, code uint32) (uint32, bool) {
 	var data *C.uint
 
-	if 0 != uint32(C.xkb_state_key_get_syms(state, C.uint(code), &data)) {
+	if 0 != uint32(C.xkb_state_key_get_syms(state.st, C.uint(code), &data)) {
 		return uint32(*data), true
 	}
 	return KEY_NoSymbol, false
@@ -252,7 +291,7 @@ This function performs Capitalization  keysym-transformations.
 see also xkb_state_key_get_syms()
 */
 func StateKeyGetOneSym(state *State, code uint32) uint32 {
-	return uint32(C.xkb_state_key_get_one_sym(state, C.uint(code)))
+	return uint32(C.xkb_state_key_get_one_sym(state.st, C.uint(code)))
 }
 
 /*
@@ -269,7 +308,7 @@ is not generally useful or desired.
 It returns 1 if the key should repeat, 0 otherwise.
 */
 func KeymapKeyRepeats(keymap *Keymap, code uint32) bool {
-	return int(C.xkb_keymap_key_repeats(keymap, C.uint(code))) != 0
+	return int(C.xkb_keymap_key_repeats(keymap.km, C.uint(code))) != 0
 }
 
 /*
@@ -279,10 +318,41 @@ Parameter flags Optional flags for the context, or 0.
 
 It returns A new context, or NULL on failure.
 */
-func ContextNew(flags uint32) *Context {
-	return C.xkb_context_new(flags)
+func ContextNew(flags uint32) (cx *Context) {
+
+	cx = new(Context)
+	Refs++
+	cx.cx = C.xkb_context_new(flags)
+	runtime.SetFinalizer(cx, contextUnref)
+	return cx
 }
 
+/*
+ContextUnref Releases a reference on a context, and possibly free it.
+
+Parameter context The context.  If it is NULL, this function does nothing.
+*/
+func ContextUnref(context *Context) {
+}
+
+func contextUnref(context *Context) {
+	Refs--
+	C.xkb_context_unref(context.cx)
+	context.cx = nil
+}
+
+/*
+KeysymToUtf32 Gets the Unicode/UTF-32 representation of a keysym.
+
+It returns The Unicode/UTF-32 representation of keysym, which is also
+compatible with UCS-4.  If the keysym does not have a Unicode
+representation, returns 0.
+
+This function does not perform any @ref keysym-transformations.
+Therefore, prefer to use xkb_state_key_get_utf32() if possible.
+
+See also xkb_state_key_get_utf32()
+*/
 func KeysymToUtf32(keysym uint32) uint32 {
 	return uint32(C.xkb_keysym_to_utf32(C.uint(keysym)))
 }

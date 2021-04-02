@@ -9,8 +9,18 @@ package xkbcommon
 */
 import "C"
 
-type Context = C.struct_xkb_context
-type Keymap = C.struct_xkb_keymap
-type State = C.struct_xkb_state
-type ComposeState = C.struct_xkb_compose_state
-type ComposeTable = C.struct_xkb_compose_table
+type Context struct {
+	cx *C.struct_xkb_context
+}
+type Keymap struct {
+	km *C.struct_xkb_keymap
+}
+type State struct {
+	st *C.struct_xkb_state
+}
+type ComposeState struct {
+	cs *C.struct_xkb_compose_state
+}
+type ComposeTable struct {
+	ct *C.struct_xkb_compose_table
+}

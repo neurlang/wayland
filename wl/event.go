@@ -42,6 +42,10 @@ func (ctx *Context) readEvent() (*Event, error) {
 	buf := bytePool.Take(8)
 	control := bytePool.Take(24)
 
+	if ctx.conn == nil {
+		return nil, ErrContextConnNil
+	}
+
 	n, oobn, _, _, err := ctx.conn.ReadMsgUnix(buf[:], control)
 	if err != nil {
 		return nil, combinedError{ErrReadHeader, err}

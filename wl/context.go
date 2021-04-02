@@ -132,8 +132,20 @@ func (ctx *Context) Run() error {
 	return ctx.run(nil)
 }
 
+// ErrContextNil (Error context is nil) occurs if the thread closes context and then
+// it wants to run, another therad probably cannot close it safely
+var ErrContextNil = errors.New("context is nil")
+
+// ErrContextConnNil (Error context conn is nil) occurs if the thread closes context and then
+// it wants to run, another therad probably cannot close it safely
+var ErrContextConnNil = errors.New("context conn is nil")
+
 func (ctx *Context) run(cb *Callback) error {
 	// ctx := context.Background()
+
+	if ctx == nil {
+		return ErrContextNil
+	}
 
 	ev, err := ctx.readEvent()
 	if err != nil {
@@ -178,8 +190,10 @@ func (ctx *Context) Close() (err error) {
 		return
 	}
 	ctx.mu.Lock()
-	err = ctx.conn.Close()
-	ctx.conn = nil
+	if ctx.conn != nil {
+		err = ctx.conn.Close()
+		ctx.conn = nil
+	}
 	ctx.sockFD = -1
 	/*
 		for i, v := range ctx.objects {
