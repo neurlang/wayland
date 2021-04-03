@@ -16,6 +16,9 @@ type Request struct {
 	oob    []byte
 }
 
+// ErrContextSendRequestNotPossible is raised in case sending wl request could not be done
+var ErrContextSendRequestNotPossible = errors.New("no write request means")
+
 // ErrContextSendRequestUnix is raised in case sending wl request fails
 var ErrContextSendRequestUnix = errors.New("unable to send request using unix")
 
@@ -45,9 +48,10 @@ func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{})
 
 	if ctx.conn != nil {
 		return writeRequest(ctx.conn, req)
-	} else {
+	} else if ctx.sockFD != -1 {
 		return writeRequestUnix(ctx.sockFD, req)
 	}
+	return ErrContextSendRequestNotPossible
 }
 
 // Write (Request Write) writes a specific request argument to the compositor

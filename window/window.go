@@ -430,8 +430,6 @@ type WidgetHandler interface {
 	PointerFrame(Widget *Widget, Input *Input)
 }
 
-type xkbModMaskT uint32
-
 type Input struct {
 	Display            *Display
 	seat               *wl.Seat
@@ -451,7 +449,7 @@ type Input struct {
 	cursorTimerRunning bool
 	//cursor_task          task
 	pointerSurface     *wl.Surface
-	modifiers          uint8
+	modifiers          ModType
 	pointerEnterSerial uint32
 	cursorSerial       uint32
 	sx                 float32
@@ -475,9 +473,9 @@ type Input struct {
 		composeTable *xkb.ComposeTable
 		composeState *xkb.ComposeState
 
-		controlMask xkbModMaskT
-		altMask     xkbModMaskT
-		shiftMask   xkbModMaskT
+		controlMask uint32
+		altMask     uint32
+		shiftMask   uint32
 	}
 
 	repeatRateSec   int32
@@ -503,7 +501,6 @@ type KeyboardHandler interface {
 		time uint32,
 		key uint32,
 		notUnicode uint32,
-		unicode uint32,
 		state wl.KeyboardKeyState,
 		data WidgetHandler,
 	)
@@ -849,10 +846,26 @@ func processKeyPress(sym uint32, input *Input) uint32 {
 		return sym
 	}
 }
+
+func (input *Input) GetModifiers() ModType {
+	return input.modifiers
+}
+
+// This gets the UTF32 rune from the key sym ("notUnicode")
+func (input *Input) GetRune(sym uint32) (r rune) {
+	r = rune(xkb.KeysymToUtf32(sym))
+	return
+}
+
+// This gets the compose UTF8 string from input
+func (input *Input) GetUtf8() []byte {
+	return xkb.ComposeStateGetUtf8(input.xkb.composeState)
+}
+
 func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
 	window *Window, sym uint32, state wl.KeyboardKeyState,
 	time uint32, key uint32) {
-	if sym == xkb.KeyF5 && input.modifiers == xkb.ModAltMask {
+	if sym == xkb.KeyF5 && input.modifiers == ModAltMask {
 		if state == wl.KeyboardKeyStatePressed {
 			windowSetMaximized(window, !window.maximized)
 		}
@@ -861,7 +874,7 @@ func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
 		state == wl.KeyboardKeyStatePressed {
 		window.fullscreenHandler.Fullscreen(window, window.Userdata)
 	} else if sym == xkb.KeyF4 &&
-		input.modifiers == xkb.ModAltMask &&
+		input.modifiers == ModAltMask &&
 		state == wl.KeyboardKeyStatePressed {
 		windowClose(window)
 	} else if window.keyboardHandler != nil {
@@ -870,7 +883,7 @@ func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
 		}
 
 		window.keyboardHandler.Key(window, input, time, key,
-			sym, xkb.KeysymToUtf32(sym), state, window.Userdata)
+			sym, state, window.Userdata)
 	}
 }
 func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
@@ -1023,6 +1036,29 @@ func (input *Input) HandleKeyboardLeave(e wl.KeyboardLeaveEvent) {
 
 }
 func (input *Input) HandleKeyboardModifiers(e wl.KeyboardModifiersEvent) {
+	var mask uint32
+
+	/* If we're not using a keymap, then we don't handle PC-style modifiers */
+	if input.xkb.keymap == nil {
+		return
+	}
+
+	xkb.StateUpdateMask(input.xkb.state, e.ModsDepressed, e.ModsLatched,
+		e.ModsLocked, 0, 0, e.Group)
+
+	mask = xkb.StateSerializeMods(input.xkb.state,
+		xkb.StateModsDepressed|
+			xkb.StateModsLatched)
+	input.modifiers = 0
+	if (mask & input.xkb.controlMask) != 0 {
+		input.modifiers |= ModControlMask
+	}
+	if (mask & input.xkb.altMask) != 0 {
+		input.modifiers |= ModAltMask
+	}
+	if (mask & input.xkb.shiftMask) != 0 {
+		input.modifiers |= ModShiftMask
+	}
 
 }
 func (input *Input) HandleKeyboardRepeatInfo(e wl.KeyboardRepeatInfoEvent) {

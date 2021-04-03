@@ -25,15 +25,6 @@ const KeymapFormatTextV1 = 1
 // ComposeFormatTextV1 is the classic libX11 Compose text format, described in Compose(5).
 const ComposeFormatTextV1 = 1
 
-// ModShiftMask is the Shift modifier mask - provided for convenience only
-const ModShiftMask = 0x01
-
-// ModAltMask is the Alt modifier mask - provided for convenience only
-const ModAltMask = 0x02
-
-// ModControlMask is the Control modifier mask - provided for convenience only
-const ModControlMask = 0x04
-
 // ContextNoFlags provides no flags for the context.
 const ContextNoFlags = 0
 
@@ -49,7 +40,7 @@ type ComposeStatus uint8
 const (
 	// ComposeNothing is The initial state; no sequence has started yet.
 	ComposeNothing ComposeStatus = 0
-	// ComposeNothing is In the middle of a sequence.
+	// ComposeComposing is In the middle of a sequence.
 	ComposeComposing ComposeStatus = 1
 	// ComposeComposed is A complete sequence has been matched.
 	ComposeComposed ComposeStatus = 2
@@ -65,4 +56,18 @@ const (
 	ComposeFeedIgnored ComposeFeedResult = 0
 	// ComposeFeedAccepted is The keysym started, advanced or cancelled a sequence.
 	ComposeFeedAccepted ComposeFeedResult = 1
+)
+
+type StateComponent uint32
+
+const (
+	StateModsDepressed   StateComponent = (1 << 0)
+	StateModsLatched     StateComponent = (1 << 1)
+	StateModsLocked      StateComponent = (1 << 2)
+	StateModsEffective   StateComponent = (1 << 3)
+	StateLayoutDepressed StateComponent = (1 << 4)
+	StateLayoutLatched   StateComponent = (1 << 5)
+	StateLayoutLocked    StateComponent = (1 << 6)
+	StateLayoutEffective StateComponent = (1 << 7)
+	StateLeds            StateComponent = (1 << 8)
 )

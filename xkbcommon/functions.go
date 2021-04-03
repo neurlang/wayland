@@ -92,7 +92,7 @@ func composeStateUnref(state *ComposeState) {
 
 // ComposeStateGetStatus Gets the current status of the compose state machine.
 //
-// See xkb_compose_status
+// See ComposeStatus
 func ComposeStateGetStatus(state *ComposeState) ComposeStatus {
 	return ComposeStatus(C.xkb_compose_state_get_status(state.cs))
 }
@@ -100,10 +100,10 @@ func ComposeStateGetStatus(state *ComposeState) ComposeStatus {
 // ComposeStateGetOneSym Gets the result keysym for a composed sequence.
 //
 // See  compose-overview for more details.  This function is only
-// useful when the status is XKB_COMPOSE_COMPOSED.
+// useful when the status is ComposeComposed.
 //
 // It returns The result keysym.  If the sequence is not complete, or does
-// not specify a result keysym, returns XKB_KEY_NoSymbol.
+// not specify a result keysym, returns KeyNoSymbol.
 func ComposeStateGetOneSym(state *ComposeState) uint32 {
 	return uint32(uint(C.xkb_compose_state_get_one_sym(state.cs)))
 }
@@ -112,7 +112,7 @@ func ComposeStateGetOneSym(state *ComposeState) uint32 {
 //
 // This function can advance into a compose sequence, cancel a sequence,
 // start a new sequence, or do nothing in particular.  The resulting
-// status may be observed with xkb_compose_state_get_status().
+// status may be observed with ComposeStateGetStatus().
 //
 // Some keysyms, such as keysyms for modifier keys, are ignored - they
 // have no effect on the status or otherwise.
@@ -136,15 +136,15 @@ func ComposeStateGetOneSym(state *ComposeState) uint32 {
 //
 //
 // The current Compose formats do not support multiple-keysyms.
-// Therefore, if you are using a function such as xkb_state_key_get_syms()
-// and it returns more than one keysym, consider feeding XKB_KEY_NoSymbol
+// Therefore, if you are using a function such as StateKeyGetSyms()
+// and it returns more than one keysym, consider feeding KeyNoSymbol
 // instead.
 //
 // Parameter state
 // The compose state object.
 // Parameter keysym
 // A keysym, usually obtained after a key-press event, with a
-// function such as xkb_state_key_get_one_sym().
+// function such as StateKeyGetOneSym().
 //
 // It returns Whether the keysym was ignored.  This is useful, for example,
 // if you want to keep a record of the sequence matched thus far.
@@ -207,7 +207,7 @@ func stateUnref(state *State) {
 // KeymapModGetIndex Gets the index of a modifier by name.
 //
 // It returns The index.  If no modifier with this name exists, returns
-// XKB_MOD_INVALID.
+// ModInvalid.
 //
 // see also xkb_mod_index_t
 func KeymapModGetIndex(keymap *Keymap, mod string) uint {
@@ -228,7 +228,7 @@ func KeymapModGetIndex(keymap *Keymap, mod string) uint {
 //
 // As an extension to XKB, this function can return more than one keysym.
 // If you do not want to handle this case, you can use
-// xkb_state_key_get_one_sym() for a simpler interface.
+// StateKeyGetOneSym() for a simpler interface.
 //
 // This function does not perform any  keysym-transformations.
 // (This might change).
@@ -248,17 +248,17 @@ func StateKeyGetSyms(state *State, code uint32) (uint32, bool) {
 // StateKeyGetOneSym Gets the single keysym obtained from pressing a particular key in a
 // given keyboard state.
 //
-// This function is similar to xkb_state_key_get_syms(), but intended
+// This function is similar to StateKeyGetSyms(), but intended
 // for users which cannot or do not want to handle the case where
 // multiple keysyms are returned (in which case this function is
 // preferred).
 //
 // It returns The keysym.  If the key does not have exactly one keysym,
-// returns XKB_KEY_NoSymbol
+// returns KeyNoSymbol
 //
 // This function performs Capitalization  keysym-transformations.
 //
-// see also xkb_state_key_get_syms()
+// see also StateKeyGetSyms()
 func StateKeyGetOneSym(state *State, code uint32) uint32 {
 	return uint32(C.xkb_state_key_get_one_sym(state.st, C.uint(code)))
 }
@@ -311,9 +311,94 @@ func contextUnref(context *Context) {
 // representation, returns 0.
 //
 // This function does not perform any keysym-transformations.
-// Therefore, prefer to use xkb_state_key_get_utf32() if possible.
+// Therefore, prefer to use StateKeyGetUtf32() if possible.
 //
-// See also xkb_state_key_get_utf32()
+// See also StateKeyGetUtf32()
 func KeysymToUtf32(keysym uint32) uint32 {
 	return uint32(C.xkb_keysym_to_utf32(C.uint(keysym)))
+}
+
+// StateKeyGetUtf32 Gets the Unicode/UTF-32 codepoint obtained from pressing a particular
+// key in a a given keyboard state.
+//
+// Returns The UTF-32 representation for the key, if it consists of only
+// a single codepoint.  Otherwise, returns 0.
+//
+// This function performs Capitalization and Control, see
+// keysym-transformations.
+//
+// since 0.4.1
+func StateKeyGetUtf32(state *State, keysym uint32) uint32 {
+	return uint32(C.xkb_state_key_get_utf32(state.st, C.uint(keysym)))
+}
+
+// Get the result Unicode/UTF-8 string for a composed sequence.
+//
+// See compose-overview for more details.  This function is only
+// useful when the status is ComposeComposed.
+//
+// parameter state
+//     The compose state.
+//
+// Returns
+//   The bytes required for the string, excluding the NUL byte.
+//   If the sequence is not complete, or does not have a viable result
+//   string, sets `buffer` to the empty string.
+func ComposeStateGetUtf8(state *ComposeState) (buffer []byte) {
+	var l = int(C.xkb_compose_state_get_utf8(state.cs, (*C.char)(nil), C.ulong(0)))
+	if l == 0 {
+		return
+	}
+	l++
+	var buf = make([]C.char, l)
+	l = int(C.xkb_compose_state_get_utf8(state.cs, (*C.char)(&buf[0]), C.ulong(l)))
+	for i := 0; i < l; i++ {
+		buffer = append(buffer, byte(buf[i]))
+	}
+	return
+}
+
+// Update a keyboard state from a set of explicit masks.
+//
+// This entry point is intended for window systems and the like, where a
+// master process holds an State, then serializes it over a wire
+// protocol, and clients then use the serialization to feed in to their own
+// State.
+//
+// All parameters must always be passed, or the resulting state may be
+// incoherent.
+//
+// The serialization is lossy and will not survive round trips; it must only
+// be used to feed slave state objects, and must not be used to update the
+// master state.
+//
+// If you do not fit the description above, you should use
+// xkb_state_update_key() instead.  The two functions should not generally be
+// used together.
+//
+// it returns A mask of state components that have changed as a result of
+// the update.  If nothing in the state has changed, returns 0.
+//
+// see also xkb_state_component
+// see also xkb_state_update_key
+func StateUpdateMask(state *State, keysym, a, b, c, d, e uint32) uint32 {
+	return uint32(C.xkb_state_update_mask(state.st, C.uint(keysym), C.uint(a), C.uint(b), C.uint(c), C.uint(d), C.uint(e)))
+}
+
+// The counterpart to xkb_state_update_mask for modifiers, to be used on
+// the server side of serialization.
+//
+// parameter state      The keyboard state.
+// parameter components A mask of the modifier state components to serialize.
+// State components other than StateMods* are ignored.
+// If StateModsEffective is included, all other state components are
+// ignored.
+//
+// it returns A xkb_mod_mask_t representing the given components of the
+// modifier state.
+//
+// This function should not be used in regular clients; please use the
+// xkb_state_mod_*_is_active API instead.
+func StateSerializeMods(state *State, mods StateComponent) uint32 {
+	return uint32(C.xkb_state_serialize_mods(state.st, uint32(mods)))
 }
