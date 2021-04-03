@@ -164,8 +164,8 @@ func (app *appState) loadImage(fileName string) {
 
 	app.frame.Rect.Min.X = 0
 	app.frame.Rect.Min.Y = 0
-	app.frame.Rect.Max.X = int(frameRect.Dx())
-	app.frame.Rect.Max.Y = int(frameRect.Dy())
+	app.frame.Rect.Max.X = frameRect.Dx()
+	app.frame.Rect.Max.Y = frameRect.Dy()
 
 	app.spawnDecoration(fileName)
 

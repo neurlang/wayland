@@ -355,7 +355,7 @@ func main() {
 	}
 
 	// Initialise damage to full surface, so the padding gets painted
-	handle(window.surface.Damage((0), (0), int32(window.width), int32(window.height)))
+	handle(window.surface.Damage(0, 0, int32(window.width), int32(window.height)))
 
 	if !window.waitForConfigure {
 		redraw(window, nil, 0)

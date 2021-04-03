@@ -60,10 +60,10 @@ func (d *Decoration) activeLeftRight(a DecoratedRgbaWindow, x, y float64) (l int
 	img := a.GetImage()
 	w := float64(img.Rect.Max.X - img.Rect.Min.X)
 
-	var x_rd float64
+	var xRd float64
 	for i, v := range d.RightButtons {
 
-		lpos := x_rd + w - Border - 1 - float64(v.Width)
+		lpos := xRd + w - Border - 1 - float64(v.Width)
 
 		if lpos < Border {
 			break
@@ -79,14 +79,14 @@ func (d *Decoration) activeLeftRight(a DecoratedRgbaWindow, x, y float64) (l int
 		}
 		_ = i
 		_ = v
-		x_rd -= float64(v.Width) + Border
+		xRd -= float64(v.Width) + Border
 	}
 
-	var x_d float64
+	var xD float64
 	for i, v := range d.LeftButtons {
-		lpos := x_d + Border + 1
+		lpos := xD + Border + 1
 
-		if lpos+float64(v.Width)+Border >= w+x_rd {
+		if lpos+float64(v.Width)+Border >= w+xRd {
 			break
 		}
 
@@ -102,17 +102,17 @@ func (d *Decoration) activeLeftRight(a DecoratedRgbaWindow, x, y float64) (l int
 
 		_ = i
 		_ = v
-		x_d += float64(v.Width) + Border
+		xD += float64(v.Width) + Border
 	}
 	return
 }
-func (d *Decoration) clientSideDecorationLeftButtons(dc *gg.Context, w, x_rd float64) float64 {
+func (d *Decoration) clientSideDecorationLeftButtons(dc *gg.Context, w, xRd float64) float64 {
 
-	var x_d float64
+	var xD float64
 	for i, v := range d.LeftButtons {
-		lpos := x_d + Border + 1
+		lpos := xD + Border + 1
 
-		if lpos+float64(v.Width)+Border >= w+x_rd {
+		if lpos+float64(v.Width)+Border >= w+xRd {
 			break
 		}
 
@@ -141,16 +141,16 @@ func (d *Decoration) clientSideDecorationLeftButtons(dc *gg.Context, w, x_rd flo
 		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
 		_ = i
 		_ = v
-		x_d += float64(v.Width) + Border
+		xD += float64(v.Width) + Border
 	}
-	return x_d
+	return xD
 }
 func (d *Decoration) clientSideDecorationRightButtons(dc *gg.Context, w float64) float64 {
 
-	var x_rd float64
+	var xRd float64
 	for i, v := range d.RightButtons {
 
-		lpos := x_rd + w - Border - 1 - float64(v.Width)
+		lpos := xRd + w - Border - 1 - float64(v.Width)
 
 		if lpos < Border {
 			break
@@ -180,19 +180,19 @@ func (d *Decoration) clientSideDecorationRightButtons(dc *gg.Context, w float64)
 		dc.DrawStringAnchored(cutString(dc, float64(v.Width), v.Text), lpos+0.5*float64(v.Width), Border+float64(d.Titlebar)*icon, 0.5, 0.5)
 		_ = i
 		_ = v
-		x_rd -= float64(v.Width) + Border
+		xRd -= float64(v.Width) + Border
 	}
-	return x_rd
+	return xRd
 }
 
-func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border bool) {
+func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, justBorder bool) {
 
 	img := a.GetImage()
 
-	if !just_border {
+	if !justBorder {
 		pixp := &img.Pix
-		(*pixp) = append(make([]uint8, img.Stride*(Border+d.Titlebar)), (*pixp)...)
-		(*pixp) = append((*pixp), make([]uint8, img.Stride*(Border))...)
+		*pixp = append(make([]uint8, img.Stride*(Border+d.Titlebar)), *pixp...)
+		*pixp = append(*pixp, make([]uint8, img.Stride*(Border))...)
 
 		img.Rect.Max.Y += 2*Border + d.Titlebar
 	}
@@ -227,11 +227,11 @@ func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, just_border boo
 			break
 		}
 	}
-	x_rd := d.clientSideDecorationRightButtons(dc, w)
-	x_ld := d.clientSideDecorationLeftButtons(dc, w, x_rd)
+	xRd := d.clientSideDecorationRightButtons(dc, w)
+	xLd := d.clientSideDecorationLeftButtons(dc, w, xRd)
 
 	dc.SetRGB(0, 0, 0)
-	dc.DrawStringAnchored(cutString(dc, (w-x_ld+x_rd)-2*Border, d.Title), (w-x_ld+x_rd)/2+x_ld, Border+float64(d.Titlebar)/3, 0.5, 0.5)
+	dc.DrawStringAnchored(cutString(dc, (w-xLd+xRd)-2*Border, d.Title), (w-xLd+xRd)/2+xLd, Border+float64(d.Titlebar)/3, 0.5, 0.5)
 
 	a.SetImage(dc.Image().(*image.RGBA))
 }

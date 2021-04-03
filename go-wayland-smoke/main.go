@@ -351,7 +351,7 @@ func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 		for j = int(j0); j < int(j1); j++ {
 			k = j*int(smoke.width) + i
 
-			smoke.bb[0].d[k] += float32(dt)
+			smoke.bb[0].d[k] += dt
 		}
 	}
 	if rand.Int()&7 == 0 {
@@ -490,7 +490,7 @@ func main() {
 	smoke.widget = smoke.window.AddWidget(&smoke)
 
 	smoke.window.SetTitle("smoke")
-	smoke.window.SetBufferType(window.WindowBufferTypeShm)
+	smoke.window.SetBufferType(window.BufferTypeShm)
 	smoke.window.SetKeyboardHandler(&smoke)
 	rand.Seed(int64(time.Now().Nanosecond()))
 

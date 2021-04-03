@@ -46,11 +46,11 @@ const SurfaceShm = 0x02
 const SurfaceHintResize = 0x10
 const SurfaceHintRgb565 = 0x100
 
-const WindowPreferredFormatNone = 0
-const WindowPreferredFormatRgb565 = 1
+const PreferredFormatNone = 0
+const PreferredFormatRgb565 = 1
 
-const WindowBufferTypeEglWindow = 0
-const WindowBufferTypeShm = 1
+const BufferTypeEglWindow = 0
+const BufferTypeShm = 1
 
 const CursorBottomLeft = 0
 const CursorBottomRight = 1
@@ -492,8 +492,8 @@ type Input struct {
 	seatVersion int32
 }
 
-func (i *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
-	i.CallbackDone(ev.C, ev.CallbackData)
+func (input *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
+	input.CallbackDone(ev.C, ev.CallbackData)
 }
 
 type KeyboardHandler interface {
@@ -592,11 +592,11 @@ func bufferToSurfaceSize(
 	*height /= bufferScale
 }
 
-func (i *Input) HandlePointerEnter(ev wl.PointerEnterEvent) {
-	i.PointerEnter(nil, ev.Serial, ev.Surface, ev.SurfaceX, ev.SurfaceY)
+func (input *Input) HandlePointerEnter(ev wl.PointerEnterEvent) {
+	input.PointerEnter(nil, ev.Serial, ev.Surface, ev.SurfaceX, ev.SurfaceY)
 }
 
-func (i *Input) PointerEnter(
+func (input *Input) PointerEnter(
 	wlPointer *wl.Pointer,
 	serial uint32,
 	surface *wl.Surface,
@@ -609,52 +609,52 @@ func (i *Input) PointerEnter(
 		return
 	}
 
-	var Window = i.Display.surface2window[surface]
+	var Window = input.Display.surface2window[surface]
 
 	if surface != Window.mainSurface.surface_ {
 		//		DBG("Ignoring Input event from subsurface %p\n", surface);
 		return
 	}
 
-	i.Display.serial = serial
-	i.pointerEnterSerial = serial
-	i.pointerFocus = Window
+	input.Display.serial = serial
+	input.pointerEnterSerial = serial
+	input.pointerFocus = Window
 
-	i.sx = sx
-	i.sy = sy
-
-}
-
-func (i *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
-	i.PointerLeave(nil, ev.Serial, ev.Surface)
-}
-
-func (i *Input) PointerLeave(wlPointer *wl.Pointer, serial uint32, wlSurface *wl.Surface) {
-
-	i.Display.serial = serial
-	inputRemovePointerFocus(i)
+	input.sx = sx
+	input.sy = sy
 
 }
 
-func (i *Input) HandlePointerMotion(ev wl.PointerMotionEvent) {
-	i.PointerMotion(ev.P, ev.Time, ev.SurfaceX, ev.SurfaceY)
+func (input *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
+	input.PointerLeave(nil, ev.Serial, ev.Surface)
 }
 
-func (i *Input) PointerMotion(
+func (input *Input) PointerLeave(wlPointer *wl.Pointer, serial uint32, wlSurface *wl.Surface) {
+
+	input.Display.serial = serial
+	inputRemovePointerFocus(input)
+
+}
+
+func (input *Input) HandlePointerMotion(ev wl.PointerMotionEvent) {
+	input.PointerMotion(ev.P, ev.Time, ev.SurfaceX, ev.SurfaceY)
+}
+
+func (input *Input) PointerMotion(
 	wlPointer *wl.Pointer,
 	time uint32,
 	surfaceX float32,
 	surfaceY float32,
 ) {
 
-	pointerHandleMotion(i, wlPointer, time, surfaceX, surfaceY)
+	pointerHandleMotion(input, wlPointer, time, surfaceX, surfaceY)
 }
 
-func (i *Input) HandlePointerButton(ev wl.PointerButtonEvent) {
-	i.PointerButton(ev.P, ev.Serial, ev.Time, ev.Button, ev.State)
+func (input *Input) HandlePointerButton(ev wl.PointerButtonEvent) {
+	input.PointerButton(ev.P, ev.Serial, ev.Time, ev.Button, ev.State)
 }
 
-func (i *Input) PointerButton(
+func (input *Input) PointerButton(
 	wlPointer *wl.Pointer,
 	serial uint32,
 	time uint32,
@@ -664,56 +664,56 @@ func (i *Input) PointerButton(
 	var widget *Widget
 	var state = wl.PointerButtonState(stateW)
 
-	i.Display.serial = serial
-	if i.focusWidget != nil && i.grab == nil &&
+	input.Display.serial = serial
+	if input.focusWidget != nil && input.grab == nil &&
 		state == wl.PointerButtonStatePressed {
-		inputGrab(i, i.focusWidget, button)
+		inputGrab(input, input.focusWidget, button)
 	}
 
-	widget = i.grab
+	widget = input.grab
 	if widget != nil && widget.Userdata != nil {
 		widget.Userdata.Button(widget,
-			i, time,
+			input, time,
 			button, state,
-			i.grab.Userdata)
+			input.grab.Userdata)
 	}
 
-	if i.grab != nil && i.grabButton == button &&
+	if input.grab != nil && input.grabButton == button &&
 		state == wl.PointerButtonStateReleased {
-		inputUngrab(i)
+		inputUngrab(input)
 	}
 
 }
 
-func (i *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
+func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
 
 }
 
 func (*Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32, value wl.Fixed) {
 }
 
-func (i *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
+func (input *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
 
 }
 
 func (*Input) PointerFrame(wlPointer *wl.Pointer) {
 }
 
-func (i *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {
+func (input *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {
 
 }
 
 func (*Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) {
 }
 
-func (i *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {
+func (input *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {
 
 }
 
 func (*Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uint32) {
 }
 
-func (i *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
+func (input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
 
 }
 
@@ -725,14 +725,14 @@ type SeatHandler interface {
 	Name(i *Input, seat *wl.Seat, name string)
 }
 
-func (i *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
-	i.SeatCapabilities(i.seat, ev.Capabilities)
+func (input *Input) HandleSeatCapabilities(ev wl.SeatCapabilitiesEvent) {
+	input.SeatCapabilities(input.seat, ev.Capabilities)
 }
 
-func (i *Input) HandleSeatName(ev wl.SeatNameEvent) {
-	i.SeatName(i.seat, ev.Name)
+func (input *Input) HandleSeatName(ev wl.SeatNameEvent) {
+	input.SeatName(input.seat, ev.Name)
 }
-func (input *Input) seat_capabilities_pointer(seat *wl.Seat, caps uint32) {
+func (input *Input) seatCapabilitiesPointer(seat *wl.Seat, caps uint32) {
 
 	if ((caps & wl.SeatCapabilityPointer) != 0) && (input.pointer == nil) {
 		var err error
@@ -753,7 +753,7 @@ func (input *Input) seat_capabilities_pointer(seat *wl.Seat, caps uint32) {
 		input.pointer = nil
 	}
 }
-func (input *Input) seat_capabilities_keyboard(seat *wl.Seat, caps uint32) {
+func (input *Input) seatCapabilitiesKeyboard(seat *wl.Seat, caps uint32) {
 	if ((caps & wl.SeatCapabilityKeyboard) != 0) && input.keyboard == nil {
 		var err error
 		input.keyboard, err = seat.GetKeyboard()
@@ -772,7 +772,7 @@ func (input *Input) seat_capabilities_keyboard(seat *wl.Seat, caps uint32) {
 		input.keyboard = nil
 	}
 }
-func (input *Input) seat_capabilities_touch(seat *wl.Seat, caps uint32) {
+func (input *Input) seatCapabilitiesTouch(seat *wl.Seat, caps uint32) {
 
 	if ((caps & wl.SeatCapabilityTouch) != 0) && input.touch == nil {
 		var err error
@@ -795,9 +795,9 @@ func (input *Input) seat_capabilities_touch(seat *wl.Seat, caps uint32) {
 
 func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 
-	input.seat_capabilities_pointer(seat, caps)
-	input.seat_capabilities_keyboard(seat, caps)
-	input.seat_capabilities_touch(seat, caps)
+	input.seatCapabilitiesPointer(seat, caps)
+	input.seatCapabilitiesKeyboard(seat, caps)
+	input.seatCapabilitiesTouch(seat, caps)
 
 	if input.Display.seatHandler != nil {
 		input.Display.seatHandler.Capabilities(input, seat, caps)
@@ -826,58 +826,58 @@ func (input *Input) HandleKeyboardEnter(e wl.KeyboardEnterEvent) {
 }
 
 /* Translate symbols appropriately if a compose sequence is being entered */
-func process_key_press(sym uint32, input *Input) uint32 {
+func processKeyPress(sym uint32, input *Input) uint32 {
 	if input.xkb.composeState == nil {
 		return sym
 	}
-	if sym == xkb.KEY_NoSymbol {
+	if sym == xkb.KeyNoSymbol {
 		return sym
 	}
-	if xkb.ComposeStateFeed(input.xkb.composeState, sym) != xkb.COMPOSE_FEED_ACCEPTED {
+	if xkb.ComposeStateFeed(input.xkb.composeState, sym) != xkb.ComposeFeedAccepted {
 		return sym
 	}
 	switch xkb.ComposeStateGetStatus(input.xkb.composeState) {
-	case xkb.COMPOSE_COMPOSING:
-		return xkb.KEY_NoSymbol
-	case xkb.COMPOSE_COMPOSED:
+	case xkb.ComposeComposing:
+		return xkb.KeyNoSymbol
+	case xkb.ComposeComposed:
 		return xkb.ComposeStateGetOneSym(input.xkb.composeState)
-	case xkb.COMPOSE_CANCELLED:
-		return xkb.KEY_NoSymbol
-	case xkb.COMPOSE_NOTHING:
+	case xkb.ComposeCancelled:
+		return xkb.KeyNoSymbol
+	case xkb.ComposeNothing:
 		return sym
 	default:
 		return sym
 	}
 }
-func (input *Input) keyboard_handle_key_internal(keyboard *wl.Keyboard,
+func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
 	window *Window, sym uint32, state wl.KeyboardKeyState,
 	time uint32, key uint32) {
-	if sym == xkb.KEY_F5 && input.modifiers == xkb.MOD_ALT_MASK {
+	if sym == xkb.KeyF5 && input.modifiers == xkb.ModAltMask {
 		if state == wl.KeyboardKeyStatePressed {
-			window_set_maximized(window, !window.maximized)
+			windowSetMaximized(window, !window.maximized)
 		}
-	} else if sym == xkb.KEY_F11 &&
+	} else if sym == xkb.KeyF11 &&
 		window.fullscreenHandler != nil &&
 		state == wl.KeyboardKeyStatePressed {
 		window.fullscreenHandler.Fullscreen(window, window.Userdata)
-	} else if sym == xkb.KEY_F4 &&
-		input.modifiers == xkb.MOD_ALT_MASK &&
+	} else if sym == xkb.KeyF4 &&
+		input.modifiers == xkb.ModAltMask &&
 		state == wl.KeyboardKeyStatePressed {
-		window_close(window)
+		windowClose(window)
 	} else if window.keyboardHandler != nil {
 		if state == wl.KeyboardKeyStatePressed {
-			sym = process_key_press(sym, input)
+			sym = processKeyPress(sym, input)
 		}
 
 		window.keyboardHandler.Key(window, input, time, key,
 			sym, xkb.KeysymToUtf32(sym), state, window.Userdata)
 	}
 }
-func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
+func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 	serial uint32, time uint32, key uint32,
-	state_w uint32) {
-	var window *Window = input.keyboardFocus
-	var state = wl.KeyboardKeyState(state_w)
+	stateW uint32) {
+	var window = input.keyboardFocus
+	var state = wl.KeyboardKeyState(stateW)
 
 	input.Display.serial = serial
 	var code = key + 8
@@ -896,7 +896,7 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 
 	var sym, _ = xkb.StateKeyGetSyms(input.xkb.state, code)
 
-	input.keyboard_handle_key_internal(keyboard, window, sym, state, time, key)
+	input.keyboardHandleKeyInternal(keyboard, window, sym, state, time, key)
 
 	if state == wl.KeyboardKeyStateReleased &&
 		key == input.repeatKey {
@@ -908,7 +908,7 @@ func (input *Input) keyboard_handle_key(keyboard *wl.Keyboard,
 }
 
 func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
-	input.keyboard_handle_key(nil, e.Serial, e.Time, e.Key, e.State)
+	input.keyboardHandleKey(nil, e.Serial, e.Time, e.Key, e.State)
 }
 
 func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
@@ -924,8 +924,8 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 
 	var keymap *xkb.Keymap
 	var state *xkb.State
-	var compose_table *xkb.ComposeTable
-	var compose_state *xkb.ComposeState
+	var composeTable *xkb.ComposeTable
+	var composeState *xkb.ComposeState
 
 	var locale string
 
@@ -939,7 +939,7 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 		return
 	}
 
-	map_str, err := sys.Mmap(int(fd), 0, int(size), sys.ProtRead, sys.MapPrivate)
+	mapStr, err := sys.Mmap(int(fd), 0, int(size), sys.ProtRead, sys.MapPrivate)
 	if err != nil {
 		sys.Close(int(fd))
 		return
@@ -947,10 +947,10 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 
 	/* Set up XKB keymap */
 	keymap = xkb.KeymapNewFromString(input.Display.xkbContext,
-		map_str,
-		xkb.KEYMAP_FORMAT_TEXT_V1,
+		mapStr,
+		xkb.KeymapFormatTextV1,
 		0)
-	sys.Munmap(map_str)
+	sys.Munmap(mapStr)
 	sys.Close(int(fd))
 
 	if keymap == nil {
@@ -979,27 +979,27 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	}
 
 	/* Set up XKB compose table */
-	compose_table =
+	composeTable =
 		xkb.ComposeTableNewFromLocale(input.Display.xkbContext,
 			locale,
-			xkb.COMPOSE_COMPILE_NO_FLAGS)
-	if compose_table == nil {
+			xkb.ComposeCompileNoFlags)
+	if composeTable == nil {
 		print("locale ")
 		print(locale)
 		println(": could not create XKB compose table for locale. Disabiling compose.")
 	} else {
 		/* Set up XKB compose state */
-		compose_state = xkb.ComposeStateNew(compose_table,
-			xkb.COMPOSE_STATE_NO_FLAGS)
-		if compose_state == nil {
+		composeState = xkb.ComposeStateNew(composeTable,
+			xkb.ComposeStateNoFlags)
+		if composeState == nil {
 			println("could not create XKB compose state. Disabiling compose.")
-			xkb.ComposeTableUnref(compose_table)
+			xkb.ComposeTableUnref(composeTable)
 
 		} else {
 			xkb.ComposeStateUnref(input.xkb.composeState)
 			xkb.ComposeTableUnref(input.xkb.composeTable)
-			input.xkb.composeState = compose_state
-			input.xkb.composeTable = compose_table
+			input.xkb.composeState = composeState
+			input.xkb.composeTable = composeTable
 		}
 	}
 
@@ -1051,9 +1051,9 @@ func (input *Input) HandleTouchShape(e wl.TouchShapeEvent) {
 func (input *Input) HandleTouchUp(e wl.TouchUpEvent) {
 
 }
-func (i *Input) SeatName(wlSeat *wl.Seat, name string) {
-	if i.Display.seatHandler != nil {
-		i.Display.seatHandler.Name(i, wlSeat, name)
+func (input *Input) SeatName(wlSeat *wl.Seat, name string) {
+	if input.Display.seatHandler != nil {
+		input.Display.seatHandler.Name(input, wlSeat, name)
 	}
 }
 
@@ -1587,7 +1587,7 @@ func surfaceFlush(surface *surface) {
 	surface.cairoSurface = nil
 }
 
-func window_close(window *Window) {
+func windowClose(window *Window) {
 	if window.closeHandler != nil {
 		window.closeHandler.Close()
 	} else {
@@ -1622,7 +1622,7 @@ func windowCreateMainSurface(Window *Window) {
 		flags |= SurfaceHintResize
 	}
 
-	if Window.preferredFormat == WindowPreferredFormatRgb565 {
+	if Window.preferredFormat == PreferredFormatRgb565 {
 		flags |= SurfaceHintRgb565
 	}
 
@@ -2121,8 +2121,8 @@ func schedulePointerImageUpdate(Input *Input,
 
 }
 
-func (i *Input) CallbackDone(wlCallback *wl.Callback, callbackData uint32) {
-	pointerSurfaceFrameCallback(i, wlCallback, callbackData)
+func (input *Input) CallbackDone(wlCallback *wl.Callback, callbackData uint32) {
+	pointerSurfaceFrameCallback(input, wlCallback, callbackData)
 }
 
 //line 3842
@@ -2464,7 +2464,7 @@ func windowScheduleRedraw(Window *Window) {
 	windowScheduleRedrawTask(Window)
 }
 
-func window_set_maximized(window *Window, maximized bool) {
+func windowSetMaximized(window *Window, maximized bool) {
 	if window.xdgToplevel == nil {
 		return
 	}
@@ -2524,9 +2524,9 @@ func windowCreateInternal(Display *Display, custom int) *Window {
 		panic("assertion failed")
 	}
 	Window.custom = (int32)(custom)
-	Window.preferredFormat = WindowPreferredFormatNone
+	Window.preferredFormat = PreferredFormatNone
 
-	surface_.bufferType = WindowBufferTypeShm
+	surface_.bufferType = BufferTypeShm
 
 	wlclient.SurfaceSetUserData(surface_.surface_, Window)
 	Display.surface2window[surface_.surface_] = Window
@@ -2672,7 +2672,7 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
 	}
 
-	d.xkbContext = xkb.ContextNew(xkb.CONTEXT_NO_FLAGS)
+	d.xkbContext = xkb.ContextNew(xkb.ContextNoFlags)
 	if d.xkbContext == nil {
 		return nil, fmt.Errorf("failed to create XKB context: %w", e)
 	}

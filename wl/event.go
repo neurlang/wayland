@@ -24,8 +24,8 @@ var ErrReadHeader = errors.New("unable to read message header")
 // ErrSizeOfHeaderWrong (Error size of message header is wrong) is returned when the returned size of message heaer is not 8 bytes
 var ErrSizeOfHeaderWrong = errors.New("size of message header is wrong")
 
-// ErrControlMsgBuffer (Error unsufficient control msg buffer) is returned when the oobn is bigger than the control message buffer
-var ErrControlMsgBuffer = errors.New("unsufficient control msg buffer")
+// ErrControlMsgBuffer (Error insufficient control msg buffer) is returned when the oobn is bigger than the control message buffer
+var ErrControlMsgBuffer = errors.New("insufficient control msg buffer")
 
 // ErrControlMsgParseError (Error control message parse error) is returned when the unix socket control message cannot be parsed, use
 // Unwrap() to get the underlying cause and GetExternal to get this cause
@@ -93,7 +93,7 @@ var ErrNoControlMsgs = errors.New("no socket control messages")
 // ErrUnableToParseUnixRights (Error unable to parse unix rights)
 var ErrUnableToParseUnixRights = errors.New("unable to parse unix rights")
 
-// FD (Event FD) ectracts the file descriptor and an optional error
+// FD (Event FD) extracts the file descriptor and an optional error
 func (ev *Event) FD() (uintptr, error) {
 	if ev.err != nil {
 		return 0, ev.err

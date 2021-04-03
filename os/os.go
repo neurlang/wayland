@@ -29,7 +29,7 @@ import "crypto/rand"
 import "fmt"
 
 // MkOsTemp is a Golang version of the popular C library function call
-// The string can contain the patern consistng of XXX that will be replaced
+// The string can contain the pattern consisting of XXX that will be replaced
 // with a high-entropy alphanumeric sequence, if you want more entropic string
 // you can put more XXX (in multiples of 3 X) up to the recommended value of 27 X
 // shorter sequence of XXX will make your MkOsTemp more prone to the failure

@@ -22,59 +22,59 @@
 package main
 
 import cairo "github.com/neurlang/wayland/cairoshim"
-import wl "github.com/neurlang/wayland/wl"
-import window "github.com/neurlang/wayland/window"
-import zwp_ti_v3 "github.com/neurlang/wayland/unstable/text-input-v3"
+import "github.com/neurlang/wayland/wl"
+import "github.com/neurlang/wayland/window"
+import zwptiv3 "github.com/neurlang/wayland/unstable/text-input-v3"
 
 import "fmt"
 
 type editor struct {
-	display            *window.Display
-	window             *window.Window
-	widget             *window.Widget
-	width              int32
-	height             int32
-	text_input_manager *zwp_ti_v3.ZwpTextInputManagerV3
+	display          *window.Display
+	window           *window.Window
+	widget           *window.Widget
+	width            int32
+	height           int32
+	textInputManager *zwptiv3.ZwpTextInputManagerV3
 
 	seat *wl.Seat
 
-	entry        *text_entry
-	editor       *text_entry
-	active_entry *text_entry
+	entry       *textEntry
+	editor      *textEntry
+	activeEntry *textEntry
 
-	selection     *wl.DataSource
-	selected_text string
+	selection    *wl.DataSource
+	selectedText string
 }
 
-type text_entry struct {
+type textEntry struct {
 	window *window.Window
 	widget *window.Widget
 
-	text            string
-	active          int
-	panel_visible   bool
-	cursor_position int
-	anchor_position int
+	text           string
+	active         int
+	panelVisible   bool
+	cursorPosition int
+	anchorPosition int
 
-	text_input *zwp_ti_v3.ZwpTextInputV3
+	textInput *zwptiv3.ZwpTextInputV3
 
-	click_to_show      bool
-	preferred_language string
-	content_purpose    int
+	clickToShow       bool
+	preferredLanguage string
+	contentPurpose    int
 }
 
-func text_entry_create(editor *editor, text string) *text_entry {
-	var entry *text_entry
+func textEntryCreate(editor *editor, text string) *textEntry {
+	var entry *textEntry
 
-	entry = new(text_entry)
+	entry = new(textEntry)
 
 	entry.widget = editor.widget.AddWidget(entry)
 	entry.window = editor.window
 	entry.text = text
 	entry.active = 0
-	entry.panel_visible = false
-	entry.cursor_position = len(text)
-	entry.anchor_position = entry.anchor_position
+	entry.panelVisible = false
+	entry.cursorPosition = len(text)
+
 	editor.display.SetSeatHandler(editor)
 
 	//zwp_text_input_v1_add_listener(entry.text_input,
@@ -83,41 +83,41 @@ func text_entry_create(editor *editor, text string) *text_entry {
 	return entry
 }
 
-func (*text_entry) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
+func (*textEntry) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
 }
-func (*text_entry) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+func (*textEntry) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
 }
-func (*text_entry) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
+func (*textEntry) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
 }
-func (*text_entry) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+func (*textEntry) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
 }
-func (*text_entry) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
+func (*textEntry) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
 }
-func (*text_entry) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
+func (*textEntry) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
 }
-func (*text_entry) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
+func (*textEntry) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
 }
-func (s *text_entry) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+func (s *textEntry) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
 
 }
-func (*text_entry) TouchFrame(widget *window.Widget, input *window.Input) {
+func (*textEntry) TouchFrame(widget *window.Widget, input *window.Input) {
 }
-func (*text_entry) TouchCancel(widget *window.Widget, width int32, height int32) {
+func (*textEntry) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
 
-func (*text_entry) Resize(widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
+func (*textEntry) Resize(widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
 }
-func (*text_entry) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
+func (*textEntry) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
 }
-func (*text_entry) Leave(widget *window.Widget, input *window.Input) {
+func (*textEntry) Leave(widget *window.Widget, input *window.Input) {
 }
-func (s *text_entry) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
+func (s *textEntry) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
 
 	return window.CursorIbeam
 }
-func (*text_entry) PointerFrame(widget *window.Widget, input *window.Input) {
+func (*textEntry) PointerFrame(widget *window.Widget, input *window.Input) {
 }
-func (*text_entry) Redraw(widget *window.Widget) {
+func (*textEntry) Redraw(widget *window.Widget) {
 }
 
 func render(editor *editor, surface cairo.Surface) {
@@ -127,19 +127,19 @@ func render(editor *editor, surface cairo.Surface) {
 	height := surface.ImageSurfaceGetHeight()
 	stride := surface.ImageSurfaceGetStride()
 
-	for y := 1; y < int(height)-1; y++ {
-		for x := 1; x < int(width)-1; x++ {
+	for y := 1; y < height-1; y++ {
+		for x := 1; x < width-1; x++ {
 
-			b := y * 255 / int(height)
-			g := (int(height) - y) * 255 / int(height)
-			r := x * 255 / int(width)
-			a := (int(width) - x) * 255 / int(width)
+			b := y * 255 / height
+			g := (height - y) * 255 / height
+			r := x * 255 / width
+			a := (width - x) * 255 / width
 
 			if dst8 != nil {
-				dst8[4*x+y*int(stride)+0] = byte(b)
-				dst8[4*x+y*int(stride)+1] = byte(g)
-				dst8[4*x+y*int(stride)+2] = byte(r)
-				dst8[4*x+y*int(stride)+3] = byte(a)
+				dst8[4*x+y*stride+0] = byte(b)
+				dst8[4*x+y*stride+1] = byte(g)
+				dst8[4*x+y*stride+2] = byte(r)
+				dst8[4*x+y*stride+3] = byte(a)
 			}
 		}
 	}
@@ -152,10 +152,8 @@ func (editor *editor) Redraw(widget *window.Widget) {
 	if surface != nil {
 
 		render(editor, surface)
-
+		surface.Destroy()
 	}
-
-	surface.Destroy()
 
 	editor.widget.WidgetScheduleRedraw()
 }
@@ -164,7 +162,7 @@ func (*editor) Enter(widget *window.Widget, input *window.Input, x float32, y fl
 }
 func (*editor) Leave(widget *window.Widget, input *window.Input) {
 }
-func (s *editor) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
+func (editor *editor) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
 
 	return window.CursorHand1
 }
@@ -174,7 +172,7 @@ func (*editor) TouchUp(widget *window.Widget, input *window.Input, serial uint32
 }
 func (*editor) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
 }
-func (s *editor) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+func (editor *editor) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
 
 }
 func (*editor) TouchFrame(widget *window.Widget, input *window.Input) {
@@ -197,9 +195,9 @@ func (editor *editor) HandleGlobal(display *window.Display, name uint32,
 	iface string, version uint32, data interface{}) {
 
 	if iface == "zwp_text_input_manager_v3" {
-		if tim, ok := display.BindUnstableInterface(name, iface, 1).(*zwp_ti_v3.ZwpTextInputManagerV3); ok {
+		if tim, ok := display.BindUnstableInterface(name, iface, 1).(*zwptiv3.ZwpTextInputManagerV3); ok {
 
-			editor.text_input_manager = tim
+			editor.textInputManager = tim
 		}
 	}
 
@@ -217,38 +215,38 @@ func (editor *editor) Capabilities(input *window.Input, seat *wl.Seat, caps uint
 
 }
 
-func (editor *editor) Name(input *window.Input, wl_seat *wl.Seat, name string) {
+func (editor *editor) Name(input *window.Input, wlSeat *wl.Seat, name string) {
 	if name == "default" {
-		editor.seat = wl_seat
+		editor.seat = wlSeat
 	}
-	if editor.text_input_manager != nil {
+	if editor.textInputManager != nil {
 
-		input, err := editor.text_input_manager.GetTextInput(editor.seat)
+		input, err := editor.textInputManager.GetTextInput(editor.seat)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		editor.entry.text_input = input
-		editor.editor.text_input = input
+		editor.entry.textInput = input
+		editor.editor.textInput = input
 	}
 }
 
-func text_entry_destroy(entry *text_entry) {
+func textEntryDestroy(entry *textEntry) {
 	if entry.widget != nil {
 		entry.widget.Destroy()
 	}
-	if entry.text_input != nil {
-		entry.text_input.Destroy()
+	if entry.textInput != nil {
+		entry.textInput.Destroy()
 	}
 	entry.text = ""
-	entry.preferred_language = ""
+	entry.preferredLanguage = ""
 }
 
 func main() {
 	var editor editor
 
-	opt_click_to_show := true
-	opt_preferred_language := "en_US"
+	optClickToShow := true
+	optPreferredLanguage := "en_US"
 
 	d, err := window.DisplayCreate([]string{})
 	if err != nil {
@@ -265,20 +263,20 @@ func main() {
 	editor.window = window.Create(d)
 	editor.widget = editor.window.FrameCreate(&editor)
 
-	editor.entry = text_entry_create(&editor, "Entry")
+	editor.entry = textEntryCreate(&editor, "Entry")
 
-	editor.entry.click_to_show = opt_click_to_show
-	if opt_preferred_language != "" {
-		editor.entry.preferred_language = opt_preferred_language
+	editor.entry.clickToShow = optClickToShow
+	if optPreferredLanguage != "" {
+		editor.entry.preferredLanguage = optPreferredLanguage
 	}
-	editor.editor = text_entry_create(&editor, "Numeric")
-	editor.editor.content_purpose = zwp_ti_v3.ZwpTextInputV3ContentPurposeNumber
-	editor.editor.click_to_show = opt_click_to_show
+	editor.editor = textEntryCreate(&editor, "Numeric")
+	editor.editor.contentPurpose = zwptiv3.ZwpTextInputV3ContentPurposeNumber
+	editor.editor.clickToShow = optClickToShow
 	editor.selection = nil
-	editor.selected_text = ""
+	editor.selectedText = ""
 
 	editor.window.SetTitle("Text Editor")
-	editor.window.SetBufferType(window.WindowBufferTypeShm)
+	editor.window.SetBufferType(window.BufferTypeShm)
 	editor.window.SetKeyboardHandler(&editor)
 	editor.window.Userdata = &editor
 
@@ -286,17 +284,17 @@ func main() {
 
 	window.DisplayRun(d)
 
-	if editor.selected_text != "" {
-		editor.selected_text = ""
+	if editor.selectedText != "" {
+		editor.selectedText = ""
 	}
 	if editor.selection != nil {
 		editor.selection.Destroy()
 	}
-	text_entry_destroy(editor.entry)
+	textEntryDestroy(editor.entry)
 	editor.entry = nil
-	text_entry_destroy(editor.editor)
+	textEntryDestroy(editor.editor)
 	editor.editor = nil
-	editor.active_entry = nil
+	editor.activeEntry = nil
 	editor.widget.Destroy()
 	editor.window.Destroy()
 	d.Destroy()

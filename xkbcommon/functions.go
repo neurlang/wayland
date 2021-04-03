@@ -77,7 +77,7 @@ ComposeTableUnref Releases a reference on a compose table, and possibly free it.
 
 Parameter table The object.  If it is NULL, this function does nothing.
 */
-func ComposeTableUnref(table *ComposeTable) {
+func ComposeTableUnref(*ComposeTable) {
 }
 
 func composeTableUnref(table *ComposeTable) {
@@ -91,7 +91,7 @@ ComposeStateUnref Releases a reference on a compose state object, and possibly f
 
 Parameter state The object.  If NULL, do nothing.
 */
-func ComposeStateUnref(state *ComposeState) {
+func ComposeStateUnref(*ComposeState) {
 }
 
 func composeStateUnref(state *ComposeState) {
@@ -174,7 +174,7 @@ KeymapUnref Releases a reference on a keymap, and possibly free it.
 
 Parameter keymap The keymap.  If it is NULL, this function does nothing.
 */
-func KeymapUnref(keymap *Keymap) {
+func KeymapUnref(*Keymap) {
 }
 
 func keymapUnref(keymap *Keymap) {
@@ -221,7 +221,7 @@ StateUnref Releases a reference on a keyboard state object, and possibly free it
 
 Parameter state The state.  If it is NULL, this function does nothing.
 */
-func StateUnref(state *State) {
+func StateUnref(*State) {
 }
 func stateUnref(state *State) {
 	Refs--
@@ -271,7 +271,7 @@ func StateKeyGetSyms(state *State, code uint32) (uint32, bool) {
 	if 0 != uint32(C.xkb_state_key_get_syms(state.st, C.uint(code), &data)) {
 		return uint32(*data), true
 	}
-	return KEY_NoSymbol, false
+	return KeyNoSymbol, false
 }
 
 /*
@@ -332,7 +332,7 @@ ContextUnref Releases a reference on a context, and possibly free it.
 
 Parameter context The context.  If it is NULL, this function does nothing.
 */
-func ContextUnref(context *Context) {
+func ContextUnref(*Context) {
 }
 
 func contextUnref(context *Context) {

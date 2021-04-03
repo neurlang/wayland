@@ -133,11 +133,11 @@ func (ctx *Context) Run() error {
 }
 
 // ErrContextNil (Error context is nil) occurs if the thread closes context and then
-// it wants to run, another therad probably cannot close it safely
+// it wants to run, another thread probably cannot close it safely
 var ErrContextNil = errors.New("context is nil")
 
 // ErrContextConnNil (Error context conn is nil) occurs if the thread closes context and then
-// it wants to run, another therad probably cannot close it safely
+// it wants to run, another thread probably cannot close it safely
 var ErrContextConnNil = errors.New("context conn is nil")
 
 func (ctx *Context) run(cb *Callback) error {

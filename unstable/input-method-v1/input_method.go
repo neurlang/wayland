@@ -419,8 +419,8 @@ func (p *ZwpInputMethodContextV1) Key(serial uint32, time uint32, key uint32, st
 // key events with grab_keyboard. The arguments should be the ones
 // from the wl_keyboard::modifiers event.
 //
-func (p *ZwpInputMethodContextV1) Modifiers(serial uint32, mods_depressed uint32, mods_latched uint32, mods_locked uint32, group uint32) error {
-	return p.Context().SendRequest(p, 11, serial, mods_depressed, mods_latched, mods_locked, group)
+func (p *ZwpInputMethodContextV1) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) error {
+	return p.Context().SendRequest(p, 11, serial, modsDepressed, modsLatched, modsLocked, group)
 }
 
 // Language will .

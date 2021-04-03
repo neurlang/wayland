@@ -215,7 +215,7 @@ func (i *ZwpTextInputV3) SetSurroundingText(text string, cursor, anchor int32) e
 // Tells the compositor why the text surrounding the cursor changed.
 //
 // Whenever the client detects an external change in text, cursor, or
-// anchor posision, it must issue this request to the compositor. This
+// anchor position, it must issue this request to the compositor. This
 // request is intended to give the input method a chance to update the
 // preedit text in an appropriate way, e.g. by removing it when the user
 // starts typing with a keyboard.
@@ -309,7 +309,7 @@ func (i *ZwpTextInputV3) Commit() error {
 
 // ZwpTextInputV3ChangeCause : text change reason
 //
-// Reason for the change of surrounding text or cursor posision.
+// Reason for the change of surrounding text or cursor position.
 const (
 	// ZwpTextInputV3ChangeCauseInputMethod : input method caused the change
 	ZwpTextInputV3ChangeCauseInputMethod = 0

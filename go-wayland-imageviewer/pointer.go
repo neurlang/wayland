@@ -218,7 +218,7 @@ func (app *appState) pointerFrameButtonClicked() {
 	}
 
 	if app.decoration.LeftActive == 1 {
-		app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY))
+		_ = app.xdgTopLevel.ShowWindowMenu(app.seat, e.serial, int32(e.surfaceX), int32(e.surfaceY))
 	}
 }
 
@@ -359,9 +359,9 @@ func (app *appState) setCursor(serial uint32, cursorName string) {
 
 	image := c.wlCursor.Images[0]
 
-	c.surface.Attach(image.GetBuffer(), 0, 0)
-	c.surface.Damage(0, 0, int32(image.GetWidth()), int32(image.GetHeight()))
-	c.surface.Commit()
+	_ = c.surface.Attach(image.GetBuffer(), 0, 0)
+	_ = c.surface.Damage(0, 0, int32(image.GetWidth()), int32(image.GetHeight()))
+	_ = c.surface.Commit()
 
 	if err := app.pointer.SetCursor(
 		serial, c.surface,
