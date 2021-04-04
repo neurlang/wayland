@@ -830,14 +830,14 @@ func processKeyPress(sym uint32, input *Input) uint32 {
 	if sym == xkb.KeyNoSymbol {
 		return sym
 	}
-	if xkb.ComposeStateFeed(input.xkb.composeState, sym) != xkb.ComposeFeedAccepted {
+	if input.xkb.composeState.Feed(sym) != xkb.ComposeFeedAccepted {
 		return sym
 	}
-	switch xkb.ComposeStateGetStatus(input.xkb.composeState) {
+	switch input.xkb.composeState.GetStatus() {
 	case xkb.ComposeComposing:
 		return xkb.KeyNoSymbol
 	case xkb.ComposeComposed:
-		return xkb.ComposeStateGetOneSym(input.xkb.composeState)
+		return input.xkb.composeState.GetOneSym()
 	case xkb.ComposeCancelled:
 		return xkb.KeyNoSymbol
 	case xkb.ComposeNothing:
@@ -859,7 +859,7 @@ func (input *Input) GetRune(sym uint32) (r rune) {
 
 // This gets the compose UTF8 string from input
 func (input *Input) GetUtf8() []byte {
-	return xkb.ComposeStateGetUtf8(input.xkb.composeState)
+	return input.xkb.composeState.GetUtf8()
 }
 
 func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
@@ -907,7 +907,7 @@ func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 		return
 	}
 
-	var sym, _ = xkb.StateKeyGetSyms(input.xkb.state, code)
+	var sym, _ = input.xkb.state.KeyGetSyms(code)
 
 	input.keyboardHandleKeyInternal(keyboard, window, sym, state, time, key)
 
@@ -915,7 +915,7 @@ func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 		key == input.repeatKey {
 		// FIXME: Disarm repeat timer
 	} else if state == wl.KeyboardKeyStatePressed &&
-		xkb.KeymapKeyRepeats(input.xkb.keymap, code) {
+		input.xkb.keymap.KeyRepeats(code) {
 		// FIXME: Arm repeat timer
 	}
 }
@@ -959,8 +959,7 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	}
 
 	/* Set up XKB keymap */
-	keymap = xkb.KeymapNewFromString(input.Display.xkbContext,
-		mapStr,
+	keymap = input.Display.xkbContext.KeymapNewFromString(mapStr,
 		xkb.KeymapFormatTextV1,
 		0)
 	sys.Munmap(mapStr)
@@ -972,7 +971,7 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	}
 
 	/* Set up XKB state */
-	state = xkb.StateNew(keymap)
+	state = keymap.StateNew()
 	if state == nil {
 		println("failed to create XKB state")
 		xkb.KeymapUnref(keymap)
@@ -993,8 +992,7 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 
 	/* Set up XKB compose table */
 	composeTable =
-		xkb.ComposeTableNewFromLocale(input.Display.xkbContext,
-			locale,
+		input.Display.xkbContext.ComposeTableNewFromLocale(locale,
 			xkb.ComposeCompileNoFlags)
 	if composeTable == nil {
 		print("locale ")
@@ -1022,11 +1020,11 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	input.xkb.state = state
 
 	input.xkb.controlMask =
-		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Control")
+		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameCtrl)
 	input.xkb.altMask =
-		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Mod1")
+		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameAlt)
 	input.xkb.shiftMask =
-		1 << xkb.KeymapModGetIndex(input.xkb.keymap, "Shift")
+		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameShift)
 
 }
 func (input *Input) HandleKeyboardLeave(e wl.KeyboardLeaveEvent) {
@@ -1043,12 +1041,10 @@ func (input *Input) HandleKeyboardModifiers(e wl.KeyboardModifiersEvent) {
 		return
 	}
 
-	xkb.StateUpdateMask(input.xkb.state, e.ModsDepressed, e.ModsLatched,
+	input.xkb.state.UpdateMask(e.ModsDepressed, e.ModsLatched,
 		e.ModsLocked, 0, 0, e.Group)
 
-	mask = xkb.StateSerializeMods(input.xkb.state,
-		xkb.StateModsDepressed|
-			xkb.StateModsLatched)
+	mask = input.xkb.state.SerializeMods(xkb.StateModsDepressed | xkb.StateModsLatched)
 	input.modifiers = 0
 	if (mask & input.xkb.controlMask) != 0 {
 		input.modifiers |= ModControlMask

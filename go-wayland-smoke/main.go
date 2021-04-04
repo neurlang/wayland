@@ -376,11 +376,9 @@ func (smoke *smoke) Key(
 	time uint32,
 	key uint32,
 	notUnicode uint32,
-	unicode uint32,
 	state wl.KeyboardKeyState,
 	data window.WidgetHandler,
 ) {
-	fmt.Println(string(rune(unicode)))
 }
 func (*smoke) Focus(window *window.Window, device *window.Input) {
 

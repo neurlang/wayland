@@ -37,37 +37,66 @@ const ComposeStateNoFlags = 0
 // ComposeStatus is the status of the Compose sequence state machine.
 type ComposeStatus uint8
 
-const (
-	// ComposeNothing is The initial state; no sequence has started yet.
-	ComposeNothing ComposeStatus = 0
-	// ComposeComposing is In the middle of a sequence.
-	ComposeComposing ComposeStatus = 1
-	// ComposeComposed is A complete sequence has been matched.
-	ComposeComposed ComposeStatus = 2
-	// ComposeCancelled is The last sequence was cancelled due to an unmatched keysym.
-	ComposeCancelled ComposeStatus = 3
-)
+// ComposeNothing is The initial state; no sequence has started yet.
+const ComposeNothing ComposeStatus = 0
+
+// ComposeComposing is In the middle of a sequence.
+const ComposeComposing ComposeStatus = 1
+
+// ComposeComposed is A complete sequence has been matched.
+const ComposeComposed ComposeStatus = 2
+
+// ComposeCancelled is The last sequence was cancelled due to an unmatched keysym.
+const ComposeCancelled ComposeStatus = 3
 
 // ComposeFeedResult is The effect of a keysym fed to ComposeStateFeed().
 type ComposeFeedResult uint8
 
-const (
-	// ComposeFeedIgnored is The keysym had no effect - it did not affect the status.
-	ComposeFeedIgnored ComposeFeedResult = 0
-	// ComposeFeedAccepted is The keysym started, advanced or cancelled a sequence.
-	ComposeFeedAccepted ComposeFeedResult = 1
-)
+// ComposeFeedIgnored is The keysym had no effect - it did not affect the status.
+const ComposeFeedIgnored ComposeFeedResult = 0
 
+// ComposeFeedAccepted is The keysym started, advanced or cancelled a sequence.
+const ComposeFeedAccepted ComposeFeedResult = 1
+
+// StateComponent is a Modifier and layout types for state objects.
+// This is bitmaskable, e.g. (XKB_STATE_MODS_DEPRESSED | XKB_STATE_MODS_LATCHED)
+// is valid to exclude locked modifiers.
+// In XKB, the DEPRESSED components are also known as 'base'.
 type StateComponent uint32
 
-const (
-	StateModsDepressed   StateComponent = (1 << 0)
-	StateModsLatched     StateComponent = (1 << 1)
-	StateModsLocked      StateComponent = (1 << 2)
-	StateModsEffective   StateComponent = (1 << 3)
-	StateLayoutDepressed StateComponent = (1 << 4)
-	StateLayoutLatched   StateComponent = (1 << 5)
-	StateLayoutLocked    StateComponent = (1 << 6)
-	StateLayoutEffective StateComponent = (1 << 7)
-	StateLeds            StateComponent = (1 << 8)
-)
+// StateModsDepressed are a Depressed modifiers, i.e. a key is physically
+// holding them.
+const StateModsDepressed StateComponent = (1 << 0)
+
+// StateModsDepressed are a Latched modifiers, i.e. will be unset after
+// the next non-modifier key press.
+const StateModsLatched StateComponent = (1 << 1)
+
+// StateModsLocked are a Locked modifiers, i.e. will be unset after the
+// key provoking the lock has been pressed again.
+const StateModsLocked StateComponent = (1 << 2)
+
+// StateModsEffective are an Effective modifiers, i.e. currently active
+// and affect key processing (derived from the other state components).
+// Use this unless you explicitly care how the state came about.
+const StateModsEffective StateComponent = (1 << 3)
+
+// StateLayoutDepressed is a Depressed layout, i.e. a key is physically
+// holding it.
+const StateLayoutDepressed StateComponent = (1 << 4)
+
+// StateLayoutLatched is a Latched layout, i.e. will be unset after the
+// next non-modifier key press.
+const StateLayoutLatched StateComponent = (1 << 5)
+
+// StateLayoutLocked is a Locked layout, i.e. will be unset after the
+// key provoking the lock has been pressed again.
+const StateLayoutLocked StateComponent = (1 << 6)
+
+// StateLayoutEffective is an Effective layout, i.e. currently active
+// and affects key processing (derived from the other state components).
+// Use this unless you explicitly care how the state came about.
+const StateLayoutEffective StateComponent = (1 << 7)
+
+// StateLeds are a LEDs (derived from the other state components).
+const StateLeds StateComponent = (1 << 8)
