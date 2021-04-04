@@ -122,7 +122,7 @@ SOFTWARE.
  *
  */
 
-const KeyVoidsymbol uint32 = 0xffffff /* Void symbol */
+const KeyVoidSymbol uint32 = 0xffffff /* Void symbol */
 
 /*
  * TTY function keys, cleverly chosen to map to ASCII, for convenience of
@@ -2605,9 +2605,9 @@ const KeyMusicalsharp uint32 = 0x0af5 /* U+266F MUSIC SHARP SIGN */
 
 const KeyMusicalflat uint32 = 0x0af6 /* U+266D MUSIC FLAT SIGN */
 
-const KeyMalesymbol uint32 = 0x0af7 /* U+2642 MALE SIGN */
+const KeyMaleSymbol uint32 = 0x0af7 /* U+2642 MALE SIGN */
 
-const KeyFemalesymbol uint32 = 0x0af8 /* U+2640 FEMALE SIGN */
+const KeyFemaleSymbol uint32 = 0x0af8 /* U+2640 FEMALE SIGN */
 
 const KeyTelephone uint32 = 0x0af9 /* U+260E BLACK TELEPHONE */
 

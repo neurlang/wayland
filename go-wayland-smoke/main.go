@@ -31,13 +31,15 @@ import "github.com/neurlang/wayland/window"
 import "fmt"
 
 type smoke struct {
-	display             *window.Display
-	window              *window.Window
-	widget              *window.Widget
-	width, height       int32
-	bigwidth, bigheight int32
-	current             int
-	bb                  [2]struct {
+	display     *window.Display
+	window      *window.Window
+	widget      *window.Widget
+	width       int32
+	height      int32
+	smallwidth  int32
+	smallheight int32
+	o           []float32
+	bb          [2]struct {
 		d  []float32
 		uv chan [2][]float32
 		uu chan []float32
@@ -157,7 +159,14 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 	}
 }
 
+const maxx = 512
+const maxy = 256
+
 func (smoke *smoke) Resize(widget *window.Widget, _ int32, _ int32, width int32, height int32) {
+
+	if smoke.smallwidth == width && smoke.smallheight == height {
+		return
+	}
 
 	size := int(width) * int(height)
 
@@ -173,18 +182,18 @@ func (smoke *smoke) Resize(widget *window.Widget, _ int32, _ int32, width int32,
 		<-olduv
 	}
 	smoke.bb[0].uv = make(chan [2][]float32, 1)
-	if width > 512 {
-		smoke.bigwidth = width
-		smoke.width = 512
+	if width > maxx {
+		smoke.smallwidth = width
+		smoke.width = maxx
 	} else {
-		smoke.bigwidth = width
+		smoke.smallwidth = width
 		smoke.width = width
 	}
-	if height > 512 {
-		smoke.bigheight = height
-		smoke.height = 512
+	if height > maxy {
+		smoke.smallheight = height
+		smoke.height = maxy
 	} else {
-		smoke.bigheight = height
+		smoke.smallheight = height
 		smoke.height = height
 	}
 	smoke.pipeline(smoke.width, smoke.height)
@@ -201,13 +210,13 @@ func render(smoke *smoke, surface cairo.Surface) {
 	var height = surface.ImageSurfaceGetHeight()
 	var stride = surface.ImageSurfaceGetStride()
 
-	data := smoke.bb[smoke.current].d
+	data := smoke.o
 
 	for y := 1; y < height-1; y++ {
-		var yy = y * int(smoke.height) / int(smoke.bigheight)
+		var yy = (y * int(smoke.height) / int(smoke.smallheight)) * int(smoke.width)
 		for x := 1; x < width-1; x++ {
-
-			var c = uint32(data[x*int(smoke.width)/int(smoke.bigwidth)+yy*int(smoke.width)] * 800.)
+			var xx = x * int(smoke.width) / int(smoke.smallwidth)
+			var c = uint32(data[xx+yy] * 800.)
 			if c > 255 {
 				c = 255
 			}
@@ -296,6 +305,8 @@ func (smoke *smoke) Redraw(widget *window.Widget) {
 		diffuse(smoke, lastTime/30, smoke.bb[0].d, smoke.bb[1].d, smoke.width, smoke.height)
 		advect(smoke, lastTime/30, uv[0], uv[1], smoke.bb[1].d, smoke.bb[0].d, smoke.width, smoke.height)
 
+		smoke.o = smoke.bb[0].d
+
 	}
 	smoke.bb[0].uu <- uv[0]
 	smoke.bb[0].vv <- uv[1]
@@ -308,20 +319,24 @@ func (smoke *smoke) Redraw(widget *window.Widget) {
 		surface.Destroy()
 	}
 
-	smoke.widget.WidgetScheduleRedraw()
+	smoke.widget.ScheduleRedraw()
 }
 func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 
 	dx := smoke.lx - x
 	dy := smoke.ly - y
 
-	dt := 0.8 / (dx*dx + dy*dy)
+	dt := 0.8 / (dx*dx + dy*dy + 1.0)
+
+	if dt > 1. {
+		dt = 1.
+	}
 
 	smoke.lx = x
 	smoke.ly = y
 
-	x *= float32(smoke.width) / float32(smoke.bigwidth)
-	y *= float32(smoke.height) / float32(smoke.bigheight)
+	x *= float32(smoke.width) / float32(smoke.smallwidth)
+	y *= float32(smoke.height) / float32(smoke.smallheight)
 	var i0, i1, j0, j1 float32
 	var k, i, j int
 	var d float32 = 5
@@ -354,15 +369,18 @@ func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 			smoke.bb[0].d[k] += dt
 		}
 	}
-	if rand.Int()&7 == 0 {
+
+	var freq = (smoke.smallwidth * smoke.smallheight) / (smoke.width * smoke.height)
+
+	if rand.Int()%int(2*freq+1) == 0 {
 		uv := <-smoke.bb[0].uv
 
 		for i = int(i0); i < int(i1); i++ {
 			for j = int(j0); j < int(j1); j++ {
 				k = j*int(smoke.width) + i
 
-				uv[0][k] += float32(512 - (rand.Int() & 1023))
-				uv[1][k] += float32(512 - (rand.Int() & 1023))
+				uv[0][k] += float32(1024 - (rand.Int() & 2047))
+				uv[1][k] += float32(1024 - (rand.Int() & 2047))
 			}
 		}
 
@@ -492,7 +510,6 @@ func main() {
 	smoke.window.SetKeyboardHandler(&smoke)
 	rand.Seed(int64(time.Now().Nanosecond()))
 
-	smoke.current = 0
 	var size = int(smoke.height * smoke.width)
 
 	smoke.bb[0].d = make([]float32, size)

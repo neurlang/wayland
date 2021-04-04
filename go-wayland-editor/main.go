@@ -77,6 +77,8 @@ func textEntryCreate(editor *editor, text string) *textEntry {
 
 	editor.display.SetSeatHandler(editor)
 
+	//editor.widget.Userdata = entry
+
 	//zwp_text_input_v1_add_listener(entry.text_input,
 	//			       &text_input_listener, entry);
 
@@ -155,7 +157,7 @@ func (editor *editor) Redraw(widget *window.Widget) {
 		surface.Destroy()
 	}
 
-	editor.widget.WidgetScheduleRedraw()
+	editor.widget.ScheduleRedraw()
 }
 
 func (*editor) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
@@ -189,7 +191,23 @@ func (*editor) AxisDiscrete(widget *window.Widget, input *window.Input, axis uin
 }
 func (*editor) PointerFrame(widget *window.Widget, input *window.Input) {
 }
-func (*editor) Resize(Widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
+
+func textEntryAllocate(textEntry *textEntry, x int32, y int32,
+	width int32, height int32) {
+	textEntry.widget.SetAllocation(x, y, width, height)
+}
+
+func (editor *editor) Resize(Widget *window.Widget, width int32, height int32, totalwidth int32, totalheight int32) {
+
+	var allocation = editor.widget.GetAllocation()
+
+	textEntryAllocate(editor.entry,
+		allocation.X+20, allocation.Y+20,
+		width-40, height/2-40)
+	textEntryAllocate(editor.editor,
+		allocation.X+20, allocation.Y+height/2+20,
+		width-40, height/2-40)
+
 }
 func (editor *editor) HandleGlobal(display *window.Display, name uint32,
 	iface string, version uint32, data interface{}) {
@@ -203,12 +221,11 @@ func (editor *editor) HandleGlobal(display *window.Display, name uint32,
 
 }
 
-func (editor *editor) Key(window *window.Window, input *window.Input, time uint32, key uint32, notUnicode uint32, unicode uint32, state wl.KeyboardKeyState, data window.WidgetHandler) {
-
+func (editor *editor) Key(window *window.Window, input *window.Input, time uint32, key uint32, notUnicode uint32, state wl.KeyboardKeyState, data window.WidgetHandler) {
 }
 
 func (editor *editor) Focus(window *window.Window, device *window.Input) {
-
+	editor.window.ScheduleRedraw()
 }
 
 func (editor *editor) Capabilities(input *window.Input, seat *wl.Seat, caps uint32) {
@@ -279,6 +296,8 @@ func main() {
 	editor.window.SetBufferType(window.BufferTypeShm)
 	editor.window.SetKeyboardHandler(&editor)
 	editor.window.Userdata = &editor
+
+	editor.widget.Userdata = &editor
 
 	editor.window.ScheduleResize(editor.width, editor.height)
 

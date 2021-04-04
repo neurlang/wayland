@@ -68,7 +68,7 @@ type StateComponent uint32
 // holding them.
 const StateModsDepressed StateComponent = (1 << 0)
 
-// StateModsDepressed are a Latched modifiers, i.e. will be unset after
+// StateModsLatched are a Latched modifiers, i.e. will be unset after
 // the next non-modifier key press.
 const StateModsLatched StateComponent = (1 << 1)
 

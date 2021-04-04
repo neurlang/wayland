@@ -156,17 +156,20 @@ var cursorMap = map[uint32]string{
 	xdgshell.ToplevelResizeEdgeNone:        cursor.LeftPtr,
 }
 
-func (app *appState) pointerFrameMotionEvent(e pointerEvent) {
-	log.Printf("motion %v, %v", e.surfaceX, e.surfaceY)
-
-	edge := componentEdge(uint32(app.width), uint32(app.height), e.surfaceX, e.surfaceY, Border)
+func (app *appState) pointerCursorDo(serial, x, y uint32) {
+	edge := componentEdge(uint32(app.width), uint32(app.height), x, y, Border)
 	cursorName, ok := cursorMap[edge]
 	if ok {
-		app.trySetCursor(e.serial, cursorName)
+		app.trySetCursor(serial, cursorName)
 	} else {
 		println("cursor not in map")
 	}
+}
 
+func (app *appState) pointerFrameMotionEvent(e pointerEvent) {
+	log.Printf("motion %v, %v", e.surfaceX, e.surfaceY)
+
+	app.pointerCursorDo(e.serial, e.surfaceX, e.surfaceY)
 }
 func (app *appState) pointerFrameAxisEvent(e pointerEvent) {
 	for i := 0; i < 2; i++ {
@@ -227,6 +230,8 @@ func (app *appState) pointerFrameButtonEvent() {
 	if wl.PointerButtonState(e.state) == wl.PointerButtonStateReleased {
 		log.Printf("button %d released", e.button)
 
+		app.pointerCursorDo(e.serial, e.surfaceX, e.surfaceY)
+
 		if app.decoration != nil {
 			app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
 			app.pointerFrameButtonClicked()
@@ -273,6 +278,9 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	if (e.eventMask & pointerEventEnter) != 0 {
 		app.pointerEvent.eventMask &= ^pointerEventEnter
 		log.Printf("entered %v, %v", e.surfaceX, e.surfaceY)
+
+		app.currentCursor = ""
+		app.pointerCursorDo(e.serial, e.surfaceX, e.surfaceY)
 		//app.trySetCursor(e.serial, cursor.LeftPtr)
 	}
 

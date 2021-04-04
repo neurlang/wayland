@@ -141,17 +141,17 @@ type Display struct {
 	seatHandler SeatHandler
 }
 
-type rectangle struct {
-	x      int32
-	y      int32
-	width  int32
-	height int32
+type Rectangle struct {
+	X      int32
+	Y      int32
+	Width  int32
+	Height int32
 }
 
 type toysurface interface {
 	prepare(dx int, dy int, width int32, height int32, flags uint32,
 		bufferTransform uint32, bufferScale int32) cairo.Surface
-	swap(bufferTransform uint32, bufferScale int32, serverAllocation *rectangle)
+	swap(bufferTransform uint32, bufferScale int32, serverAllocation *Rectangle)
 	acquire(ctx *struct{}) int
 	release()
 	destroy()
@@ -172,8 +172,8 @@ type surface struct {
 	lastTime uint32
 	//	pad1	uint32
 
-	allocation       rectangle
-	serverAllocation rectangle
+	allocation       Rectangle
+	serverAllocation Rectangle
 
 	inputRegion  *wl.Region
 	opaqueRegion *wl.Region
@@ -201,10 +201,10 @@ type Window struct {
 
 	title string
 
-	savedAllocation   rectangle
-	minAllocation     rectangle
-	pendingAllocation rectangle
-	lastGeometry      rectangle
+	savedAllocation   Rectangle
+	minAllocation     Rectangle
+	pendingAllocation Rectangle
+	lastGeometry      Rectangle
 
 	x, y int32
 
@@ -223,7 +223,7 @@ type Window struct {
 
 	resizing int32
 
-	fullscreen int32
+	fullscreen bool
 	maximized  bool
 
 	preferredFormat int
@@ -298,7 +298,7 @@ func (Window *Window) ToplevelConfigure(
 	states []int32,
 ) {
 	Window.maximized = false
-	Window.fullscreen = 0
+	Window.fullscreen = false
 	Window.resizing = 0
 	Window.focused = 0
 
@@ -307,7 +307,7 @@ func (Window *Window) ToplevelConfigure(
 		case zxdg.ToplevelStateMaximized:
 			Window.maximized = true
 		case zxdg.ToplevelStateFullscreen:
-			Window.fullscreen = 1
+			Window.fullscreen = true
 		case zxdg.ToplevelStateResizing:
 			Window.resizing = 1
 		case zxdg.ToplevelStateActivated:
@@ -324,9 +324,9 @@ func (Window *Window) ToplevelConfigure(
 		var margin int32 = 0
 
 		Window.ScheduleResize(width+margin*2, height+margin*2)
-	} else if (Window.savedAllocation.width > 0) &&
-		(Window.savedAllocation.height > 0) {
-		Window.ScheduleResize(Window.savedAllocation.width, Window.savedAllocation.height)
+	} else if (Window.savedAllocation.Width > 0) &&
+		(Window.savedAllocation.Height > 0) {
+		Window.ScheduleResize(Window.savedAllocation.Width, Window.savedAllocation.Height)
 	}
 
 }
@@ -350,7 +350,7 @@ type Widget struct {
 	surface    *surface
 	tooltip    *struct{}
 	childList  *widgetList
-	allocation rectangle
+	allocation Rectangle
 
 	opaque        int32
 	tooltipCount  int32
@@ -525,7 +525,7 @@ type output struct {
 	Display        *Display
 	output         *wl.Output
 	serverOutputId uint32
-	allocation     rectangle
+	allocation     Rectangle
 	link           [2]*output
 	transform      int32
 	scale          int32
@@ -1198,9 +1198,9 @@ func shmPoolDestroy(pool *shmPool) {
 }
 
 //line 820
-func dataLengthForShmSurface(rect *rectangle) uintptr {
-	var stride = int32(cairo.FormatStrideForWidth(cairo.FormatArgb32, int(rect.width)))
-	return uintptr(int(stride * rect.height))
+func dataLengthForShmSurface(rect *Rectangle) uintptr {
+	var stride = int32(cairo.FormatStrideForWidth(cairo.FormatArgb32, int(rect.Width)))
+	return uintptr(int(stride * rect.Height))
 }
 
 func shmPoolReset(pool *shmPool) {
@@ -1209,7 +1209,7 @@ func shmPoolReset(pool *shmPool) {
 
 //line 829
 func displayCreateShmSurfaceFromPool(Display *Display,
-	rectangle *rectangle,
+	rectangle *Rectangle,
 	flags uint32, pool *shmPool) (*cairo.Surface, *shmSurfaceData) {
 	var data = &shmSurfaceData{}
 	var format uint32
@@ -1226,9 +1226,9 @@ func displayCreateShmSurfaceFromPool(Display *Display,
 		cairoFormat = cairo.FormatArgb32
 	}
 
-	stride = cairo.FormatStrideForWidth(cairoFormat, int(rectangle.width))
+	stride = cairo.FormatStrideForWidth(cairoFormat, int(rectangle.Width))
 
-	length = stride * int(rectangle.height)
+	length = stride * int(rectangle.Height)
 	data.pool = nil
 
 	map_ = shmPoolAllocate(pool, uintptr(length), &offset)
@@ -1239,8 +1239,8 @@ func displayCreateShmSurfaceFromPool(Display *Display,
 
 	surface = cairo.ImageSurfaceCreateForData(map_,
 		cairoFormat,
-		int(rectangle.width),
-		int(rectangle.height),
+		int(rectangle.Width),
+		int(rectangle.Height),
 		stride)
 
 	surface.SetUserData(func() {
@@ -1259,8 +1259,8 @@ func displayCreateShmSurfaceFromPool(Display *Display,
 	}
 
 	data.buffer, err = pool.pool.CreateBuffer(int32(offset),
-		rectangle.width,
-		rectangle.height,
+		rectangle.Width,
+		rectangle.Height,
 		int32(stride), format)
 	if err != nil {
 		return nil, nil
@@ -1271,7 +1271,7 @@ func displayCreateShmSurfaceFromPool(Display *Display,
 
 //line 886
 func displayCreateShmSurface(Display *Display,
-	rectangle *rectangle, flags uint32,
+	rectangle *Rectangle, flags uint32,
 	alternatePool *shmPool,
 	dataRet **shmSurfaceData) *cairo.Surface {
 	var data *shmSurfaceData
@@ -1397,7 +1397,7 @@ func (s *shmSurface) prepare(dx int, dy int, width int32, height int32, flags ui
 
 	var resizeHint = (flags & SurfaceHintResize) != 0
 	surface := s
-	var rect rectangle
+	var rect Rectangle
 	var leaf *shmSurfaceLeaf
 	var i int
 
@@ -1438,8 +1438,8 @@ func (s *shmSurface) prepare(dx int, dy int, width int32, height int32, flags ui
 		(*leaf.cairoSurface).Destroy()
 	}
 
-	rect.width = width
-	rect.height = height
+	rect.Width = width
+	rect.Height = height
 
 	leaf.cairoSurface = displayCreateShmSurface(
 		surface.Display,
@@ -1463,22 +1463,22 @@ out:
 
 //line 1146
 func shmSurfaceSwap(surface *shmSurface, bufferTransform uint32,
-	bufferScale int32, serverAllocation *rectangle) {
+	bufferScale int32, serverAllocation *Rectangle) {
 	var leaf = surface.current
 
-	serverAllocation.width =
+	serverAllocation.Width =
 		int32((*leaf.cairoSurface).ImageSurfaceGetWidth())
-	serverAllocation.height =
+	serverAllocation.Height =
 		int32((*leaf.cairoSurface).ImageSurfaceGetHeight())
 
 	bufferToSurfaceSize(bufferTransform, bufferScale,
-		&serverAllocation.width,
-		&serverAllocation.height)
+		&serverAllocation.Width,
+		&serverAllocation.Height)
 
 	_ = surface.surface.Attach(leaf.data.buffer,
 		surface.dx, surface.dy)
 	_ = surface.surface.Damage(0, 0,
-		serverAllocation.width, serverAllocation.height)
+		serverAllocation.Width, serverAllocation.Height)
 	_ = surface.surface.Commit()
 
 	leaf.busy = 1
@@ -1488,7 +1488,7 @@ func shmSurfaceSwap(surface *shmSurface, bufferTransform uint32,
 func (s *shmSurface) swap(
 	bufferTransform uint32,
 	bufferScale int32,
-	serverAllocation *rectangle,
+	serverAllocation *Rectangle,
 ) {
 	shmSurfaceSwap(s, bufferTransform, bufferScale, serverAllocation)
 
@@ -1516,7 +1516,7 @@ func (s *shmSurface) destroy() {
 
 //line 1199
 func shmSurfaceCreate(Display *Display, wlSurface *wl.Surface,
-	flags uint32, rectangle *rectangle) toysurface {
+	flags uint32, rectangle *Rectangle) toysurface {
 	var surface = &shmSurface{}
 
 	surface.Display = Display
@@ -1640,7 +1640,7 @@ func surfaceCreateSurface(surface *surface, flags uint32) {
 
 	surface.cairoSurface = (*surface.toysurface).prepare(
 		0, 0,
-		allocation.width, allocation.height, flags,
+		allocation.Width, allocation.Height, flags,
 		uint32(surface.bufferTransform), surface.bufferScale)
 
 }
@@ -1708,10 +1708,10 @@ func (Window *Window) Destroy() {
 //line 1624
 func widgetFindWidget(Widget *Widget, x int32, y int32) *Widget {
 
-	if Widget.allocation.x <= x &&
-		x < Widget.allocation.x+Widget.allocation.width &&
-		Widget.allocation.y <= y &&
-		y < Widget.allocation.y+Widget.allocation.height {
+	if Widget.allocation.X <= x &&
+		x < Widget.allocation.X+Widget.allocation.Width &&
+		Widget.allocation.Y <= y &&
+		y < Widget.allocation.Y+Widget.allocation.Height {
 		return Widget
 	}
 
@@ -1780,6 +1780,10 @@ func (parent *Widget) Destroy() {
 		surfaceDestroy(parent.surface)
 	}
 
+}
+
+func (widget *Widget) GetAllocation() Rectangle {
+	return widget.allocation
 }
 
 func (d *Display) SetSeatHandler(h SeatHandler) {
@@ -1883,14 +1887,14 @@ func (d *Display) ShmFormat(wlShm *wl.Shm, format uint32) {
 
 //line 1733
 func widgetSetSize(Widget *Widget, width int32, height int32) {
-	Widget.allocation.width = width
-	Widget.allocation.height = height
+	Widget.allocation.Width = width
+	Widget.allocation.Height = height
 }
 
 //line 1740
-func WidgetSetAllocation(Widget *Widget, x int32, y int32, width int32, height int32) {
-	Widget.allocation.x = x
-	Widget.allocation.y = y
+func (Widget *Widget) SetAllocation(x int32, y int32, width int32, height int32) {
+	Widget.allocation.X = x
+	Widget.allocation.Y = y
 	widgetSetSize(Widget, width, height)
 }
 
@@ -1922,7 +1926,7 @@ func (parent *Widget) WidgetGetLastTime() uint32 {
 }
 
 //line 2013
-func (parent *Widget) WidgetScheduleRedraw() {
+func (parent *Widget) ScheduleRedraw() {
 	parent.surface.redrawNeeded = 1
 	windowScheduleRedrawTask(parent.Window)
 }
@@ -1954,6 +1958,8 @@ func (Window *Window) FrameCreate(data WidgetHandler) *Widget {
 
 	frame.widget = Window.AddWidget(frame)
 	frame.child = frame.widget.AddWidget(data)
+
+	frame.widget.Userdata = data
 
 	Window.frame = frame
 
@@ -2029,10 +2035,10 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	// * based on the old surface dimensions. However, if we have an active
 	// * grab, we expect to see Input from outside the Window anyway.
 
-	if nil == Input.grab && (sx < float32(Window.mainSurface.allocation.x) ||
-		sy < float32(Window.mainSurface.allocation.y) ||
-		sx > float32(Window.mainSurface.allocation.width) ||
-		sy > float32(Window.mainSurface.allocation.height)) {
+	if nil == Input.grab && (sx < float32(Window.mainSurface.allocation.X) ||
+		sy < float32(Window.mainSurface.allocation.Y) ||
+		sx > float32(Window.mainSurface.allocation.Width) ||
+		sy > float32(Window.mainSurface.allocation.Height)) {
 		return
 	}
 
@@ -2254,15 +2260,15 @@ func surfaceResize(surface *surface) {
 
 	if Widget.Userdata != nil {
 		Widget.Userdata.Resize(Widget,
-			Widget.allocation.width,
-			Widget.allocation.height,
-			Widget.Window.pendingAllocation.width,
-			Widget.Window.pendingAllocation.height)
+			Widget.allocation.Width,
+			Widget.allocation.Height,
+			Widget.Window.pendingAllocation.Width,
+			Widget.Window.pendingAllocation.Height)
 	}
 
-	if (surface.allocation.width != Widget.allocation.width) ||
-		(surface.allocation.height != Widget.allocation.height) {
-		windowScheduleRedraw(Widget.Window)
+	if (surface.allocation.Width != Widget.allocation.Width) ||
+		(surface.allocation.Height != Widget.allocation.Height) {
+		Widget.Window.ScheduleRedraw()
 
 	}
 
@@ -2273,15 +2279,15 @@ func surfaceResize(surface *surface) {
 //line 4144
 func windowDoResize(Window *Window) {
 
-	WidgetSetAllocation(Window.mainSurface.Widget,
-		Window.pendingAllocation.x,
-		Window.pendingAllocation.y,
-		Window.pendingAllocation.width,
-		Window.pendingAllocation.height)
+	Window.mainSurface.Widget.SetAllocation(
+		Window.pendingAllocation.X,
+		Window.pendingAllocation.Y,
+		Window.pendingAllocation.Width,
+		Window.pendingAllocation.Height)
 
 	surfaceResize(Window.mainSurface)
 
-	if (Window.fullscreen != 0) && (Window.maximized) {
+	if (Window.fullscreen) && (Window.maximized) {
 		Window.savedAllocation = Window.pendingAllocation
 	}
 }
@@ -2300,29 +2306,29 @@ func (Window *Window) ScheduleResize(width int32, height int32) {
 	const minWidth = 32
 	const minHeight = 32
 
-	Window.pendingAllocation.x = 0
-	Window.pendingAllocation.y = 0
-	Window.pendingAllocation.width = width
-	Window.pendingAllocation.height = height
+	Window.pendingAllocation.X = 0
+	Window.pendingAllocation.Y = 0
+	Window.pendingAllocation.Width = width
+	Window.pendingAllocation.Height = height
 
 	// this is an explicit change from upstream wayland/weston
-	if Window.minAllocation.width < minWidth {
-		Window.minAllocation.width = minWidth
+	if Window.minAllocation.Width < minWidth {
+		Window.minAllocation.Width = minWidth
 	}
 	// this is an explicit change from upstream wayland/weston
-	if Window.minAllocation.width < minHeight {
-		Window.minAllocation.height = minHeight
+	if Window.minAllocation.Width < minHeight {
+		Window.minAllocation.Height = minHeight
 	}
 
-	if Window.pendingAllocation.width < Window.minAllocation.width {
-		Window.pendingAllocation.width = Window.minAllocation.width
+	if Window.pendingAllocation.Width < Window.minAllocation.Width {
+		Window.pendingAllocation.Width = Window.minAllocation.Width
 	}
-	if Window.pendingAllocation.height < Window.minAllocation.height {
-		Window.pendingAllocation.height = Window.minAllocation.height
+	if Window.pendingAllocation.Height < Window.minAllocation.Height {
+		Window.pendingAllocation.Height = Window.minAllocation.Height
 	}
 
 	Window.resizeNeeded = 1
-	windowScheduleRedraw(Window)
+	Window.ScheduleRedraw()
 }
 
 //line 4254
@@ -2345,20 +2351,20 @@ func windowUninhibitRedraw(Window *Window) {
 }
 
 //line 4521
-func windowGetAllocation(Window *Window, allocation *rectangle) {
+func windowGetAllocation(Window *Window, allocation *Rectangle) {
 	*allocation = Window.mainSurface.allocation
 }
 
 //line 4445
-func windowGetGeometry(Window *Window, geometry *rectangle) {
-	if Window.fullscreen != 0 {
+func windowGetGeometry(Window *Window, geometry *Rectangle) {
+	if Window.fullscreen {
 		windowGetAllocation(Window, geometry)
 	}
 }
 
 //line 4458
 func windowSyncGeometry(Window *Window) {
-	var geometry rectangle
+	var geometry Rectangle
 
 	if Window.xdgSurface == nil {
 		return
@@ -2366,18 +2372,18 @@ func windowSyncGeometry(Window *Window) {
 
 	windowGetGeometry(Window, &geometry)
 
-	if geometry.x == Window.lastGeometry.x &&
-		geometry.y == Window.lastGeometry.y &&
-		geometry.width == Window.lastGeometry.width &&
-		geometry.height == Window.lastGeometry.height {
+	if geometry.X == Window.lastGeometry.X &&
+		geometry.Y == Window.lastGeometry.Y &&
+		geometry.Width == Window.lastGeometry.Width &&
+		geometry.Height == Window.lastGeometry.Height {
 		return
 	}
 
 	_ = Window.xdgSurface.SetWindowGeometry(
-		geometry.x,
-		geometry.y,
-		geometry.width,
-		geometry.height)
+		geometry.X,
+		geometry.Y,
+		geometry.Width,
+		geometry.Height)
 	Window.lastGeometry = geometry
 }
 
@@ -2492,7 +2498,7 @@ func windowScheduleRedrawTask(Window *Window) {
 }
 
 // line 4636
-func windowScheduleRedraw(Window *Window) {
+func (Window *Window) ScheduleRedraw() {
 	windowScheduleRedrawTask(Window)
 }
 

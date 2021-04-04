@@ -223,16 +223,16 @@ func (keymap *Keymap) ModGetIndex(mod string) uint {
 //
 // Parameter[in]  state    The keyboard state object.
 // Parameter[in]  key      The keycode of the key.
-// Parameter[out] sym_out  The first of an immutable array of keysyms corresponding the
+// Parameter[out] symOut  The first of an immutable array of keysyms corresponding the
 // key in the given keyboard state.
 //
 // This function does not perform any keysym-transformations.
 // (This might change).
 //
-// It returns The first keysym in the sym_out array.  If no keysyms
+// It returns The first keysym in the symOut array.  If no keysyms
 // are produced by the key in the given keyboard state, returns KeyNoSymbol and sets
 // ok to false.
-func (state *State) KeyGetSyms(key uint32) (sym_out uint32, ok bool) {
+func (state *State) KeyGetSyms(key uint32) (symOut uint32, ok bool) {
 	var data *C.uint
 
 	if 0 != uint32(C.xkb_state_key_get_syms(state.st, C.uint(key), &data)) {
@@ -380,12 +380,12 @@ func (state *ComposeState) GetUtf8() (buffer []byte) {
 //
 // see also xkb_state_component
 // see also xkb_state_update_key
-func (state *State) UpdateMask(depressed_mods, latched_mods, locked_mods,
-	depressed_layout, latched_layout, locked_layout uint32) uint32 {
-	return uint32(C.xkb_state_update_mask(state.st, C.uint(depressed_mods),
-		C.uint(latched_mods), C.uint(locked_mods),
-		C.uint(depressed_layout), C.uint(latched_layout),
-		C.uint(locked_layout)))
+func (state *State) UpdateMask(depressedMods, latchedMods, lockedMods,
+	depressedLayout, latchedLayout, lockedLayout uint32) uint32 {
+	return uint32(C.xkb_state_update_mask(state.st, C.uint(depressedMods),
+		C.uint(latchedMods), C.uint(lockedMods),
+		C.uint(depressedLayout), C.uint(latchedLayout),
+		C.uint(lockedLayout)))
 }
 
 // SerializeMods is The counterpart to xkb_state_update_mask for modifiers, to be used on

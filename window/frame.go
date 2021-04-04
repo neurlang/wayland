@@ -30,10 +30,70 @@ type windowFrame struct {
 	child  *Widget
 }
 
-func (*windowFrame) Resize(Widget *Widget, width int32, height int32, pwidth int32, pheight int32) {}
-func (*windowFrame) Redraw(Widget *Widget)                                                         {}
-func (*windowFrame) Enter(Widget *Widget, Input *Input, x float32, y float32)                      {}
-func (*windowFrame) Leave(Widget *Widget, Input *Input)                                            {}
+func (frame *windowFrame) Resize(Widget *Widget, width int32, height int32, pwidth int32, pheight int32) {
+
+	var interior, input Rectangle
+	var child = frame.child
+
+	if Widget.Window.fullscreen {
+		interior.X = 0
+		interior.Y = 0
+		interior.Width = width
+		interior.Height = height
+	} else {
+		//frame_resize(frame.frame, width, height);
+		//frame_interior(frame.frame, &interior.x, &interior.y,
+		//	       &interior.width, &interior.height);
+	}
+	child.SetAllocation(interior.X, interior.Y,
+		interior.Width, interior.Height)
+
+	if child.Userdata != nil {
+		child.Userdata.Resize(child, interior.Width, interior.Height, width, height)
+
+		if Widget.Window.fullscreen {
+			width = child.allocation.Width
+			height = child.allocation.Height
+		} else {
+			//frameResizeInside(frame.frame,
+			//		    child.allocation.width,
+			//		    child.allocation.height);
+			//width = frame_width(frame.frame);
+			//height = frame_height(frame.frame);
+		}
+	}
+	Widget.SetAllocation(0, 0, width, height)
+
+	ir, err := Widget.Window.Display.compositor.CreateRegion()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	Widget.surface.inputRegion = ir
+	if !Widget.Window.fullscreen {
+		input = interior
+		//frame_input_rect(frame.frame, &input.x, &input.y,
+		//		 &input.width, &input.height);
+		Widget.surface.inputRegion.Add(input.X, input.Y, input.Width, input.Height)
+	} else {
+		Widget.surface.inputRegion.Add(0, 0, width, height)
+	}
+
+	Widget.SetAllocation(0, 0, width, height)
+	// TODO: opaque ..
+
+	Widget.ScheduleRedraw()
+
+}
+func (*windowFrame) Redraw(Widget *Widget) {
+	var window = Widget.Window
+	if window.fullscreen {
+		return
+	}
+
+}
+func (*windowFrame) Enter(Widget *Widget, Input *Input, x float32, y float32) {}
+func (*windowFrame) Leave(Widget *Widget, Input *Input)                       {}
 func (*windowFrame) Motion(Widget *Widget, Input *Input, time uint32, x float32, y float32) int {
 	return CursorWatch
 }
