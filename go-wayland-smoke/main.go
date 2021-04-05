@@ -27,7 +27,7 @@ import "math/rand"
 import cairo "github.com/neurlang/wayland/cairoshim"
 import "github.com/neurlang/wayland/wl"
 import "github.com/neurlang/wayland/window"
-
+import xkb "github.com/neurlang/wayland/xkbcommon"
 import "fmt"
 
 type smoke struct {
@@ -235,20 +235,7 @@ func render(smoke *smoke, surface cairo.Surface) {
 }
 func (smoke *smoke) pipeline(width int32, height int32) {
 	const lastTime = 600000
-	/*	go func() {
-			for {
-				var uv [2][]float32
-				uv = <-smoke.bb[0].uv
-				if uv[0] == nil || uv[1] == nil {
-					smoke.bb[0].uu <- nil
-					smoke.bb[0].vv <- nil
-					return
-				}
-				smoke.bb[0].uu <- uv[0]
-				smoke.bb[0].vv <- uv[1]
-			}
-		}()
-	*/go func() {
+	go func() {
 		for {
 			var u0 []float32
 			u0 = <-smoke.bb[0].uu
@@ -397,6 +384,12 @@ func (smoke *smoke) Key(
 	state wl.KeyboardKeyState,
 	data window.WidgetHandler,
 ) {
+	println(notUnicode)
+
+	if notUnicode == xkb.KeyQ || notUnicode == xkb.KEYq {
+		smoke.free()
+		smoke.display.Exit()
+	}
 }
 func (*smoke) Focus(window *window.Window, device *window.Input) {
 
@@ -486,6 +479,25 @@ func (*smoke) AxisDiscrete(
 ) {
 }
 func (*smoke) PointerFrame(widget *window.Widget, input *window.Input) {
+}
+
+func (smoke *smoke) free() {
+	// tear down the rendering pipe
+	var olduv = smoke.bb[0].uv
+	if smoke.pipe {
+		<-olduv
+		smoke.bb[0].uu <- nil
+		smoke.bb[0].vv <- nil
+		<-olduv
+	}
+
+	smoke.bb[0].d = nil
+	smoke.bb[0].uv = nil
+	smoke.bb[1].d = nil
+	smoke.bb[1].uu = nil
+	smoke.bb[1].vv = nil
+	smoke.bb[0].uu = nil
+	smoke.bb[0].vv = nil
 }
 
 func main() {

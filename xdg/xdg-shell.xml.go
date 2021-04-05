@@ -74,6 +74,7 @@ func NewWmBase(ctx *wl.Context) *WmBase {
 //
 func (i *WmBase) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
+	i.Unregister()
 	return err
 }
 
@@ -264,6 +265,7 @@ func NewPositioner(ctx *wl.Context) *Positioner {
 //
 func (i *Positioner) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
+	i.Unregister()
 	return err
 }
 
@@ -587,6 +589,7 @@ func NewSurface(ctx *wl.Context) *Surface {
 //
 func (s *Surface) Destroy() error {
 	err := s.Context().SendRequest(s, 0)
+	s.Unregister()
 	return err
 }
 
@@ -826,6 +829,7 @@ func NewToplevel(ctx *wl.Context) *Toplevel {
 //
 func (i *Toplevel) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
+	i.Unregister()
 	return err
 }
 
@@ -1456,6 +1460,7 @@ func NewPopup(ctx *wl.Context) *Popup {
 //
 func (i *Popup) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
+	i.Unregister()
 	return err
 }
 

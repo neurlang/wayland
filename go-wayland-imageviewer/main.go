@@ -111,6 +111,16 @@ func main() {
 		app.releaseXdgWmBase()
 	}
 
+	// Release shm
+	if app.shm != nil {
+		app.releaseShm()
+	}
+
+	// Release registry
+	if app.registry != nil {
+		app.releaseRegistry()
+	}
+
 	for i, c := range app.cursors {
 		app.CursorDestroy(c)
 		app.cursors[i] = nil
@@ -580,6 +590,15 @@ func (app *appState) releaseXdgWmBase() {
 		log.Println("unable to destroy xdg_wm_base:", err)
 	}
 	app.wmBase = nil
+}
+func (app *appState) releaseShm() {
+	app.shm.Unregister()
+	app.shm = nil
+}
+func (app *appState) releaseRegistry() {
+	app.registry.RemoveGlobalHandler(app)
+	app.registry.Unregister()
+	app.registry = nil
 }
 
 func (app *appState) CursorDestroy(c *cursorData) {

@@ -398,7 +398,9 @@ func (p *ShmPool) CreateBuffer(
 // are gone.
 //
 func (p *ShmPool) Destroy() error {
-	return p.Context().SendRequest(p, 1)
+	err := p.Context().SendRequest(p, 1)
+	p.Unregister()
+	return err
 }
 
 // Resize will change the size of the pool mapping.
@@ -658,7 +660,9 @@ func NewBuffer(ctx *Context) *Buffer {
 // For possible side-effects to a surface, see wl_surface.attach.
 //
 func (p *Buffer) Destroy() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 type DataOfferOfferEvent struct {
@@ -847,7 +851,9 @@ func (p *DataOffer) Receive(mimeType string, fd uintptr) error {
 // Destroy the data offer.
 //
 func (p *DataOffer) Destroy() error {
-	return p.Context().SendRequest(p, 2)
+	err := p.Context().SendRequest(p, 2)
+	p.Unregister()
+	return err
 }
 
 // Finish will the offer will no longer be used.
@@ -1186,7 +1192,9 @@ func (p *DataSource) Offer(mimeType string) error {
 // Destroy the data source.
 //
 func (p *DataSource) Destroy() error {
-	return p.Context().SendRequest(p, 1)
+	err := p.Context().SendRequest(p, 1)
+	p.Unregister()
+	return err
 }
 
 // SetActions will set the available drag-and-drop actions.
@@ -1532,7 +1540,9 @@ func (p *DataDevice) SetSelection(source *DataSource, serial uint32) error {
 // This request destroys the data device.
 //
 func (p *DataDevice) Release() error {
-	return p.Context().SendRequest(p, 2)
+	err := p.Context().SendRequest(p, 2)
+	p.Unregister()
+	return err
 }
 
 const (
@@ -2056,7 +2066,9 @@ func NewSurface(ctx *Context) *Surface {
 // Deletes the surface and invalidates its object ID.
 //
 func (p *Surface) Destroy() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 // Attach will set the surface contents.
@@ -2538,7 +2550,9 @@ func (p *Seat) GetTouch() (*Touch, error) {
 // use the seat object anymore.
 //
 func (p *Seat) Release() error {
-	return p.Context().SendRequest(p, 3)
+	err := p.Context().SendRequest(p, 3)
+	p.Unregister()
+	return err
 }
 
 const (
@@ -3004,7 +3018,9 @@ func (p *Pointer) SetCursor(
 // wl_pointer_destroy() after using this request.
 //
 func (p *Pointer) Release() error {
-	return p.Context().SendRequest(p, 1)
+	err := p.Context().SendRequest(p, 1)
+	p.Unregister()
+	return err
 }
 
 const (
@@ -3309,7 +3325,9 @@ func NewKeyboard(ctx *Context) *Keyboard {
 //
 //
 func (p *Keyboard) Release() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 const (
@@ -3639,7 +3657,9 @@ func NewTouch(ctx *Context) *Touch {
 //
 //
 func (p *Touch) Release() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 type OutputGeometryEvent struct {
@@ -3839,7 +3859,9 @@ func NewOutput(ctx *Context) *Output {
 // use the output object anymore.
 //
 func (p *Output) Release() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 const (
@@ -3883,7 +3905,9 @@ func NewRegion(ctx *Context) *Region {
 // Destroy the region.  This will invalidate the object ID.
 //
 func (p *Region) Destroy() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 // Add will add rectangle to region.
@@ -3922,7 +3946,9 @@ func NewSubcompositor(ctx *Context) *Subcompositor {
 // objects, wl_subsurface objects included.
 //
 func (p *Subcompositor) Destroy() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 // GetSubsurface will give a surface the role sub-surface.
@@ -3973,7 +3999,9 @@ func NewSubsurface(ctx *Context) *Subsurface {
 // a sub-surface. The wl_surface is unmapped immediately.
 //
 func (p *Subsurface) Destroy() error {
-	return p.Context().SendRequest(p, 0)
+	err := p.Context().SendRequest(p, 0)
+	p.Unregister()
+	return err
 }
 
 // SetPosition will reposition the sub-surface.

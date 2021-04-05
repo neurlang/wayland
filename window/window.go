@@ -1592,6 +1592,7 @@ func createCursors(Display *Display) (err error) {
 //line 1386
 func destroyCursors(Display *Display) {
 	Display.cursorTheme.Destroy()
+	Display.cursorTheme = nil
 }
 
 //line 1402

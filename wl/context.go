@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sys "github.com/neurlang/wayland/os"
+	//"reflect"
 )
 
 func init() {
@@ -200,13 +201,11 @@ func (ctx *Context) Close() (err error) {
 			print("close-time garbage: ")
 			print(i)
 			print(": ")
-			print(reflect.TypeOf(v).String())
-			print(": ")
-			println(v.Name())
+			println(reflect.TypeOf(v).String())
 		}
 	*/
-	ctx.mu.Unlock()
 	ctx.objects = nil
 	ctx.scms = nil
+	ctx.mu.Unlock()
 	return err
 }
