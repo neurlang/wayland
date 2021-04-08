@@ -19,7 +19,20 @@ These gophers (in this image) are courtesy of Copyright (c) 2019 Maria Letta
 
 # Dependencies
 
-None, this is a pure go implementation
+None, this is a pure go implementation. But for a meaningful keyboard
+support, you need the C libxkbcommon library for apps that require keyboard.
+
+Golang install:
+
+```
+sudo apt-get install golang
+```
+
+or
+
+```
+sudo dnf install golang
+```
 
 # Docker Installation
 
@@ -40,6 +53,19 @@ the Wayland compositor weston that is useful for testing:
 sudo apt-get install weston
 ```
 
+Install libxkbcommon:
+
+```
+sudo apt-get install libxkbcommon-dev
+```
+
+or in Fedora:
+
+```
+sudo dnf install libxkbcommon-devel
+```
+
+
 Next, get the demos:
 
 ```
@@ -49,9 +75,9 @@ go get github.com/neurlang/wayland/...
 Then, install them:
 
 ```
-go install github.com/neurlang/wayland/go-wayland-simple-shm@latest
-go install github.com/neurlang/wayland/go-wayland-smoke@latest
-go install github.com/neurlang/wayland/go-wayland-imageviewer@latest
+go get github.com/neurlang/wayland/go-wayland-simple-shm@latest
+go get github.com/neurlang/wayland/go-wayland-smoke@latest
+go get github.com/neurlang/wayland/go-wayland-imageviewer@latest
 ```
 
 Using golang version < 1.16 (there is support for golang >= 1.09):
