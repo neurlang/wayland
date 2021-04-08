@@ -38,6 +38,8 @@ type pointerEvent struct {
 		discrete int32
 	}
 	axisSource uint32
+	moveWindow bool
+	sizeWindow bool
 }
 
 func (app *appState) attachPointer() {
@@ -229,8 +231,10 @@ func (app *appState) pointerFrameButtonEvent() {
 	e := &app.pointerEvent
 	if wl.PointerButtonState(e.state) == wl.PointerButtonStateReleased {
 		log.Printf("button %d released", e.button)
-
 		app.pointerCursorDo(e.serial, e.surfaceX, e.surfaceY)
+
+		e.moveWindow = false
+		e.sizeWindow = false
 
 		if app.decoration != nil {
 			app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
@@ -238,7 +242,7 @@ func (app *appState) pointerFrameButtonEvent() {
 
 			app.decoration.LeftActive, app.decoration.RightActive = 0, 0
 
-			app.redecorate()
+			app.redecorate(false)
 		}
 
 	} else {
@@ -250,7 +254,7 @@ func (app *appState) pointerFrameButtonEvent() {
 			if app.decoration != nil {
 				app.decoration.LeftActive, app.decoration.RightActive = app.decoration.activeLeftRight(app, float64(e.surfaceX), float64(e.surfaceY))
 				if app.decoration.LeftActive != 0 || app.decoration.RightActive != 0 {
-					app.redecorate()
+					app.redecorate(true)
 					break
 				}
 			}
@@ -259,10 +263,15 @@ func (app *appState) pointerFrameButtonEvent() {
 			if edge != xdgshell.ToplevelResizeEdgeNone {
 				if err := app.xdgTopLevel.Resize(app.seat, e.serial, edge); err != nil {
 					log.Println("unable to start resize")
+				} else {
+					e.moveWindow = true
+					e.sizeWindow = true
 				}
 			} else {
 				if err := app.xdgTopLevel.Move(app.seat, e.serial); err != nil {
 					log.Println("unable to start move")
+				} else {
+					e.moveWindow = true
 				}
 			}
 		case BtnRight:
@@ -284,10 +293,6 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 		//app.trySetCursor(e.serial, cursor.LeftPtr)
 	}
 
-	if (e.eventMask & pointerEventLeave) != 0 {
-		app.pointerEvent.eventMask &= ^pointerEventLeave
-		log.Print("leave")
-	}
 	if (e.eventMask & pointerEventMotion) != 0 {
 		app.pointerEvent.eventMask &= ^pointerEventMotion
 		app.pointerFrameMotionEvent(e)
@@ -302,6 +307,12 @@ func (app *appState) HandlePointerFrame(_ wl.PointerFrameEvent) {
 	if (e.eventMask & axisEvents) != 0 {
 		app.pointerEvent.eventMask &= ^axisEvents
 		app.pointerFrameAxisEvent(e)
+	}
+	if (e.eventMask & pointerEventLeave) != 0 {
+		app.pointerEvent.eventMask &= ^pointerEventLeave
+		log.Print("leave")
+
+		app.pointerEvent.moveWindow = false
 	}
 }
 

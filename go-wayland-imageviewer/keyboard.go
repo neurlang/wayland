@@ -10,11 +10,12 @@ const (
 	keyboardEventLeave = 1 << 9
 )
 
-func (app *appState) Focused() bool {
-	return (app.pointerEvent.eventMask & keyboardEventLeave) != 0
+func (app *appState) UnFocused() bool {
+	var ret1 = (app.pointerEvent.eventMask & keyboardEventLeave) != 0
+	return ret1 && !app.pointerEvent.moveWindow
 }
 
-func (app *appState) redecorate() {
+func (app *appState) redecorate(configuring bool) {
 	if app.decoration != nil {
 
 		app.frame.Rect.Min.X = 0
@@ -22,7 +23,7 @@ func (app *appState) redecorate() {
 		app.frame.Rect.Max.X = int(app.width)
 		app.frame.Rect.Max.Y = int(app.height)
 
-		app.decoration.clientSideDecoration(app, true)
+		app.decoration.clientSideDecoration(app, true, configuring)
 
 		app.width = int32(app.frame.Rect.Max.X)
 		app.height = int32(app.frame.Rect.Max.Y)
@@ -51,14 +52,17 @@ func (app *appState) HandleKeyboardEnter(wl.KeyboardEnterEvent) {
 	app.pointerEvent.eventMask &= ^keyboardEventLeave
 	app.pointerEvent.eventMask |= keyboardEventEnter
 
-	app.redecorate()
+	app.redecorate(true)
+
 }
 
 func (app *appState) HandleKeyboardLeave(wl.KeyboardLeaveEvent) {
 	app.pointerEvent.eventMask &= ^keyboardEventEnter
 	app.pointerEvent.eventMask |= keyboardEventLeave
 
-	app.redecorate()
+	app.redecorate(false)
+
+	app.pointerEvent.moveWindow = false
 
 }
 func (app *appState) attachKeyboard() {

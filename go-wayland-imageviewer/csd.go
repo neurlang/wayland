@@ -23,7 +23,7 @@ type Decoration struct {
 }
 
 type DecoratedRgbaWindow interface {
-	Focused() bool
+	UnFocused() bool
 	GetImage() *image.RGBA
 	SetImage(img *image.RGBA)
 }
@@ -34,8 +34,10 @@ const hb = Border / 2
 const db = Border * 2
 
 var decorationFonts = []string{
-	"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+	"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf", // fedora
+	"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",   // ubuntu
 	"/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf", // fedora
 	"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
 	"/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
 }
@@ -185,7 +187,7 @@ func (d *Decoration) clientSideDecorationRightButtons(dc *gg.Context, w float64)
 	return xRd
 }
 
-func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, justBorder bool) {
+func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, justBorder, configuring bool) {
 
 	img := a.GetImage()
 
@@ -213,8 +215,9 @@ func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, justBorder bool
 	dc.SetLineWidth(2.)
 	dc.StrokePreserve()
 
-	if a.Focused() {
+	if a.UnFocused() && !configuring {
 		dc.SetRGB255(192, 192, 192)
+
 	} else {
 		dc.SetRGB255(255, 255, 255)
 	}

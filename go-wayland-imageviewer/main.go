@@ -189,7 +189,7 @@ func (app *appState) spawnDecoration(fileName string) {
 	app.decoration.Titlebar = 20
 	app.decoration.LeftButtons = []DecorationButton{{"#", 40, false}}
 	app.decoration.RightButtons = []DecorationButton{{"×", 40, false}, {"▫", 40, false}, {"_", 40, false}}
-	app.decoration.clientSideDecoration(app, false)
+	app.decoration.clientSideDecoration(app, false, false)
 }
 
 func run(app *appState) {
@@ -399,7 +399,7 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 
 	// perform client side decoration
 	if app.decoration != nil {
-		app.decoration.clientSideDecoration(app, false)
+		app.decoration.clientSideDecoration(app, false, app.pointerEvent.moveWindow || app.pointerEvent.sizeWindow)
 	}
 
 	app.width = int32(app.frame.Rect.Max.X)
