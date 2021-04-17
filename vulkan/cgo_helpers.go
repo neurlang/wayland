@@ -8,7 +8,6 @@ package vulkan
 /*
 #include <vulkan/vulkan.h>
 #include <stdlib.h>
-#include "cgo_helpers.h"
 
 typedef void VkAccelerationStructureCreateInfoNVX;
 typedef void VkAccelerationStructureMemoryRequirementsInfoNVX;
@@ -25386,49 +25385,6 @@ func (x *PhysicalDeviceVulkanMemoryModelFeatures) Deref() {
 	x.VulkanMemoryModelDeviceScope = (Bool32)(x.ref2b17642b.vulkanMemoryModelDeviceScope)
 }
 
-func (x DebugReportCallbackFunc) PassRef() (ref *C.PFN_vkDebugReportCallbackEXT, allocs *cgoAllocMap) {
-	if x == nil {
-		return nil, nil
-	}
-	if debugReportCallbackFuncC918AAC4Func == nil {
-		debugReportCallbackFuncC918AAC4Func = x
-	}
-	return (*C.PFN_vkDebugReportCallbackEXT)(C.PFN_vkDebugReportCallbackEXT_c918aac4), nil
-}
-
-func (x DebugReportCallbackFunc) PassValue() (ref C.PFN_vkDebugReportCallbackEXT, allocs *cgoAllocMap) {
-	if x == nil {
-		return nil, nil
-	}
-	if debugReportCallbackFuncC918AAC4Func == nil {
-		debugReportCallbackFuncC918AAC4Func = x
-	}
-	return (C.PFN_vkDebugReportCallbackEXT)(C.PFN_vkDebugReportCallbackEXT_c918aac4), nil
-}
-
-func NewDebugReportCallbackFuncRef(ref unsafe.Pointer) *DebugReportCallbackFunc {
-	return (*DebugReportCallbackFunc)(ref)
-}
-
-//export debugReportCallbackFuncC918AAC4
-func debugReportCallbackFuncC918AAC4(cflags C.VkDebugReportFlagsEXT, cobjectType C.VkDebugReportObjectTypeEXT, cobject C.uint64_t, clocation C.size_t, cmessageCode C.int32_t, cpLayerPrefix *C.char, cpMessage *C.char, cpUserData unsafe.Pointer) C.VkBool32 {
-	if debugReportCallbackFuncC918AAC4Func != nil {
-		flagsc918aac4 := (DebugReportFlags)(cflags)
-		objectTypec918aac4 := (DebugReportObjectType)(cobjectType)
-		objectc918aac4 := (uint64)(cobject)
-		locationc918aac4 := (uint)(clocation)
-		messageCodec918aac4 := (int32)(cmessageCode)
-		pLayerPrefixc918aac4 := packPCharString(cpLayerPrefix)
-		pMessagec918aac4 := packPCharString(cpMessage)
-		pUserDatac918aac4 := (unsafe.Pointer)(unsafe.Pointer(cpUserData))
-		retc918aac4 := debugReportCallbackFuncC918AAC4Func(flagsc918aac4, objectTypec918aac4, objectc918aac4, locationc918aac4, messageCodec918aac4, pLayerPrefixc918aac4, pMessagec918aac4, pUserDatac918aac4)
-		ret, _ := (C.VkBool32)(retc918aac4), cgoAllocsUnknown
-		return ret
-	}
-	panic("callback func has not been set (race?)")
-}
-
-var debugReportCallbackFuncC918AAC4Func DebugReportCallbackFunc
 
 // allocDebugReportCallbackCreateInfoMemory allocates memory for type C.VkDebugReportCallbackCreateInfoEXT in C.
 // The caller is responsible for freeing the this memory via C.free.
@@ -25442,94 +25398,6 @@ func allocDebugReportCallbackCreateInfoMemory(n int) unsafe.Pointer {
 
 const sizeOfDebugReportCallbackCreateInfoValue = unsafe.Sizeof([1]C.VkDebugReportCallbackCreateInfoEXT{})
 
-// Ref returns the underlying reference to C object or nil if struct is nil.
-func (x *DebugReportCallbackCreateInfo) Ref() *C.VkDebugReportCallbackCreateInfoEXT {
-	if x == nil {
-		return nil
-	}
-	return x.refc8238563
-}
-
-// Free invokes alloc map's free mechanism that cleanups any allocated memory using C free.
-// Does nothing if struct is nil or has no allocation map.
-func (x *DebugReportCallbackCreateInfo) Free() {
-	if x != nil && x.allocsc8238563 != nil {
-		x.allocsc8238563.(*cgoAllocMap).Free()
-		x.refc8238563 = nil
-	}
-}
-
-// NewDebugReportCallbackCreateInfoRef creates a new wrapper struct with underlying reference set to the original C object.
-// Returns nil if the provided pointer to C object is nil too.
-func NewDebugReportCallbackCreateInfoRef(ref unsafe.Pointer) *DebugReportCallbackCreateInfo {
-	if ref == nil {
-		return nil
-	}
-	obj := new(DebugReportCallbackCreateInfo)
-	obj.refc8238563 = (*C.VkDebugReportCallbackCreateInfoEXT)(unsafe.Pointer(ref))
-	return obj
-}
-
-// PassRef returns the underlying C object, otherwise it will allocate one and set its values
-// from this wrapping struct, counting allocations into an allocation map.
-func (x *DebugReportCallbackCreateInfo) PassRef() (*C.VkDebugReportCallbackCreateInfoEXT, *cgoAllocMap) {
-	if x == nil {
-		return nil, nil
-	} else if x.refc8238563 != nil {
-		return x.refc8238563, nil
-	}
-	memc8238563 := allocDebugReportCallbackCreateInfoMemory(1)
-	refc8238563 := (*C.VkDebugReportCallbackCreateInfoEXT)(memc8238563)
-	allocsc8238563 := new(cgoAllocMap)
-	allocsc8238563.Add(memc8238563)
-
-	var csType_allocs *cgoAllocMap
-	refc8238563.sType, csType_allocs = (C.VkStructureType)(x.SType), cgoAllocsUnknown
-	allocsc8238563.Borrow(csType_allocs)
-
-	var cpNext_allocs *cgoAllocMap
-	refc8238563.pNext, cpNext_allocs = *(*unsafe.Pointer)(unsafe.Pointer(&x.PNext)), cgoAllocsUnknown
-	allocsc8238563.Borrow(cpNext_allocs)
-
-	var cflags_allocs *cgoAllocMap
-	refc8238563.flags, cflags_allocs = (C.VkDebugReportFlagsEXT)(x.Flags), cgoAllocsUnknown
-	allocsc8238563.Borrow(cflags_allocs)
-
-	var cpfnCallback_allocs *cgoAllocMap
-	refc8238563.pfnCallback, cpfnCallback_allocs = x.PfnCallback.PassValue()
-	allocsc8238563.Borrow(cpfnCallback_allocs)
-
-	var cpUserData_allocs *cgoAllocMap
-	refc8238563.pUserData, cpUserData_allocs = *(*unsafe.Pointer)(unsafe.Pointer(&x.PUserData)), cgoAllocsUnknown
-	allocsc8238563.Borrow(cpUserData_allocs)
-
-	x.refc8238563 = refc8238563
-	x.allocsc8238563 = allocsc8238563
-	return refc8238563, allocsc8238563
-
-}
-
-// PassValue does the same as PassRef except that it will try to dereference the returned pointer.
-func (x DebugReportCallbackCreateInfo) PassValue() (C.VkDebugReportCallbackCreateInfoEXT, *cgoAllocMap) {
-	if x.refc8238563 != nil {
-		return *x.refc8238563, nil
-	}
-	ref, allocs := x.PassRef()
-	return *ref, allocs
-}
-
-// Deref uses the underlying reference to C object and fills the wrapping struct with values.
-// Do not forget to call this method whether you get a struct for C object and want to read its values.
-func (x *DebugReportCallbackCreateInfo) Deref() {
-	if x.refc8238563 == nil {
-		return
-	}
-	x.SType = (StructureType)(x.refc8238563.sType)
-	x.PNext = (unsafe.Pointer)(unsafe.Pointer(x.refc8238563.pNext))
-	x.Flags = (DebugReportFlags)(x.refc8238563.flags)
-	x.PfnCallback = *NewDebugReportCallbackFuncRef(unsafe.Pointer(&x.refc8238563.pfnCallback))
-	x.PUserData = (unsafe.Pointer)(unsafe.Pointer(x.refc8238563.pUserData))
-}
 
 // allocPipelineRasterizationStateRasterizationOrderAMDMemory allocates memory for type C.VkPipelineRasterizationStateRasterizationOrderAMD in C.
 // The caller is responsible for freeing the this memory via C.free.

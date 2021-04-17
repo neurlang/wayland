@@ -15,40 +15,40 @@ import "unsafe"
 //////////////////////
 
 
-VkResult callVkCreateInstance(
+VkResult wlcallVkCreateInstance(
     const VkInstanceCreateInfo*                 pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
     VkInstance*                                 pInstance) {
     return vkCreateInstance(pCreateInfo, pAllocator, pInstance);
 }
 
-void callVkDestroyInstance(
+void wlcallVkDestroyInstance(
     VkInstance                                  instance,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyInstance(instance, pAllocator);
 }
 
-VkResult callVkEnumeratePhysicalDevices(
+VkResult wlcallVkEnumeratePhysicalDevices(
     VkInstance                                  instance,
     uint32_t*                                   pPhysicalDeviceCount,
     VkPhysicalDevice*                           pPhysicalDevices) {
     return vkEnumeratePhysicalDevices(instance, pPhysicalDeviceCount, pPhysicalDevices);
 }
 
-void callVkGetPhysicalDeviceFeatures(
+void wlcallVkGetPhysicalDeviceFeatures(
     VkPhysicalDevice                            physicalDevice,
     VkPhysicalDeviceFeatures*                   pFeatures) {
     vkGetPhysicalDeviceFeatures(physicalDevice, pFeatures);
 }
 
-void callVkGetPhysicalDeviceFormatProperties(
+void wlcallVkGetPhysicalDeviceFormatProperties(
     VkPhysicalDevice                            physicalDevice,
     VkFormat                                    format,
     VkFormatProperties*                         pFormatProperties) {
     vkGetPhysicalDeviceFormatProperties(physicalDevice, format, pFormatProperties);
 }
 
-VkResult callVkGetPhysicalDeviceImageFormatProperties(
+VkResult wlcallVkGetPhysicalDeviceImageFormatProperties(
     VkPhysicalDevice                            physicalDevice,
     VkFormat                                    format,
     VkImageType                                 type,
@@ -60,13 +60,13 @@ VkResult callVkGetPhysicalDeviceImageFormatProperties(
             tiling, usage, flags, pImageFormatProperties);
 }
 
-void callVkGetPhysicalDeviceProperties(
+void wlcallVkGetPhysicalDeviceProperties(
     VkPhysicalDevice                            physicalDevice,
     VkPhysicalDeviceProperties*                 pProperties) {
     vkGetPhysicalDeviceProperties(physicalDevice, pProperties);
 }
 
-void callVkGetPhysicalDeviceQueueFamilyProperties(
+void wlcallVkGetPhysicalDeviceQueueFamilyProperties(
     VkPhysicalDevice                            physicalDevice,
     uint32_t*                                   pQueueFamilyPropertyCount,
     VkQueueFamilyProperties*                    pQueueFamilyProperties) {
@@ -74,13 +74,13 @@ void callVkGetPhysicalDeviceQueueFamilyProperties(
             pQueueFamilyPropertyCount, pQueueFamilyProperties);
 }
 
-void callVkGetPhysicalDeviceMemoryProperties(
+void wlcallVkGetPhysicalDeviceMemoryProperties(
     VkPhysicalDevice                            physicalDevice,
     VkPhysicalDeviceMemoryProperties*           pMemoryProperties) {
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
 }
 
-VkResult callVkCreateDevice(
+VkResult wlcallVkCreateDevice(
     VkPhysicalDevice                            physicalDevice,
     const VkDeviceCreateInfo*                   pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -88,20 +88,20 @@ VkResult callVkCreateDevice(
     return vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
 }
 
-void callVkDestroyDevice(
+void wlcallVkDestroyDevice(
     VkDevice                                    device,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyDevice(device, pAllocator);
 }
 
-VkResult callVkEnumerateInstanceExtensionProperties(
+VkResult wlcallVkEnumerateInstanceExtensionProperties(
     const char*                                 pLayerName,
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties) {
     return vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
 }
 
-VkResult callVkEnumerateDeviceExtensionProperties(
+VkResult wlcallVkEnumerateDeviceExtensionProperties(
     VkPhysicalDevice                            physicalDevice,
     const char*                                 pLayerName,
     uint32_t*                                   pPropertyCount,
@@ -110,20 +110,20 @@ VkResult callVkEnumerateDeviceExtensionProperties(
             pPropertyCount, pProperties);
 }
 
-VkResult callVkEnumerateInstanceLayerProperties(
+VkResult wlcallVkEnumerateInstanceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties) {
     return vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties);
 }
 
-VkResult callVkEnumerateDeviceLayerProperties(
+VkResult wlcallVkEnumerateDeviceLayerProperties(
     VkPhysicalDevice                            physicalDevice,
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties) {
     return vkEnumerateDeviceLayerProperties(physicalDevice, pPropertyCount, pProperties);
 }
 
-void callVkGetDeviceQueue(
+void wlcallVkGetDeviceQueue(
     VkDevice                                    device,
     uint32_t                                    queueFamilyIndex,
     uint32_t                                    queueIndex,
@@ -131,7 +131,7 @@ void callVkGetDeviceQueue(
     vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
 }
 
-VkResult callVkQueueSubmit(
+VkResult wlcallVkQueueSubmit(
     VkQueue                                     queue,
     uint32_t                                    submitCount,
     const VkSubmitInfo*                         pSubmits,
@@ -139,17 +139,17 @@ VkResult callVkQueueSubmit(
     return vkQueueSubmit(queue, submitCount, pSubmits, fence);
 }
 
-VkResult callVkQueueWaitIdle(
+VkResult wlcallVkQueueWaitIdle(
     VkQueue                                     queue) {
     return vkQueueWaitIdle(queue);
 }
 
-VkResult callVkDeviceWaitIdle(
+VkResult wlcallVkDeviceWaitIdle(
     VkDevice                                    device) {
     return vkDeviceWaitIdle(device);
 }
 
-VkResult callVkAllocateMemory(
+VkResult wlcallVkAllocateMemory(
     VkDevice                                    device,
     const VkMemoryAllocateInfo*                 pAllocateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -157,14 +157,14 @@ VkResult callVkAllocateMemory(
     return vkAllocateMemory(device, pAllocateInfo, pAllocator, pMemory);
 }
 
-void callVkFreeMemory(
+void wlcallVkFreeMemory(
     VkDevice                                    device,
     VkDeviceMemory                              memory,
     const VkAllocationCallbacks*                pAllocator) {
     vkFreeMemory(device, memory, pAllocator);
 }
 
-VkResult callVkMapMemory(
+VkResult wlcallVkMapMemory(
     VkDevice                                    device,
     VkDeviceMemory                              memory,
     VkDeviceSize                                offset,
@@ -174,34 +174,34 @@ VkResult callVkMapMemory(
     return vkMapMemory(device, memory, offset, size, flags, ppData);
 }
 
-void callVkUnmapMemory(
+void wlcallVkUnmapMemory(
     VkDevice                                    device,
     VkDeviceMemory                              memory) {
     vkUnmapMemory(device, memory);
 }
 
-VkResult callVkFlushMappedMemoryRanges(
+VkResult wlcallVkFlushMappedMemoryRanges(
     VkDevice                                    device,
     uint32_t                                    memoryRangeCount,
     const VkMappedMemoryRange*                  pMemoryRanges) {
     return vkFlushMappedMemoryRanges(device, memoryRangeCount, pMemoryRanges);
 }
 
-VkResult callVkInvalidateMappedMemoryRanges(
+VkResult wlcallVkInvalidateMappedMemoryRanges(
     VkDevice                                    device,
     uint32_t                                    memoryRangeCount,
     const VkMappedMemoryRange*                  pMemoryRanges) {
     return vkInvalidateMappedMemoryRanges(device, memoryRangeCount, pMemoryRanges);
 }
 
-void callVkGetDeviceMemoryCommitment(
+void wlcallVkGetDeviceMemoryCommitment(
     VkDevice                                    device,
     VkDeviceMemory                              memory,
     VkDeviceSize*                               pCommittedMemoryInBytes) {
     vkGetDeviceMemoryCommitment(device, memory, pCommittedMemoryInBytes);
 }
 
-VkResult callVkBindBufferMemory(
+VkResult wlcallVkBindBufferMemory(
     VkDevice                                    device,
     VkBuffer                                    buffer,
     VkDeviceMemory                              memory,
@@ -209,7 +209,7 @@ VkResult callVkBindBufferMemory(
     return vkBindBufferMemory(device, buffer, memory, memoryOffset);
 }
 
-VkResult callVkBindImageMemory(
+VkResult wlcallVkBindImageMemory(
     VkDevice                                    device,
     VkImage                                     image,
     VkDeviceMemory                              memory,
@@ -217,21 +217,21 @@ VkResult callVkBindImageMemory(
     return vkBindImageMemory(device, image, memory, memoryOffset);
 }
 
-void callVkGetBufferMemoryRequirements(
+void wlcallVkGetBufferMemoryRequirements(
     VkDevice                                    device,
     VkBuffer                                    buffer,
     VkMemoryRequirements*                       pMemoryRequirements) {
     vkGetBufferMemoryRequirements(device, buffer, pMemoryRequirements);
 }
 
-void callVkGetImageMemoryRequirements(
+void wlcallVkGetImageMemoryRequirements(
     VkDevice                                    device,
     VkImage                                     image,
     VkMemoryRequirements*                       pMemoryRequirements) {
     vkGetImageMemoryRequirements(device, image, pMemoryRequirements);
 }
 
-void callVkGetImageSparseMemoryRequirements(
+void wlcallVkGetImageSparseMemoryRequirements(
     VkDevice                                    device,
     VkImage                                     image,
     uint32_t*                                   pSparseMemoryRequirementCount,
@@ -240,7 +240,7 @@ void callVkGetImageSparseMemoryRequirements(
                                            pSparseMemoryRequirements);
 }
 
-void callVkGetPhysicalDeviceSparseImageFormatProperties(
+void wlcallVkGetPhysicalDeviceSparseImageFormatProperties(
     VkPhysicalDevice                            physicalDevice,
     VkFormat                                    format,
     VkImageType                                 type,
@@ -253,7 +253,7 @@ void callVkGetPhysicalDeviceSparseImageFormatProperties(
             type, samples, usage, tiling, pPropertyCount, pProperties);
 }
 
-VkResult callVkQueueBindSparse(
+VkResult wlcallVkQueueBindSparse(
     VkQueue                                     queue,
     uint32_t                                    bindInfoCount,
     const VkBindSparseInfo*                     pBindInfo,
@@ -261,7 +261,7 @@ VkResult callVkQueueBindSparse(
     return vkQueueBindSparse(queue, bindInfoCount, pBindInfo, fence);
 }
 
-VkResult callVkCreateFence(
+VkResult wlcallVkCreateFence(
     VkDevice                                    device,
     const VkFenceCreateInfo*                    pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -269,27 +269,27 @@ VkResult callVkCreateFence(
     return vkCreateFence(device, pCreateInfo, pAllocator, pFence);
 }
 
-void callVkDestroyFence(
+void wlcallVkDestroyFence(
     VkDevice                                    device,
     VkFence                                     fence,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyFence(device, fence, pAllocator);
 }
 
-VkResult callVkResetFences(
+VkResult wlcallVkResetFences(
     VkDevice                                    device,
     uint32_t                                    fenceCount,
     const VkFence*                              pFences) {
     return vkResetFences(device, fenceCount, pFences);
 }
 
-VkResult callVkGetFenceStatus(
+VkResult wlcallVkGetFenceStatus(
     VkDevice                                    device,
     VkFence                                     fence) {
     return vkGetFenceStatus(device, fence);
 }
 
-VkResult callVkWaitForFences(
+VkResult wlcallVkWaitForFences(
     VkDevice                                    device,
     uint32_t                                    fenceCount,
     const VkFence*                              pFences,
@@ -298,7 +298,7 @@ VkResult callVkWaitForFences(
     return vkWaitForFences(device, fenceCount, pFences, waitAll, timeout);
 }
 
-VkResult callVkCreateSemaphore(
+VkResult wlcallVkCreateSemaphore(
     VkDevice                                    device,
     const VkSemaphoreCreateInfo*                pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -306,14 +306,14 @@ VkResult callVkCreateSemaphore(
     return vkCreateSemaphore(device, pCreateInfo, pAllocator, pSemaphore);
 }
 
-void callVkDestroySemaphore(
+void wlcallVkDestroySemaphore(
     VkDevice                                    device,
     VkSemaphore                                 semaphore,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroySemaphore(device, semaphore, pAllocator);
 }
 
-VkResult callVkCreateEvent(
+VkResult wlcallVkCreateEvent(
     VkDevice                                    device,
     const VkEventCreateInfo*                    pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -321,32 +321,32 @@ VkResult callVkCreateEvent(
     return vkCreateEvent(device, pCreateInfo, pAllocator, pEvent);
 }
 
-void callVkDestroyEvent(
+void wlcallVkDestroyEvent(
     VkDevice                                    device,
     VkEvent                                     event,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyEvent(device, event, pAllocator);
 }
 
-VkResult callVkGetEventStatus(
+VkResult wlcallVkGetEventStatus(
     VkDevice                                    device,
     VkEvent                                     event) {
     return vkGetEventStatus(device, event);
 }
 
-VkResult callVkSetEvent(
+VkResult wlcallVkSetEvent(
     VkDevice                                    device,
     VkEvent                                     event) {
     return vkSetEvent(device, event);
 }
 
-VkResult callVkResetEvent(
+VkResult wlcallVkResetEvent(
     VkDevice                                    device,
     VkEvent                                     event) {
     return vkResetEvent(device, event);
 }
 
-VkResult callVkCreateQueryPool(
+VkResult wlcallVkCreateQueryPool(
     VkDevice                                    device,
     const VkQueryPoolCreateInfo*                pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -354,14 +354,14 @@ VkResult callVkCreateQueryPool(
     return vkCreateQueryPool(device, pCreateInfo, pAllocator, pQueryPool);
 }
 
-void callVkDestroyQueryPool(
+void wlcallVkDestroyQueryPool(
     VkDevice                                    device,
     VkQueryPool                                 queryPool,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyQueryPool(device, queryPool, pAllocator);
 }
 
-VkResult callVkGetQueryPoolResults(
+VkResult wlcallVkGetQueryPoolResults(
     VkDevice                                    device,
     VkQueryPool                                 queryPool,
     uint32_t                                    firstQuery,
@@ -374,7 +374,7 @@ VkResult callVkGetQueryPoolResults(
                                      dataSize, pData, stride, flags);
 }
 
-VkResult callVkCreateBuffer(
+VkResult wlcallVkCreateBuffer(
     VkDevice                                    device,
     const VkBufferCreateInfo*                   pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -382,14 +382,14 @@ VkResult callVkCreateBuffer(
     return vkCreateBuffer(device, pCreateInfo, pAllocator, pBuffer);
 }
 
-void callVkDestroyBuffer(
+void wlcallVkDestroyBuffer(
     VkDevice                                    device,
     VkBuffer                                    buffer,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyBuffer(device, buffer, pAllocator);
 }
 
-VkResult callVkCreateBufferView(
+VkResult wlcallVkCreateBufferView(
     VkDevice                                    device,
     const VkBufferViewCreateInfo*               pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -397,14 +397,14 @@ VkResult callVkCreateBufferView(
     return vkCreateBufferView(device, pCreateInfo, pAllocator, pView);
 }
 
-void callVkDestroyBufferView(
+void wlcallVkDestroyBufferView(
     VkDevice                                    device,
     VkBufferView                                bufferView,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyBufferView(device, bufferView, pAllocator);
 }
 
-VkResult callVkCreateImage(
+VkResult wlcallVkCreateImage(
     VkDevice                                    device,
     const VkImageCreateInfo*                    pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -412,14 +412,14 @@ VkResult callVkCreateImage(
     return vkCreateImage(device, pCreateInfo, pAllocator, pImage);
 }
 
-void callVkDestroyImage(
+void wlcallVkDestroyImage(
     VkDevice                                    device,
     VkImage                                     image,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyImage(device, image, pAllocator);
 }
 
-void callVkGetImageSubresourceLayout(
+void wlcallVkGetImageSubresourceLayout(
     VkDevice                                    device,
     VkImage                                     image,
     const VkImageSubresource*                   pSubresource,
@@ -427,7 +427,7 @@ void callVkGetImageSubresourceLayout(
     vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
 }
 
-VkResult callVkCreateImageView(
+VkResult wlcallVkCreateImageView(
     VkDevice                                    device,
     const VkImageViewCreateInfo*                pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -435,14 +435,14 @@ VkResult callVkCreateImageView(
     return vkCreateImageView(device, pCreateInfo, pAllocator, pView);
 }
 
-void callVkDestroyImageView(
+void wlcallVkDestroyImageView(
     VkDevice                                    device,
     VkImageView                                 imageView,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyImageView(device, imageView, pAllocator);
 }
 
-VkResult callVkCreateShaderModule(
+VkResult wlcallVkCreateShaderModule(
     VkDevice                                    device,
     const VkShaderModuleCreateInfo*             pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -450,14 +450,14 @@ VkResult callVkCreateShaderModule(
     return vkCreateShaderModule(device, pCreateInfo, pAllocator, pShaderModule);
 }
 
-void callVkDestroyShaderModule(
+void wlcallVkDestroyShaderModule(
     VkDevice                                    device,
     VkShaderModule                              shaderModule,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyShaderModule(device, shaderModule, pAllocator);
 }
 
-VkResult callVkCreatePipelineCache(
+VkResult wlcallVkCreatePipelineCache(
     VkDevice                                    device,
     const VkPipelineCacheCreateInfo*            pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -465,14 +465,14 @@ VkResult callVkCreatePipelineCache(
     return vkCreatePipelineCache(device, pCreateInfo, pAllocator, pPipelineCache);
 }
 
-void callVkDestroyPipelineCache(
+void wlcallVkDestroyPipelineCache(
     VkDevice                                    device,
     VkPipelineCache                             pipelineCache,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyPipelineCache(device, pipelineCache, pAllocator);
 }
 
-VkResult callVkGetPipelineCacheData(
+VkResult wlcallVkGetPipelineCacheData(
     VkDevice                                    device,
     VkPipelineCache                             pipelineCache,
     size_t*                                     pDataSize,
@@ -480,7 +480,7 @@ VkResult callVkGetPipelineCacheData(
     return vkGetPipelineCacheData(device, pipelineCache, pDataSize, pData);
 }
 
-VkResult callVkMergePipelineCaches(
+VkResult wlcallVkMergePipelineCaches(
     VkDevice                                    device,
     VkPipelineCache                             dstCache,
     uint32_t                                    srcCacheCount,
@@ -488,7 +488,7 @@ VkResult callVkMergePipelineCaches(
     return vkMergePipelineCaches(device, dstCache, srcCacheCount, pSrcCaches);
 }
 
-VkResult callVkCreateGraphicsPipelines(
+VkResult wlcallVkCreateGraphicsPipelines(
     VkDevice                                    device,
     VkPipelineCache                             pipelineCache,
     uint32_t                                    createInfoCount,
@@ -499,7 +499,7 @@ VkResult callVkCreateGraphicsPipelines(
                                          pCreateInfos, pAllocator, pPipelines);
 }
 
-VkResult callVkCreateComputePipelines(
+VkResult wlcallVkCreateComputePipelines(
     VkDevice                                    device,
     VkPipelineCache                             pipelineCache,
     uint32_t                                    createInfoCount,
@@ -510,14 +510,14 @@ VkResult callVkCreateComputePipelines(
                                         pCreateInfos, pAllocator, pPipelines);
 }
 
-void callVkDestroyPipeline(
+void wlcallVkDestroyPipeline(
     VkDevice                                    device,
     VkPipeline                                  pipeline,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyPipeline(device, pipeline, pAllocator);
 }
 
-VkResult callVkCreatePipelineLayout(
+VkResult wlcallVkCreatePipelineLayout(
     VkDevice                                    device,
     const VkPipelineLayoutCreateInfo*           pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -525,14 +525,14 @@ VkResult callVkCreatePipelineLayout(
     return vkCreatePipelineLayout(device, pCreateInfo, pAllocator, pPipelineLayout);
 }
 
-void callVkDestroyPipelineLayout(
+void wlcallVkDestroyPipelineLayout(
     VkDevice                                    device,
     VkPipelineLayout                            pipelineLayout,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyPipelineLayout(device, pipelineLayout, pAllocator);
 }
 
-VkResult callVkCreateSampler(
+VkResult wlcallVkCreateSampler(
     VkDevice                                    device,
     const VkSamplerCreateInfo*                  pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -540,14 +540,14 @@ VkResult callVkCreateSampler(
     return vkCreateSampler(device, pCreateInfo, pAllocator, pSampler);
 }
 
-void callVkDestroySampler(
+void wlcallVkDestroySampler(
     VkDevice                                    device,
     VkSampler                                   sampler,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroySampler(device, sampler, pAllocator);
 }
 
-VkResult callVkCreateDescriptorSetLayout(
+VkResult wlcallVkCreateDescriptorSetLayout(
     VkDevice                                    device,
     const VkDescriptorSetLayoutCreateInfo*      pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -555,14 +555,14 @@ VkResult callVkCreateDescriptorSetLayout(
     return vkCreateDescriptorSetLayout(device, pCreateInfo, pAllocator, pSetLayout);
 }
 
-void callVkDestroyDescriptorSetLayout(
+void wlcallVkDestroyDescriptorSetLayout(
     VkDevice                                    device,
     VkDescriptorSetLayout                       descriptorSetLayout,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, pAllocator);
 }
 
-VkResult callVkCreateDescriptorPool(
+VkResult wlcallVkCreateDescriptorPool(
     VkDevice                                    device,
     const VkDescriptorPoolCreateInfo*           pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -570,28 +570,28 @@ VkResult callVkCreateDescriptorPool(
     return vkCreateDescriptorPool(device, pCreateInfo, pAllocator, pDescriptorPool);
 }
 
-void callVkDestroyDescriptorPool(
+void wlcallVkDestroyDescriptorPool(
     VkDevice                                    device,
     VkDescriptorPool                            descriptorPool,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyDescriptorPool(device, descriptorPool, pAllocator);
 }
 
-VkResult callVkResetDescriptorPool(
+VkResult wlcallVkResetDescriptorPool(
     VkDevice                                    device,
     VkDescriptorPool                            descriptorPool,
     VkDescriptorPoolResetFlags                  flags) {
     return vkResetDescriptorPool(device, descriptorPool, flags);
 }
 
-VkResult callVkAllocateDescriptorSets(
+VkResult wlcallVkAllocateDescriptorSets(
     VkDevice                                    device,
     const VkDescriptorSetAllocateInfo*          pAllocateInfo,
     VkDescriptorSet*                            pDescriptorSets) {
     return vkAllocateDescriptorSets(device, pAllocateInfo, pDescriptorSets);
 }
 
-VkResult callVkFreeDescriptorSets(
+VkResult wlcallVkFreeDescriptorSets(
     VkDevice                                    device,
     VkDescriptorPool                            descriptorPool,
     uint32_t                                    descriptorSetCount,
@@ -599,7 +599,7 @@ VkResult callVkFreeDescriptorSets(
     return vkFreeDescriptorSets(device, descriptorPool, descriptorSetCount, pDescriptorSets);
 }
 
-void callVkUpdateDescriptorSets(
+void wlcallVkUpdateDescriptorSets(
     VkDevice                                    device,
     uint32_t                                    descriptorWriteCount,
     const VkWriteDescriptorSet*                 pDescriptorWrites,
@@ -609,7 +609,7 @@ void callVkUpdateDescriptorSets(
                                descriptorCopyCount, pDescriptorCopies);
 }
 
-VkResult callVkCreateFramebuffer(
+VkResult wlcallVkCreateFramebuffer(
     VkDevice                                    device,
     const VkFramebufferCreateInfo*              pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -617,14 +617,14 @@ VkResult callVkCreateFramebuffer(
     return vkCreateFramebuffer(device, pCreateInfo, pAllocator, pFramebuffer);
 }
 
-void callVkDestroyFramebuffer(
+void wlcallVkDestroyFramebuffer(
     VkDevice                                    device,
     VkFramebuffer                               framebuffer,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyFramebuffer(device, framebuffer, pAllocator);
 }
 
-VkResult callVkCreateRenderPass(
+VkResult wlcallVkCreateRenderPass(
     VkDevice                                    device,
     const VkRenderPassCreateInfo*               pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -632,21 +632,21 @@ VkResult callVkCreateRenderPass(
     return vkCreateRenderPass(device, pCreateInfo, pAllocator, pRenderPass);
 }
 
-void callVkDestroyRenderPass(
+void wlcallVkDestroyRenderPass(
     VkDevice                                    device,
     VkRenderPass                                renderPass,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyRenderPass(device, renderPass, pAllocator);
 }
 
-void callVkGetRenderAreaGranularity(
+void wlcallVkGetRenderAreaGranularity(
     VkDevice                                    device,
     VkRenderPass                                renderPass,
     VkExtent2D*                                 pGranularity) {
     vkGetRenderAreaGranularity(device, renderPass, pGranularity);
 }
 
-VkResult callVkCreateCommandPool(
+VkResult wlcallVkCreateCommandPool(
     VkDevice                                    device,
     const VkCommandPoolCreateInfo*              pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -654,28 +654,28 @@ VkResult callVkCreateCommandPool(
     return vkCreateCommandPool(device, pCreateInfo, pAllocator, pCommandPool);
 }
 
-void callVkDestroyCommandPool(
+void wlcallVkDestroyCommandPool(
     VkDevice                                    device,
     VkCommandPool                               commandPool,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroyCommandPool(device, commandPool, pAllocator);
 }
 
-VkResult callVkResetCommandPool(
+VkResult wlcallVkResetCommandPool(
     VkDevice                                    device,
     VkCommandPool                               commandPool,
     VkCommandPoolResetFlags                     flags) {
     return vkResetCommandPool(device, commandPool, flags);
 }
 
-VkResult callVkAllocateCommandBuffers(
+VkResult wlcallVkAllocateCommandBuffers(
     VkDevice                                    device,
     const VkCommandBufferAllocateInfo*          pAllocateInfo,
     VkCommandBuffer*                            pCommandBuffers) {
     return vkAllocateCommandBuffers(device, pAllocateInfo, pCommandBuffers);
 }
 
-void callVkFreeCommandBuffers(
+void wlcallVkFreeCommandBuffers(
     VkDevice                                    device,
     VkCommandPool                               commandPool,
     uint32_t                                    commandBufferCount,
@@ -683,31 +683,31 @@ void callVkFreeCommandBuffers(
     vkFreeCommandBuffers(device, commandPool, commandBufferCount, pCommandBuffers);
 }
 
-VkResult callVkBeginCommandBuffer(
+VkResult wlcallVkBeginCommandBuffer(
     VkCommandBuffer                             commandBuffer,
     const VkCommandBufferBeginInfo*             pBeginInfo) {
     return vkBeginCommandBuffer(commandBuffer, pBeginInfo);
 }
 
-VkResult callVkEndCommandBuffer(
+VkResult wlcallVkEndCommandBuffer(
     VkCommandBuffer                             commandBuffer) {
     return vkEndCommandBuffer(commandBuffer);
 }
 
-VkResult callVkResetCommandBuffer(
+VkResult wlcallVkResetCommandBuffer(
     VkCommandBuffer                             commandBuffer,
     VkCommandBufferResetFlags                   flags) {
     return vkResetCommandBuffer(commandBuffer, flags);
 }
 
-void callVkCmdBindPipeline(
+void wlcallVkCmdBindPipeline(
     VkCommandBuffer                             commandBuffer,
     VkPipelineBindPoint                         pipelineBindPoint,
     VkPipeline                                  pipeline) {
     vkCmdBindPipeline(commandBuffer, pipelineBindPoint, pipeline);
 }
 
-void callVkCmdSetViewport(
+void wlcallVkCmdSetViewport(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    firstViewport,
     uint32_t                                    viewportCount,
@@ -715,7 +715,7 @@ void callVkCmdSetViewport(
     vkCmdSetViewport(commandBuffer, firstViewport, viewportCount, pViewports);
 }
 
-void callVkCmdSetScissor(
+void wlcallVkCmdSetScissor(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    firstScissor,
     uint32_t                                    scissorCount,
@@ -723,13 +723,13 @@ void callVkCmdSetScissor(
     vkCmdSetScissor(commandBuffer, firstScissor, scissorCount, pScissors);
 }
 
-void callVkCmdSetLineWidth(
+void wlcallVkCmdSetLineWidth(
     VkCommandBuffer                             commandBuffer,
     float                                       lineWidth) {
     vkCmdSetLineWidth(commandBuffer, lineWidth);
 }
 
-void callVkCmdSetDepthBias(
+void wlcallVkCmdSetDepthBias(
     VkCommandBuffer                             commandBuffer,
     float                                       depthBiasConstantFactor,
     float                                       depthBiasClamp,
@@ -738,41 +738,41 @@ void callVkCmdSetDepthBias(
                           depthBiasClamp, depthBiasSlopeFactor);
 }
 
-void callVkCmdSetBlendConstants(
+void wlcallVkCmdSetBlendConstants(
     VkCommandBuffer                             commandBuffer,
     const float                                 blendConstants[4]) {
     vkCmdSetBlendConstants(commandBuffer, blendConstants);
 }
 
-void callVkCmdSetDepthBounds(
+void wlcallVkCmdSetDepthBounds(
     VkCommandBuffer                             commandBuffer,
     float                                       minDepthBounds,
     float                                       maxDepthBounds) {
     vkCmdSetDepthBounds(commandBuffer, minDepthBounds, maxDepthBounds);
 }
 
-void callVkCmdSetStencilCompareMask(
+void wlcallVkCmdSetStencilCompareMask(
     VkCommandBuffer                             commandBuffer,
     VkStencilFaceFlags                          faceMask,
     uint32_t                                    compareMask) {
     vkCmdSetStencilCompareMask(commandBuffer, faceMask, compareMask);
 }
 
-void callVkCmdSetStencilWriteMask(
+void wlcallVkCmdSetStencilWriteMask(
     VkCommandBuffer                             commandBuffer,
     VkStencilFaceFlags                          faceMask,
     uint32_t                                    writeMask) {
     vkCmdSetStencilWriteMask(commandBuffer, faceMask, writeMask);
 }
 
-void callVkCmdSetStencilReference(
+void wlcallVkCmdSetStencilReference(
     VkCommandBuffer                             commandBuffer,
     VkStencilFaceFlags                          faceMask,
     uint32_t                                    reference) {
     vkCmdSetStencilReference(commandBuffer, faceMask, reference);
 }
 
-void callVkCmdBindDescriptorSets(
+void wlcallVkCmdBindDescriptorSets(
     VkCommandBuffer                             commandBuffer,
     VkPipelineBindPoint                         pipelineBindPoint,
     VkPipelineLayout                            layout,
@@ -786,7 +786,7 @@ void callVkCmdBindDescriptorSets(
                                 dynamicOffsetCount, pDynamicOffsets);
 }
 
-void callVkCmdBindIndexBuffer(
+void wlcallVkCmdBindIndexBuffer(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    buffer,
     VkDeviceSize                                offset,
@@ -794,7 +794,7 @@ void callVkCmdBindIndexBuffer(
     vkCmdBindIndexBuffer(commandBuffer, buffer, offset, indexType);
 }
 
-void callVkCmdBindVertexBuffers(
+void wlcallVkCmdBindVertexBuffers(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    firstBinding,
     uint32_t                                    bindingCount,
@@ -803,7 +803,7 @@ void callVkCmdBindVertexBuffers(
     vkCmdBindVertexBuffers(commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets);
 }
 
-void callVkCmdDraw(
+void wlcallVkCmdDraw(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    vertexCount,
     uint32_t                                    instanceCount,
@@ -812,7 +812,7 @@ void callVkCmdDraw(
     vkCmdDraw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
-void callVkCmdDrawIndexed(
+void wlcallVkCmdDrawIndexed(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    indexCount,
     uint32_t                                    instanceCount,
@@ -823,7 +823,7 @@ void callVkCmdDrawIndexed(
                          firstIndex, vertexOffset, firstInstance);
 }
 
-void callVkCmdDrawIndirect(
+void wlcallVkCmdDrawIndirect(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    buffer,
     VkDeviceSize                                offset,
@@ -832,7 +832,7 @@ void callVkCmdDrawIndirect(
     vkCmdDrawIndirect(commandBuffer, buffer, offset, drawCount, stride);
 }
 
-void callVkCmdDrawIndexedIndirect(
+void wlcallVkCmdDrawIndexedIndirect(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    buffer,
     VkDeviceSize                                offset,
@@ -841,7 +841,7 @@ void callVkCmdDrawIndexedIndirect(
     vkCmdDrawIndexedIndirect(commandBuffer, buffer, offset, drawCount, stride);
 }
 
-void callVkCmdDispatch(
+void wlcallVkCmdDispatch(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    x,
     uint32_t                                    y,
@@ -849,14 +849,14 @@ void callVkCmdDispatch(
     vkCmdDispatch(commandBuffer, x, y, z);
 }
 
-void callVkCmdDispatchIndirect(
+void wlcallVkCmdDispatchIndirect(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    buffer,
     VkDeviceSize                                offset) {
     vkCmdDispatchIndirect(commandBuffer, buffer, offset);
 }
 
-void callVkCmdCopyBuffer(
+void wlcallVkCmdCopyBuffer(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    srcBuffer,
     VkBuffer                                    dstBuffer,
@@ -865,7 +865,7 @@ void callVkCmdCopyBuffer(
     vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, regionCount, pRegions);
 }
 
-void callVkCmdCopyImage(
+void wlcallVkCmdCopyImage(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     srcImage,
     VkImageLayout                               srcImageLayout,
@@ -877,7 +877,7 @@ void callVkCmdCopyImage(
                        dstImage, dstImageLayout, regionCount, pRegions);
 }
 
-void callVkCmdBlitImage(
+void wlcallVkCmdBlitImage(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     srcImage,
     VkImageLayout                               srcImageLayout,
@@ -890,7 +890,7 @@ void callVkCmdBlitImage(
                        dstImage, dstImageLayout, regionCount, pRegions, filter);
 }
 
-void callVkCmdCopyBufferToImage(
+void wlcallVkCmdCopyBufferToImage(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    srcBuffer,
     VkImage                                     dstImage,
@@ -901,7 +901,7 @@ void callVkCmdCopyBufferToImage(
                                dstImage, dstImageLayout, regionCount, pRegions);
 }
 
-void callVkCmdCopyImageToBuffer(
+void wlcallVkCmdCopyImageToBuffer(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     srcImage,
     VkImageLayout                               srcImageLayout,
@@ -912,7 +912,7 @@ void callVkCmdCopyImageToBuffer(
                                dstBuffer, regionCount, pRegions);
 }
 
-void callVkCmdUpdateBuffer(
+void wlcallVkCmdUpdateBuffer(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    dstBuffer,
     VkDeviceSize                                dstOffset,
@@ -921,7 +921,7 @@ void callVkCmdUpdateBuffer(
     vkCmdUpdateBuffer(commandBuffer, dstBuffer, dstOffset, dataSize, pData);
 }
 
-void callVkCmdFillBuffer(
+void wlcallVkCmdFillBuffer(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    dstBuffer,
     VkDeviceSize                                dstOffset,
@@ -930,7 +930,7 @@ void callVkCmdFillBuffer(
     vkCmdFillBuffer(commandBuffer, dstBuffer, dstOffset, size, data);
 }
 
-void callVkCmdClearColorImage(
+void wlcallVkCmdClearColorImage(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     image,
     VkImageLayout                               imageLayout,
@@ -940,7 +940,7 @@ void callVkCmdClearColorImage(
     vkCmdClearColorImage(commandBuffer, image, imageLayout, pColor, rangeCount, pRanges);
 }
 
-void callVkCmdClearDepthStencilImage(
+void wlcallVkCmdClearDepthStencilImage(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     image,
     VkImageLayout                               imageLayout,
@@ -951,7 +951,7 @@ void callVkCmdClearDepthStencilImage(
                                     pDepthStencil, rangeCount, pRanges);
 }
 
-void callVkCmdClearAttachments(
+void wlcallVkCmdClearAttachments(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    attachmentCount,
     const VkClearAttachment*                    pAttachments,
@@ -960,7 +960,7 @@ void callVkCmdClearAttachments(
     vkCmdClearAttachments(commandBuffer, attachmentCount, pAttachments, rectCount, pRects);
 }
 
-void callVkCmdResolveImage(
+void wlcallVkCmdResolveImage(
     VkCommandBuffer                             commandBuffer,
     VkImage                                     srcImage,
     VkImageLayout                               srcImageLayout,
@@ -972,21 +972,21 @@ void callVkCmdResolveImage(
                           dstImage, dstImageLayout, regionCount, pRegions);
 }
 
-void callVkCmdSetEvent(
+void wlcallVkCmdSetEvent(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
     VkPipelineStageFlags                        stageMask) {
     vkCmdSetEvent(commandBuffer, event, stageMask);
 }
 
-void callVkCmdResetEvent(
+void wlcallVkCmdResetEvent(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
     VkPipelineStageFlags                        stageMask) {
     vkCmdResetEvent(commandBuffer, event, stageMask);
 }
 
-void callVkCmdWaitEvents(
+void wlcallVkCmdWaitEvents(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    eventCount,
     const VkEvent*                              pEvents,
@@ -1004,7 +1004,7 @@ void callVkCmdWaitEvents(
                         imageMemoryBarrierCount, pImageMemoryBarriers);
 }
 
-void callVkCmdPipelineBarrier(
+void wlcallVkCmdPipelineBarrier(
     VkCommandBuffer                             commandBuffer,
     VkPipelineStageFlags                        srcStageMask,
     VkPipelineStageFlags                        dstStageMask,
@@ -1021,7 +1021,7 @@ void callVkCmdPipelineBarrier(
                              imageMemoryBarrierCount, pImageMemoryBarriers);
 }
 
-void callVkCmdBeginQuery(
+void wlcallVkCmdBeginQuery(
     VkCommandBuffer                             commandBuffer,
     VkQueryPool                                 queryPool,
     uint32_t                                    query,
@@ -1029,14 +1029,14 @@ void callVkCmdBeginQuery(
     vkCmdBeginQuery(commandBuffer, queryPool, query, flags);
 }
 
-void callVkCmdEndQuery(
+void wlcallVkCmdEndQuery(
     VkCommandBuffer                             commandBuffer,
     VkQueryPool                                 queryPool,
     uint32_t                                    query) {
     vkCmdEndQuery(commandBuffer, queryPool, query);
 }
 
-void callVkCmdResetQueryPool(
+void wlcallVkCmdResetQueryPool(
     VkCommandBuffer                             commandBuffer,
     VkQueryPool                                 queryPool,
     uint32_t                                    firstQuery,
@@ -1044,7 +1044,7 @@ void callVkCmdResetQueryPool(
     vkCmdResetQueryPool(commandBuffer, queryPool, firstQuery, queryCount);
 }
 
-void callVkCmdWriteTimestamp(
+void wlcallVkCmdWriteTimestamp(
     VkCommandBuffer                             commandBuffer,
     VkPipelineStageFlagBits                     pipelineStage,
     VkQueryPool                                 queryPool,
@@ -1052,7 +1052,7 @@ void callVkCmdWriteTimestamp(
     vkCmdWriteTimestamp(commandBuffer, pipelineStage, queryPool, query);
 }
 
-void callVkCmdCopyQueryPoolResults(
+void wlcallVkCmdCopyQueryPoolResults(
     VkCommandBuffer                             commandBuffer,
     VkQueryPool                                 queryPool,
     uint32_t                                    firstQuery,
@@ -1065,7 +1065,7 @@ void callVkCmdCopyQueryPoolResults(
                                   dstBuffer, dstOffset, stride, flags);
 }
 
-void callVkCmdPushConstants(
+void wlcallVkCmdPushConstants(
     VkCommandBuffer                             commandBuffer,
     VkPipelineLayout                            layout,
     VkShaderStageFlags                          stageFlags,
@@ -1075,39 +1075,39 @@ void callVkCmdPushConstants(
     vkCmdPushConstants(commandBuffer, layout, stageFlags, offset, size, pValues);
 }
 
-void callVkCmdBeginRenderPass(
+void wlcallVkCmdBeginRenderPass(
     VkCommandBuffer                             commandBuffer,
     const VkRenderPassBeginInfo*                pRenderPassBegin,
     VkSubpassContents                           contents) {
     vkCmdBeginRenderPass(commandBuffer, pRenderPassBegin, contents);
 }
 
-void callVkCmdNextSubpass(
+void wlcallVkCmdNextSubpass(
     VkCommandBuffer                             commandBuffer,
     VkSubpassContents                           contents) {
     vkCmdNextSubpass(commandBuffer, contents);
 }
 
-void callVkCmdEndRenderPass(
+void wlcallVkCmdEndRenderPass(
     VkCommandBuffer                             commandBuffer) {
     vkCmdEndRenderPass(commandBuffer);
 }
 
-void callVkCmdExecuteCommands(
+void wlcallVkCmdExecuteCommands(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    commandBufferCount,
     const VkCommandBuffer*                      pCommandBuffers) {
     vkCmdExecuteCommands(commandBuffer, commandBufferCount, pCommandBuffers);
 }
 
-void callVkDestroySurfaceKHR(
+void wlcallVkDestroySurfaceKHR(
     VkInstance                                  instance,
     VkSurfaceKHR                                surface,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroySurfaceKHR(instance, surface, pAllocator);
 }
 
-VkResult callVkGetPhysicalDeviceSurfaceSupportKHR(
+VkResult wlcallVkGetPhysicalDeviceSurfaceSupportKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex,
     VkSurfaceKHR                                surface,
@@ -1116,7 +1116,7 @@ VkResult callVkGetPhysicalDeviceSurfaceSupportKHR(
             queueFamilyIndex, surface, pSupported);
 }
 
-VkResult callVkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+VkResult wlcallVkGetPhysicalDeviceSurfaceCapabilitiesKHR(
     VkPhysicalDevice                            physicalDevice,
     VkSurfaceKHR                                surface,
     VkSurfaceCapabilitiesKHR*                   pSurfaceCapabilities) {
@@ -1124,7 +1124,7 @@ VkResult callVkGetPhysicalDeviceSurfaceCapabilitiesKHR(
             surface, pSurfaceCapabilities);
 }
 
-VkResult callVkGetPhysicalDeviceSurfaceFormatsKHR(
+VkResult wlcallVkGetPhysicalDeviceSurfaceFormatsKHR(
     VkPhysicalDevice                            physicalDevice,
     VkSurfaceKHR                                surface,
     uint32_t*                                   pSurfaceFormatCount,
@@ -1133,7 +1133,7 @@ VkResult callVkGetPhysicalDeviceSurfaceFormatsKHR(
             surface, pSurfaceFormatCount, pSurfaceFormats);
 }
 
-VkResult callVkGetPhysicalDeviceSurfacePresentModesKHR(
+VkResult wlcallVkGetPhysicalDeviceSurfacePresentModesKHR(
     VkPhysicalDevice                            physicalDevice,
     VkSurfaceKHR                                surface,
     uint32_t*                                   pPresentModeCount,
@@ -1142,7 +1142,7 @@ VkResult callVkGetPhysicalDeviceSurfacePresentModesKHR(
             surface, pPresentModeCount, pPresentModes);
 }
 
-VkResult callVkCreateSwapchainKHR(
+VkResult wlcallVkCreateSwapchainKHR(
     VkDevice                                    device,
     const VkSwapchainCreateInfoKHR*             pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1150,14 +1150,14 @@ VkResult callVkCreateSwapchainKHR(
     return vkCreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
 }
 
-void callVkDestroySwapchainKHR(
+void wlcallVkDestroySwapchainKHR(
     VkDevice                                    device,
     VkSwapchainKHR                              swapchain,
     const VkAllocationCallbacks*                pAllocator) {
     vkDestroySwapchainKHR(device, swapchain, pAllocator);
 }
 
-VkResult callVkGetSwapchainImagesKHR(
+VkResult wlcallVkGetSwapchainImagesKHR(
     VkDevice                                    device,
     VkSwapchainKHR                              swapchain,
     uint32_t*                                   pSwapchainImageCount,
@@ -1165,7 +1165,7 @@ VkResult callVkGetSwapchainImagesKHR(
     return vkGetSwapchainImagesKHR(device, swapchain, pSwapchainImageCount, pSwapchainImages);
 }
 
-VkResult callVkAcquireNextImageKHR(
+VkResult wlcallVkAcquireNextImageKHR(
     VkDevice                                    device,
     VkSwapchainKHR                              swapchain,
     uint64_t                                    timeout,
@@ -1175,13 +1175,13 @@ VkResult callVkAcquireNextImageKHR(
     return vkAcquireNextImageKHR(device, swapchain, timeout, semaphore, fence, pImageIndex);
 }
 
-VkResult callVkQueuePresentKHR(
+VkResult wlcallVkQueuePresentKHR(
     VkQueue                                     queue,
     const VkPresentInfoKHR*                     pPresentInfo) {
     return vkQueuePresentKHR(queue, pPresentInfo);
 }
 
-VkResult callVkGetPhysicalDeviceDisplayPropertiesKHR(
+VkResult wlcallVkGetPhysicalDeviceDisplayPropertiesKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t*                                   pPropertyCount,
     VkDisplayPropertiesKHR*                     pProperties) {
@@ -1189,7 +1189,7 @@ VkResult callVkGetPhysicalDeviceDisplayPropertiesKHR(
             pPropertyCount, pProperties);
 }
 
-VkResult callVkGetPhysicalDeviceDisplayPlanePropertiesKHR(
+VkResult wlcallVkGetPhysicalDeviceDisplayPlanePropertiesKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t*                                   pPropertyCount,
     VkDisplayPlanePropertiesKHR*                pProperties) {
@@ -1197,7 +1197,7 @@ VkResult callVkGetPhysicalDeviceDisplayPlanePropertiesKHR(
             pPropertyCount, pProperties);
 }
 
-VkResult callVkGetDisplayPlaneSupportedDisplaysKHR(
+VkResult wlcallVkGetDisplayPlaneSupportedDisplaysKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    planeIndex,
     uint32_t*                                   pDisplayCount,
@@ -1206,7 +1206,7 @@ VkResult callVkGetDisplayPlaneSupportedDisplaysKHR(
             pDisplayCount, pDisplays);
 }
 
-VkResult callVkGetDisplayModePropertiesKHR(
+VkResult wlcallVkGetDisplayModePropertiesKHR(
     VkPhysicalDevice                            physicalDevice,
     VkDisplayKHR                                display,
     uint32_t*                                   pPropertyCount,
@@ -1215,7 +1215,7 @@ VkResult callVkGetDisplayModePropertiesKHR(
             pPropertyCount, pProperties);
 }
 
-VkResult callVkCreateDisplayModeKHR(
+VkResult wlcallVkCreateDisplayModeKHR(
     VkPhysicalDevice                            physicalDevice,
     VkDisplayKHR                                display,
     const VkDisplayModeCreateInfoKHR*           pCreateInfo,
@@ -1224,7 +1224,7 @@ VkResult callVkCreateDisplayModeKHR(
     return vkCreateDisplayModeKHR(physicalDevice, display, pCreateInfo, pAllocator, pMode);
 }
 
-VkResult callVkGetDisplayPlaneCapabilitiesKHR(
+VkResult wlcallVkGetDisplayPlaneCapabilitiesKHR(
     VkPhysicalDevice                            physicalDevice,
     VkDisplayModeKHR                            mode,
     uint32_t                                    planeIndex,
@@ -1232,7 +1232,7 @@ VkResult callVkGetDisplayPlaneCapabilitiesKHR(
     return vkGetDisplayPlaneCapabilitiesKHR(physicalDevice, mode, planeIndex, pCapabilities);
 }
 
-VkResult callVkCreateDisplayPlaneSurfaceKHR(
+VkResult wlcallVkCreateDisplayPlaneSurfaceKHR(
     VkInstance                                  instance,
     const VkDisplaySurfaceCreateInfoKHR*        pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1240,7 +1240,7 @@ VkResult callVkCreateDisplayPlaneSurfaceKHR(
     return vkCreateDisplayPlaneSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkResult callVkCreateSharedSwapchainsKHR(
+VkResult wlcallVkCreateSharedSwapchainsKHR(
     VkDevice                                    device,
     uint32_t                                    swapchainCount,
     const VkSwapchainCreateInfoKHR*             pCreateInfos,
@@ -1251,7 +1251,7 @@ VkResult callVkCreateSharedSwapchainsKHR(
 }
 
 #ifdef VK_USE_PLATFORM_XLIB_KHR
-VkResult callVkCreateXlibSurfaceKHR(
+VkResult wlcallVkCreateXlibSurfaceKHR(
     VkInstance                                  instance,
     const VkXlibSurfaceCreateInfoKHR*           pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1259,7 +1259,7 @@ VkResult callVkCreateXlibSurfaceKHR(
     return vkCreateXlibSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkBool32 callVkGetPhysicalDeviceXlibPresentationSupportKHR(
+VkBool32 wlcallVkGetPhysicalDeviceXlibPresentationSupportKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex,
     Display*                                    dpy,
@@ -1270,7 +1270,7 @@ VkBool32 callVkGetPhysicalDeviceXlibPresentationSupportKHR(
 #endif
 
 #ifdef VK_USE_PLATFORM_XCB_KHR
-VkResult callVkCreateXcbSurfaceKHR(
+VkResult wlcallVkCreateXcbSurfaceKHR(
     VkInstance                                  instance,
     const VkXcbSurfaceCreateInfoKHR*            pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1278,7 +1278,7 @@ VkResult callVkCreateXcbSurfaceKHR(
     return vkCreateXcbSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkBool32 callVkGetPhysicalDeviceXcbPresentationSupportKHR(
+VkBool32 wlcallVkGetPhysicalDeviceXcbPresentationSupportKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex,
     xcb_connection_t*                           connection,
@@ -1289,7 +1289,7 @@ VkBool32 callVkGetPhysicalDeviceXcbPresentationSupportKHR(
 #endif
 
 #ifdef VK_USE_PLATFORM_WAYLAND_KHR
-VkResult callVkCreateWaylandSurfaceKHR(
+VkResult wlcallVkCreateWaylandSurfaceKHR(
     VkInstance                                  instance,
     const VkWaylandSurfaceCreateInfoKHR*        pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1297,7 +1297,7 @@ VkResult callVkCreateWaylandSurfaceKHR(
     return vkCreateWaylandSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkBool32 callVkGetPhysicalDeviceWaylandPresentationSupportKHR(
+VkBool32 wlcallVkGetPhysicalDeviceWaylandPresentationSupportKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex,
     struct wl_display*                          display) {
@@ -1307,7 +1307,7 @@ VkBool32 callVkGetPhysicalDeviceWaylandPresentationSupportKHR(
 #endif
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-VkResult callVkCreateAndroidSurfaceKHR(
+VkResult wlcallVkCreateAndroidSurfaceKHR(
     VkInstance                                  instance,
     const VkAndroidSurfaceCreateInfoKHR*        pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1317,7 +1317,7 @@ VkResult callVkCreateAndroidSurfaceKHR(
 #endif
 
 #ifdef VK_USE_PLATFORM_IOS_MVK
-VkResult callVkCreateIOSSurfaceMVK(
+VkResult wlcallVkCreateIOSSurfaceMVK(
     VkInstance                              instance,
     const VkIOSSurfaceCreateInfoMVK*        pCreateInfo,
     const VkAllocationCallbacks*            pAllocator,
@@ -1325,36 +1325,36 @@ VkResult callVkCreateIOSSurfaceMVK(
     return vkCreateIOSSurfaceMVK(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkResult callVkActivateMoltenVKLicenseMVK(
+VkResult wlcallVkActivateMoltenVKLicenseMVK(
     const char*                                 licenseID,
     const char*                                 licenseKey,
     VkBool32                                    acceptLicenseTermsAndConditions) {
     return vkActivateMoltenVKLicenseMVK(licenseID, licenseKey, acceptLicenseTermsAndConditions);
 }
 
-VkResult callVkActivateMoltenVKLicensesMVK() {
+VkResult wlcallVkActivateMoltenVKLicensesMVK() {
     return vkActivateMoltenVKLicensesMVK();
 }
 
-VkResult callVkGetMoltenVKDeviceConfigurationMVK(
+VkResult wlcallVkGetMoltenVKDeviceConfigurationMVK(
     VkDevice                                    device,
     MVKDeviceConfiguration*                     pConfiguration) {
     return vkGetMoltenVKDeviceConfigurationMVK(device, pConfiguration);
 }
 
-VkResult callVkSetMoltenVKDeviceConfigurationMVK(
+VkResult wlcallVkSetMoltenVKDeviceConfigurationMVK(
     VkDevice                                    device,
     MVKDeviceConfiguration*                     pConfiguration) {
     return vkSetMoltenVKDeviceConfigurationMVK(device, pConfiguration);
 }
 
-VkResult callVkGetPhysicalDeviceMetalFeaturesMVK(
+VkResult wlcallVkGetPhysicalDeviceMetalFeaturesMVK(
     VkPhysicalDevice                            physicalDevice,
     MVKPhysicalDeviceMetalFeatures*             pMetalFeatures) {
     return vkGetPhysicalDeviceMetalFeaturesMVK(physicalDevice, pMetalFeatures);
 }
 
-VkResult callVkGetSwapchainPerformanceMVK(
+VkResult wlcallVkGetSwapchainPerformanceMVK(
     VkDevice                                    device,
     VkSwapchainKHR                              swapchain,
     MVKSwapchainPerformance*                    pSwapchainPerf) {
@@ -1363,7 +1363,7 @@ VkResult callVkGetSwapchainPerformanceMVK(
 #endif
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-VkResult callVkCreateWin32SurfaceKHR(
+VkResult wlcallVkCreateWin32SurfaceKHR(
     VkInstance                                  instance,
     const VkWin32SurfaceCreateInfoKHR*          pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1371,14 +1371,14 @@ VkResult callVkCreateWin32SurfaceKHR(
     return vkCreateWin32SurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 
-VkBool32 callVkGetPhysicalDeviceWin32PresentationSupportKHR(
+VkBool32 wlcallVkGetPhysicalDeviceWin32PresentationSupportKHR(
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex) {
     return vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
 }
 #endif
 
-VkResult callVkCreateDebugReportCallbackEXT(
+VkResult wlcallVkCreateDebugReportCallbackEXT(
     VkInstance                                  instance,
     const VkDebugReportCallbackCreateInfoEXT*   pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1392,7 +1392,7 @@ VkResult callVkCreateDebugReportCallbackEXT(
     return VK_NOT_READY;
 }
 
-void callVkDestroyDebugReportCallbackEXT(
+void wlcallVkDestroyDebugReportCallbackEXT(
     VkInstance                                  instance,
     VkDebugReportCallbackEXT                    callback,
     const VkAllocationCallbacks*                pAllocator) {
@@ -1404,7 +1404,7 @@ void callVkDestroyDebugReportCallbackEXT(
     }
 }
 
-void callVkDebugReportMessageEXT(
+void wlcallVkDebugReportMessageEXT(
     VkInstance                                  instance,
     VkDebugReportFlagsEXT                       flags,
     VkDebugReportObjectTypeEXT                  objectType,
@@ -1424,14 +1424,14 @@ void callVkDebugReportMessageEXT(
 
 
 //////////////////////
-void callVkGetPhysicalDeviceFeatures2(
+void wlcallVkGetPhysicalDeviceFeatures2(
     VkPhysicalDevice                            physicalDevice,
     VkPhysicalDeviceFeatures2*                   pFeatures) {
     vkGetPhysicalDeviceFeatures2(physicalDevice, pFeatures);
 }
 
 VkResult
-callCreateWaylandSurfaceKHR(
+wlcallVkCreateWaylandSurfaceKHR(
     VkInstance                                  instance,
     const VkWaylandSurfaceCreateInfoKHR*        pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
@@ -1444,7 +1444,7 @@ callCreateWaylandSurfaceKHR(
     }
     return VK_NOT_READY;
 }
-VkBool32 callGetPhysicalDeviceWaylandPresentationSupportKHR(
+VkBool32 wlcallVkGetPhysicalDeviceWaylandPresentationSupportKHR(
     VkInstance                                  instance,
     VkPhysicalDevice                            physicalDevice,
     uint32_t                                    queueFamilyIndex,
@@ -1469,7 +1469,7 @@ func AcquireNextImage(device Device, swapchain Swapchain, timeout uint64, semaph
 	csemaphore, _ := *(*C.VkSemaphore)(unsafe.Pointer(&semaphore)), cgoAllocsUnknown
 	cfence, _ := *(*C.VkFence)(unsafe.Pointer(&fence)), cgoAllocsUnknown
 	cpImageIndex, _ := (*C.uint32_t)(unsafe.Pointer(pImageIndex)), cgoAllocsUnknown
-	__ret := C.callVkAcquireNextImageKHR(cdevice, cswapchain, ctimeout, csemaphore, cfence, cpImageIndex)
+	__ret :=  C.wlcallVkAcquireNextImageKHR(cdevice, cswapchain, ctimeout, csemaphore, cfence, cpImageIndex)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1478,7 +1478,7 @@ func AcquireNextImage(device Device, swapchain Swapchain, timeout uint64, semaph
 func QueuePresent(queue Queue, pPresentInfo *PresentInfo) Result {
 	cqueue, _ := *(*C.VkQueue)(unsafe.Pointer(&queue)), cgoAllocsUnknown
 	cpPresentInfo, _ := pPresentInfo.PassRef()
-	__ret := C.callVkQueuePresentKHR(cqueue, cpPresentInfo)
+	__ret :=  C.wlcallVkQueuePresentKHR(cqueue, cpPresentInfo)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1486,7 +1486,7 @@ func QueuePresent(queue Queue, pPresentInfo *PresentInfo) Result {
 // QueueWaitIdle function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkQueueWaitIdle.html
 func QueueWaitIdle(queue Queue) Result {
 	cqueue, _ := *(*C.VkQueue)(unsafe.Pointer(&queue)), cgoAllocsUnknown
-	__ret := C.callVkQueueWaitIdle(cqueue)
+	__ret :=  C.wlcallVkQueueWaitIdle(cqueue)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1498,7 +1498,7 @@ func WaitForFences(device Device, fenceCount uint32, pFences []Fence, waitAll Bo
 	cpFences, _ := (*C.VkFence)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pFences)).Data)), cgoAllocsUnknown
 	cwaitAll, _ := (C.VkBool32)(waitAll), cgoAllocsUnknown
 	ctimeout, _ := (C.uint64_t)(timeout), cgoAllocsUnknown
-	__ret := C.callVkWaitForFences(cdevice, cfenceCount, cpFences, cwaitAll, ctimeout)
+	__ret :=  C.wlcallVkWaitForFences(cdevice, cfenceCount, cpFences, cwaitAll, ctimeout)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1508,7 +1508,7 @@ func ResetFences(device Device, fenceCount uint32, pFences []Fence) Result {
 	cdevice, _ := *(*C.VkDevice)(unsafe.Pointer(&device)), cgoAllocsUnknown
 	cfenceCount, _ := (C.uint32_t)(fenceCount), cgoAllocsUnknown
 	cpFences, _ := (*C.VkFence)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pFences)).Data)), cgoAllocsUnknown
-	__ret := C.callVkResetFences(cdevice, cfenceCount, cpFences)
+	__ret :=  C.wlcallVkResetFences(cdevice, cfenceCount, cpFences)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1517,7 +1517,7 @@ func ResetFences(device Device, fenceCount uint32, pFences []Fence) Result {
 func BeginCommandBuffer(commandBuffer CommandBuffer, pBeginInfo *CommandBufferBeginInfo) Result {
 	ccommandBuffer, _ := *(*C.VkCommandBuffer)(unsafe.Pointer(&commandBuffer)), cgoAllocsUnknown
 	cpBeginInfo, _ := pBeginInfo.PassRef()
-	__ret := C.callVkBeginCommandBuffer(ccommandBuffer, cpBeginInfo)
+	__ret :=  C.wlcallVkBeginCommandBuffer(ccommandBuffer, cpBeginInfo)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1527,7 +1527,7 @@ func CmdBeginRenderPass(commandBuffer CommandBuffer, pRenderPassBegin *RenderPas
 	ccommandBuffer, _ := *(*C.VkCommandBuffer)(unsafe.Pointer(&commandBuffer)), cgoAllocsUnknown
 	cpRenderPassBegin, _ := pRenderPassBegin.PassRef()
 	ccontents, _ := (C.VkSubpassContents)(contents), cgoAllocsUnknown
-	C.callVkCmdBeginRenderPass(ccommandBuffer, cpRenderPassBegin, ccontents)
+	 C.wlcallVkCmdBeginRenderPass(ccommandBuffer, cpRenderPassBegin, ccontents)
 }
 
 // CmdBindVertexBuffers function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBindVertexBuffers.html
@@ -1537,7 +1537,7 @@ func CmdBindVertexBuffers(commandBuffer CommandBuffer, firstBinding uint32, bind
 	cbindingCount, _ := (C.uint32_t)(bindingCount), cgoAllocsUnknown
 	cpBuffers, _ := (*C.VkBuffer)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pBuffers)).Data)), cgoAllocsUnknown
 	cpOffsets, _ := (*C.VkDeviceSize)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pOffsets)).Data)), cgoAllocsUnknown
-	C.callVkCmdBindVertexBuffers(ccommandBuffer, cfirstBinding, cbindingCount, cpBuffers, cpOffsets)
+	 C.wlcallVkCmdBindVertexBuffers(ccommandBuffer, cfirstBinding, cbindingCount, cpBuffers, cpOffsets)
 }
 
 // CmdDraw function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdDraw.html
@@ -1547,7 +1547,7 @@ func CmdDraw(commandBuffer CommandBuffer, vertexCount uint32, instanceCount uint
 	cinstanceCount, _ := (C.uint32_t)(instanceCount), cgoAllocsUnknown
 	cfirstVertex, _ := (C.uint32_t)(firstVertex), cgoAllocsUnknown
 	cfirstInstance, _ := (C.uint32_t)(firstInstance), cgoAllocsUnknown
-	C.callVkCmdDraw(ccommandBuffer, cvertexCount, cinstanceCount, cfirstVertex, cfirstInstance)
+	 C.wlcallVkCmdDraw(ccommandBuffer, cvertexCount, cinstanceCount, cfirstVertex, cfirstInstance)
 }
 
 // CmdSetScissor function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdSetScissor.html
@@ -1556,7 +1556,7 @@ func CmdSetScissor(commandBuffer CommandBuffer, firstScissor uint32, scissorCoun
 	cfirstScissor, _ := (C.uint32_t)(firstScissor), cgoAllocsUnknown
 	cscissorCount, _ := (C.uint32_t)(scissorCount), cgoAllocsUnknown
 	cpScissors, _ := unpackArgSRect2D(pScissors)
-	C.callVkCmdSetScissor(ccommandBuffer, cfirstScissor, cscissorCount, cpScissors)
+	 C.wlcallVkCmdSetScissor(ccommandBuffer, cfirstScissor, cscissorCount, cpScissors)
 	packSRect2D(pScissors, cpScissors)
 }
 
@@ -1566,7 +1566,7 @@ func CmdSetViewport(commandBuffer CommandBuffer, firstViewport uint32, viewportC
 	cfirstViewport, _ := (C.uint32_t)(firstViewport), cgoAllocsUnknown
 	cviewportCount, _ := (C.uint32_t)(viewportCount), cgoAllocsUnknown
 	cpViewports, _ := unpackArgSViewport(pViewports)
-	C.callVkCmdSetViewport(ccommandBuffer, cfirstViewport, cviewportCount, cpViewports)
+	 C.wlcallVkCmdSetViewport(ccommandBuffer, cfirstViewport, cviewportCount, cpViewports)
 	packSViewport(pViewports, cpViewports)
 }
 
@@ -1580,7 +1580,7 @@ func CmdBindDescriptorSets(commandBuffer CommandBuffer, pipelineBindPoint Pipeli
 	cpDescriptorSets, _ := (*C.VkDescriptorSet)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pDescriptorSets)).Data)), cgoAllocsUnknown
 	cdynamicOffsetCount, _ := (C.uint32_t)(dynamicOffsetCount), cgoAllocsUnknown
 	cpDynamicOffsets, _ := (*C.uint32_t)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pDynamicOffsets)).Data)), cgoAllocsUnknown
-	C.callVkCmdBindDescriptorSets(ccommandBuffer, cpipelineBindPoint, clayout, cfirstSet, cdescriptorSetCount, cpDescriptorSets, cdynamicOffsetCount, cpDynamicOffsets)
+	 C.wlcallVkCmdBindDescriptorSets(ccommandBuffer, cpipelineBindPoint, clayout, cfirstSet, cdescriptorSetCount, cpDescriptorSets, cdynamicOffsetCount, cpDynamicOffsets)
 }
 
 // CmdBindPipeline function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBindPipeline.html
@@ -1588,19 +1588,19 @@ func CmdBindPipeline(commandBuffer CommandBuffer, pipelineBindPoint PipelineBind
 	ccommandBuffer, _ := *(*C.VkCommandBuffer)(unsafe.Pointer(&commandBuffer)), cgoAllocsUnknown
 	cpipelineBindPoint, _ := (C.VkPipelineBindPoint)(pipelineBindPoint), cgoAllocsUnknown
 	cpipeline, _ := *(*C.VkPipeline)(unsafe.Pointer(&pipeline)), cgoAllocsUnknown
-	C.callVkCmdBindPipeline(ccommandBuffer, cpipelineBindPoint, cpipeline)
+	 C.wlcallVkCmdBindPipeline(ccommandBuffer, cpipelineBindPoint, cpipeline)
 }
 
 // CmdEndRenderPass function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdEndRenderPass.html
 func CmdEndRenderPass(commandBuffer CommandBuffer) {
 	ccommandBuffer, _ := *(*C.VkCommandBuffer)(unsafe.Pointer(&commandBuffer)), cgoAllocsUnknown
-	C.callVkCmdEndRenderPass(ccommandBuffer)
+	 C.wlcallVkCmdEndRenderPass(ccommandBuffer)
 }
 
 // EndCommandBuffer function as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkEndCommandBuffer.html
 func EndCommandBuffer(commandBuffer CommandBuffer) Result {
 	ccommandBuffer, _ := *(*C.VkCommandBuffer)(unsafe.Pointer(&commandBuffer)), cgoAllocsUnknown
-	__ret := C.callVkEndCommandBuffer(ccommandBuffer)
+	__ret :=  C.wlcallVkEndCommandBuffer(ccommandBuffer)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1611,7 +1611,7 @@ func QueueSubmit(queue Queue, submitCount uint32, pSubmits []SubmitInfo, fence F
 	csubmitCount, _ := (C.uint32_t)(submitCount), cgoAllocsUnknown
 	cpSubmits, _ := unpackArgSSubmitInfo(pSubmits)
 	cfence, _ := *(*C.VkFence)(unsafe.Pointer(&fence)), cgoAllocsUnknown
-	__ret := C.callVkQueueSubmit(cqueue, csubmitCount, cpSubmits, cfence)
+	__ret :=  C.wlcallVkQueueSubmit(cqueue, csubmitCount, cpSubmits, cfence)
 	packSSubmitInfo(pSubmits, cpSubmits)
 	__v := (Result)(__ret)
 	return __v
@@ -1623,7 +1623,7 @@ func CreateImageView(device Device, pCreateInfo *ImageViewCreateInfo, pAllocator
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpView, _ := (*C.VkImageView)(unsafe.Pointer(pView)), cgoAllocsUnknown
-	__ret := C.callVkCreateImageView(cdevice, cpCreateInfo, cpAllocator, cpView)
+	__ret :=  C.wlcallVkCreateImageView(cdevice, cpCreateInfo, cpAllocator, cpView)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1634,7 +1634,7 @@ func CreateFramebuffer(device Device, pCreateInfo *FramebufferCreateInfo, pAlloc
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpFramebuffer, _ := (*C.VkFramebuffer)(unsafe.Pointer(pFramebuffer)), cgoAllocsUnknown
-	__ret := C.callVkCreateFramebuffer(cdevice, cpCreateInfo, cpAllocator, cpFramebuffer)
+	__ret :=  C.wlcallVkCreateFramebuffer(cdevice, cpCreateInfo, cpAllocator, cpFramebuffer)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1645,7 +1645,7 @@ func CreateFence(device Device, pCreateInfo *FenceCreateInfo, pAllocator *Alloca
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpFence, _ := (*C.VkFence)(unsafe.Pointer(pFence)), cgoAllocsUnknown
-	__ret := C.callVkCreateFence(cdevice, cpCreateInfo, cpAllocator, cpFence)
+	__ret :=  C.wlcallVkCreateFence(cdevice, cpCreateInfo, cpAllocator, cpFence)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1655,7 +1655,7 @@ func AllocateCommandBuffers(device Device, pAllocateInfo *CommandBufferAllocateI
 	cdevice, _ := *(*C.VkDevice)(unsafe.Pointer(&device)), cgoAllocsUnknown
 	cpAllocateInfo, _ := pAllocateInfo.PassRef()
 	cpCommandBuffers, _ := (*C.VkCommandBuffer)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pCommandBuffers)).Data)), cgoAllocsUnknown
-	__ret := C.callVkAllocateCommandBuffers(cdevice, cpAllocateInfo, cpCommandBuffers)
+	__ret :=  C.wlcallVkAllocateCommandBuffers(cdevice, cpAllocateInfo, cpCommandBuffers)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1665,7 +1665,7 @@ func GetPhysicalDeviceSurfaceCapabilities(physicalDevice PhysicalDevice, surface
 	cphysicalDevice, _ := *(*C.VkPhysicalDevice)(unsafe.Pointer(&physicalDevice)), cgoAllocsUnknown
 	csurface, _ := *(*C.VkSurfaceKHR)(unsafe.Pointer(&surface)), cgoAllocsUnknown
 	cpSurfaceCapabilities, _ := pSurfaceCapabilities.PassRef()
-	__ret := C.callVkGetPhysicalDeviceSurfaceCapabilitiesKHR(cphysicalDevice, csurface, cpSurfaceCapabilities)
+	__ret :=  C.wlcallVkGetPhysicalDeviceSurfaceCapabilitiesKHR(cphysicalDevice, csurface, cpSurfaceCapabilities)
 
 	pSurfaceCapabilities.SupportedCompositeAlpha = CompositeAlphaFlags(cpSurfaceCapabilities.supportedCompositeAlpha)
 	pSurfaceCapabilities.MinImageCount = uint32(cpSurfaceCapabilities.minImageCount)
@@ -1681,7 +1681,7 @@ func GetPhysicalDeviceSurfaceSupport(physicalDevice PhysicalDevice, queueFamilyI
 	cqueueFamilyIndex, _ := (C.uint32_t)(queueFamilyIndex), cgoAllocsUnknown
 	csurface, _ := *(*C.VkSurfaceKHR)(unsafe.Pointer(&surface)), cgoAllocsUnknown
 	cpSupported, _ := (*C.VkBool32)(unsafe.Pointer(pSupported)), cgoAllocsUnknown
-	__ret := C.callVkGetPhysicalDeviceSurfaceSupportKHR(cphysicalDevice, cqueueFamilyIndex, csurface, cpSupported)
+	__ret :=  C.wlcallVkGetPhysicalDeviceSurfaceSupportKHR(cphysicalDevice, cqueueFamilyIndex, csurface, cpSupported)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1692,7 +1692,7 @@ func GetPhysicalDeviceSurfacePresentModes(physicalDevice PhysicalDevice, surface
 	csurface, _ := *(*C.VkSurfaceKHR)(unsafe.Pointer(&surface)), cgoAllocsUnknown
 	cpPresentModeCount, _ := (*C.uint32_t)(unsafe.Pointer(pPresentModeCount)), cgoAllocsUnknown
 	cpPresentModes, _ := (*C.VkPresentModeKHR)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pPresentModes)).Data)), cgoAllocsUnknown
-	__ret := C.callVkGetPhysicalDeviceSurfacePresentModesKHR(cphysicalDevice, csurface, cpPresentModeCount, cpPresentModes)
+	__ret :=  C.wlcallVkGetPhysicalDeviceSurfacePresentModesKHR(cphysicalDevice, csurface, cpPresentModeCount, cpPresentModes)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1703,7 +1703,7 @@ func CreateSwapchain(device Device, pCreateInfo *SwapchainCreateInfo, pAllocator
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpSwapchain, _ := (*C.VkSwapchainKHR)(unsafe.Pointer(pSwapchain)), cgoAllocsUnknown
-	__ret := C.callVkCreateSwapchainKHR(cdevice, cpCreateInfo, cpAllocator, cpSwapchain)
+	__ret :=  C.wlcallVkCreateSwapchainKHR(cdevice, cpCreateInfo, cpAllocator, cpSwapchain)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1714,7 +1714,7 @@ func GetSwapchainImages(device Device, swapchain Swapchain, pSwapchainImageCount
 	cswapchain, _ := *(*C.VkSwapchainKHR)(unsafe.Pointer(&swapchain)), cgoAllocsUnknown
 	cpSwapchainImageCount, _ := (*C.uint32_t)(unsafe.Pointer(pSwapchainImageCount)), cgoAllocsUnknown
 	cpSwapchainImages, _ := (*C.VkImage)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pSwapchainImages)).Data)), cgoAllocsUnknown
-	__ret := C.callVkGetSwapchainImagesKHR(cdevice, cswapchain, cpSwapchainImageCount, cpSwapchainImages)
+	__ret :=  C.wlcallVkGetSwapchainImagesKHR(cdevice, cswapchain, cpSwapchainImageCount, cpSwapchainImages)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1725,7 +1725,7 @@ func GetPhysicalDeviceSurfaceFormats(physicalDevice PhysicalDevice, surface Surf
 	csurface, _ := *(*C.VkSurfaceKHR)(unsafe.Pointer(&surface)), cgoAllocsUnknown
 	cpSurfaceFormatCount, _ := (*C.uint32_t)(unsafe.Pointer(pSurfaceFormatCount)), cgoAllocsUnknown
 	cpSurfaceFormats, _ := unpackArgSSurfaceFormat(pSurfaceFormats)
-	__ret := C.callVkGetPhysicalDeviceSurfaceFormatsKHR(cphysicalDevice, csurface, cpSurfaceFormatCount, cpSurfaceFormats)
+	__ret :=  C.wlcallVkGetPhysicalDeviceSurfaceFormatsKHR(cphysicalDevice, csurface, cpSurfaceFormatCount, cpSurfaceFormats)
 	packSSurfaceFormat(pSurfaceFormats, cpSurfaceFormats)
 	__v := (Result)(__ret)
 	for i := range pSurfaceFormats {
@@ -1741,7 +1741,7 @@ func CreateRenderPass(device Device, pCreateInfo *RenderPassCreateInfo, pAllocat
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpRenderPass, _ := (*C.VkRenderPass)(unsafe.Pointer(pRenderPass)), cgoAllocsUnknown
-	__ret := C.callVkCreateRenderPass(cdevice, cpCreateInfo, cpAllocator, cpRenderPass)
+	__ret :=  C.wlcallVkCreateRenderPass(cdevice, cpCreateInfo, cpAllocator, cpRenderPass)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1752,7 +1752,7 @@ func CreateCommandPool(device Device, pCreateInfo *CommandPoolCreateInfo, pAlloc
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpCommandPool, _ := (*C.VkCommandPool)(unsafe.Pointer(pCommandPool)), cgoAllocsUnknown
-	__ret := C.callVkCreateCommandPool(cdevice, cpCreateInfo, cpAllocator, cpCommandPool)
+	__ret :=  C.wlcallVkCreateCommandPool(cdevice, cpCreateInfo, cpAllocator, cpCommandPool)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1763,7 +1763,7 @@ func CreateSemaphore(device Device, pCreateInfo *SemaphoreCreateInfo, pAllocator
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpSemaphore, _ := (*C.VkSemaphore)(unsafe.Pointer(pSemaphore)), cgoAllocsUnknown
-	__ret := C.callVkCreateSemaphore(cdevice, cpCreateInfo, cpAllocator, cpSemaphore)
+	__ret :=  C.wlcallVkCreateSemaphore(cdevice, cpCreateInfo, cpAllocator, cpSemaphore)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1774,7 +1774,7 @@ func CreateDescriptorSetLayout(device Device, pCreateInfo *DescriptorSetLayoutCr
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpSetLayout, _ := (*C.VkDescriptorSetLayout)(unsafe.Pointer(pSetLayout)), cgoAllocsUnknown
-	__ret := C.callVkCreateDescriptorSetLayout(cdevice, cpCreateInfo, cpAllocator, cpSetLayout)
+	__ret :=  C.wlcallVkCreateDescriptorSetLayout(cdevice, cpCreateInfo, cpAllocator, cpSetLayout)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1785,7 +1785,7 @@ func CreatePipelineLayout(device Device, pCreateInfo *PipelineLayoutCreateInfo, 
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpPipelineLayout, _ := (*C.VkPipelineLayout)(unsafe.Pointer(pPipelineLayout)), cgoAllocsUnknown
-	__ret := C.callVkCreatePipelineLayout(cdevice, cpCreateInfo, cpAllocator, cpPipelineLayout)
+	__ret :=  C.wlcallVkCreatePipelineLayout(cdevice, cpCreateInfo, cpAllocator, cpPipelineLayout)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1796,7 +1796,7 @@ func CreateShaderModule(device Device, pCreateInfo *ShaderModuleCreateInfo, pAll
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpShaderModule, _ := (*C.VkShaderModule)(unsafe.Pointer(pShaderModule)), cgoAllocsUnknown
-	__ret := C.callVkCreateShaderModule(cdevice, cpCreateInfo, cpAllocator, cpShaderModule)
+	__ret :=  C.wlcallVkCreateShaderModule(cdevice, cpCreateInfo, cpAllocator, cpShaderModule)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1809,7 +1809,7 @@ func CreateGraphicsPipelines(device Device, pipelineCache PipelineCache, createI
 	cpCreateInfos, _ := unpackArgSGraphicsPipelineCreateInfo(pCreateInfos)
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpPipelines, _ := (*C.VkPipeline)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pPipelines)).Data)), cgoAllocsUnknown
-	__ret := C.callVkCreateGraphicsPipelines(cdevice, cpipelineCache, ccreateInfoCount, cpCreateInfos, cpAllocator, cpPipelines)
+	__ret :=  C.wlcallVkCreateGraphicsPipelines(cdevice, cpipelineCache, ccreateInfoCount, cpCreateInfos, cpAllocator, cpPipelines)
 	packSGraphicsPipelineCreateInfo(pCreateInfos, cpCreateInfos)
 	__v := (Result)(__ret)
 	return __v
@@ -1821,7 +1821,7 @@ func CreateBuffer(device Device, pCreateInfo *BufferCreateInfo, pAllocator *Allo
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpBuffer, _ := (*C.VkBuffer)(unsafe.Pointer(pBuffer)), cgoAllocsUnknown
-	__ret := C.callVkCreateBuffer(cdevice, cpCreateInfo, cpAllocator, cpBuffer)
+	__ret :=  C.wlcallVkCreateBuffer(cdevice, cpCreateInfo, cpAllocator, cpBuffer)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1831,7 +1831,7 @@ func GetBufferMemoryRequirements(device Device, buffer Buffer, pMemoryRequiremen
 	cdevice, _ := *(*C.VkDevice)(unsafe.Pointer(&device)), cgoAllocsUnknown
 	cbuffer, _ := *(*C.VkBuffer)(unsafe.Pointer(&buffer)), cgoAllocsUnknown
 	cpMemoryRequirements, _ := pMemoryRequirements.PassRef()
-	C.callVkGetBufferMemoryRequirements(cdevice, cbuffer, cpMemoryRequirements)
+	 C.wlcallVkGetBufferMemoryRequirements(cdevice, cbuffer, cpMemoryRequirements)
 
 	pMemoryRequirements.MemoryTypeBits = uint32(cpMemoryRequirements.memoryTypeBits)
 }
@@ -1842,7 +1842,7 @@ func AllocateMemory(device Device, pAllocateInfo *MemoryAllocateInfo, pAllocator
 	cpAllocateInfo, _ := pAllocateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpMemory, _ := (*C.VkDeviceMemory)(unsafe.Pointer(pMemory)), cgoAllocsUnknown
-	__ret := C.callVkAllocateMemory(cdevice, cpAllocateInfo, cpAllocator, cpMemory)
+	__ret :=  C.wlcallVkAllocateMemory(cdevice, cpAllocateInfo, cpAllocator, cpMemory)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1855,7 +1855,7 @@ func MapMemory(device Device, memory DeviceMemory, offset DeviceSize, size Devic
 	csize, _ := (C.VkDeviceSize)(size), cgoAllocsUnknown
 	cflags, _ := (C.VkMemoryMapFlags)(flags), cgoAllocsUnknown
 	cppData, _ := ppData, cgoAllocsUnknown
-	__ret := C.callVkMapMemory(cdevice, cmemory, coffset, csize, cflags, cppData)
+	__ret :=  C.wlcallVkMapMemory(cdevice, cmemory, coffset, csize, cflags, cppData)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1866,7 +1866,7 @@ func BindBufferMemory(device Device, buffer Buffer, memory DeviceMemory, memoryO
 	cbuffer, _ := *(*C.VkBuffer)(unsafe.Pointer(&buffer)), cgoAllocsUnknown
 	cmemory, _ := *(*C.VkDeviceMemory)(unsafe.Pointer(&memory)), cgoAllocsUnknown
 	cmemoryOffset, _ := (C.VkDeviceSize)(memoryOffset), cgoAllocsUnknown
-	__ret := C.callVkBindBufferMemory(cdevice, cbuffer, cmemory, cmemoryOffset)
+	__ret :=  C.wlcallVkBindBufferMemory(cdevice, cbuffer, cmemory, cmemoryOffset)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1877,7 +1877,7 @@ func CreateDescriptorPool(device Device, pCreateInfo *DescriptorPoolCreateInfo, 
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpDescriptorPool, _ := (*C.VkDescriptorPool)(unsafe.Pointer(pDescriptorPool)), cgoAllocsUnknown
-	__ret := C.callVkCreateDescriptorPool(cdevice, cpCreateInfo, cpAllocator, cpDescriptorPool)
+	__ret :=  C.wlcallVkCreateDescriptorPool(cdevice, cpCreateInfo, cpAllocator, cpDescriptorPool)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1887,7 +1887,7 @@ func AllocateDescriptorSets(device Device, pAllocateInfo *DescriptorSetAllocateI
 	cdevice, _ := *(*C.VkDevice)(unsafe.Pointer(&device)), cgoAllocsUnknown
 	cpAllocateInfo, _ := pAllocateInfo.PassRef()
 	cpDescriptorSets, _ := (*C.VkDescriptorSet)(unsafe.Pointer(pDescriptorSets)), cgoAllocsUnknown
-	__ret := C.callVkAllocateDescriptorSets(cdevice, cpAllocateInfo, cpDescriptorSets)
+	__ret :=  C.wlcallVkAllocateDescriptorSets(cdevice, cpAllocateInfo, cpDescriptorSets)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1899,7 +1899,7 @@ func UpdateDescriptorSets(device Device, descriptorWriteCount uint32, pDescripto
 	cpDescriptorWrites, _ := unpackArgSWriteDescriptorSet(pDescriptorWrites)
 	cdescriptorCopyCount, _ := (C.uint32_t)(descriptorCopyCount), cgoAllocsUnknown
 	cpDescriptorCopies, _ := unpackArgSCopyDescriptorSet(pDescriptorCopies)
-	C.callVkUpdateDescriptorSets(cdevice, cdescriptorWriteCount, cpDescriptorWrites, cdescriptorCopyCount, cpDescriptorCopies)
+	 C.wlcallVkUpdateDescriptorSets(cdevice, cdescriptorWriteCount, cpDescriptorWrites, cdescriptorCopyCount, cpDescriptorCopies)
 	packSCopyDescriptorSet(pDescriptorCopies, cpDescriptorCopies)
 	packSWriteDescriptorSet(pDescriptorWrites, cpDescriptorWrites)
 }
@@ -1910,7 +1910,7 @@ func CreatePipelineCache(device Device, pCreateInfo *PipelineCacheCreateInfo, pA
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpPipelineCache, _ := (*C.VkPipelineCache)(unsafe.Pointer(pPipelineCache)), cgoAllocsUnknown
-	__ret := C.callVkCreatePipelineCache(cdevice, cpCreateInfo, cpAllocator, cpPipelineCache)
+	__ret :=  C.wlcallVkCreatePipelineCache(cdevice, cpCreateInfo, cpAllocator, cpPipelineCache)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1920,7 +1920,7 @@ func CreateInstance(pCreateInfo *InstanceCreateInfo, pAllocator *AllocationCallb
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpInstance, _ := (*C.VkInstance)(unsafe.Pointer(pInstance)), cgoAllocsUnknown
-	__ret := C.callVkCreateInstance(cpCreateInfo, cpAllocator, cpInstance)
+	__ret :=  C.wlcallVkCreateInstance(cpCreateInfo, cpAllocator, cpInstance)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1930,7 +1930,7 @@ func EnumeratePhysicalDevices(instance Instance, pPhysicalDeviceCount *uint32, p
 	cinstance, _ := *(*C.VkInstance)(unsafe.Pointer(&instance)), cgoAllocsUnknown
 	cpPhysicalDeviceCount, _ := (*C.uint32_t)(unsafe.Pointer(pPhysicalDeviceCount)), cgoAllocsUnknown
 	cpPhysicalDevices, _ := (*C.VkPhysicalDevice)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&pPhysicalDevices)).Data)), cgoAllocsUnknown
-	__ret := C.callVkEnumeratePhysicalDevices(cinstance, cpPhysicalDeviceCount, cpPhysicalDevices)
+	__ret :=  C.wlcallVkEnumeratePhysicalDevices(cinstance, cpPhysicalDeviceCount, cpPhysicalDevices)
 	__v := (Result)(__ret)
 	return __v
 }
@@ -1941,7 +1941,7 @@ func CreateDevice(physicalDevice PhysicalDevice, pCreateInfo *DeviceCreateInfo, 
 	cpCreateInfo, _ := pCreateInfo.PassRef()
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpDevice, _ := (*C.VkDevice)(unsafe.Pointer(pDevice)), cgoAllocsUnknown
-	__ret := C.callVkCreateDevice(cphysicalDevice, cpCreateInfo, cpAllocator, cpDevice)
+	__ret :=  C.wlcallVkCreateDevice(cphysicalDevice, cpCreateInfo, cpAllocator, cpDevice)
 	__v := (Result)(__ret)
 
 	*pDevice = *(*Device)(cpDevice)
@@ -1957,7 +1957,7 @@ func GetDeviceQueue(device Device, queueFamilyIndex uint32, queueIndex uint32, p
 	cqueueFamilyIndex, _ := (C.uint32_t)(queueFamilyIndex), cgoAllocsUnknown
 	cqueueIndex, _ := (C.uint32_t)(queueIndex), cgoAllocsUnknown
 	cpQueue, _ := (*C.VkQueue)(unsafe.Pointer(pQueue)), cgoAllocsUnknown
-	C.callVkGetDeviceQueue(cdevice, cqueueFamilyIndex, cqueueIndex, cpQueue)
+	 C.wlcallVkGetDeviceQueue(cdevice, cqueueFamilyIndex, cqueueIndex, cpQueue)
 	*pQueue = *(*Queue)(cpQueue)
 }
 
@@ -1966,7 +1966,7 @@ func GetPhysicalDeviceQueueFamilyProperties(physicalDevice PhysicalDevice, pQueu
 	cphysicalDevice, _ := *(*C.VkPhysicalDevice)(unsafe.Pointer(&physicalDevice)), cgoAllocsUnknown
 	cpQueueFamilyPropertyCount, _ := (*C.uint32_t)(unsafe.Pointer(pQueueFamilyPropertyCount)), cgoAllocsUnknown
 	cpQueueFamilyProperties, _ := unpackArgSQueueFamilyProperties(pQueueFamilyProperties)
-	C.callVkGetPhysicalDeviceQueueFamilyProperties(cphysicalDevice, cpQueueFamilyPropertyCount, cpQueueFamilyProperties)
+	 C.wlcallVkGetPhysicalDeviceQueueFamilyProperties(cphysicalDevice, cpQueueFamilyPropertyCount, cpQueueFamilyProperties)
 	packSQueueFamilyProperties(pQueueFamilyProperties, cpQueueFamilyProperties)
 	for i := range pQueueFamilyProperties {
 		pQueueFamilyProperties[i].Deref()
@@ -1977,7 +1977,7 @@ func GetPhysicalDeviceQueueFamilyProperties(physicalDevice PhysicalDevice, pQueu
 func GetPhysicalDeviceMemoryProperties(physicalDevice PhysicalDevice, pMemoryProperties *PhysicalDeviceMemoryProperties) {
 	cphysicalDevice, _ := *(*C.VkPhysicalDevice)(unsafe.Pointer(&physicalDevice)), cgoAllocsUnknown
 	cpMemoryProperties, _ := pMemoryProperties.PassRef()
-	C.callVkGetPhysicalDeviceMemoryProperties(cphysicalDevice, cpMemoryProperties)
+	 C.wlcallVkGetPhysicalDeviceMemoryProperties(cphysicalDevice, cpMemoryProperties)
 
 	pMemoryProperties.Deref()
 
@@ -1990,7 +1990,7 @@ func GetPhysicalDeviceMemoryProperties(physicalDevice PhysicalDevice, pMemoryPro
 func GetPhysicalDeviceProperties(physicalDevice PhysicalDevice, pProperties *PhysicalDeviceProperties) {
 	cphysicalDevice, _ := *(*C.VkPhysicalDevice)(unsafe.Pointer(&physicalDevice)), cgoAllocsUnknown
 	cpProperties, _ := pProperties.PassRef()
-	C.callVkGetPhysicalDeviceProperties(cphysicalDevice, cpProperties)
+	 C.wlcallVkGetPhysicalDeviceProperties(cphysicalDevice, cpProperties)
 
 	pProperties.Deref()
 }
@@ -1999,7 +1999,7 @@ func GetPhysicalDeviceProperties(physicalDevice PhysicalDevice, pProperties *Phy
 func GetPhysicalDeviceFeatures2(physicalDevice PhysicalDevice, pFeatures *PhysicalDeviceFeatures2) {
 	cphysicalDevice, _ := *(*C.VkPhysicalDevice)(unsafe.Pointer(&physicalDevice)), cgoAllocsUnknown
 	cpFeatures, _ := pFeatures.PassRef()
-	C.callVkGetPhysicalDeviceFeatures2(cphysicalDevice, cpFeatures)
+	 C.wlcallVkGetPhysicalDeviceFeatures2(cphysicalDevice, cpFeatures)
 }
 
 // Wayland-related
@@ -2008,9 +2008,9 @@ func CreateWaylandSurface(instance Instance, info *WaylandSurfaceCreateInfo, pAl
 	cpAllocator, _ := (*C.VkAllocationCallbacks)(unsafe.Pointer(pAllocator)), cgoAllocsUnknown
 	cpSurface, _ := (*C.VkSurfaceKHR)(unsafe.Pointer(pSurface)), cgoAllocsUnknown
 
-	C.callCreateWaylandSurfaceKHR(instance, (*C.VkWaylandSurfaceCreateInfoKHR)(unsafe.Pointer(info)), cpAllocator, cpSurface)
+	C.wlcallVkCreateWaylandSurfaceKHR(instance, (*C.VkWaylandSurfaceCreateInfoKHR)(unsafe.Pointer(info)), cpAllocator, cpSurface)
 }
 
 func GetPhysicalDeviceWaylandPresentationSupport(instance Instance, physicalDevice PhysicalDevice, queueFamilyIndex uint32, display uintptr) bool {
-	return 0 != C.callGetPhysicalDeviceWaylandPresentationSupportKHR(instance, physicalDevice, C.uint(queueFamilyIndex), (*C.struct_wl_display)(unsafe.Pointer(display)))
+	return 0 != C.wlcallVkGetPhysicalDeviceWaylandPresentationSupportKHR(instance, physicalDevice, C.uint(queueFamilyIndex), (*C.struct_wl_display)(unsafe.Pointer(display)))
 }
