@@ -31,10 +31,13 @@ package libwayland
 #include "fullscreen-shell-unstable-v1-client-protocol.h"
 
 #include "bridge.h"
+
+#include <errno.h>
 */
 import "C"
 import "unsafe"
 import "sync"
+
 
 // Interfaces
 
@@ -612,9 +615,6 @@ func DisplayDispatch(d *Display) int {
 	return (int)(C.wl_display_dispatch((*C.struct_wl_display)(unsafe.Pointer(d))))
 }
 
-func DisplayFlush(d *Display) int {
-	return (int)(C.wl_display_flush((*C.struct_wl_display)(unsafe.Pointer(d))))
-}
 
 func DisplayRoundtrip(d *Display) int {
 	return (int)(C.wl_display_roundtrip((*C.struct_wl_display)(unsafe.Pointer(d))))
@@ -715,6 +715,29 @@ type PointerConstraintsV1 C.struct_zwp_pointer_constraints_v1
 
 func DisplayGetFd(d *Display) int {
 	return (int)(C.wl_display_get_fd((*C.struct_wl_display)(unsafe.Pointer(d))))
+}
+
+
+func DisplayPrepareRead(d *Display) int {
+	return (int)(C.wl_display_prepare_read((*C.struct_wl_display)(unsafe.Pointer(d))))
+}
+
+const ErrAgain = int(C.EAGAIN)
+
+func DisplayFlush(d *Display) (n int, err error) {
+	cn, errno := C.wl_display_flush((*C.struct_wl_display)(unsafe.Pointer(d)))
+	n = int(cn)
+	if n == -1 {
+		err = errno
+	}
+	
+	return
+}
+func DisplayCancelRead(d *Display) {
+	C.wl_display_cancel_read((*C.struct_wl_display)(d))
+}
+func DisplayReadEvents(d *Display) {
+	C.wl_display_read_events((*C.struct_wl_display)(d))
 }
 func RegistryBindDataDeviceManager(r *Registry, name uint32, version uint32) *DataDeviceManager {
 	return (*DataDeviceManager)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_data_device_manager_interface, (C.uint32_t)(version)))

@@ -56,10 +56,26 @@ type SampleMask uint32
 
 // Instance as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkInstance.html
 type Instance C.VkInstance
+/*
+func ToInstance(i Instance) vulkan.Instance {
+	return *(*vulkan.Instance)(unsafe.Pointer(&i))
+}
 
+func FromInstance(i vulkan.Instance) Instance {
+	return *(*Instance)(unsafe.Pointer(&i))
+}
+*/
 // PhysicalDevice as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkPhysicalDevice.html
 type PhysicalDevice C.VkPhysicalDevice
+/*
+func ToPhysicalDevice(i PhysicalDevice) vulkan.PhysicalDevice {
+	return *(*vulkan.PhysicalDevice)(unsafe.Pointer(&i))
+}
 
+func FromPhysicalDevice(i vulkan.PhysicalDevice) PhysicalDevice {
+	return *(*PhysicalDevice)(unsafe.Pointer(&i))
+}
+*/
 // Device as declared in https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkDevice.html
 type Device C.VkDevice
 
@@ -2434,7 +2450,15 @@ type PhysicalDeviceShaderDrawParameterFeatures struct {
 
 // Surface as declared in https://www.khronos.org/registry/vulkan/specs/1.0-wsi_extensions/xhtml/vkspec.html#VkSurfaceKHR
 type Surface C.VkSurfaceKHR
+/*
+func ToSurface(i *Surface) *vulkan.Surface {
+	return (*vulkan.Surface)(unsafe.Pointer(i))
+}
 
+func FromSurface(i *vulkan.Surface) *Surface {
+	return (*Surface)(unsafe.Pointer(i))
+}
+*/
 // SurfaceTransformFlags type as declared in https://www.khronos.org/registry/vulkan/specs/1.0-wsi_extensions/xhtml/vkspec.html#VkSurfaceTransformFlagsKHR
 type SurfaceTransformFlags uint32
 

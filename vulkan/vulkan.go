@@ -1945,9 +1945,6 @@ func CreateDevice(physicalDevice PhysicalDevice, pCreateInfo *DeviceCreateInfo, 
 	__v := (Result)(__ret)
 
 	*pDevice = *(*Device)(cpDevice)
-	print(":")
-	println(cpDevice)
-	println(*pDevice)
 	return __v
 }
 

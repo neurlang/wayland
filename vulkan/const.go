@@ -5,9 +5,6 @@
 
 package vulkan
 
-/*
- */
-import "C"
 
 const (
 	// NoPrototypes as defined in vulkan/<predefine>:24
