@@ -3,12 +3,12 @@ package main
 import (
 	"time"
 
+	vk "github.com/neurlang/wayland/vulkan"
 	"github.com/rkusa/gm/mat4"
 	"github.com/rkusa/gm/vec3"
+	vulkan "github.com/vulkan-go/vulkan"
 	"reflect"
 	"unsafe"
-
-	vulkan "github.com/neurlang/wayland/vulkan"
 )
 
 type ubo struct {
@@ -231,7 +231,7 @@ func init_cube(vc *VkCube) {
 	var pipeline_stack = ([1]vulkan.Pipeline)(vc.pipeline)
 
 	vulkan.CreateGraphicsPipelines(vc.device,
-		vulkan.PipelineCache(*vulkan.NilPipelineCache),
+		vulkan.PipelineCache(*vk.NilPipelineCache),
 		1,
 		[]vulkan.GraphicsPipelineCreateInfo{{
 			SType:      vulkan.StructureTypeGraphicsPipelineCreateInfo,
@@ -299,7 +299,7 @@ func init_cube(vc *VkCube) {
 			Layout:             vc.pipeline_layout,
 			RenderPass:         vc.render_pass,
 			Subpass:            0,
-			BasePipelineHandle: vulkan.Pipeline(*vulkan.NilPipeline),
+			BasePipelineHandle: vulkan.Pipeline(*vk.NilPipeline),
 			BasePipelineIndex:  0,
 		}},
 		nil,
@@ -329,6 +329,8 @@ func init_cube(vc *VkCube) {
 
 	var reqs vulkan.MemoryRequirements
 	vulkan.GetBufferMemoryRequirements(vc.device, vc.buffer, &reqs)
+
+	reqs.Deref()
 
 	var memory_type = uint32(find_host_coherent_memory(vc, reqs.MemoryTypeBits))
 	if memory_type == ^uint32(0) {

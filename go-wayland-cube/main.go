@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	wayland "github.com/neurlang/wayland/libwayland"
-	vulkan "github.com/neurlang/wayland/vulkan"
-	"golang.org/x/sys/unix"
 	"os"
 	"syscall"
 	"unsafe"
+
+	wayland "github.com/neurlang/wayland/libwayland"
+	vulkan "github.com/neurlang/wayland/vulkan"
+	vk "github.com/vulkan-go/vulkan"
+	"golang.org/x/sys/unix"
 )
 
 const WL_PROXY_FLAG_ID_DELETED = 1
@@ -65,38 +67,38 @@ type VkCube struct {
 
 	wl *Wland
 
-	device     vulkan.Device
-	swap_chain [1]vulkan.Swapchain
-	queue      vulkan.Queue
-	semaphore  vulkan.Semaphore
+	device     vk.Device
+	swap_chain [1]vk.Swapchain
+	queue      vk.Queue
+	semaphore  vk.Semaphore
 
 	buffers [MAX_NUM_IMAGES]VkCubeBuffer
 
 	mapping *ubo
 
-	buffer          vulkan.Buffer
-	render_pass     vulkan.RenderPass
-	vertex_offset   vulkan.DeviceSize
-	colors_offset   vulkan.DeviceSize
-	normals_offset  vulkan.DeviceSize
-	pipeline        [1]vulkan.Pipeline
-	pipeline_layout vulkan.PipelineLayout
-	descriptor_set  vulkan.DescriptorSet
+	buffer          vk.Buffer
+	render_pass     vk.RenderPass
+	vertex_offset   vk.DeviceSize
+	colors_offset   vk.DeviceSize
+	normals_offset  vk.DeviceSize
+	pipeline        [1]vk.Pipeline
+	pipeline_layout vk.PipelineLayout
+	descriptor_set  vk.DescriptorSet
 
-	protected vulkan.Bool32
+	protected vk.Bool32
 
 	start float64
 
-	physical_device vulkan.PhysicalDevice
-	surface         vulkan.Surface
+	physical_device vk.PhysicalDevice
+	surface         vk.Surface
 	image_count     uint32
-	image_format    vulkan.Format
-	cmd_pool        vulkan.CommandPool
+	image_format    vk.Format
+	cmd_pool        vk.CommandPool
 
-	mem vulkan.DeviceMemory
+	mem vk.DeviceMemory
 
-	memory_properties vulkan.PhysicalDeviceMemoryProperties
-	instance          vulkan.Instance
+	memory_properties vk.PhysicalDeviceMemoryProperties
+	instance          vk.Instance
 
 	protected_chain bool
 }
@@ -109,12 +111,12 @@ func (vc *VkCube) Init() {
 }
 
 type VkCubeBuffer struct {
-	mem         vulkan.DeviceMemory
-	image       vulkan.Image
-	view        [1]vulkan.ImageView
-	framebuffer vulkan.Framebuffer
-	fence       vulkan.Fence
-	cmd_buffer  [1]vulkan.CommandBuffer
+	mem         vk.DeviceMemory
+	image       vk.Image
+	view        [1]vk.ImageView
+	framebuffer vk.Framebuffer
+	fence       vk.Fence
+	cmd_buffer  [1]vk.CommandBuffer
 
 	fb     uint32
 	stride uint32
@@ -124,36 +126,36 @@ func init_vk_objects(vc *VkCube) {
 
 	var pass = vc.render_pass
 
-	vulkan.CreateRenderPass(vc.device,
-		&vulkan.RenderPassCreateInfo{
-			SType:           vulkan.StructureTypeRenderPassCreateInfo,
+	vk.CreateRenderPass(vc.device,
+		&vk.RenderPassCreateInfo{
+			SType:           vk.StructureTypeRenderPassCreateInfo,
 			AttachmentCount: 1,
-			PAttachments: []vulkan.AttachmentDescription{
+			PAttachments: []vk.AttachmentDescription{
 				{
 					Format:        vc.image_format,
 					Samples:       1,
-					LoadOp:        vulkan.AttachmentLoadOpClear,
-					StoreOp:       vulkan.AttachmentStoreOpStore,
-					InitialLayout: vulkan.ImageLayoutUndefined,
-					FinalLayout:   vulkan.ImageLayoutPresentSrc,
+					LoadOp:        vk.AttachmentLoadOpClear,
+					StoreOp:       vk.AttachmentStoreOpStore,
+					InitialLayout: vk.ImageLayoutUndefined,
+					FinalLayout:   vk.ImageLayoutPresentSrc,
 				},
 			},
 			SubpassCount: 1,
-			PSubpasses: []vulkan.SubpassDescription{
+			PSubpasses: []vk.SubpassDescription{
 				{
-					PipelineBindPoint:    vulkan.PipelineBindPointGraphics,
+					PipelineBindPoint:    vk.PipelineBindPointGraphics,
 					InputAttachmentCount: 0,
 					ColorAttachmentCount: 1,
-					PColorAttachments: []vulkan.AttachmentReference{
+					PColorAttachments: []vk.AttachmentReference{
 						{
 							Attachment: 0,
-							Layout:     vulkan.ImageLayoutColorAttachmentOptimal,
+							Layout:     vk.ImageLayoutColorAttachmentOptimal,
 						},
 					},
-					PResolveAttachments: []vulkan.AttachmentReference{
+					PResolveAttachments: []vk.AttachmentReference{
 						{
-							Attachment: vulkan.AttachmentUnused,
-							Layout:     vulkan.ImageLayoutColorAttachmentOptimal,
+							Attachment: vk.AttachmentUnused,
+							Layout:     vk.ImageLayoutColorAttachmentOptimal,
 						},
 					},
 					PDepthStencilAttachment: nil,
@@ -170,18 +172,18 @@ func init_vk_objects(vc *VkCube) {
 
 	vc.Init()
 
-	var flags vulkan.CommandPoolCreateFlags
+	var flags vk.CommandPoolCreateFlags
 	if 0 != uint32(vc.protected) {
-		flags = vulkan.CommandPoolCreateFlags(vulkan.CommandPoolCreateProtectedBit)
+		flags = vk.CommandPoolCreateFlags(vk.CommandPoolCreateProtectedBit)
 	}
 
 	var cmdpool = vc.cmd_pool
 
-	vulkan.CreateCommandPool(vc.device,
-		&vulkan.CommandPoolCreateInfo{
-			SType:            vulkan.StructureTypeCommandPoolCreateInfo,
+	vk.CreateCommandPool(vc.device,
+		&vk.CommandPoolCreateInfo{
+			SType:            vk.StructureTypeCommandPoolCreateInfo,
 			QueueFamilyIndex: 0,
-			Flags:            vulkan.CommandPoolCreateFlags(vulkan.CommandPoolCreateResetCommandBufferBit) | flags,
+			Flags:            vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit) | flags,
 		},
 		nil,
 		&cmdpool)
@@ -189,9 +191,9 @@ func init_vk_objects(vc *VkCube) {
 
 	var sema = vc.semaphore
 
-	vulkan.CreateSemaphore(vc.device,
-		&vulkan.SemaphoreCreateInfo{
-			SType: vulkan.StructureTypeSemaphoreCreateInfo,
+	vk.CreateSemaphore(vc.device,
+		&vk.SemaphoreCreateInfo{
+			SType: vk.StructureTypeSemaphoreCreateInfo,
 		},
 		nil,
 		&sema)
@@ -199,37 +201,41 @@ func init_vk_objects(vc *VkCube) {
 	vc.semaphore = sema
 }
 
-func choose_surface_format(vc *VkCube) vulkan.Format {
+func choose_surface_format(vc *VkCube) vk.Format {
 	var num_formats uint32 = 0
 
-	vulkan.GetPhysicalDeviceSurfaceFormats(vc.physical_device, vc.surface,
+	vk.GetPhysicalDeviceSurfaceFormats(vc.physical_device, vc.surface,
 		&num_formats, nil)
 	if !(num_formats > 0) {
 		panic("assert")
 	}
 
-	var formats = make([]vulkan.SurfaceFormat, num_formats)
+	var formats = make([]vk.SurfaceFormat, num_formats)
 
-	vulkan.GetPhysicalDeviceSurfaceFormats(vc.physical_device, vc.surface,
+	vk.GetPhysicalDeviceSurfaceFormats(vc.physical_device, vc.surface,
 		&num_formats, formats)
 
-	var format vulkan.Format = vulkan.FormatUndefined
+	for i := range formats {
+		formats[i].Deref()
+	}
+
+	var format vk.Format = vk.FormatUndefined
 
 	for i := uint32(0); i < num_formats; i++ {
 		switch formats[i].Format {
-		case vulkan.FormatR8g8b8a8Srgb:
+		case vk.FormatR8g8b8a8Srgb:
 			fallthrough
-		case vulkan.FormatB8g8r8a8Srgb:
+		case vk.FormatB8g8r8a8Srgb:
 			/* These formats are all fine */
 			format = formats[i].Format
 			continue
-		case vulkan.FormatR8g8b8Srgb:
+		case vk.FormatR8g8b8Srgb:
 			fallthrough
-		case vulkan.FormatB8g8r8Srgb:
+		case vk.FormatB8g8r8Srgb:
 			fallthrough
-		case vulkan.FormatR5g6b5UnormPack16:
+		case vk.FormatR5g6b5UnormPack16:
 			fallthrough
-		case vulkan.FormatB5g6r5UnormPack16:
+		case vk.FormatB5g6r5UnormPack16:
 			fallthrough
 			/* We would like to support these but they don't seem to work. */
 		default:
@@ -237,7 +243,7 @@ func choose_surface_format(vc *VkCube) vulkan.Format {
 		}
 	}
 
-	if !(format != vulkan.FormatUndefined) {
+	if !(format != vk.FormatUndefined) {
 		panic("assert")
 	}
 
@@ -272,9 +278,9 @@ func mainloop(vc *VkCube) {
 			wayland.DisplayCancelRead(vc.wl.ndisplay)
 		}
 
-		var result = [1]vulkan.Result{vulkan.AcquireNextImage(vc.device, vc.swap_chain[0], 60,
+		var result = [1]vk.Result{vk.AcquireNextImage(vc.device, vc.swap_chain[0], 60,
 			vc.semaphore, nil, &index)}
-		if result[0] != vulkan.Success {
+		if result[0] != vk.Success {
 			return
 		}
 
@@ -284,19 +290,19 @@ func mainloop(vc *VkCube) {
 
 		vc.Render(&vc.buffers[index], 1)
 
-		vulkan.QueuePresent(vc.queue,
-			&vulkan.PresentInfo{
-				SType:          vulkan.StructureTypePresentInfo,
+		vk.QueuePresent(vc.queue,
+			&vk.PresentInfo{
+				SType:          vk.StructureTypePresentInfo,
 				SwapchainCount: 1,
 				PSwapchains:    vc.swap_chain[:],
 				PImageIndices:  []uint32{index},
 				PResults:       result[:],
 			})
-		if result[0] != vulkan.Success {
+		if result[0] != vk.Success {
 			return
 		}
 
-		vulkan.QueueWaitIdle(vc.queue)
+		vk.QueueWaitIdle(vc.queue)
 	}
 
 }
@@ -305,20 +311,20 @@ func init_buffer(vc *VkCube, b *VkCubeBuffer) {
 
 	var iview = b.view[0]
 
-	vulkan.CreateImageView(vc.device,
-		&vulkan.ImageViewCreateInfo{
-			SType:    vulkan.StructureTypeImageViewCreateInfo,
+	vk.CreateImageView(vc.device,
+		&vk.ImageViewCreateInfo{
+			SType:    vk.StructureTypeImageViewCreateInfo,
 			Image:    b.image,
-			ViewType: vulkan.ImageViewType2d,
+			ViewType: vk.ImageViewType2d,
 			Format:   vc.image_format,
-			Components: vulkan.ComponentMapping{
-				R: vulkan.ComponentSwizzleR,
-				G: vulkan.ComponentSwizzleG,
-				B: vulkan.ComponentSwizzleB,
-				A: vulkan.ComponentSwizzleA,
+			Components: vk.ComponentMapping{
+				R: vk.ComponentSwizzleR,
+				G: vk.ComponentSwizzleG,
+				B: vk.ComponentSwizzleB,
+				A: vk.ComponentSwizzleA,
 			},
-			SubresourceRange: vulkan.ImageSubresourceRange{
-				AspectMask:     vulkan.ImageAspectFlags(vulkan.ImageAspectColorBit),
+			SubresourceRange: vk.ImageSubresourceRange{
+				AspectMask:     vk.ImageAspectFlags(vk.ImageAspectColorBit),
 				BaseMipLevel:   0,
 				LevelCount:     1,
 				BaseArrayLayer: 0,
@@ -331,9 +337,9 @@ func init_buffer(vc *VkCube, b *VkCubeBuffer) {
 
 	var fbuffer = b.framebuffer
 
-	vulkan.CreateFramebuffer(vc.device,
-		&vulkan.FramebufferCreateInfo{
-			SType:           vulkan.StructureTypeFramebufferCreateInfo,
+	vk.CreateFramebuffer(vc.device,
+		&vk.FramebufferCreateInfo{
+			SType:           vk.StructureTypeFramebufferCreateInfo,
 			RenderPass:      vc.render_pass,
 			AttachmentCount: 1,
 			PAttachments:    b.view[:],
@@ -348,10 +354,10 @@ func init_buffer(vc *VkCube, b *VkCubeBuffer) {
 
 	var fence = b.fence
 
-	vulkan.CreateFence(vc.device,
-		&vulkan.FenceCreateInfo{
-			SType: vulkan.StructureTypeFenceCreateInfo,
-			Flags: vulkan.FenceCreateFlags(vulkan.FenceCreateSignaledBit),
+	vk.CreateFence(vc.device,
+		&vk.FenceCreateInfo{
+			SType: vk.StructureTypeFenceCreateInfo,
+			Flags: vk.FenceCreateFlags(vk.FenceCreateSignaledBit),
 		},
 		nil,
 		&fence)
@@ -360,11 +366,11 @@ func init_buffer(vc *VkCube, b *VkCubeBuffer) {
 
 	var cmd_buffer = b.cmd_buffer
 
-	vulkan.AllocateCommandBuffers(vc.device,
-		&vulkan.CommandBufferAllocateInfo{
-			SType:              vulkan.StructureTypeCommandBufferAllocateInfo,
+	vk.AllocateCommandBuffers(vc.device,
+		&vk.CommandBufferAllocateInfo{
+			SType:              vk.StructureTypeCommandBufferAllocateInfo,
 			CommandPool:        vc.cmd_pool,
-			Level:              vulkan.CommandBufferLevelPrimary,
+			Level:              vk.CommandBufferLevelPrimary,
 			CommandBufferCount: 1,
 		},
 		cmd_buffer[:])
@@ -373,34 +379,36 @@ func init_buffer(vc *VkCube, b *VkCubeBuffer) {
 }
 
 func create_swapchain(vc *VkCube) {
-	var surface_caps vulkan.SurfaceCapabilities
+	var surface_caps vk.SurfaceCapabilities
 
-	vulkan.GetPhysicalDeviceSurfaceCapabilities(vc.physical_device, vc.surface,
+	vk.GetPhysicalDeviceSurfaceCapabilities(vc.physical_device, vc.surface,
 		&surface_caps)
 
+	surface_caps.Deref()
+
 	if 0 == (surface_caps.SupportedCompositeAlpha &
-		vulkan.CompositeAlphaFlags(vulkan.CompositeAlphaOpaqueBit)) {
+		vk.CompositeAlphaFlags(vk.CompositeAlphaOpaqueBit)) {
 		panic("assert")
 	}
 
-	var supported vulkan.Bool32
-	vulkan.GetPhysicalDeviceSurfaceSupport(vc.physical_device, 0, vc.surface,
+	var supported vk.Bool32
+	vk.GetPhysicalDeviceSurfaceSupport(vc.physical_device, 0, vc.surface,
 		&supported)
 	if !(0 != uint32(supported)) {
 		panic("assert")
 	}
 
 	var count uint32
-	vulkan.GetPhysicalDeviceSurfacePresentModes(vc.physical_device, vc.surface,
+	vk.GetPhysicalDeviceSurfacePresentModes(vc.physical_device, vc.surface,
 		&count, nil)
-	var present_modes = make([]vulkan.PresentMode, count)
-	vulkan.GetPhysicalDeviceSurfacePresentModes(vc.physical_device, vc.surface,
+	var present_modes = make([]vk.PresentMode, count)
+	vk.GetPhysicalDeviceSurfacePresentModes(vc.physical_device, vc.surface,
 		&count, present_modes)
 
-	var present_mode vulkan.PresentMode = vulkan.PresentModeMailbox
+	var present_mode vk.PresentMode = vk.PresentModeMailbox
 	for i := uint32(0); i < count; i++ {
-		if present_modes[i] == vulkan.PresentModeFifo {
-			present_mode = vulkan.PresentModeFifo
+		if present_modes[i] == vk.PresentModeFifo {
+			present_mode = vk.PresentModeFifo
 			break
 		}
 	}
@@ -419,40 +427,40 @@ func create_swapchain(vc *VkCube) {
 		minImageCount = surface_caps.MaxImageCount
 	}
 
-	var flags vulkan.SwapchainCreateFlags
+	var flags vk.SwapchainCreateFlags
 	if 0 != uint32(vc.protected) {
-		flags = vulkan.SwapchainCreateFlags(vulkan.SwapchainCreateProtectedBit)
+		flags = vk.SwapchainCreateFlags(vk.SwapchainCreateProtectedBit)
 	}
 
 	var swpchain = vc.swap_chain[0]
 
-	vulkan.CreateSwapchain(vc.device,
-		&vulkan.SwapchainCreateInfo{
-			SType:                 vulkan.StructureTypeSwapchainCreateInfo,
+	vk.CreateSwapchain(vc.device,
+		&vk.SwapchainCreateInfo{
+			SType:                 vk.StructureTypeSwapchainCreateInfo,
 			Flags:                 flags,
 			Surface:               vc.surface,
 			MinImageCount:         minImageCount,
 			ImageFormat:           vc.image_format,
-			ImageColorSpace:       vulkan.ColorSpaceSrgbNonlinear,
-			ImageExtent:           vulkan.Extent2D{Width: uint32(vc.width), Height: uint32(vc.height)},
+			ImageColorSpace:       vk.ColorSpaceSrgbNonlinear,
+			ImageExtent:           vk.Extent2D{Width: uint32(vc.width), Height: uint32(vc.height)},
 			ImageArrayLayers:      1,
-			ImageUsage:            vulkan.ImageUsageFlags(vulkan.ImageUsageColorAttachmentBit),
-			ImageSharingMode:      vulkan.SharingModeExclusive,
+			ImageUsage:            vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit),
+			ImageSharingMode:      vk.SharingModeExclusive,
 			QueueFamilyIndexCount: 1,
 			PQueueFamilyIndices:   []uint32{0},
-			PreTransform:          vulkan.SurfaceTransformIdentityBit,
-			CompositeAlpha:        vulkan.CompositeAlphaOpaqueBit,
+			PreTransform:          vk.SurfaceTransformIdentityBit,
+			CompositeAlpha:        vk.CompositeAlphaOpaqueBit,
 			PresentMode:           present_mode,
 		}, nil, &swpchain)
 	vc.swap_chain[0] = swpchain
 
-	vulkan.GetSwapchainImages(vc.device, vc.swap_chain[0],
+	vk.GetSwapchainImages(vc.device, vc.swap_chain[0],
 		&vc.image_count, nil)
 	if !(vc.image_count > 0) {
 		panic("assert")
 	}
-	var swap_chain_images = make([]vulkan.Image, vc.image_count)
-	vulkan.GetSwapchainImages(vc.device, vc.swap_chain[0],
+	var swap_chain_images = make([]vk.Image, vc.image_count)
+	vk.GetSwapchainImages(vc.device, vc.swap_chain[0],
 		&vc.image_count, swap_chain_images)
 
 	if !(vc.image_count <= MAX_NUM_IMAGES) {
@@ -464,46 +472,55 @@ func create_swapchain(vc *VkCube) {
 	}
 }
 
-var que vulkan.Queue
-var dev vulkan.Device
+var que vk.Queue
+var dev vk.Device
 
 func init_vk(vc *VkCube) {
 	const extension = "VK_KHR_wayland_surface\000"
 
-	var inst = vc.instance
+	// OR without using a windowing library (Linux only, recommended for compute-only tasks)
+	if err := vk.SetDefaultGetInstanceProcAddr(); err != nil {
+		panic(err)
+	}
 
-	vulkan.CreateInstance(&vulkan.InstanceCreateInfo{
-		SType: vulkan.StructureTypeInstanceCreateInfo,
-		PApplicationInfo: &vulkan.ApplicationInfo{
-			SType:            vulkan.StructureTypeApplicationInfo,
+	var inst vk.Instance
+
+	vulkan.CreateInstance(&vk.InstanceCreateInfo{
+		SType: vk.StructureTypeInstanceCreateInfo,
+		PApplicationInfo: &vk.ApplicationInfo{
+			SType:            vk.StructureTypeApplicationInfo,
 			PApplicationName: "vkcube",
 			ApiVersion:       uint32(1<<22 | 1<<12 | 0),
 		},
 		EnabledExtensionCount: 2,
 		PpEnabledExtensionNames: []string{
-			vulkan.KhrSurfaceExtensionName,
+			vk.KhrSurfaceExtensionName + "\000",
 			extension,
 		},
 	},
 		nil,
 		&inst)
-	vc.instance = inst
+	vc.instance = vk.Instance(unsafe.Pointer(inst))
+
+	if err := vk.InitInstance(vk.Instance(unsafe.Pointer(inst))); err != nil {
+		panic(err)
+	}
 
 	var count uint32
-	var res = vulkan.EnumeratePhysicalDevices(vc.instance, &count, nil)
-	if (res != vulkan.Success) || (count == 0) {
+	var res = vk.EnumeratePhysicalDevices(vk.Instance(unsafe.Pointer(vc.instance)), &count, nil)
+	if (res != vk.Success) || (count == 0) {
 		panic("No Vulkan devices found.\n")
 	}
-	var pd = make([]vulkan.PhysicalDevice, count)
-	vulkan.EnumeratePhysicalDevices(vc.instance, &count, pd)
+	var pd = make([]vk.PhysicalDevice, count)
+	vk.EnumeratePhysicalDevices(vc.instance, &count, pd)
 	vc.physical_device = pd[0]
 	fmt.Printf("%d physical devices\n", count)
 
-	var protected_features = vulkan.PhysicalDeviceProtectedMemoryFeatures{
-		SType: vulkan.StructureTypePhysicalDeviceProtectedMemoryFeatures,
+	var protected_features = vk.PhysicalDeviceProtectedMemoryFeatures{
+		SType: vk.StructureTypePhysicalDeviceProtectedMemoryFeatures,
 	}
-	var features = vulkan.PhysicalDeviceFeatures2{
-		SType: vulkan.StructureTypePhysicalDeviceFeatures2,
+	var features = vk.PhysicalDeviceFeatures2{
+		SType: vk.StructureTypePhysicalDeviceFeatures2,
 		PNext: unsafe.Pointer(&protected_features),
 	}
 	vulkan.GetPhysicalDeviceFeatures2(vc.physical_device, &features)
@@ -518,34 +535,48 @@ func init_vk(vc *VkCube) {
 		vc.protected = 0
 	}
 
-	var properties vulkan.PhysicalDeviceProperties
-	vulkan.GetPhysicalDeviceProperties(vc.physical_device, &properties)
+	var properties vk.PhysicalDeviceProperties
+	vk.GetPhysicalDeviceProperties(vc.physical_device, &properties)
+
+	properties.Deref()
+
 	fmt.Printf("vendor id %04x, device name %s\n",
 		properties.VendorID, properties.DeviceName)
 
-	vulkan.GetPhysicalDeviceMemoryProperties(vc.physical_device, &vc.memory_properties)
+	vk.GetPhysicalDeviceMemoryProperties(vc.physical_device, &vc.memory_properties)
 
-	vulkan.GetPhysicalDeviceQueueFamilyProperties(vc.physical_device, &count, nil)
+	vc.memory_properties.Deref()
+
+	for i := range vc.memory_properties.MemoryTypes {
+		vc.memory_properties.MemoryTypes[i].Deref()
+	}
+
+	vk.GetPhysicalDeviceQueueFamilyProperties(vc.physical_device, &count, nil)
 	if !(count > 0) {
 		panic("assert")
 	}
-	var props = make([]vulkan.QueueFamilyProperties, count)
-	vulkan.GetPhysicalDeviceQueueFamilyProperties(vc.physical_device, &count, props)
-	if 0 == (props[0].QueueFlags & vulkan.QueueFlags(vulkan.QueueGraphicsBit)) {
+	var props = make([]vk.QueueFamilyProperties, count)
+	vk.GetPhysicalDeviceQueueFamilyProperties(vc.physical_device, &count, props)
+
+	for i := range props {
+		props[i].Deref()
+	}
+
+	if 0 == (props[0].QueueFlags & vk.QueueFlags(vk.QueueGraphicsBit)) {
 		panic("assert")
 	}
 
-	var flag vulkan.DeviceQueueCreateFlags = 0
+	var flag vk.DeviceQueueCreateFlags = 0
 	if vc.protected != 0 {
-		flag = vulkan.DeviceQueueCreateFlags(vulkan.DeviceQueueCreateProtectedBit)
+		flag = vk.DeviceQueueCreateFlags(vk.DeviceQueueCreateProtectedBit)
 	}
 
-	vulkan.CreateDevice(vc.physical_device,
-		&vulkan.DeviceCreateInfo{
-			SType:                vulkan.StructureTypeDeviceCreateInfo,
+	vk.CreateDevice(vc.physical_device,
+		&vk.DeviceCreateInfo{
+			SType:                vk.StructureTypeDeviceCreateInfo,
 			QueueCreateInfoCount: 1,
-			PQueueCreateInfos: []vulkan.DeviceQueueCreateInfo{{
-				SType:            vulkan.StructureTypeDeviceQueueCreateInfo,
+			PQueueCreateInfos: []vk.DeviceQueueCreateInfo{{
+				SType:            vk.StructureTypeDeviceQueueCreateInfo,
 				QueueFamilyIndex: 0,
 				QueueCount:       1,
 				Flags:            flag,
@@ -553,13 +584,13 @@ func init_vk(vc *VkCube) {
 			}},
 			EnabledExtensionCount: 1,
 			PpEnabledExtensionNames: []string{
-				vulkan.KhrSwapchainExtensionName,
+				vk.KhrSwapchainExtensionName + "\000",
 			},
 		},
 		nil,
 		&dev)
 
-	vulkan.GetDeviceQueue(dev, 0, 0, &que)
+	vk.GetDeviceQueue(dev, 0, 0, &que)
 
 	vc.device = dev
 	vc.queue = que
@@ -623,7 +654,7 @@ func main() {
 
 	init_vk(&vc)
 
-	if !vulkan.GetPhysicalDeviceWaylandPresentationSupport((vc.instance),
+	if !vulkan.GetPhysicalDeviceWaylandPresentationSupport(
 		(vc.physical_device), 0, uintptr(unsafe.Pointer(vc.wl.ndisplay))) {
 
 		panic("no wl support on physical device")
@@ -634,7 +665,7 @@ func main() {
 
 	vulkan.CreateWaylandSurface(inst,
 		&vulkan.WaylandSurfaceCreateInfo{
-			SType:   vulkan.StructureTypeWaylandSurfaceCreateInfo,
+			SType:   vk.StructureTypeWaylandSurfaceCreateInfo,
 			Display: uintptr(unsafe.Pointer(vc.wl.ndisplay)),
 			Surface: uintptr(unsafe.Pointer(vc.wl.nsurface)),
 		}, nil, &surf)

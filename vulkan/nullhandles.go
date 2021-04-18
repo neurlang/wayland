@@ -2,7 +2,7 @@
 
 package vulkan
 
-//import "github.com/vulkan-go/vulkan"
+import "github.com/vulkan-go/vulkan"
 import "unsafe"
 
 /*
@@ -13,5 +13,5 @@ VkPipelineCache nilPipelineCache =  (VkPipelineCache) { VK_NULL_HANDLE };
 */
 import "C"
 
-var NilPipeline = (*Pipeline)(unsafe.Pointer(&C.nilPipeline));
-var NilPipelineCache = (*PipelineCache)(unsafe.Pointer(&C.nilPipelineCache));
+var NilPipeline = (*vulkan.Pipeline)(unsafe.Pointer(&C.nilPipeline))
+var NilPipelineCache = (*vulkan.PipelineCache)(unsafe.Pointer(&C.nilPipelineCache))

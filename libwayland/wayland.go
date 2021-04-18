@@ -38,7 +38,6 @@ import "C"
 import "unsafe"
 import "sync"
 
-
 // Interfaces
 
 type Display C.struct_wl_display
@@ -615,7 +614,6 @@ func DisplayDispatch(d *Display) int {
 	return (int)(C.wl_display_dispatch((*C.struct_wl_display)(unsafe.Pointer(d))))
 }
 
-
 func DisplayRoundtrip(d *Display) int {
 	return (int)(C.wl_display_roundtrip((*C.struct_wl_display)(unsafe.Pointer(d))))
 }
@@ -717,7 +715,6 @@ func DisplayGetFd(d *Display) int {
 	return (int)(C.wl_display_get_fd((*C.struct_wl_display)(unsafe.Pointer(d))))
 }
 
-
 func DisplayPrepareRead(d *Display) int {
 	return (int)(C.wl_display_prepare_read((*C.struct_wl_display)(unsafe.Pointer(d))))
 }
@@ -730,7 +727,7 @@ func DisplayFlush(d *Display) (n int, err error) {
 	if n == -1 {
 		err = errno
 	}
-	
+
 	return
 }
 func DisplayCancelRead(d *Display) {
