@@ -239,6 +239,7 @@ func choose_surface_format(vc *VkCube) vk.Format {
 			fallthrough
 			/* We would like to support these but they don't seem to work. */
 		default:
+			println(formats[i].Format)
 			continue
 		}
 	}
@@ -472,9 +473,6 @@ func create_swapchain(vc *VkCube) {
 	}
 }
 
-var que vk.Queue
-var dev vk.Device
-
 func init_vk(vc *VkCube) {
 	const extension = "VK_KHR_wayland_surface\000"
 
@@ -570,6 +568,9 @@ func init_vk(vc *VkCube) {
 	if vc.protected != 0 {
 		flag = vk.DeviceQueueCreateFlags(vk.DeviceQueueCreateProtectedBit)
 	}
+	
+	var que vk.Queue
+	var dev vk.Device
 
 	vk.CreateDevice(vc.physical_device,
 		&vk.DeviceCreateInfo{
@@ -651,6 +652,8 @@ func main() {
 	vc.wl.wait_for_configure = true
 
 	vc.wl.nsurface.Commit()
+	
+	wayland.DisplayRoundtrip(vc.wl.ndisplay)
 
 	init_vk(&vc)
 
@@ -671,6 +674,8 @@ func main() {
 		}, nil, &surf)
 
 	vc.surface = surf
+		
+	
 
 	vc.image_format = choose_surface_format(&vc)
 
