@@ -215,7 +215,6 @@ func (textarea *textarea) Key(
 			textarea.KeyReload("Delete", 0, time)
 			KeyRepeatSubscribe(textarea, "Delete", 0, time)
 
-		
 		case 'c', 'v':
 
 			if input.GetModifiers() == window.ModControlMask {
@@ -227,7 +226,7 @@ func (textarea *textarea) Key(
 			fallthrough
 
 		default:
-			println(string(input.GetRune(notUnicode)))		
+			println(string(input.GetRune(notUnicode)))
 			textarea.KeyReload(string(input.GetRune(notUnicode)), 0, time)
 		}
 
@@ -245,19 +244,19 @@ func (textarea *textarea) Key(
 		}
 		KeyRepeatSubscribe(textarea, "", notUnicode, time)
 		if textarea.KeyNavigate("", notUnicode, time) {
-			if input.GetModifiers() & window.ModShiftMask == 0 {
+			if input.GetModifiers()&window.ModShiftMask == 0 {
 				textarea.StringGrid.Selecting = false
 				textarea.StringGrid.IsSelected = false
 			}
 		}
 
 	} else {
-	
+
 		if textarea.KeyUnNavigate("", notUnicode, time) {
 			println("un repeat")
 			KeyRepeatSubscribe(nil, "", 0, time)
 		}
-	
+
 		switch notUnicode {
 		case 65505:
 			fallthrough
@@ -266,7 +265,7 @@ func (textarea *textarea) Key(
 			textarea.StringGrid.IsSelected = textarea.StringGrid.Selecting
 			textarea.StringGrid.Selecting = false
 		}
-	
+
 		fmt.Println("input.GetRune(notUnicode)=", string(input.GetRune(notUnicode)),
 			"input.GetUtf8()=", string(input.GetUtf8()),
 			"key=", key, "notUnicode=", notUnicode)
@@ -281,26 +280,23 @@ func (*textarea) Focus(window *window.Window, device *window.Input) {
 func (textarea *textarea) KeyUnNavigate(key string, notUnicode, time uint32) bool {
 	switch notUnicode {
 	case xkb.KeyDown:
-		textarea.navigateHeld &= 0xf^navigateDown
+		textarea.navigateHeld &= 0xf ^ navigateDown
 		return textarea.navigateHeld == 0
 	case xkb.KeyUp:
-		textarea.navigateHeld &= 0xf^navigateUp
+		textarea.navigateHeld &= 0xf ^ navigateUp
 		return textarea.navigateHeld == 0
 	case xkb.KeyLeft:
-		textarea.navigateHeld &= 0xf^navigateLeft
+		textarea.navigateHeld &= 0xf ^ navigateLeft
 		return textarea.navigateHeld == 0
 	case xkb.KeyRight:
-		textarea.navigateHeld &= 0xf^navigateRight
+		textarea.navigateHeld &= 0xf ^ navigateRight
 		return textarea.navigateHeld == 0
 	}
 	return true
 }
 
-
 func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool {
 
-
-	
 	switch notUnicode {
 	case xkb.KeyHome:
 		textarea.StringGrid.IbeamCursor.X = 0
@@ -340,18 +336,12 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 		return true
 
 	default:
-	
-		
-	
 
-	
+		/*
 
-	
-	/*
-	
-		fmt.Println("input.GetRune(notUnicode)=", string(input.GetRune(notUnicode)),
-			"input.GetUtf8()=", string(input.GetUtf8()),
-			"key=", key, "notUnicode=", notUnicode)*/
+			fmt.Println("input.GetRune(notUnicode)=", string(input.GetRune(notUnicode)),
+				"input.GetUtf8()=", string(input.GetUtf8()),
+				"key=", key, "notUnicode=", notUnicode)*/
 	}
 	return false
 }
@@ -362,25 +352,25 @@ func (textarea *textarea) KeyReload(key string, notUnicode, time uint32) {
 	} else {
 
 		content, err := load_content(ContentRequest{
-			Width: textarea.StringGrid.XCells,
+			Width:  textarea.StringGrid.XCells,
 			Height: textarea.StringGrid.YCells,
 			Write: &WriteRequest{
-				X: textarea.StringGrid.IbeamCursor.X,
-				Y: textarea.StringGrid.IbeamCursor.Y,
-				Key: key,
+				X:      textarea.StringGrid.IbeamCursor.X,
+				Y:      textarea.StringGrid.IbeamCursor.Y,
+				Key:    key,
 				Insert: true,
-		}})
+			}})
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		
+
 		textarea.StringGrid.Content = content.Content
-		
+
 		if content.Write != nil {
 			textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
 			textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
-			
+
 			textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
 			textarea.StringGrid.Selecting = false
 		}

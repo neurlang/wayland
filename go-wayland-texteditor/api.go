@@ -5,20 +5,19 @@ import "io/ioutil"
 import "encoding/json"
 import "bytes"
 
-
 type WriteRequest struct {
-	X, Y int
-	Key string
+	X, Y   int
+	Key    string
 	Insert bool
 }
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
-	Write *WriteRequest
+	Write                     *WriteRequest
 }
 type ContentResponse struct {
 	Content []string
-	Write *WriteResponse
+	Write   *WriteResponse
 }
 
 type WriteResponse struct {

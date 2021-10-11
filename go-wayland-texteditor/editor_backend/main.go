@@ -1,16 +1,15 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "encoding/json"
-    "io/ioutil"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
-
 var file = [][]string{
-[]string{"H","e","l","l","o",},
-[]string{"w","o","r","l","d",},
+	[]string{"H", "e", "l", "l", "o"},
+	[]string{"w", "o", "r", "l", "d"},
 }
 
 func handlerWrite(w *WriteRequest) *WriteResponse {
@@ -30,7 +29,7 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		wr.MoveX = -w.X
 		wr.MoveY = 1
 	case "Delete":
-		if (w.X == len(row)) {
+		if w.X == len(row) {
 			file[w.Y] = append(row, file[w.Y+1]...)
 			file = append(file[:w.Y+1], file[w.Y+2:]...)
 			return &wr
@@ -38,24 +37,24 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		row = append(row[:w.X], row[w.X+1:]...)
 		file[w.Y] = row
 	case "Backspace":
-		if (w.X == 0) {
+		if w.X == 0 {
 			if w.Y != 0 {
 				wr.MoveX = len(file[w.Y-1])
 				wr.MoveY = -1
 				file[w.Y-1] = append(file[w.Y-1], row...)
 				file = append(file[:w.Y], file[w.Y+1:]...)
 			}
-		
+
 			return &wr
 		}
 		row = append(row[:w.X-1], row[w.X:]...)
 		file[w.Y] = row
 		wr.MoveX = -1
 	default:
-		if (w.X == len(row)) {
+		if w.X == len(row) {
 			row = append(row, w.Key)
 			file[w.Y] = row
-		} else if (w.Insert) {
+		} else if w.Insert {
 			row = append(row[:w.X+1], row[w.X:]...)
 			file[w.Y] = row
 		}
@@ -69,19 +68,19 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 /////////////////
 
 type WriteRequest struct {
-	X, Y int
-	Key string
+	X, Y   int
+	Key    string
 	Insert bool
 }
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
-	Write *WriteRequest
+	Write                     *WriteRequest
 }
 
 type ContentResponse struct {
 	Content []string
-	Write *WriteResponse
+	Write   *WriteResponse
 }
 
 type WriteResponse struct {
@@ -90,13 +89,13 @@ type WriteResponse struct {
 
 func handlerContent(w http.ResponseWriter, r *http.Request) {
 
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
 		return
-    }
-    println(string(body))
-    
-    	var cr ContentRequest
+	}
+	println(string(body))
+
+	var cr ContentRequest
 	err = json.Unmarshal(body, &cr)
 	if err != nil {
 		return
@@ -105,30 +104,26 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	if cr.Write != nil {
 		resp.Write = handlerWrite(cr.Write)
 	}
-	
-	
 
-	
 	for y := cr.Ypos; y < cr.Ypos+cr.Height; y++ {
-	for x := cr.Xpos; x < cr.Xpos+cr.Width; x++ {
-		if y >= len(file) || x >= len(file[y]) {
-			resp.Content = append(resp.Content, " ")
-		} else {
-			resp.Content = append(resp.Content, file[y][x])
+		for x := cr.Xpos; x < cr.Xpos+cr.Width; x++ {
+			if y >= len(file) || x >= len(file[y]) {
+				resp.Content = append(resp.Content, " ")
+			} else {
+				resp.Content = append(resp.Content, file[y][x])
+			}
 		}
 	}
+
+	bytes, err := json.Marshal(resp)
+	if err != nil {
+		return
 	}
 
-    bytes, err := json.Marshal(resp)
-    if err != nil {
-		return
-    }
-
-    w.Write(bytes)
+	w.Write(bytes)
 }
 
-
 func main() {
-    http.HandleFunc("/content", handlerContent)
-    log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/content", handlerContent)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

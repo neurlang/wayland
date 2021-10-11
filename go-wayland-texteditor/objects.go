@@ -130,7 +130,7 @@ func (sg *StringGrid) Render(c Canvas) {
 		}
 	}
 
-	if (c.GetTime() - uint32(sg.IbeamCursorBlinkFix)) &512 == 0 {
+	if (c.GetTime()-uint32(sg.IbeamCursorBlinkFix))&512 == 0 {
 		var cursor = &IbeamCursor{
 			Pos: ObjectPosition{
 				sg.Pos.X + sg.IbeamCursor.X*sg.CellWidth,
