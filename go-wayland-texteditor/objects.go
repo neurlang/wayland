@@ -56,15 +56,9 @@ func (sg *StringGrid) Button(up bool) {
 		sg.Selecting = false
 	} else {
 		sg.Selecting = true
-		if sg.IsSelected {
-			sg.IsSelected = false
-			sg.SelectionCursor = sg.Hover
-			sg.IbeamCursor = sg.Hover
-		} else {
-			sg.SelectionCursor = sg.IbeamCursor
-			sg.IbeamCursor = sg.Hover
-		}
-
+		sg.IsSelected = false
+		sg.SelectionCursor = sg.Hover
+		sg.IbeamCursor = sg.Hover
 	}
 }
 func (sg *StringGrid) Motion(pos ObjectPosition) {
