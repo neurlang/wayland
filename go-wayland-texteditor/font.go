@@ -4,14 +4,12 @@ import "os"
 import "image/png"
 import "image/color"
 import "strings"
+import "fmt"
 
 type Font struct {
-	width    int
-	height   int
-	cellx    int
-	celly    int
-	mapping  map[string][2]int
-	mapping2 map[[2]int][][3]byte
+	cellx   int
+	celly   int
+	mapping map[string][][3]byte
 }
 
 func (f *Font) GetRGBTexture(code string) [][3]byte {
@@ -20,11 +18,7 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 	if !ok {
 		return nil
 	}
-	var b, ok2 = f.mapping2[a]
-	if !ok2 {
-		return nil
-	}
-	return b
+	return a
 }
 
 func (f *Font) Load(name, descriptor string) error {
@@ -44,23 +38,30 @@ func (f *Font) Load(name, descriptor string) error {
 	}
 	b := img.Bounds()
 
-	f.width = b.Max.X - b.Min.X
-	f.height = b.Max.Y - b.Min.Y
+	var width = b.Max.X - b.Min.X
+	var height = b.Max.Y - b.Min.Y
 
 	var buffer = strings.Split(strings.ReplaceAll(descriptor, "\r\n", "\n"), "\n")
 	var buf0 = strings.Split(buffer[0], "\t")
 
-	f.cellx = f.width / len(buf0)
-	f.celly = f.height / len(buffer)
+	var cellx = width / len(buf0)
+	var celly = height / len(buffer)
 
-	f.mapping = make(map[string][2]int)
-	f.mapping2 = make(map[[2]int][][3]byte)
+	if f.mapping == nil {
+		f.cellx = cellx
+		f.celly = celly
+	} else if f.cellx != cellx || f.celly != celly {
+		return fmt.Errorf("only same cell sized fonts can be merged")
+	}
+
+	var mapping = make(map[string][2]int)
+	var mapping2 = make(map[[2]int][][3]byte)
 
 	for y, v := range buffer {
 		var buf = strings.Split(v, "\t")
 		for x, cell := range buf {
 
-			f.mapping[cell] = [2]int{x, y}
+			mapping[cell] = [2]int{x, y}
 		}
 	}
 
@@ -70,14 +71,20 @@ func (f *Font) Load(name, descriptor string) error {
 			var ix = (x - b.Min.X) / f.cellx
 			var i = [2]int{ix, iy}
 
-			var sli = f.mapping2[i]
+			var sli = mapping2[i]
 
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
 
 			sli = append(sli, [3]byte{c.R, c.G, c.B})
 
-			f.mapping2[i] = sli
+			mapping2[i] = sli
 		}
+	}
+	if f.mapping == nil {
+		f.mapping = make(map[string][][3]byte)
+	}
+	for k, v := range mapping {
+		f.mapping[k] = mapping2[v]
 	}
 	return nil
 }

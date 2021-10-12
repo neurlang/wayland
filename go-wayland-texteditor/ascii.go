@@ -16,10 +16,3 @@ $	4	D	T	d	t
 -	=	M	]	m	}
 .	>	N	^	n	~
 /	?	O	_	o	`
-
-var AsciiFont Font
-
-func init() {
-	(&AsciiFont).Load("ascii.png", asciiDescriptor)
-
-}

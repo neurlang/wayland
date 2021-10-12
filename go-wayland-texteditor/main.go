@@ -396,7 +396,7 @@ func main() {
 		return
 	}
 
-	textarea.StringGrid.Font = &AsciiFont
+	textarea.StringGrid.Font = &UnicodeFont
 	textarea.StringGrid.Content = content.Content
 	textarea.StringGrid.XCells = 90
 	textarea.StringGrid.YCells = 30
