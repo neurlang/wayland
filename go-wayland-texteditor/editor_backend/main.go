@@ -80,6 +80,7 @@ type ContentRequest struct {
 
 type ContentResponse struct {
 	Content []string
+	FgColor [][5]int
 	Write   *WriteResponse
 }
 
@@ -114,6 +115,8 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	resp.FgColor = reprocess_syntax_highlighting_golang(file)
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {

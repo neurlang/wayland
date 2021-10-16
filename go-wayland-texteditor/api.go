@@ -17,6 +17,7 @@ type ContentRequest struct {
 }
 type ContentResponse struct {
 	Content []string
+	FgColor [][5]int
 	Write   *WriteResponse
 }
 

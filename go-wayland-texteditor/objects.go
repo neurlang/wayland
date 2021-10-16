@@ -48,6 +48,7 @@ type StringGrid struct {
 	SelectionCursor       ObjectPosition
 	Hover                 ObjectPosition
 	Selecting, IsSelected bool
+	ContentFgColor        map[[2]int][3]byte
 }
 
 func (sg *StringGrid) Button(up bool) {
@@ -68,6 +69,17 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 		sg.IbeamCursor = sg.Hover
 
 	}
+}
+
+func (sg *StringGrid) FgColor(x, y int) [3]byte {
+	for i := x; i >= 0 && i > x-16; i-- {
+		if sg.ContentFgColor != nil {
+			if c, ok := sg.ContentFgColor[[2]int{i, y}]; ok {
+				return c
+			}
+		}
+	}
+	return [3]byte{255, 255, 255}
 }
 
 func (sg *StringGrid) Width() int {
@@ -99,13 +111,14 @@ func (sg *StringGrid) Render(c Canvas) {
 
 			var selected = sg.Selected(x, y)
 			var bgcolor = [3]byte{0, 27, 51}
-			var fgcolor = [3]byte{255, 255, 255}
+			var fgcolor = sg.FgColor(x, y)
 			if selected {
 				bgcolor = [3]byte{0, 136, 255}
 				fgcolor = [3]byte{255, 255, 255}
 			} else if sg.RowFocused(y) {
 				bgcolor = [3]byte{0, 59, 112}
 			}
+			fgcolor = maxColor(fgcolor, bgcolor)
 
 			var cell = &StringCell{
 				Pos: ObjectPosition{

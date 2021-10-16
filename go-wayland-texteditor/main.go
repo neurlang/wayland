@@ -29,6 +29,7 @@ import wl "github.com/neurlang/wayland/wl"
 import xkb "github.com/neurlang/wayland/xkbcommon"
 import window "github.com/neurlang/wayland/window"
 import "fmt"
+import "sync"
 
 const navigateUp = 1
 const navigateDown = 2
@@ -42,6 +43,7 @@ type textarea struct {
 	width   int32
 	height  int32
 	StringGrid
+	mutex        sync.RWMutex
 	navigateHeld byte
 }
 
@@ -52,6 +54,34 @@ type surface struct {
 
 func (s *surface) GetTime() uint32 {
 	return s.time
+}
+
+func minColor(a, b [3]byte) (o [3]byte) {
+	o = b
+	if a[0] < b[0] {
+		o[0] = a[0]
+	}
+	if a[1] < b[1] {
+		o[1] = a[1]
+	}
+	if a[2] < b[2] {
+		o[2] = a[2]
+	}
+	return o
+}
+
+func maxColor(a, b [3]byte) (o [3]byte) {
+	o = b
+	if a[0] > b[0] {
+		o[0] = a[0]
+	}
+	if a[1] > b[1] {
+		o[1] = a[1]
+	}
+	if a[2] > b[2] {
+		o[2] = a[2]
+	}
+	return o
 }
 
 func (s *surface) PutRGB(pos ObjectPosition, texture_rgb [][3]byte, texture_width int, Bg, Fg [3]byte, flip bool) {
@@ -124,6 +154,9 @@ func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwid
 }
 
 func render(textarea *textarea, s cairo.Surface, time uint32) {
+	textarea.mutex.RLock()
+	defer textarea.mutex.RUnlock()
+
 	textarea.StringGrid.Render(&surface{s, time})
 }
 
@@ -143,21 +176,35 @@ func (textarea *textarea) Redraw(widget *window.Widget) {
 }
 
 func (s *textarea) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	s.StringGrid.Selecting = false
 	s.StringGrid.Motion(ObjectPosition{int((x + float32(s.StringGrid.CellWidth)*0.5) / float32(s.StringGrid.CellWidth)), int(y / float32(s.StringGrid.CellHeight))})
 
 }
 func (s *textarea) Leave(widget *window.Widget, input *window.Input) {
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	s.StringGrid.Selecting = false
 
 }
 func (s *textarea) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	s.StringGrid.Motion(ObjectPosition{int((x + float32(s.StringGrid.CellWidth)*0.5) / float32(s.StringGrid.CellWidth)), int(y / float32(s.StringGrid.CellHeight))})
 
 	return window.CursorIbeam
 }
 func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	if button == 272 {
 		s.StringGrid.Button(state == wl.PointerButtonStateReleased)
@@ -197,6 +244,8 @@ func (textarea *textarea) Key(
 	state wl.KeyboardKeyState,
 	data window.WidgetHandler,
 ) {
+	textarea.mutex.Lock()
+	defer textarea.mutex.Unlock()
 
 	var entered = input.GetRune(notUnicode)
 
@@ -206,13 +255,13 @@ func (textarea *textarea) Key(
 		case xkb.KeyKpEnter:
 			fallthrough
 		case xkb.KeyReturn:
-			textarea.KeyReload("Enter", 0, time)
+			textarea.KeyReloadNoMutex("Enter", 0, time)
 			KeyRepeatSubscribe(textarea, "Enter", 0, time)
 		case xkb.KeyBackspace:
-			textarea.KeyReload("Backspace", 0, time)
+			textarea.KeyReloadNoMutex("Backspace", 0, time)
 			KeyRepeatSubscribe(textarea, "Backspace", 0, time)
 		case xkb.KeyDelete:
-			textarea.KeyReload("Delete", 0, time)
+			textarea.KeyReloadNoMutex("Delete", 0, time)
 			KeyRepeatSubscribe(textarea, "Delete", 0, time)
 
 		case 'c', 'v':
@@ -227,7 +276,7 @@ func (textarea *textarea) Key(
 
 		default:
 			println(string(input.GetRune(notUnicode)))
-			textarea.KeyReload(string(input.GetRune(notUnicode)), 0, time)
+			textarea.KeyReloadNoMutex(string(input.GetRune(notUnicode)), 0, time)
 		}
 
 	} else if state == wl.KeyboardKeyStatePressed {
@@ -345,7 +394,14 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 	}
 	return false
 }
+
 func (textarea *textarea) KeyReload(key string, notUnicode, time uint32) {
+	textarea.mutex.Lock()
+	defer textarea.mutex.Unlock()
+	textarea.KeyReloadNoMutex(key, notUnicode, time)
+}
+
+func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) {
 
 	if key == "" {
 		textarea.KeyNavigate(key, notUnicode, time)
@@ -366,6 +422,10 @@ func (textarea *textarea) KeyReload(key string, notUnicode, time uint32) {
 		}
 
 		textarea.StringGrid.Content = content.Content
+		textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
+		for _, v := range content.FgColor {
+			textarea.StringGrid.ContentFgColor[[2]int{v[0], v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
+		}
 
 		if content.Write != nil {
 			textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
