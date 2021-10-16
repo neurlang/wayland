@@ -94,7 +94,7 @@ func (sg *StringGrid) Selected(x, y int) bool {
 	if !(sg.Selecting || sg.IsSelected) {
 		return false
 	}
-	var objs = [3]ObjectPosition{sg.SelectionCursor, sg.IbeamCursor, ObjectPosition{x, y}}
+	var objs = [3]ObjectPosition{sg.SelectionCursor, sg.IbeamCursor, {x, y}}
 	sort.Slice(objs[:], func(i, j int) bool {
 		return objs[i].Less(objs[j])
 	})

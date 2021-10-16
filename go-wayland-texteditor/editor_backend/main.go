@@ -8,8 +8,8 @@ import (
 )
 
 var file = [][]string{
-	[]string{"H", "e", "l", "l", "o"},
-	[]string{"w", "o", "r", "l", "d"},
+	{"H", "e", "l", "l", "o"},
+	{"w", "o", "r", "l", "d"},
 }
 
 func handlerWrite(w *WriteRequest) *WriteResponse {

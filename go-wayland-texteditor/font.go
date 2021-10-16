@@ -58,7 +58,7 @@ func (f *Font) Load(name, descriptor string) error {
 	var mapping2 = make(map[[2]int][][3]byte)
 
 	for y, v := range buffer {
-		var buf = strings.Split(v, "\t")
+		var buf = strings.Split(strings.Trim(v, "\t"), "\t")
 		for x, cell := range buf {
 
 			mapping[cell] = [2]int{x, y}
