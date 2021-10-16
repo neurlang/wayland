@@ -51,7 +51,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int
 			loaded = hash(a[0], loaded)
 			length++
 			digits = false
-		case "(", ")", "{", ":", " ", "", "\t":
+		case "(", ")", "{", ":", " ", "", "\t", ";":
 			out = append(out, reprocess_syntax_highlighting_end(loaded, length, x, y, digits)...)
 			length = 0
 			loaded = 0
@@ -68,7 +68,7 @@ func reprocess_syntax_highlighting_end(loaded uint64, length, x, y int, digits b
 	switch loaded {
 	case hashstr("func"), hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"),
 		hashstr("switch"), hashstr("len"), hashstr("append"), hashstr("range"), hashstr("else"),
-		hashstr("package"), hashstr("else"), hashstr("default"):
+		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"):
 		out = append(out, [5]int{x - length, y, 255, 128, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("int"), hashstr("uint"), hashstr("int64"), hashstr("int32"), hashstr("uint64"),
