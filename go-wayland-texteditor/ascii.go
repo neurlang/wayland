@@ -1,6 +1,6 @@
 package main
 
-var asciiDescriptor = ` 	0	@	P	'	p
+var asciiDescriptor = ` 	0	@	P	`+"`"+`	p
 !	1	A	Q	a	q
 "	2	B	R	b	r
 #	3	C	S	c	s
