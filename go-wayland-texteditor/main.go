@@ -277,6 +277,14 @@ func (textarea *textarea) Key(
 					}
 					_ = src
 				*/
+				if notUnicode == 'c' {
+
+				}
+				if notUnicode == 'v' {
+
+					input.ReceiveSelectionData("text/plain", &Paste{Textarea: textarea})
+
+				}
 
 				println("CTRL C/V")
 				break
@@ -411,6 +419,23 @@ func (textarea *textarea) KeyReload(key string, notUnicode, time uint32) {
 	textarea.KeyReloadNoMutex(key, notUnicode, time)
 }
 
+func (textarea *textarea) handleContent(content *ContentResponse) {
+
+	textarea.StringGrid.Content = content.Content
+	textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
+	for _, v := range content.FgColor {
+		textarea.StringGrid.ContentFgColor[[2]int{v[0], v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
+	}
+
+	if content.Write != nil {
+		textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
+		textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
+
+		textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
+		textarea.StringGrid.Selecting = false
+	}
+}
+
 func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) {
 
 	if key == "" {
@@ -431,19 +456,7 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 			return
 		}
 
-		textarea.StringGrid.Content = content.Content
-		textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
-		for _, v := range content.FgColor {
-			textarea.StringGrid.ContentFgColor[[2]int{v[0], v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
-		}
-
-		if content.Write != nil {
-			textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
-			textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
-
-			textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
-			textarea.StringGrid.Selecting = false
-		}
+		textarea.handleContent(content)
 	}
 }
 

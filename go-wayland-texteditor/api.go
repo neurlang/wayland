@@ -10,10 +10,15 @@ type WriteRequest struct {
 	Key    string
 	Insert bool
 }
+type PasteRequest struct {
+	X, Y   int
+	Buffer []byte
+}
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
 	Write                     *WriteRequest
+	Paste                     *PasteRequest
 }
 type ContentResponse struct {
 	Content []string

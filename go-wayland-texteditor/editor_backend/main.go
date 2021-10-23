@@ -5,11 +5,59 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var file = [][]string{
 	{"H", "e", "l", "l", "o"},
 	{"w", "o", "r", "l", "d"},
+}
+
+func handlerPaste(p *PasteRequest) {
+	var array = string(p.Buffer)
+	if p.Y >= len(file) {
+		return
+	}
+	if p.X > len(file[p.Y]) {
+		return
+	}
+
+	temp := strings.Split(strings.ReplaceAll(array, "\r\n", "\n"), "\n")
+	if len(temp) > 0 {
+		file = append(file[:p.Y+1], append(make([][]string, len(temp)-1), file[p.Y+1:]...)...)
+	}
+	var rrow []string
+
+	for i, subarray := range temp {
+		if len(subarray) == 0 && i+1 == len(temp) {
+			break
+		}
+		array := []rune(subarray)
+		if p.Y >= len(file) {
+			file = append(file, []string{})
+		}
+		var row = file[p.Y]
+		if p.X > len(row) {
+			p.X = 0
+		}
+		if rrow == nil {
+			rrow = row[p.X:]
+		}
+		row = row[:p.X:p.X]
+
+		for _, c := range array {
+			var char = string(c)
+			row = append(row, char)
+		}
+		file[p.Y] = row
+
+		p.X = 0
+		p.Y++
+	}
+	if p.Y >= len(file) {
+		file = append(file, []string{})
+	}
+	file[p.Y] = append(file[p.Y], rrow...)
 }
 
 func handlerWrite(w *WriteRequest) *WriteResponse {
@@ -73,9 +121,15 @@ type WriteRequest struct {
 	Insert bool
 }
 
+type PasteRequest struct {
+	X, Y   int
+	Buffer []byte
+}
+
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
 	Write                     *WriteRequest
+	Paste                     *PasteRequest
 }
 
 type ContentResponse struct {
@@ -104,6 +158,10 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	var resp ContentResponse
 	if cr.Write != nil {
 		resp.Write = handlerWrite(cr.Write)
+	}
+
+	if cr.Paste != nil {
+		handlerPaste(cr.Paste)
 	}
 
 	for y := cr.Ypos; y < cr.Ypos+cr.Height; y++ {

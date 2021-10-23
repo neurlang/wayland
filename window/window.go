@@ -29,6 +29,7 @@ import zxdg "github.com/neurlang/wayland/xdg"
 import cairo "github.com/neurlang/wayland/cairoshim"
 
 import "os"
+import "io"
 
 import sys "github.com/neurlang/wayland/os"
 import xkb "github.com/neurlang/wayland/xkbcommon"
@@ -2382,6 +2383,57 @@ func inputSetPointerImage(Input *Input, pointer int) {
 
 		inputSetPointerImageIndex(Input, 0)
 	}
+}
+
+//line 4020
+func (of *dataOffer) ReceiveData(mimeType string, function io.WriteCloser) error {
+	var f1, f2, err = os.Pipe()
+	if err != nil {
+		return err
+	}
+
+	of.offer.Receive(mimeType, f2.Fd())
+	f2.Close()
+
+	go func(f *os.File) {
+		for {
+			n, err := io.Copy(function, f)
+			if n == 0 {
+				function.Close()
+				f.Close()
+				return
+			}
+			if err != nil {
+				function.Close()
+				f.Close()
+				return
+			}
+		}
+	}(f1)
+
+	return nil
+}
+
+//line 4062
+func (input *Input) ReceiveSelectionData(mimeType string, function io.WriteCloser) error {
+
+	if input.selectionOffer == nil {
+		return errors.New("no offer")
+	}
+	if function == nil {
+		return errors.New("nil function")
+	}
+	var found bool
+	for _, p := range input.selectionOffer.types {
+		if mimeType == p {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return errors.New("not found")
+	}
+	return input.selectionOffer.ReceiveData(mimeType, function)
 }
 
 // line 4104
