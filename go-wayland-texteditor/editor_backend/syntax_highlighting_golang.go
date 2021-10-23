@@ -20,7 +20,7 @@ func hash(b byte, x uint64) uint64 {
 	x ^= x << 13
 	x ^= x >> 7
 	x ^= x << 17
-	return x
+	return x - 1
 }
 
 func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int) {
@@ -51,7 +51,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int
 			loaded = hash(a[0], loaded)
 			length++
 			digits = false
-		case "(", ")", "{", ":", " ", "", "\t", ";":
+		case "(", ")", "{", ":", " ", "", "\t", ";", ",":
 			out = append(out, reprocess_syntax_highlighting_end(loaded, length, x, y, digits)...)
 			length = 0
 			loaded = 0

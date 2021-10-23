@@ -61,4 +61,6 @@ func init() {
 	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor)
 	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor)
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor)
+	(&UnicodeFont).Alias("\t", " ")
+	(&UnicodeFont).Alias("", " ")
 }

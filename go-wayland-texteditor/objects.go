@@ -49,6 +49,7 @@ type StringGrid struct {
 	Hover                 ObjectPosition
 	Selecting, IsSelected bool
 	ContentFgColor        map[[2]int][3]byte
+	lineLen		      []int
 }
 
 func (sg *StringGrid) Button(up bool) {
@@ -63,6 +64,12 @@ func (sg *StringGrid) Button(up bool) {
 	}
 }
 func (sg *StringGrid) Motion(pos ObjectPosition) {
+
+	for pos.X > 0 && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
+		pos.X--
+	}
+
+
 	sg.Hover = pos
 
 	if sg.Selecting {

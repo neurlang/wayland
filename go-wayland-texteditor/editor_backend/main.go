@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
+const tabSize = 8
+
 var file = [][]string{
-	{"H", "e", "l", "l", "o"},
+	{"H", "e", "l", "l", "o","c","r","u","e","l"},
 	{"w", "o", "r", "l", "d"},
 }
 
@@ -47,6 +49,11 @@ func handlerPaste(p *PasteRequest) {
 
 		for _, c := range array {
 			var char = string(c)
+			if char == "\t" {
+				for len(row) & (tabSize-1) != (tabSize-1) {
+					row = append(row, "")
+				}
+			}
 			row = append(row, char)
 		}
 		file[p.Y] = row
@@ -82,9 +89,13 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 			file = append(file[:w.Y+1], file[w.Y+2:]...)
 			return &wr
 		}
+		for row[w.X] == "" {
+			row = append(row[:w.X], row[w.X+1:]...)
+		}
 		row = append(row[:w.X], row[w.X+1:]...)
 		file[w.Y] = row
 	case "Backspace":
+	again:
 		if w.X == 0 {
 			if w.Y != 0 {
 				wr.MoveX = len(file[w.Y-1])
@@ -97,12 +108,37 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		}
 		row = append(row[:w.X-1], row[w.X:]...)
 		file[w.Y] = row
-		wr.MoveX = -1
+		wr.MoveX--
+		w.X--
+		if (w.X >= 1 && row[w.X-1] == "") {
+			goto again
+		}
+	case "\t":
+		for {
+			if w.X == len(row) {
+				row = append(row, w.Key)
+				file[w.Y] = row
+			} else if w.Insert {
+				row = append(row[:w.X+1], row[w.X:]...)
+				file[w.Y] = row
+			}
+			if (w.X & (tabSize-1)) == (tabSize-1) {
+				row[w.X] = w.Key
+			} else {
+				row[w.X] = ""
+			}
+			println(w.Key)
+			wr.MoveX++
+			w.X++
+			if (w.X & (tabSize-1)) == 0 {
+				break
+			}
+		}
 	default:
 		if w.X == len(row) {
 			row = append(row, w.Key)
 			file[w.Y] = row
-		} else if w.Insert {
+		} else if w.Insert && row[w.X] != "" {
 			row = append(row[:w.X+1], row[w.X:]...)
 			file[w.Y] = row
 		}
@@ -167,7 +203,7 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	for y := cr.Ypos; y < cr.Ypos+cr.Height; y++ {
 		for x := cr.Xpos; x < cr.Xpos+cr.Width; x++ {
 			if y >= len(file) || x >= len(file[y]) {
-				resp.Content = append(resp.Content, " ")
+				resp.Content = append(resp.Content, "")
 			} else {
 				resp.Content = append(resp.Content, file[y][x])
 			}

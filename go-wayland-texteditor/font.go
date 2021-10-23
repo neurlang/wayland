@@ -21,6 +21,19 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 	return a
 }
 
+func (f *Font) Alias(alias, key string) error {
+	if f.mapping == nil {
+		println("no mapping")
+		return fmt.Errorf("no mapping")
+	}
+	if f.mapping[key] == nil {
+		println("key missing")
+		return fmt.Errorf("key missing")
+	}
+	f.mapping[alias] = f.mapping[key]
+	return nil
+}
+
 func (f *Font) Load(name, descriptor string) error {
 	file, err := os.Open(name)
 	if err != nil {
