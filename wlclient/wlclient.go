@@ -181,6 +181,43 @@ func SubsurfaceDestroy(p *wl.Subsurface) {
 	p.Unregister()
 }
 
+func DataDeviceManagerDestroy(d *wl.DataDeviceManager) {
+	//d.Destroy()
+	d.Unregister()
+}
+
+
+type DataDeviceListener interface {
+	wl.DataDeviceDataOfferHandler
+	wl.DataDeviceEnterHandler
+	wl.DataDeviceLeaveHandler
+	wl.DataDeviceMotionHandler
+	wl.DataDeviceDropHandler
+	wl.DataDeviceSelectionHandler
+}
+
+func DataDeviceAddListener(p *wl.DataDevice, h DataDeviceListener) {
+	p.AddDataOfferHandler(h)
+	p.AddEnterHandler(h)
+	p.AddLeaveHandler(h)
+	p.AddMotionHandler(h)
+	p.AddDropHandler(h)
+	p.AddSelectionHandler(h)
+}
+
+type DataOfferListener interface {
+	wl.DataOfferOfferHandler
+	wl.DataOfferSourceActionsHandler
+	wl.DataOfferActionHandler
+}
+
+func DataOfferAddListener(p *wl.DataOffer, h DataOfferListener) {
+	p.AddOfferHandler(h)
+	p.AddSourceActionsHandler(h)
+	p.AddActionHandler(h)
+}
+
+
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
 	c := wl.NewCompositor(r.Ctx)
 	_ = r.Bind(name, "wl_compositor", version, c)

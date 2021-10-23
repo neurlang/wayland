@@ -15,15 +15,16 @@ type Proxy interface {
 	SetContext(c *Context)
 	Id() ProxyId
 	SetId(id ProxyId)
-	//Name() string
-	//SetName(name string)
+//	Name() uint32
+//	SetName(name uint32)
+	Unregister()
 }
 
 // BaseProxy (Base Proxy) is a struct that stores Context and ProxyId explicitly
 type BaseProxy struct {
 	id  ProxyId
 	ctx *Context
-	//name string
+	name uint32
 }
 
 // Id BaseProxy implements Id to get ProxyId
@@ -47,12 +48,12 @@ func (p *BaseProxy) SetContext(c *Context) {
 }
 
 // BaseProxy implements Name
-//func (p *BaseProxy) Name() string {
+//func (p *BaseProxy) Name() uint32 {
 //	return p.name
 //}
 
 // BaseProxy implements SetName
-//func (p *BaseProxy) SetName(name string) {
+//func (p *BaseProxy) SetName(name uint32) {
 //	p.name = name
 //}
 

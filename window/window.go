@@ -86,6 +86,7 @@ type Display struct {
 	subcompositor      *wl.Subcompositor
 	shm                *wl.Shm
 	dataDeviceManager  *wl.DataDeviceManager
+	dataDeviceVersion  int
 	textCursorPosition *struct{}
 	xdgShell           *zxdg.WmBase
 	serial             uint32
@@ -189,6 +190,8 @@ func (s *surface) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	s.CallbackDone(ev.C, ev.CallbackData)
 }
 
+type DataHandler func(*Window, *Input, float32, float32, []string, *Window, WidgetHandler)
+
 type FullscreenHandler interface {
 	Fullscreen(*Window, WidgetHandler)
 }
@@ -257,6 +260,7 @@ type Window struct {
 
 	fullscreenHandler FullscreenHandler
 	closeHandler      CloseHandler
+	dataHandler       DataHandler
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
@@ -285,6 +289,10 @@ func (Window *Window) SetCloseHandler(handler CloseHandler) {
 
 	Window.closeHandler = handler
 
+}
+
+func (Window *Window) SetDataHandler(window *Window, handler DataHandler) {
+	window.dataHandler = handler
 }
 
 func (Window *Window) HandleToplevelConfigure(ev zxdg.ToplevelConfigureEvent) {
@@ -484,14 +492,135 @@ type Input struct {
 	repeatDelayNsec int32
 
 	//repeat_task     task
-	repeatSym   uint32
-	repeatKey   uint32
-	repeatTime  uint32
-	seatVersion int32
+	repeatSym      uint32
+	repeatKey      uint32
+	repeatTime     uint32
+	seatVersion    int32
+	selectionOffer *dataOffer
+	dragOffer      *dataOffer
+	offerData      map[*wl.DataOffer]*dataOffer
 }
 
 func (input *Input) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	input.CallbackDone(ev.C, ev.CallbackData)
+}
+
+type dataOffer struct {
+	input *Input
+	offer *wl.DataOffer
+
+	types []string
+}
+
+func (do *dataOffer) HandleDataOfferOffer(ev wl.DataOfferOfferEvent) {
+
+	println("HandleDataOfferOffer", ev.MimeType)
+
+	do.types = append(do.types, ev.MimeType)
+}
+
+func (do *dataOffer) HandleDataOfferSourceActions(ev wl.DataOfferSourceActionsEvent) {
+	println("HandleDataOfferSourceActions")
+
+}
+
+func (do *dataOffer) HandleDataOfferAction(ev wl.DataOfferActionEvent) {
+	println("HandleDataOfferAction")
+}
+
+func (input *Input) HandleDataDeviceDataOffer(ev wl.DataDeviceDataOfferEvent) {
+
+	println("HandleDataDeviceDataOffer")
+	var offer dataOffer
+
+	offer.input = input
+	offer.offer = ev.Offer
+
+	wlclient.DataOfferAddListener(offer.offer, &offer)
+
+	if input.offerData == nil {
+		input.offerData = make(map[*wl.DataOffer]*dataOffer)
+	}
+
+	input.offerData[ev.Offer] = &offer
+
+	println("HandleDataDeviceDataOffer")
+}
+
+func (input *Input) HandleDataDeviceEnter(ev wl.DataDeviceEnterEvent) {
+	println("HandleDataDeviceEnter")
+
+	surface := ev.Surface
+
+	if surface == nil {
+		return
+	}
+
+	window := surface.UserData.(*Window)
+	var typesData []string
+
+	if ev.Offer != nil {
+		input.dragOffer = input.offerData[ev.Offer]
+
+		typesData = input.dragOffer.types
+
+	}
+
+	if window.dataHandler != nil {
+		window.dataHandler(window, input, ev.X, ev.Y, typesData, window, window.Userdata)
+	}
+}
+
+func (input *Input) HandleDataDeviceLeave(ev wl.DataDeviceLeaveEvent) {
+	println("HandleDataDeviceLeave")
+
+	if input.dragOffer != nil {
+		input.dragOffer.offer.Destroy()
+		input.dragOffer.offer.Unregister()
+	}
+
+}
+
+func (input *Input) HandleDataDeviceMotion(ev wl.DataDeviceMotionEvent) {
+	println("HandleDataDeviceMotion")
+
+}
+
+func (input *Input) HandleDataDeviceDrop(ev wl.DataDeviceDropEvent) {
+	println("HandleDataDeviceDrop")
+}
+
+func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
+
+	println("HandleDataDeviceSelection")
+
+	//println("HandleDataDeviceSelection", input.selectionOffer.offer, ev.Offer)
+
+	if input.selectionOffer != nil {
+		if input.selectionOffer.offer != nil {
+			println("deleting")
+			input.selectionOffer.offer.Destroy()
+			input.selectionOffer.offer.Unregister()
+			input.selectionOffer.offer = nil
+		}
+
+	}
+
+	if ev.Offer != nil {
+
+		var another = input.offerData[ev.Offer]
+
+		if another == input.selectionOffer {
+			input.selectionOffer = nil
+		} else {
+
+			input.selectionOffer = another
+		}
+	} else {
+
+		input.selectionOffer = nil
+	}
+	//println("HandleDataDeviceSelection", input.selectionOffer.offer, ev.Offer)
 }
 
 type KeyboardHandler interface {
@@ -803,6 +932,9 @@ func (input *Input) SeatCapabilities(seat *wl.Seat, caps uint32) {
 }
 
 func (input *Input) HandleKeyboardEnter(e wl.KeyboardEnterEvent) {
+
+	println("kbEnter")
+
 	var window *Window
 	var surface = e.Surface
 	var serial = e.Serial
@@ -1823,7 +1955,7 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	switch iface {
 
 	case "wl_compositor":
-		d.compositor = wlclient.RegistryBindCompositorInterface(d.registry, id, 1)
+		d.compositor = wlclient.RegistryBindCompositorInterface(d.registry, id, 3)
 
 	case "wl_output":
 
@@ -1837,10 +1969,7 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 		d.shm = wlclient.RegistryBindShmInterface(d.registry, id, 1)
 		wlclient.ShmAddListener(d.shm, d)
 	case "wl_data_device_manager":
-		d.dataDeviceManagerVersion = minU32(version, 3)
-
-		wlclient.RegistryBindDataDeviceManagerInterface(d.registry, id,
-			d.dataDeviceManagerVersion)
+		displayAddDataDevice(d, id, version)
 
 	//case "zxdg_shell_v6":
 	case "xdg_wm_base":
@@ -2692,13 +2821,46 @@ func displayAddInput(d *Display, id uint32, displaySeatVersion int) {
 
 	wlclient.SeatAddListener(input_.seat, input_)
 
+	if d.dataDeviceManager != nil {
+		dev, err := d.dataDeviceManager.GetDataDevice(input_.seat)
+		if err != nil {
+			fmt.Println(err)
+		} else if dev != nil {
+			wlclient.DataDeviceAddListener(dev, input_)
+
+			input_.dataDevice = dev
+		}
+
+	}
+
 	ps, err := d.compositor.CreateSurface()
 	if err != nil {
 		fmt.Println(err)
 	} else {
 		input_.pointerSurface = ps
 	}
+}
 
+func displayAddDataDevice(d *Display, id uint32, ddmVersion uint32) {
+	d.dataDeviceManagerVersion = minU32(ddmVersion, 3)
+
+	d.dataDeviceManager = wlclient.RegistryBindDataDeviceManagerInterface(d.registry, id,
+		d.dataDeviceManagerVersion)
+
+	for _, input := range d.inputList {
+		if input.dataDevice == nil {
+
+			dev, err := d.dataDeviceManager.GetDataDevice(input.seat)
+			if err != nil {
+				fmt.Println(err)
+			} else if dev != nil {
+				wlclient.DataDeviceAddListener(dev, input)
+
+				input.dataDevice = dev
+			}
+
+		}
+	}
 }
 
 // line 6237
@@ -2765,9 +2927,21 @@ func (d *Display) Destroy() {
 		wlclient.ShmDestroy(d.shm)
 	}
 
+	if d.dataDeviceManager != nil {
+		wlclient.DataDeviceManagerDestroy(d.dataDeviceManager)
+	}
+
 	wlclient.RegistryDestroy(d.registry)
 
 	wlclient.DisplayDisconnect(d.Display)
+}
+
+//line 6425
+func (d *Display) CreateDataSource() (*wl.DataSource, error) {
+	if d.dataDeviceManager == nil {
+		return nil, errors.New("Device manager does not exist")
+	}
+	return d.dataDeviceManager.CreateDataSource()
 }
 
 //line 6478
@@ -2794,7 +2968,8 @@ func DisplayRun(Display *Display) {
 			break
 		}
 
-		if wlclient.DisplayRun(Display.Display) != nil {
+		if err := wlclient.DisplayRun(Display.Display); err != nil {
+			fmt.Println(err)
 			return
 		}
 

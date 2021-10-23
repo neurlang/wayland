@@ -177,6 +177,8 @@ func (textarea *textarea) Redraw(widget *window.Widget) {
 
 func (s *textarea) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
 
+	println("enter")
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -267,6 +269,14 @@ func (textarea *textarea) Key(
 		case 'c', 'v':
 
 			if input.GetModifiers() == window.ModControlMask {
+
+				/*
+					src, err := textarea.display.CreateDataSource()
+					if err != nil {
+						fmt.Println(err)
+					}
+					_ = src
+				*/
 
 				println("CTRL C/V")
 				break

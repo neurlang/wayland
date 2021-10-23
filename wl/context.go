@@ -27,10 +27,24 @@ type Context struct {
 	scms      []sys.SocketControlMessage
 }
 
+func (ctx *Context) RegisterMapped(proxy Proxy, num uint32) {
+	ctx.mu.Lock()
+	proxy.SetId(ProxyId(num))
+	proxy.SetContext(ctx)
+	ctx.objects[ProxyId(num)] = proxy
+	ctx.mu.Unlock()
+}
+
 // Register registers a proxy in the map of all Context objects (proxies)
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
-	ctx.currentId += 1
+	// avoid colliding with server side mapped proxy id?
+	for {
+		ctx.currentId += 1
+		if _, ok := ctx.objects[(ctx.currentId)]; !ok {
+			break
+		}
+	}
 	proxy.SetId(ctx.currentId)
 	proxy.SetContext(ctx)
 	ctx.objects[ctx.currentId] = proxy
@@ -50,9 +64,6 @@ func (ctx *Context) Unregister(id ProxyId) {
 func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 	ctx.mu.RLock()
 	defer ctx.mu.RUnlock()
-	if id > ctx.currentId {
-		return nil
-	}
 	proxy, ok := ctx.objects[id]
 	if !ok {
 		return nil

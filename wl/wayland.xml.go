@@ -1224,7 +1224,7 @@ const (
 )
 
 type DataDeviceDataOfferEvent struct {
-	Id *DataOffer
+	Offer *DataOffer
 }
 
 type DataDeviceDataOfferHandler interface {
@@ -1256,7 +1256,7 @@ type DataDeviceEnterEvent struct {
 	Surface *Surface
 	X       float32
 	Y       float32
-	Id      *DataOffer
+	Offer   *DataOffer
 }
 
 type DataDeviceEnterHandler interface {
@@ -1368,7 +1368,7 @@ func (p *DataDevice) RemoveDropHandler(h DataDeviceDropHandler) {
 }
 
 type DataDeviceSelectionEvent struct {
-	Id *DataOffer
+	Offer *DataOffer
 }
 
 type DataDeviceSelectionHandler interface {
@@ -1400,7 +1400,11 @@ func (p *DataDevice) Dispatch(event *Event) {
 	case 0:
 		if len(p.dataOfferHandlers) > 0 {
 			ev := DataDeviceDataOfferEvent{}
-			ev.Id = event.Proxy(p.Context()).(*DataOffer)
+			id := event.Uint32()
+			println(id)
+			offer := new(DataOffer)
+			p.Context().RegisterMapped(offer, id)
+			ev.Offer = offer
 			p.mu.RLock()
 			for _, h := range p.dataOfferHandlers {
 				h.HandleDataDeviceDataOffer(ev)
@@ -1414,7 +1418,12 @@ func (p *DataDevice) Dispatch(event *Event) {
 			ev.Surface = event.Proxy(p.Context()).(*Surface)
 			ev.X = event.Float32()
 			ev.Y = event.Float32()
-			ev.Id = event.Proxy(p.Context()).(*DataOffer)
+			id := event.Uint32()
+			println(id)
+			proxy := p.Context().LookupProxy(ProxyId(id))
+			if proxy != nil {
+				ev.Offer = proxy.(*DataOffer)
+			}
 			p.mu.RLock()
 			for _, h := range p.enterHandlers {
 				h.HandleDataDeviceEnter(ev)
@@ -1454,12 +1463,18 @@ func (p *DataDevice) Dispatch(event *Event) {
 	case 5:
 		if len(p.selectionHandlers) > 0 {
 			ev := DataDeviceSelectionEvent{}
-			ev.Id = event.Proxy(p.Context()).(*DataOffer)
+			id := event.Uint32()
+			println(id)
+			proxy := p.Context().LookupProxy(ProxyId(id))
+			if proxy != nil {
+				ev.Offer = proxy.(*DataOffer)
+			}
 			p.mu.RLock()
 			for _, h := range p.selectionHandlers {
 				h.HandleDataDeviceSelection(ev)
 			}
 			p.mu.RUnlock()
+
 		}
 	}
 }
