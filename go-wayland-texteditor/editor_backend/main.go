@@ -11,7 +11,7 @@ import (
 const tabSize = 8
 
 var file = [][]string{
-	{"H", "e", "l", "l", "o","c","r","u","e","l"},
+	{"H", "e", "l", "l", "o", "c", "r", "u", "e", "l"},
 	{"w", "o", "r", "l", "d"},
 }
 
@@ -50,7 +50,7 @@ func handlerPaste(p *PasteRequest) {
 		for _, c := range array {
 			var char = string(c)
 			if char == "\t" {
-				for len(row) & (tabSize-1) != (tabSize-1) {
+				for len(row)&(tabSize-1) != (tabSize - 1) {
 					row = append(row, "")
 				}
 			}
@@ -110,7 +110,7 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		file[w.Y] = row
 		wr.MoveX--
 		w.X--
-		if (w.X >= 1 && row[w.X-1] == "") {
+		if w.X >= 1 && row[w.X-1] == "" {
 			goto again
 		}
 	case "\t":
@@ -122,7 +122,7 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 				row = append(row[:w.X+1], row[w.X:]...)
 				file[w.Y] = row
 			}
-			if (w.X & (tabSize-1)) == (tabSize-1) {
+			if (w.X & (tabSize - 1)) == (tabSize - 1) {
 				row[w.X] = w.Key
 			} else {
 				row[w.X] = ""
@@ -130,7 +130,7 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 			println(w.Key)
 			wr.MoveX++
 			w.X++
-			if (w.X & (tabSize-1)) == 0 {
+			if (w.X & (tabSize - 1)) == 0 {
 				break
 			}
 		}

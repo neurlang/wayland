@@ -45,6 +45,7 @@ type textarea struct {
 	StringGrid
 	mutex        sync.RWMutex
 	navigateHeld byte
+	fullscreen   bool
 }
 
 type surface struct {
@@ -146,11 +147,25 @@ func (s *surface) PutRGB(pos ObjectPosition, texture_rgb [][3]byte, texture_widt
 }
 
 func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwidth int32, pheight int32) {
+
 	t.width = pwidth
 	t.height = pheight
 	if t.width != pwidth || t.height != pheight {
 		widget.SetAllocation(0, 0, pwidth, pheight)
 	}
+
+	xcells := 1 + int(pwidth)/t.StringGrid.CellWidth
+	ycells := 1 + int(pheight)/t.StringGrid.CellHeight
+
+	content, err := load_content(ContentRequest{Width: xcells, Height: ycells})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	t.StringGrid.XCells = xcells
+	t.StringGrid.YCells = ycells
+	t.handleContent(content)
 }
 
 func render(textarea *textarea, s cairo.Surface, time uint32) {
@@ -282,7 +297,7 @@ func (textarea *textarea) Key(
 				}
 				if notUnicode == 'v' {
 
-					input.ReceiveSelectionData("text/plain", &Paste{Textarea: textarea})
+					input.ReceiveSelectionData("text/plain;charset=utf-8", &Paste{Textarea: textarea})
 
 				}
 
@@ -460,6 +475,11 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 	}
 }
 
+func (textarea *textarea) Fullscreen(w *window.Window, wh window.WidgetHandler) {
+	textarea.fullscreen = !textarea.fullscreen
+	w.SetFullscreen(textarea.fullscreen)
+}
+
 func main() {
 
 	var textarea textarea
@@ -469,9 +489,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	textarea.width = 2 * 480
-	textarea.height = 480
 
 	content, err := load_content(ContentRequest{Width: 90, Height: 30})
 	if err != nil {
@@ -488,6 +505,9 @@ func main() {
 	textarea.StringGrid.IbeamCursor.X = 1
 	textarea.StringGrid.IbeamCursor.Y = 1
 
+	textarea.width = int32(textarea.StringGrid.XCells * textarea.StringGrid.CellWidth)
+	textarea.height = int32(textarea.StringGrid.YCells * textarea.StringGrid.CellHeight)
+
 	textarea.display = d
 	textarea.window = window.Create(d)
 
@@ -497,6 +517,7 @@ func main() {
 	textarea.window.SetBufferType(window.BufferTypeShm)
 
 	textarea.window.SetKeyboardHandler(&textarea)
+	textarea.window.SetFullscreenHandler(&textarea)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 

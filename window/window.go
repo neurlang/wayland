@@ -104,7 +104,7 @@ type Display struct {
 	//	pad7		uint64
 	//	pad8		uint64
 
-	running int32
+	running bool
 
 	globalList []*global
 	//	pad9		uint64
@@ -199,11 +199,28 @@ type FullscreenHandler interface {
 type CloseHandler interface {
 	Close()
 }
+
+const (
+	TYPE_NONE byte = iota
+	TYPE_TOPLEVEL
+	TYPE_FULLSCREEN
+	TYPE_MAXIMIZED
+	TYPE_TRANSIENT
+	TYPE_MENU
+	TYPE_CUSTOM
+)
+
+type ResizeHandler interface {
+	MinimumSize() (int32, int32)
+}
+
 type Window struct {
 	Display          *Display
 	windowOutputList [2]uintptr
 
 	title string
+
+	typ byte
 
 	savedAllocation   Rectangle
 	minAllocation     Rectangle
@@ -262,6 +279,10 @@ type Window struct {
 	fullscreenHandler FullscreenHandler
 	closeHandler      CloseHandler
 	dataHandler       DataHandler
+
+	fullscreenMethod uint32
+
+	resizor ResizeHandler
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
@@ -2199,6 +2220,28 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	inputSetPointerImage(Input, cursor)
 }
 
+func (window *Window) SetFullscreen(fullscreen bool) {
+	if window.Display.xdgShell == nil {
+		return
+	}
+
+	if (window.typ == TYPE_FULLSCREEN) == fullscreen {
+		return
+	}
+
+	if fullscreen {
+		window.typ = TYPE_FULLSCREEN
+		window.savedAllocation = window.mainSurface.allocation
+		window.xdgToplevel.SetFullscreen(nil)
+	} else {
+		window.typ = TYPE_TOPLEVEL
+		window.xdgToplevel.UnsetFullscreen()
+		window.ScheduleResize(window.savedAllocation.Width,
+			window.savedAllocation.Height)
+	}
+
+}
+
 //line 3552
 func inputGetSeat(Input *Input) *wl.Seat {
 	return Input.seat
@@ -2485,8 +2528,12 @@ func idleResize(Window *Window) {
 //line 4223
 func (Window *Window) ScheduleResize(width int32, height int32) {
 	// this is an explicit change from upstream wayland/weston
-	const minWidth = 32
-	const minHeight = 32
+	var minWidth int32 = 32
+	var minHeight int32 = 32
+
+	if Window.resizor != nil {
+		minWidth, minHeight = Window.resizor.MinimumSize()
+	}
 
 	Window.pendingAllocation.X = 0
 	Window.pendingAllocation.Y = 0
@@ -3005,7 +3052,7 @@ func displayDefer(Display *Display /*task *task,*/, fun runner) {
 //line 6501
 func DisplayRun(Display *Display) {
 
-	Display.running = 1
+	Display.running = true
 	for {
 
 		for len(Display.deferredListNew) > 0 {
@@ -3016,7 +3063,7 @@ func DisplayRun(Display *Display) {
 
 		}
 
-		if Display.running == 0 {
+		if Display.running == false {
 			break
 		}
 
@@ -3029,5 +3076,5 @@ func DisplayRun(Display *Display) {
 }
 
 func (d *Display) Exit() {
-	d.running = 0
+	d.running = false
 }
