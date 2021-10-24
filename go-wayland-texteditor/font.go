@@ -77,7 +77,7 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 
 		faketexture := make([][3]byte, f.cellx*f.celly)
 		fakestring := fmt.Sprintf("%+q", code)
-		if len(fakestring) > 3 && fakestring[0:3] == "\"\\u" {
+		if len(fakestring) > 3 && (fakestring[0:3] == "\"\\u" || fakestring[0:3] == "\"\\U") {
 			fakestring = fakestring[3:]
 		}
 		if len(fakestring) > 1 && fakestring[0:1] == "\"" {
@@ -86,6 +86,7 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 		if len(fakestring) >= 1 && fakestring[len(fakestring)-1] == '"' {
 			fakestring = fakestring[0 : len(fakestring)-1]
 		}
+		println(fakestring)
 		var i = 0
 		for ybox := byte(0); ybox < 4; ybox++ {
 			for xbox := byte(0); xbox < 3; xbox++ {
