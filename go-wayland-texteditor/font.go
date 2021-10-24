@@ -12,11 +12,102 @@ type Font struct {
 	mapping map[string][][3]byte
 }
 
+var hexfont = " #    # ##  ##   #  ###  ## ###  #   #   #  ##   #  ##  ### ### " +
+	"# #  ##   #   # #   #   #     # # # # # # # # # # # # # #   #   " +
+	"# # # #   #  #  ### ##  ##   #   #   ## # # ##  #   # # ### ### " +
+	"# #   #  #    #  #    # # #  #  # #   # ### # # # # # # #   #   " +
+	" #    # ### ##   #  ##   #   #   #  ##  # # ##   #  ##  ### #   " +
+	"                                                                "
+
+func hexfontGet(hex, x, y byte) bool {
+	switch hex {
+	case '0':
+		hex = 0
+	case '1':
+		hex = 1
+	case '2':
+		hex = 2
+	case '3':
+		hex = 3
+	case '4':
+		hex = 4
+	case '5':
+		hex = 5
+	case '6':
+		hex = 6
+	case '7':
+		hex = 7
+	case '8':
+		hex = 8
+	case '9':
+		hex = 9
+	case 'A', 'a':
+		hex = 10
+	case 'B', 'b':
+		hex = 11
+	case 'C', 'c':
+		hex = 12
+	case 'D', 'd':
+		hex = 13
+	case 'E', 'e':
+		hex = 14
+	case 'F', 'f':
+		hex = 15
+	}
+	if hex >= 16 {
+		panic("")
+	}
+	if x >= 4 {
+		panic("")
+	}
+	if y >= 6 {
+		panic("")
+	}
+
+	return hexfont[4*int(hex)+int(y)*64+int(x)] == '#'
+}
+
 func (f *Font) GetRGBTexture(code string) [][3]byte {
 
 	var a, ok = f.mapping[code]
 	if !ok {
-		return nil
+		if f.cellx < 12 || f.celly < 24 {
+			return nil
+		}
+
+		faketexture := make([][3]byte, f.cellx*f.celly)
+		fakestring := fmt.Sprintf("%+q", code)
+		if len(fakestring) > 3 && fakestring[0:3] == "\"\\u" {
+			fakestring = fakestring[3:]
+		}
+		if len(fakestring) > 1 && fakestring[0:1] == "\"" {
+			fakestring = fakestring[1:]
+		}
+		if len(fakestring) >= 1 && fakestring[len(fakestring)-1] == '"' {
+			fakestring = fakestring[0 : len(fakestring)-1]
+		}
+		var i = 0
+		for ybox := byte(0); ybox < 4; ybox++ {
+			for xbox := byte(0); xbox < 3; xbox++ {
+
+				for y := byte(0); y < 6; y++ {
+					for x := byte(0); x < 4; x++ {
+						pos := int(ybox)*f.cellx*6 + int(xbox)*4 + int(y)*f.cellx + int(x)
+						if len(fakestring) > i {
+							if hexfontGet(fakestring[i], x, y) {
+								faketexture[pos][0] = 255
+								faketexture[pos][1] = 255
+								faketexture[pos][2] = 255
+							}
+						}
+					}
+				}
+				i++
+			}
+		}
+		// memoization
+		f.mapping[code] = faketexture
+		return faketexture
 	}
 	return a
 }
