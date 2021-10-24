@@ -54,6 +54,16 @@ var extendedbDescriptor = "" +
 	ȸ	ȹ	Ɠ	Ɣ	ǌ	ǋ	ƥ	Ƥ	ɋ	Ɋ	ư	Ư
 	ƌ	Ƌ	ƣ	Ƣ	ƞ	Ƞ	Ǌ	Ɵ	Ʃ	ƪ	ƭ	ȶ`
 
+var ipaDescriptor = "" +
+	`ɐ	ɑ	ɒ	ɓ	ɔ	ɕ	ɖ	ɗ	ɘ	ə	ɚ	ɛ
+	ɜ	ɝ	ɞ	ɟ	ɠ	ɡ	ɢ	ɣ	ɤ	ɥ	ɦ	ɧ
+	ɨ	ɩ	ɪ	ɫ	ɬ	ɭ	ɮ	ɯ	ɰ	ɱ	ɲ	ɳ
+	ɴ	ɵ	ɶ	ɷ	ɸ	ɹ	ɺ	ɻ	ɼ	ɽ	ɾ	ɿ
+	ʀ	ʁ	ʂ	ʃ	ʄ	ʅ	ʆ	ʇ	ʈ	ʉ	ʊ	ʋ
+	ʌ	ʍ	ʎ	ʏ	ʐ	ʑ	ʒ	ʓ	ʔ	ʕ	ʖ	ʗ
+	ʘ	ʙ	ʚ	ʛ	ʜ	ʝ	ʞ	ʟ	ʠ	ʡ	ʢ	ʣ
+	ʤ	ʥ	ʦ	ʧ	ʨ	ʩ	ʪ	ʫ	ʬ	ʭ	ʮ	ʯ`
+
 var UnicodeFont Font
 
 func init() {
@@ -61,6 +71,7 @@ func init() {
 	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor)
 	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor)
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor)
+	(&UnicodeFont).Load("ipa.png", ipaDescriptor)
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
 }
