@@ -504,6 +504,7 @@ func main() {
 	textarea.StringGrid.CellHeight = 24
 	textarea.StringGrid.IbeamCursor.X = 1
 	textarea.StringGrid.IbeamCursor.Y = 1
+	textarea.StringGrid.LineNumbers = 3
 
 	textarea.width = int32(textarea.StringGrid.XCells * textarea.StringGrid.CellWidth)
 	textarea.height = int32(textarea.StringGrid.YCells * textarea.StringGrid.CellHeight)

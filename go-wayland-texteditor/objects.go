@@ -1,6 +1,7 @@
 package main
 
 import "sort"
+import "fmt"
 
 type Canvas interface {
 	PutRGB(ObjectPosition, [][3]byte, int, [3]byte, [3]byte, bool)
@@ -37,6 +38,7 @@ func (sc *StringCell) Render(c Canvas) {
 
 type StringGrid struct {
 	Pos                   ObjectPosition
+	LineNumbers           int
 	XCells                int
 	YCells                int
 	Content               []string
@@ -64,6 +66,8 @@ func (sg *StringGrid) Button(up bool) {
 	}
 }
 func (sg *StringGrid) Motion(pos ObjectPosition) {
+
+	pos.X -= sg.LineNumbers
 
 	for pos.X > 0 && (sg.XCells*pos.Y+pos.X-1) < len(sg.Content) && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
 		pos.X--
@@ -113,11 +117,35 @@ func (sg *StringGrid) RowFocused(y int) bool {
 
 func (sg *StringGrid) Render(c Canvas) {
 	for y := 0; y < sg.YCells; y++ {
-		for x := 0; x < sg.XCells; x++ {
+		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers)+"d", y+1)
+		for x := 0; x < sg.LineNumbers; x++ {
 
-			var selected = sg.Selected(x, y)
+			var bgcolor = [3]byte{0, 13, 26}
+			var fgcolor = [3]byte{0, 136, 255}
+
+			var cell = &StringCell{
+				Pos: ObjectPosition{
+					sg.Pos.X + x*sg.CellWidth,
+					sg.Pos.Y + y*sg.CellHeight,
+				},
+				String:     string(linenum[x]),
+				CellWidth:  sg.CellWidth,
+				CellHeight: sg.CellHeight,
+				Font:       sg.Font,
+				BgRGB:      bgcolor,
+				FgRGB:      fgcolor,
+				Flip:       false,
+			}
+			cell.Render(c)
+		}
+
+		for x := sg.LineNumbers; x < sg.XCells; x++ {
+
+			xx := x - sg.LineNumbers
+
+			var selected = sg.Selected(xx, y)
 			var bgcolor = [3]byte{0, 27, 51}
-			var fgcolor = sg.FgColor(x, y)
+			var fgcolor = sg.FgColor(xx, y)
 			if selected {
 				bgcolor = [3]byte{0, 136, 255}
 				fgcolor = [3]byte{255, 255, 255}
@@ -131,7 +159,7 @@ func (sg *StringGrid) Render(c Canvas) {
 					sg.Pos.X + x*sg.CellWidth,
 					sg.Pos.Y + y*sg.CellHeight,
 				},
-				String:     sg.Content[sg.XCells*y+x],
+				String:     sg.Content[sg.XCells*y+xx],
 				CellWidth:  sg.CellWidth,
 				CellHeight: sg.CellHeight,
 				Font:       sg.Font,
@@ -146,7 +174,7 @@ func (sg *StringGrid) Render(c Canvas) {
 	if (c.GetTime()-uint32(sg.IbeamCursorBlinkFix))&512 == 0 {
 		var cursor = &IbeamCursor{
 			Pos: ObjectPosition{
-				sg.Pos.X + sg.IbeamCursor.X*sg.CellWidth,
+				sg.Pos.X + (sg.IbeamCursor.X+sg.LineNumbers)*sg.CellWidth,
 				sg.Pos.Y + sg.IbeamCursor.Y*sg.CellHeight,
 			},
 			CellHeight: sg.CellHeight,
