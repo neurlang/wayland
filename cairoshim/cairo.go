@@ -21,6 +21,8 @@
 // Package cairo implements a simple dummy cairo api
 package cairo
 
+import "runtime"
+
 type enum = int64
 
 // FormatArgb32 pixel is a 32-bit quantity, with alpha in the upper 8 bits, then red, then green, then blue. The 32-bit quantities are stored native-endian. Pre-multiplied alpha is used. (That is, 50% transparent red is 0x80800000, not 0x80ff0000.)
@@ -34,6 +36,7 @@ type Surface interface {
 	Reference() Surface
 	Destroy()
 	SetUserData(data func())
+	SetDestructor(destructor func())
 	ImageSurfaceGetData() []byte
 	ImageSurfaceGetWidth() int
 	ImageSurfaceGetHeight() int
@@ -48,6 +51,8 @@ type simulatedSurface struct {
 	width  int
 	height int
 	stride int
+
+	destructor func()
 }
 
 type simulatedSurfaceRef struct {
@@ -131,11 +136,22 @@ func FormatStrideForWidth(cairoFormat Format, width int) int {
 	return width * 4
 }
 
+// SetUserData sets destructor, unused
+func (s *simulatedSurface) SetDestructor(data func()) {
+	runtime.SetFinalizer(s, func(interface{}) {
+		data()
+	})
+}
+
+// SetUserData sets destructor, unused
+func (s *simulatedSurfaceRef) SetDestructor(data func()) {
+	s.surf.SetDestructor(data)
+}
+
 // SetUserData sets User Data, unused
 func (s *simulatedSurface) SetUserData(data func()) {
 }
 
 // SetUserData sets User Data, unused
 func (s *simulatedSurfaceRef) SetUserData(data func()) {
-	s.surf.SetUserData(data)
 }

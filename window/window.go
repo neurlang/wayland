@@ -1343,8 +1343,9 @@ func shmPoolDestroy(pool *shmPool) {
 	if err != nil {
 		println(err)
 	}
-
-	pool.pool.Destroy()
+	if pool.pool != nil {
+		pool.pool.Destroy()
+	}
 	pool.data = nil
 	pool.pool = nil
 	pool.size = 0
@@ -1397,7 +1398,7 @@ func displayCreateShmSurfaceFromPool(Display *Display,
 		int(rectangle.Height),
 		stride)
 
-	surface.SetUserData(func() {
+	surface.SetDestructor(func() {
 
 		shmSurfaceDataDestroy(data)
 	})

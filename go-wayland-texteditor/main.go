@@ -476,8 +476,10 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 }
 
 func (textarea *textarea) Fullscreen(w *window.Window, wh window.WidgetHandler) {
+
 	textarea.fullscreen = !textarea.fullscreen
 	w.SetFullscreen(textarea.fullscreen)
+
 }
 
 func main() {
