@@ -86,6 +86,43 @@ var greekDescriptor = "" +
 	Ϧ	ϧ	Ϩ	ϩ	Ϫ	ϫ	
 	Ϭ	ϭ	Ϯ	ϯ			`
 
+var cyrillicDescriptor = "" +
+	`А	а	Ӑ	ӑ	Ӓ	ӓ	Ә	ә	Ӛ	ӛ
+	Ӕ	ӕ	Б	б	В	в	Г	г	Ѓ	ѓ
+	Ґ	ґ	Ғ	ғ	Ӻ	ӻ	Ҕ	ҕ	Ӷ	ӷ
+	Д	д	Ђ	ђ	Ҙ	ҙ	Е	е	Ѐ	ѐ
+	Ӗ	ӗ	Ё	ё	Є	є	Ж	ж	Ӂ	ӂ
+	Ӝ	ӝ	Җ	җ	З	з	Ӟ	ӟ	Ѕ	ѕ
+	Ӡ	ӡ	И	и	Ѝ	ѝ	Ӥ	ӥ	Ӣ	ӣ
+	Ҋ	ҋ	І	і	Ї	ї	Й	й	Ј	ј
+	К	к	Ќ	ќ	Қ	қ	Ӄ	ӄ	Ҡ	ҡ
+	Ҟ	ҟ	Ҝ	ҝ	Л	л	Ӆ	ӆ	Љ	љ
+	М	м	Ӎ	ӎ	Н	н	Ӊ	ӊ	Ң	ң
+	Ӈ	ӈ	Ҥ	ҥ	Њ	њ	О	о	Ӧ	ӧ
+	Ө	ө	Ӫ	ӫ	П	п	Ҧ	ҧ	Ҁ	ҁ
+	Р	р	Ҏ	ҏ	С	с	Ҫ	ҫ	Т	т
+	Ҭ	ҭ	Ћ	ћ	У	у	Ў	ў	Ӱ	ӱ
+	Ӳ	ӳ	Ӯ	ӯ	Ү	ү	Ұ	ұ	Ѹ	ѹ
+	Ф	ф	Х	х	Ӽ	ӽ	Ӿ	ӿ	Ҳ	ҳ
+	Һ	һ	Ѡ	ѡ	Ѿ	ѿ	Ѽ	ѽ	Ѻ	ѻ
+	Ц	ц	Ҵ	ҵ	Ч	ч	Ӵ	ӵ	Ҷ	ҷ
+	Ӌ	ӌ	Ҹ	ҹ	Ҽ	ҽ	Ҿ	ҿ	Џ	џ
+	Ш	ш	Щ	щ	Ъ	ъ	Ы	ы	Ӹ	ӹ
+	Ь	ь	Ҍ	ҍ	Ѣ	ѣ	Э	э	Ӭ	ӭ
+	Ю	ю	Я	я	Ѥ	ѥ	Ѧ	ѧ	Ѫ	ѫ
+	Ѩ	ѩ	Ѭ	ѭ	Ѯ	ѯ	Ѱ	ѱ	Ѳ	ѳ
+	Ѵ	ѵ	Ѷ	ѷ	Ҩ	ҩ	Ӏ	ӏ	҂	`
+
+var vietnameseDescriptor = "" +
+	`ả	Ả	ạ	Ạ	ằ	Ằ	ẳ	Ẳ	ẵ	Ẵ
+	ắ	Ắ	ặ	Ặ	ầ	Ầ	ẩ	Ẩ	ẫ	Ẫ
+	ấ	Ấ	ậ	Ậ	ẻ	Ẻ	ẽ	Ẽ	ẹ	Ẹ
+	ề	Ề	ể	Ể	ễ	Ễ	ế	Ế	ệ	Ệ
+	ỉ	Ỉ	ị	Ị	ỏ	Ỏ	ọ	Ọ	ồ	Ồ
+	ổ	Ổ	ỗ	Ỗ	ố	Ố	ộ	Ộ	ờ	Ờ
+	ở	Ở	ỡ	Ỡ	ớ	Ớ	ợ	Ợ	ủ	Ủ
+	ụ	Ụ	ừ	Ừ	ử	Ử	ữ	Ữ	ứ	Ứ
+	ự	Ự	ỳ	Ỳ	ỷ	Ỷ	ỹ	Ỹ	ỵ	Ỵ`
 var UnicodeFont Font
 
 func init() {
@@ -95,6 +132,8 @@ func init() {
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor)
 	(&UnicodeFont).Load("ipa.png", ipaDescriptor)
 	(&UnicodeFont).Load("greek.png", greekDescriptor)
+	(&UnicodeFont).Load("cyrillic.png", cyrillicDescriptor)
+	(&UnicodeFont).Load("vietnamese.png", vietnameseDescriptor)
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
 }
