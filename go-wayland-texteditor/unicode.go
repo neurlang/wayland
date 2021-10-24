@@ -64,6 +64,28 @@ var ipaDescriptor = "" +
 	ʘ	ʙ	ʚ	ʛ	ʜ	ʝ	ʞ	ʟ	ʠ	ʡ	ʢ	ʣ
 	ʤ	ʥ	ʦ	ʧ	ʨ	ʩ	ʪ	ʫ	ʬ	ʭ	ʮ	ʯ`
 
+var greekDescriptor = "" +
+	`Α	α	Ά	ά	Β	β	ϐ
+	Γ	γ	Δ	δ	Ε	ε	ϵ
+	Έ	έ	Ϝ	ϝ	Ͷ	ͷ	϶
+	Ϛ	ϛ	Ζ	ζ	Ͱ	ͱ	ϑ
+	Η	η	Ή	ή	Θ	θ	ϴ
+	Ι	ι	Ί	ί	Ϊ	ϊ	ΐ
+	Ϳ	ϳ	Κ	κ	ϰ	Ϗ	ϗ
+	Λ	λ	Μ	μ	Ν	ν	
+	Ξ	ξ	Ο	ο	Ό	ό	
+	Π	π	ϖ	Ϻ	ϻ	Ϟ	ϟ
+	Ϙ	ϙ	Ρ	ρ	ϱ	ϼ	
+	Σ	ς	σ	Ϲ	ϲ	Ͼ	ͼ
+	Ͻ	ͻ	Ͽ	ͽ	Τ	τ	
+	Υ	υ	ϒ	Ύ	ύ	ϓ	
+	Ϋ	ϋ	ϔ	ΰ	Φ	φ	ϕ
+	Χ	χ	Ψ	ψ	Ω	ω	
+	Ώ	ώ	Ϡ	ϡ	Ͳ	ͳ	
+	Ϸ	ϸ	Ϣ	ϣ	Ϥ	ϥ	
+	Ϧ	ϧ	Ϩ	ϩ	Ϫ	ϫ	
+	Ϭ	ϭ	Ϯ	ϯ			`
+
 var UnicodeFont Font
 
 func init() {
@@ -72,6 +94,7 @@ func init() {
 	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor)
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor)
 	(&UnicodeFont).Load("ipa.png", ipaDescriptor)
+	(&UnicodeFont).Load("greek.png", greekDescriptor)
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
 }
