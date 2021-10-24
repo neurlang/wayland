@@ -39,6 +39,7 @@ func (sc *StringCell) Render(c Canvas) {
 type StringGrid struct {
 	Pos                   ObjectPosition
 	LineNumbers           int
+	LastColHint           int
 	XCells                int
 	YCells                int
 	Content               []string
@@ -52,6 +53,7 @@ type StringGrid struct {
 	Selecting, IsSelected bool
 	ContentFgColor        map[[2]int][3]byte
 	lineLen               []int
+	FlipColor             bool
 }
 
 func (sg *StringGrid) Button(up bool) {
@@ -71,6 +73,10 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 
 	for pos.X > 0 && (sg.XCells*pos.Y+pos.X-1) < len(sg.Content) && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
 		pos.X--
+	}
+
+	if pos.X < 0 {
+		pos.X = 0
 	}
 
 	sg.Hover = pos
@@ -117,11 +123,11 @@ func (sg *StringGrid) RowFocused(y int) bool {
 
 func (sg *StringGrid) Render(c Canvas) {
 	for y := 0; y < sg.YCells; y++ {
-		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers)+"d", y+1)
+		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers-1)+"d   ", y+1)
 		for x := 0; x < sg.LineNumbers; x++ {
 
 			var bgcolor = [3]byte{0, 13, 26}
-			var fgcolor = [3]byte{0, 136, 255}
+			var fgcolor = [3]byte{0, 101, 191}
 
 			var cell = &StringCell{
 				Pos: ObjectPosition{
@@ -134,7 +140,7 @@ func (sg *StringGrid) Render(c Canvas) {
 				Font:       sg.Font,
 				BgRGB:      bgcolor,
 				FgRGB:      fgcolor,
-				Flip:       false,
+				Flip:       sg.FlipColor,
 			}
 			cell.Render(c)
 		}
@@ -150,7 +156,13 @@ func (sg *StringGrid) Render(c Canvas) {
 				bgcolor = [3]byte{0, 136, 255}
 				fgcolor = [3]byte{255, 255, 255}
 			} else if sg.RowFocused(y) {
-				bgcolor = [3]byte{0, 59, 112}
+				if x > sg.LastColHint {
+					bgcolor = [3]byte{12, 68, 117}
+				} else {
+					bgcolor = [3]byte{0, 59, 112}
+				}
+			} else if x > sg.LastColHint {
+				bgcolor = [3]byte{12, 37, 60}
 			}
 			fgcolor = maxColor(fgcolor, bgcolor)
 
@@ -165,7 +177,7 @@ func (sg *StringGrid) Render(c Canvas) {
 				Font:       sg.Font,
 				BgRGB:      bgcolor,
 				FgRGB:      fgcolor,
-				Flip:       false,
+				Flip:       sg.FlipColor,
 			}
 			cell.Render(c)
 		}
