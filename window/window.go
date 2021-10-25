@@ -2567,11 +2567,15 @@ func (parent *Widget) ScheduleResize(width int32, height int32) {
 }
 
 //line 4269
-func windowInhibitRedraw(Window *Window) {
+func (Window *Window) InhibitRedraw() {
 	Window.redrawInhibited = 1
 	Window.redrawTaskScheduled = 0
 }
 
+func (Window *Window) UninhibitRedraw() {
+	windowUninhibitRedraw(Window)
+	windowScheduleRedrawTask(Window)
+}
 // line 4284
 func windowUninhibitRedraw(Window *Window) {
 	Window.redrawInhibited = 0
@@ -2827,7 +2831,7 @@ func Create(Display *Display) *Window {
 
 		zxdg.ToplevelAddListener(Window.xdgToplevel, Window)
 
-		windowInhibitRedraw(Window)
+		Window.InhibitRedraw()
 
 		_ = Window.mainSurface.surface_.Commit()
 	}

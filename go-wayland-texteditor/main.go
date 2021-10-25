@@ -261,6 +261,9 @@ func (textarea *textarea) Key(
 	state wl.KeyboardKeyState,
 	data window.WidgetHandler,
 ) {
+
+	win.UninhibitRedraw()
+
 	textarea.mutex.Lock()
 	defer textarea.mutex.Unlock()
 
@@ -354,6 +357,13 @@ func (textarea *textarea) Key(
 	}
 }
 func (*textarea) Focus(window *window.Window, device *window.Input) {
+
+	if device == nil {
+		window.InhibitRedraw()
+	} else {
+		window.UninhibitRedraw()
+	}
+
 	print(device)
 	println("Focus")
 
