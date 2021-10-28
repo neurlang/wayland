@@ -17,6 +17,14 @@ type ubo struct {
 	normal              mat4.Mat4
 }
 
+func sync(dst, src *ubo) {
+	dst.modelview = src.modelview
+	dst.modelviewprojection = src.modelviewprojection
+	for y := 0; y < 12; y++ {
+		dst.normal[y] = src.normal[y]
+	}
+}
+
 func makeTimestamp() float64 {
 	return float64(time.Now().UnixNano() / int64(time.Millisecond))
 }
@@ -458,8 +466,7 @@ func render_cube(vc *VkCube, b *VkCubeBuffer, wait_semaphore_count uint8) {
 	/* The mat3 normalMatrix is laid out as 3 vec4s. */
 	ubo.normal = ubo.modelview
 
-	/*sync c*/
-	*(*[176]byte)(unsafe.Pointer(vc.mapping)) = *(*[176]byte)(unsafe.Pointer(&ubo))
+	sync(vc.mapping, &ubo)
 
 	vulkan.WaitForFences(vc.device, 1, []vulkan.Fence{b.fence}, vulkan.True, ^uint64(0))
 	vulkan.ResetFences(vc.device, 1, []vulkan.Fence{b.fence})
