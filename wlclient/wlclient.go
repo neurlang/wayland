@@ -186,7 +186,6 @@ func DataDeviceManagerDestroy(d *wl.DataDeviceManager) {
 	d.Unregister()
 }
 
-
 type DataDeviceListener interface {
 	wl.DataDeviceDataOfferHandler
 	wl.DataDeviceEnterHandler
@@ -216,7 +215,6 @@ func DataOfferAddListener(p *wl.DataOffer, h DataOfferListener) {
 	p.AddSourceActionsHandler(h)
 	p.AddActionHandler(h)
 }
-
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
 	c := wl.NewCompositor(r.Ctx)

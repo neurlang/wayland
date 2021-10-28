@@ -2576,6 +2576,7 @@ func (Window *Window) UninhibitRedraw() {
 	windowUninhibitRedraw(Window)
 	windowScheduleRedrawTask(Window)
 }
+
 // line 4284
 func windowUninhibitRedraw(Window *Window) {
 	Window.redrawInhibited = 0

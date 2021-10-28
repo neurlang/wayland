@@ -568,7 +568,7 @@ func init_vk(vc *VkCube) {
 	if vc.protected != 0 {
 		flag = vk.DeviceQueueCreateFlags(vk.DeviceQueueCreateProtectedBit)
 	}
-	
+
 	var que vk.Queue
 	var dev vk.Device
 
@@ -652,7 +652,7 @@ func main() {
 	vc.wl.wait_for_configure = true
 
 	vc.wl.nsurface.Commit()
-	
+
 	wayland.DisplayRoundtrip(vc.wl.ndisplay)
 
 	init_vk(&vc)
@@ -674,8 +674,6 @@ func main() {
 		}, nil, &surf)
 
 	vc.surface = surf
-		
-	
 
 	vc.image_format = choose_surface_format(&vc)
 

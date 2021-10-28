@@ -4,6 +4,7 @@
 
 // Code copied from "golang.org/x/exp/shiny/driver/internal/swizzle"
 
+//go:build !amd64 && !arm64
 // +build !amd64,!arm64
 
 package swizzle
