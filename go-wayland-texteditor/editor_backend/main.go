@@ -44,7 +44,9 @@ func handlerCopy(p *CopyRequest) *CopyResponse {
 			}
 			cr.Buffer = append(cr.Buffer, []byte(file[y][x])...)
 		}
-		cr.Buffer = append(cr.Buffer, '\r', '\n')
+		if y != p.Y1 {
+			cr.Buffer = append(cr.Buffer, '\n')
+		}
 	}
 	return &cr
 }
