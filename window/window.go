@@ -534,6 +534,12 @@ type dataOffer struct {
 	types []string
 }
 
+func (do *dataOffer) Destroy() {
+	wlclient.DataOfferDestroy(do.offer)
+	do.types = nil
+	do.input = nil
+}
+
 func (do *dataOffer) HandleDataOfferOffer(ev wl.DataOfferOfferEvent) {
 
 	println("HandleDataOfferOffer", ev.MimeType)
@@ -643,6 +649,64 @@ func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
 		input.selectionOffer = nil
 	}
 	//println("HandleDataDeviceSelection", input.selectionOffer.offer, ev.Offer)
+}
+
+func (input *Input) DeviceSetSelection(src *wl.DataSource, serial uint32) {
+	if input.dataDevice != nil {
+		input.dataDevice.SetSelection(src, serial)
+	}
+}
+
+func (input *Input) Destroy() {
+	inputRemoveKeyboardFocus(input)
+	inputRemovePointerFocus(input)
+
+	if input.dragOffer != nil {
+		input.dragOffer.Destroy()
+		input.dragOffer = nil
+	}
+	if input.selectionOffer != nil {
+		input.selectionOffer.Destroy()
+		input.selectionOffer = nil
+	}
+
+	if input.dataDevice != nil {
+		if input.Display.dataDeviceManagerVersion >= 2 {
+			input.dataDevice.Release()
+		} else {
+			wlclient.DataDeviceDestroy(input.dataDevice)
+		}
+		input.dataDevice = nil
+	}
+
+	if input.seatVersion >= wl.PointerReleaseSinceVersion {
+		if input.touch != nil {
+			input.touch.Release()
+		}
+		if input.pointer != nil {
+			input.pointer.Release()
+		}
+		if input.keyboard != nil {
+			input.keyboard.Release()
+		}
+	} else {
+		if input.touch != nil {
+			wlclient.TouchDestroy(input.touch)
+		}
+		if input.pointer != nil {
+			wlclient.PointerDestroy(input.pointer)
+		}
+		if input.keyboard != nil {
+			wlclient.KeyboardDestroy(input.keyboard)
+		}
+	}
+	input.touch = nil
+	input.pointer = nil
+	input.keyboard = nil
+	input.pointerSurface.Destroy()
+
+	wlclient.SeatDestroy(input.seat)
+
 }
 
 type KeyboardHandler interface {

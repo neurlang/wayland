@@ -954,8 +954,8 @@ func (p *DataSource) RemoveTargetHandler(h DataSourceTargetHandler) {
 
 type DataSourceSendEvent struct {
 	MimeType string
-	fd       uintptr
-	fdError  error
+	Fd       uintptr
+	FdError  error
 }
 
 type DataSourceSendHandler interface {
@@ -1111,7 +1111,7 @@ func (p *DataSource) Dispatch(event *Event) {
 		if len(p.sendHandlers) > 0 {
 			ev := DataSourceSendEvent{}
 			ev.MimeType = event.String()
-			ev.fd, ev.fdError = event.FD()
+			ev.Fd, ev.FdError = event.FD()
 			p.mu.RLock()
 			for _, h := range p.sendHandlers {
 				h.HandleDataSourceSend(ev)
@@ -1401,7 +1401,6 @@ func (p *DataDevice) Dispatch(event *Event) {
 		if len(p.dataOfferHandlers) > 0 {
 			ev := DataDeviceDataOfferEvent{}
 			id := event.Uint32()
-			println(id)
 			offer := new(DataOffer)
 			p.Context().RegisterMapped(offer, id)
 			ev.Offer = offer
@@ -1419,7 +1418,6 @@ func (p *DataDevice) Dispatch(event *Event) {
 			ev.X = event.Float32()
 			ev.Y = event.Float32()
 			id := event.Uint32()
-			println(id)
 			proxy := p.Context().LookupProxy(ProxyId(id))
 			if proxy != nil {
 				ev.Offer = proxy.(*DataOffer)
@@ -1464,7 +1462,6 @@ func (p *DataDevice) Dispatch(event *Event) {
 		if len(p.selectionHandlers) > 0 {
 			ev := DataDeviceSelectionEvent{}
 			id := event.Uint32()
-			println(id)
 			proxy := p.Context().LookupProxy(ProxyId(id))
 			if proxy != nil {
 				ev.Offer = proxy.(*DataOffer)

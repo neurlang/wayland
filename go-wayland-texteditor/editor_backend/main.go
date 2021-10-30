@@ -15,6 +15,40 @@ var file = [][]string{
 	{"w", "o", "r", "l", "d"},
 }
 
+func handlerCopy(p *CopyRequest) *CopyResponse {
+	var cr CopyResponse
+	if (p.Y0 > p.Y1) || ((p.Y0 == p.Y1) && (p.X0 > p.X1)) {
+		p.X0, p.X1 = p.X1, p.X0
+		p.Y0, p.Y1 = p.Y1, p.Y0
+	}
+	if p.Y0 >= len(file) {
+		return &cr
+	}
+	if p.X0 > len(file[p.Y0]) {
+		return &cr
+	}
+	if p.Y1 >= len(file) {
+		return &cr
+	}
+	if p.X1 > len(file[p.Y1]) {
+		return &cr
+	}
+
+	for y := p.Y0; y <= p.Y1; y++ {
+		for x := 0; x < len(file[y]); x++ {
+			if y == p.Y0 && x < p.X0 {
+				continue
+			}
+			if y == p.Y1 && x >= p.X1 {
+				break
+			}
+			cr.Buffer = append(cr.Buffer, []byte(file[y][x])...)
+		}
+		cr.Buffer = append(cr.Buffer, '\r', '\n')
+	}
+	return &cr
+}
+
 func handlerPaste(p *PasteRequest) {
 	var array = string(p.Buffer)
 	if p.Y >= len(file) {
@@ -164,6 +198,7 @@ type PasteRequest struct {
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
+	Copy                      *CopyRequest
 	Write                     *WriteRequest
 	Paste                     *PasteRequest
 }
@@ -171,9 +206,16 @@ type ContentRequest struct {
 type ContentResponse struct {
 	Content []string
 	FgColor [][5]int
+	Copy    *CopyResponse
 	Write   *WriteResponse
 }
 
+type CopyRequest struct {
+	X0, Y0, X1, Y1 int
+}
+type CopyResponse struct {
+	Buffer []byte
+}
 type WriteResponse struct {
 	MoveX, MoveY int
 }
@@ -192,10 +234,12 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var resp ContentResponse
+	if cr.Copy != nil {
+		resp.Copy = handlerCopy(cr.Copy)
+	}
 	if cr.Write != nil {
 		resp.Write = handlerWrite(cr.Write)
 	}
-
 	if cr.Paste != nil {
 		handlerPaste(cr.Paste)
 	}

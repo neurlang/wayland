@@ -37,11 +37,14 @@ const navigateLeft = 4
 const navigateRight = 8
 
 type textarea struct {
-	display *window.Display
-	window  *window.Window
-	widget  *window.Widget
-	width   int32
-	height  int32
+	display      *window.Display
+	window       *window.Window
+	widget       *window.Widget
+	src          *wl.DataSource
+	srcSerial    uint32
+	srcClipboard string
+	width        int32
+	height       int32
 	StringGrid
 	mutex        sync.RWMutex
 	navigateHeld byte
@@ -288,23 +291,39 @@ func (textarea *textarea) Key(
 
 			if input.GetModifiers() == window.ModControlMask {
 
-				/*
-					src, err := textarea.display.CreateDataSource()
-					if err != nil {
-						fmt.Println(err)
-					}
-					_ = src
-				*/
 				if notUnicode == 'c' {
+					println("CTRL C")
+					if textarea.StringGrid.IbeamCursor == textarea.StringGrid.SelectionCursor {
+						break
+
+					}
+					if textarea.src == nil {
+
+						src, err := textarea.display.CreateDataSource()
+						if err != nil {
+							fmt.Println(err)
+						}
+						textarea.src = src
+						textarea.src.AddTargetHandler(textarea)
+						textarea.src.AddSendHandler(textarea)
+						textarea.src.AddCancelledHandler(textarea)
+						textarea.src.AddDndDropPerformedHandler(textarea)
+						textarea.src.AddDndFinishedHandler(textarea)
+						textarea.src.AddActionHandler(textarea)
+
+					}
+
+					textarea.src.Offer("text/plain;charset=utf-8")
+					input.DeviceSetSelection(textarea.src, textarea.srcSerial)
+					textarea.srcSerial ++
 
 				}
 				if notUnicode == 'v' {
-
+					println("CTRL V")
 					input.ReceiveSelectionData("text/plain;charset=utf-8", &Paste{Textarea: textarea})
 
 				}
 
-				println("CTRL C/V")
 				break
 			}
 
@@ -483,6 +502,32 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 
 		textarea.handleContent(content)
 	}
+}
+
+func (textarea *textarea) HandleDataSourceSend(ev wl.DataSourceSendEvent) {
+	println("HandleDataSourceSend", ev.MimeType, ev.Fd, ev.FdError)
+	var c Copy
+
+	c.Textarea = textarea
+
+	c.Receive(ev.Fd, ev.MimeType)
+
+}
+func (textarea *textarea) HandleDataSourceAction(ev wl.DataSourceActionEvent) {
+	println("HandleDataSourceActions")
+}
+func (textarea *textarea) HandleDataSourceTarget(ev wl.DataSourceTargetEvent) {
+	println("HandleDataSourceTarget")
+}
+func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEvent) {
+
+	println("HandleDataSourceCancelled")
+}
+func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {
+	println("HandleDataSourceDndDropPerformed")
+}
+func (textarea *textarea) HandleDataSourceDndFinished(ev wl.DataSourceDndFinishedEvent) {
+	println("HandleDataSourceDndFinished")
 }
 
 func (textarea *textarea) Fullscreen(w *window.Window, wh window.WidgetHandler) {

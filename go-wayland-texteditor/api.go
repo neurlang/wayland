@@ -17,13 +17,22 @@ type PasteRequest struct {
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
+	Copy                      *CopyRequest
 	Write                     *WriteRequest
 	Paste                     *PasteRequest
 }
 type ContentResponse struct {
 	Content []string
 	FgColor [][5]int
+	Copy    *CopyResponse
 	Write   *WriteResponse
+}
+
+type CopyRequest struct {
+	X0, Y0, X1, Y1 int
+}
+type CopyResponse struct {
+	Buffer []byte
 }
 
 type WriteResponse struct {

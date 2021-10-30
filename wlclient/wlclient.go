@@ -77,6 +77,10 @@ type SeatListener interface {
 	wl.SeatNameHandler
 }
 
+func SeatDestroy(p *wl.Seat) {
+	//p.Destroy()
+	p.Unregister()
+}
 func SeatAddListener(s *wl.Seat, data SeatListener) {
 	s.AddCapabilitiesHandler(data)
 	s.AddNameHandler(data)
@@ -180,7 +184,10 @@ func SubsurfaceDestroy(p *wl.Subsurface) {
 	p.Destroy()
 	p.Unregister()
 }
-
+func DataDeviceDestroy(p *wl.DataDevice) {
+	//p.Destroy()
+	p.Unregister()
+}
 func DataDeviceManagerDestroy(d *wl.DataDeviceManager) {
 	//d.Destroy()
 	d.Unregister()
@@ -210,6 +217,10 @@ type DataOfferListener interface {
 	wl.DataOfferActionHandler
 }
 
+func DataOfferDestroy(p *wl.DataOffer) {
+	//d.Destroy()
+	p.Unregister()
+}
 func DataOfferAddListener(p *wl.DataOffer, h DataOfferListener) {
 	p.AddOfferHandler(h)
 	p.AddSourceActionsHandler(h)

@@ -104,6 +104,9 @@ func isNilBetter(i Proxy) bool {
 	case *Callback:
 		v := i.(*Callback)
 		ret = v == nil
+	case *DataSource:
+		v := i.(*DataSource)
+		ret = v == nil
 	default:
 		fmt.Printf("Please add %T to isNilBetter. Thank you.\n", i)
 		ret = false
