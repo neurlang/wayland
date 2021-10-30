@@ -314,8 +314,9 @@ func (textarea *textarea) Key(
 					}
 
 					textarea.src.Offer("text/plain;charset=utf-8")
+					textarea.src.Offer("text/plain;charset=UTF-8")
 					input.DeviceSetSelection(textarea.src, textarea.srcSerial)
-					textarea.srcSerial ++
+					textarea.srcSerial++
 
 				}
 				if notUnicode == 'v' {
