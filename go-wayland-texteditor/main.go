@@ -533,16 +533,20 @@ func (textarea *textarea) HandleDataSourceTarget(ev wl.DataSourceTargetEvent) {
 func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEvent) {
 
 	println("HandleDataSourceCancelled")
-
-	textarea.src.RemoveTargetHandler(textarea)
-	textarea.src.RemoveSendHandler(textarea)
-	textarea.src.RemoveCancelledHandler(textarea)
-	textarea.src.RemoveDndDropPerformedHandler(textarea)
-	textarea.src.RemoveDndFinishedHandler(textarea)
-	textarea.src.RemoveActionHandler(textarea)
-	textarea.src.Destroy()
-	textarea.src.Unregister()
-	textarea.src = nil
+	// causes crash:
+	/*
+		if textarea.src != nil {
+			textarea.src.RemoveTargetHandler(textarea)
+			textarea.src.RemoveSendHandler(textarea)
+			textarea.src.RemoveCancelledHandler(textarea)
+			textarea.src.RemoveDndDropPerformedHandler(textarea)
+			textarea.src.RemoveDndFinishedHandler(textarea)
+			textarea.src.RemoveActionHandler(textarea)
+			//textarea.src.Destroy()
+			textarea.src.Unregister()
+			textarea.src = nil
+		}
+	*/
 
 }
 func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {
