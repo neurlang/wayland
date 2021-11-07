@@ -8,6 +8,9 @@ type Paste struct {
 }
 
 func (p *Paste) Write(b []byte) (int, error) {
+
+	println("WRITING:", len(b))
+
 	p.buffer = append(p.buffer, b...)
 	return len(b), nil
 }

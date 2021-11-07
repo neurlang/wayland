@@ -106,8 +106,14 @@ func (sg *StringGrid) Height() int {
 	return sg.YCells * sg.CellHeight
 }
 
-func (sg *StringGrid) Selected(x, y int) bool {
+func (sg *StringGrid) IsSelection() bool {
 	if !(sg.Selecting || sg.IsSelected) {
+		return false
+	}
+	return true
+}
+func (sg *StringGrid) Selected(x, y int) bool {
+	if !sg.IsSelection() {
 		return false
 	}
 	var objs = [3]ObjectPosition{sg.SelectionCursor, sg.IbeamCursor, {x, y}}

@@ -3105,6 +3105,10 @@ func (d *Display) Destroy() {
 	wlclient.DisplayDisconnect(d.Display)
 }
 
+func (d *Display) GetSerial() uint32 {
+	return d.serial
+}
+
 //line 6425
 func (d *Display) CreateDataSource() (*wl.DataSource, error) {
 	if d.dataDeviceManager == nil {

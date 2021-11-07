@@ -41,7 +41,6 @@ type textarea struct {
 	window       *window.Window
 	widget       *window.Widget
 	src          *wl.DataSource
-	srcSerial    uint32
 	srcClipboard string
 	width        int32
 	height       int32
@@ -293,30 +292,41 @@ func (textarea *textarea) Key(
 
 				if notUnicode == 'c' {
 					println("CTRL C")
-					if textarea.StringGrid.IbeamCursor == textarea.StringGrid.SelectionCursor {
+
+					if !textarea.StringGrid.IsSelection() {
 						break
 
 					}
-					if textarea.src == nil {
 
-						src, err := textarea.display.CreateDataSource()
-						if err != nil {
-							fmt.Println(err)
-						}
-						textarea.src = src
-						textarea.src.AddTargetHandler(textarea)
-						textarea.src.AddSendHandler(textarea)
-						textarea.src.AddCancelledHandler(textarea)
-						textarea.src.AddDndDropPerformedHandler(textarea)
-						textarea.src.AddDndFinishedHandler(textarea)
-						textarea.src.AddActionHandler(textarea)
+					if textarea.src != nil {
 
+						textarea.src.RemoveTargetHandler(textarea)
+						textarea.src.RemoveSendHandler(textarea)
+						textarea.src.RemoveCancelledHandler(textarea)
+						textarea.src.RemoveDndDropPerformedHandler(textarea)
+						textarea.src.RemoveDndFinishedHandler(textarea)
+						textarea.src.RemoveActionHandler(textarea)
+						textarea.src.Destroy()
+						textarea.src.Unregister()
 					}
 
+					src, err := textarea.display.CreateDataSource()
+					if err != nil {
+						fmt.Println(err)
+					}
+					textarea.src = src
+
+					textarea.src.Offer("UTF8_STRING")
 					textarea.src.Offer("text/plain;charset=utf-8")
 					textarea.src.Offer("text/plain;charset=UTF-8")
-					input.DeviceSetSelection(textarea.src, textarea.srcSerial)
-					textarea.srcSerial++
+					textarea.src.AddTargetHandler(textarea)
+					textarea.src.AddSendHandler(textarea)
+					textarea.src.AddCancelledHandler(textarea)
+					textarea.src.AddDndDropPerformedHandler(textarea)
+					textarea.src.AddDndFinishedHandler(textarea)
+					textarea.src.AddActionHandler(textarea)
+
+					input.DeviceSetSelection(textarea.src, textarea.display.GetSerial())
 
 				}
 				if notUnicode == 'v' {
@@ -342,7 +352,7 @@ func (textarea *textarea) Key(
 			fallthrough
 		case 65506:
 			println("start")
-			if !(textarea.StringGrid.IsSelected || textarea.StringGrid.Selecting) {
+			if !textarea.StringGrid.IsSelection() {
 				textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
 			}
 			textarea.StringGrid.Selecting = true
@@ -523,6 +533,17 @@ func (textarea *textarea) HandleDataSourceTarget(ev wl.DataSourceTargetEvent) {
 func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEvent) {
 
 	println("HandleDataSourceCancelled")
+
+	textarea.src.RemoveTargetHandler(textarea)
+	textarea.src.RemoveSendHandler(textarea)
+	textarea.src.RemoveCancelledHandler(textarea)
+	textarea.src.RemoveDndDropPerformedHandler(textarea)
+	textarea.src.RemoveDndFinishedHandler(textarea)
+	textarea.src.RemoveActionHandler(textarea)
+	textarea.src.Destroy()
+	textarea.src.Unregister()
+	textarea.src = nil
+
 }
 func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {
 	println("HandleDataSourceDndDropPerformed")

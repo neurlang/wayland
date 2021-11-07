@@ -46,6 +46,9 @@ func (p *Copy) Receive(fd uintptr, name string) error {
 	return nil
 }
 func (p *Copy) Write(buf []byte) (int, error) {
+
+	println("COPYING:", len(buf))
+
 	return p.file.Write(buf)
 }
 
