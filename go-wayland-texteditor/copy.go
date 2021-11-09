@@ -16,31 +16,15 @@ func (p *Copy) Receive(fd uintptr, name string) error {
 	p.Textarea.mutex.Lock()
 	defer p.Textarea.mutex.Unlock()
 
-	if p.Textarea.StringGrid.IbeamCursor == p.Textarea.StringGrid.SelectionCursor {
-		fmt.Println(io.Copy(p, strings.NewReader(p.Textarea.srcClipboard)))
+	if !p.Textarea.StringGrid.IsSelection() {
+		//fmt.Println(io.Copy(p, strings.NewReader(p.Textarea.srcClipboard)))
 		fmt.Println(p.Close())
 		return nil
 	}
 
-	content, err := load_content(ContentRequest{
-		Width:  p.Textarea.StringGrid.XCells,
-		Height: p.Textarea.StringGrid.YCells,
-		Copy: &CopyRequest{
-			X0: p.Textarea.StringGrid.IbeamCursor.X,
-			Y0: p.Textarea.StringGrid.IbeamCursor.Y,
-			X1: p.Textarea.StringGrid.SelectionCursor.X,
-			Y1: p.Textarea.StringGrid.SelectionCursor.Y,
-		}})
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
+	var clipbrd = string(p.Textarea.CopyBuffer)
 
-	p.Textarea.handleContent(content)
-
-	p.Textarea.srcClipboard = string(content.Copy.Buffer)
-
-	fmt.Println(io.Copy(p, strings.NewReader(p.Textarea.srcClipboard)))
+	fmt.Println(io.Copy(p, strings.NewReader(clipbrd)))
 	fmt.Println(p.Close())
 
 	return nil

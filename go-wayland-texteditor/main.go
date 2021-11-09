@@ -37,13 +37,13 @@ const navigateLeft = 4
 const navigateRight = 8
 
 type textarea struct {
-	display      *window.Display
-	window       *window.Window
-	widget       *window.Widget
-	src          *wl.DataSource
-	srcClipboard string
-	width        int32
-	height       int32
+	display    *window.Display
+	window     *window.Window
+	widget     *window.Widget
+	src        *wl.DataSource
+	CopyBuffer string
+	width      int32
+	height     int32
 	StringGrid
 	mutex        sync.RWMutex
 	navigateHeld byte
@@ -298,6 +298,24 @@ func (textarea *textarea) Key(
 
 					}
 
+					content, err := load_content(ContentRequest{
+						Width:  textarea.StringGrid.XCells,
+						Height: textarea.StringGrid.YCells,
+						Copy: &CopyRequest{
+							X0: textarea.StringGrid.IbeamCursor.X,
+							Y0: textarea.StringGrid.IbeamCursor.Y,
+							X1: textarea.StringGrid.SelectionCursor.X,
+							Y1: textarea.StringGrid.SelectionCursor.Y,
+						}})
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
+
+					textarea.handleContent(content)
+
+					textarea.CopyBuffer = string(content.Copy.Buffer)
+
 					if textarea.src != nil {
 
 						textarea.src.RemoveTargetHandler(textarea)
@@ -306,8 +324,8 @@ func (textarea *textarea) Key(
 						textarea.src.RemoveDndDropPerformedHandler(textarea)
 						textarea.src.RemoveDndFinishedHandler(textarea)
 						textarea.src.RemoveActionHandler(textarea)
-						textarea.src.Destroy()
-						textarea.src.Unregister()
+						//textarea.src.Destroy()
+						//textarea.src.Unregister()
 					}
 
 					src, err := textarea.display.CreateDataSource()
@@ -533,20 +551,9 @@ func (textarea *textarea) HandleDataSourceTarget(ev wl.DataSourceTargetEvent) {
 func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEvent) {
 
 	println("HandleDataSourceCancelled")
-	// causes crash:
-	/*
-		if textarea.src != nil {
-			textarea.src.RemoveTargetHandler(textarea)
-			textarea.src.RemoveSendHandler(textarea)
-			textarea.src.RemoveCancelledHandler(textarea)
-			textarea.src.RemoveDndDropPerformedHandler(textarea)
-			textarea.src.RemoveDndFinishedHandler(textarea)
-			textarea.src.RemoveActionHandler(textarea)
-			//textarea.src.Destroy()
-			textarea.src.Unregister()
-			textarea.src = nil
-		}
-	*/
+
+	textarea.src = nil
+	textarea.CopyBuffer = ""
 
 }
 func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {
