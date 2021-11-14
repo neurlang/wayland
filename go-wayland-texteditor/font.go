@@ -77,20 +77,16 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 
 		faketexture := make([][3]byte, f.cellx*f.celly)
 		fakestring := fmt.Sprintf("%+q", code)
-		if len(fakestring) > 3 && (fakestring[0:3] == "\"\\u" || fakestring[0:3] == "\"\\U") {
-			fakestring = fakestring[3:]
-		}
-		if len(fakestring) > 1 && fakestring[0:1] == "\"" {
-			fakestring = fakestring[1:]
-		}
-		if len(fakestring) >= 1 && fakestring[len(fakestring)-1] == '"' {
-			fakestring = fakestring[0 : len(fakestring)-1]
-		}
-		println(fakestring)
-		var i = 0
-		for ybox := byte(0); ybox < 4; ybox++ {
-			for xbox := byte(0); xbox < 3; xbox++ {
 
+		fakestring = strings.Replace(fakestring, "\"", "", -1)
+		fakestring = strings.Replace(fakestring, "\\", "", -1)
+		fakestring = strings.Replace(fakestring, "u", "", -1)
+		fakestring = strings.Replace(fakestring, "U", "", -1)
+
+		//println(fakestring)
+		var i = 0
+		for xbox := byte(0); xbox < 3; xbox++ {
+			for ybox := byte(0); ybox < 4; ybox++ {
 				for y := byte(0); y < 6; y++ {
 					for x := byte(0); x < 4; x++ {
 						pos := int(ybox)*f.cellx*6 + int(xbox)*4 + int(y)*f.cellx + int(x)
@@ -123,6 +119,62 @@ func (f *Font) Alias(alias, key string) error {
 		return fmt.Errorf("key missing")
 	}
 	f.mapping[alias] = f.mapping[key]
+	return nil
+}
+func maxByte3(a, b [3]byte) [3]byte {
+	return [3]byte{maxByte(a[0], b[0]), maxByte(a[1], b[1]), maxByte(a[2], b[2])}
+}
+func maxByte(a, b byte) byte {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func (f *Font) Combine(combiner, descriptor, textureName string) error {
+	if len(combiner) == 0 {
+		println("no combiner, would create same named textures")
+		return fmt.Errorf("no combiner")
+	}
+
+	var combinerTexture [][3]byte
+
+	if len(textureName) == 0 {
+		combinerTexture = f.GetRGBTexture(combiner)
+	} else {
+		combinerTexture = f.GetRGBTexture(textureName)
+	}
+	if len(combinerTexture) == 0 {
+		println("no combiner texture")
+		return fmt.Errorf("no combiner texture")
+	}
+
+	var buffer = strings.Split(strings.ReplaceAll(descriptor, "\r\n", "\n"), "\n")
+
+	for _, v := range buffer {
+		var buf = strings.Split(strings.Trim(v, "\t"), "\t")
+		for _, cell := range buf {
+			if len(cell) == 0 {
+				continue
+			}
+			if cell == combiner {
+				continue
+			}
+
+			var otherTexture = f.GetRGBTexture(cell)
+
+			if len(otherTexture) != len(combinerTexture) {
+				continue
+			}
+
+			var newTexture = make([][3]byte, len(otherTexture))
+			for i := range newTexture {
+				newTexture[i] = maxByte3(otherTexture[i], combinerTexture[i])
+			}
+
+			f.mapping[cell+combiner] = newTexture
+		}
+	}
 	return nil
 }
 

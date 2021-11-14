@@ -50,6 +50,21 @@ func handlerCopy(p *CopyRequest) *CopyResponse {
 	}
 	return &cr
 }
+func isCombinable(r rune) bool {
+	return r > 128
+}
+func isCombiner(r rune) bool {
+	switch r {
+	case 0x900, 0x901, 0x902, 0x903, 0x93a, 0x93b, 0x93c, 0x93e, 0x93f, 0x940:
+		return true
+	case 0x941, 0x942, 0x943, 0x944, 0x945, 0x946, 0x947, 0x948, 0x949, 0x94a:
+		return true
+	case 0x94b, 0x94c, 0x94d, 0x94e, 0x94f, 0x955, 0x956, 0x957, 0x962, 0x963:
+		return true
+	default:
+		return false
+	}
+}
 
 func handlerPaste(p *PasteRequest) {
 	var array = string(p.Buffer)
@@ -83,6 +98,8 @@ func handlerPaste(p *PasteRequest) {
 		}
 		row = row[:p.X:p.X]
 
+		var isCombinAble = false
+
 		for _, c := range array {
 			var char = string(c)
 			if char == "\t" {
@@ -90,7 +107,12 @@ func handlerPaste(p *PasteRequest) {
 					row = append(row, "")
 				}
 			}
-			row = append(row, char)
+			if (len(row) > 0) && isCombiner(c) && isCombinAble {
+				row[len(row)-1] = row[len(row)-1] + char
+			} else {
+				isCombinAble = isCombinable(c)
+				row = append(row, char)
+			}
 		}
 		file[p.Y] = row
 
