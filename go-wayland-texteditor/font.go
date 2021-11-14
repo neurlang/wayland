@@ -131,6 +131,31 @@ func maxByte(a, b byte) byte {
 	return b
 }
 
+func Each(descriptor string, function func(string) error) error {
+	var buffer = strings.Split(strings.ReplaceAll(strings.ReplaceAll(descriptor, "\r\n", "\n"), "\t", "\n"), "\n")
+	for _, v := range buffer {
+		if len(v) == 0 {
+			continue
+		}
+		err := function(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f *Font) Multiply(descriptor1, suffix, separator, descriptor2 string) error {
+	Each(descriptor1, func(v string) error {
+		err := f.Combine(suffix+v, descriptor2, v+separator)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return nil
+}
+
 func (f *Font) Combine(combiner, descriptor, textureName string) error {
 	if len(combiner) == 0 {
 		println("no combiner, would create same named textures")
@@ -173,12 +198,14 @@ func (f *Font) Combine(combiner, descriptor, textureName string) error {
 			}
 
 			f.mapping[cell+combiner] = newTexture
+
+			//println(cell+combiner)
 		}
 	}
 	return nil
 }
 
-func (f *Font) Load(name, descriptor string) error {
+func (f *Font) Load(name, descriptor, trailer string) error {
 	file, err := os.Open(name)
 	if err != nil {
 		print("Font not found: ")
@@ -241,7 +268,7 @@ func (f *Font) Load(name, descriptor string) error {
 		f.mapping = make(map[string][][3]byte)
 	}
 	for k, v := range mapping {
-		f.mapping[k] = mapping2[v]
+		f.mapping[k+trailer] = mapping2[v]
 	}
 	return nil
 }

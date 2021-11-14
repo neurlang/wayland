@@ -123,17 +123,66 @@ var vietnameseDescriptor = "" +
 	ở	Ở	ỡ	Ỡ	ớ	Ớ	ợ	Ợ	ủ	Ủ
 	ụ	Ụ	ừ	Ừ	ử	Ử	ữ	Ữ	ứ	Ứ
 	ự	Ự	ỳ	Ỳ	ỷ	Ỷ	ỹ	Ỹ	ỵ	Ỵ`
+
+var hangul0Descriptor = "" +
+	`가	개	갸	걔	거	게	겨	계	고	과	괘	괴	교	구	궈	궤	귀	규	그	긔	기
+	까	깨	꺄	꺠	꺼	께	껴	꼐	꼬	꽈	꽤	꾀	꾜	꾸	꿔	꿰	뀌	뀨	끄	끠	끼
+	나	내	냐	냬	너	네	녀	녜	노	놔	놰	뇌	뇨	누	눠	눼	뉘	뉴	느	늬	니
+	다	대	댜	댸	더	데	뎌	뎨	도	돠	돼	되	됴	두	둬	뒈	뒤	듀	드	듸	디
+	따	때	땨	떄	떠	떼	뗘	뗴	또	똬	뙈	뙤	뚀	뚜	뚸	뛔	뛰	뜌	뜨	띄	띠
+	라	래	랴	럐	러	레	려	례	로	롸	뢔	뢰	료	루	뤄	뤠	뤼	류	르	릐	리
+	마	매	먀	먜	머	메	며	몌	모	뫄	뫠	뫼	묘	무	뭐	뭬	뮈	뮤	므	믜	미
+	바	배	뱌	뱨	버	베	벼	볘	보	봐	봬	뵈	뵤	부	붜	붸	뷔	뷰	브	븨	비
+	빠	빼	뺘	뺴	뻐	뻬	뼈	뼤	뽀	뽜	뽸	뾔	뾰	뿌	뿨	쀄	쀠	쀼	쁘	쁴	삐
+	사	새	샤	섀	서	세	셔	셰	소	솨	쇄	쇠	쇼	수	숴	쉐	쉬	슈	스	싀	시
+	싸	쌔	쌰	썌	써	쎄	쎠	쎼	쏘	쏴	쐐	쐬	쑈	쑤	쒀	쒜	쒸	쓔	쓰	씌	씨
+	아	애	야	얘	어	에	여	예	오	와	왜	외	요	우	워	웨	위	유	으	의	이
+	자	재	쟈	쟤	저	제	져	졔	조	좌	좨	죄	죠	주	줘	줴	쥐	쥬	즈	즤	지
+	짜	째	쨔	쨰	쩌	쩨	쪄	쪠	쪼	쫘	쫴	쬐	쬬	쭈	쭤	쮀	쮜	쮸	쯔	쯰	찌
+	차	채	챠	챼	처	체	쳐	쳬	초	촤	쵀	최	쵸	추	춰	췌	취	츄	츠	츼	치
+	카	캐	캬	컈	커	케	켜	켸	코	콰	쾌	쾨	쿄	쿠	쿼	퀘	퀴	큐	크	킈	키
+	타	태	탸	턔	터	테	텨	톄	토	톼	퇘	퇴	툐	투	퉈	퉤	튀	튜	트	틔	티
+	파	패	퍄	퍠	퍼	페	펴	폐	포	퐈	퐤	푀	표	푸	풔	풰	퓌	퓨	프	픠	피
+	하	해	햐	햬	허	헤	혀	혜	호	화	홰	회	효	후	훠	훼	휘	휴	흐	희	히`
+
+var hangul9Descriptor = "" +
+	`ᆻ	ᆨ	ᆺ	ᆫ	ᆼ	ᇀ	ᆷ	ᆸ	ᆮ	ᆯ	ᆾ
+	ᆻ9	ᆨ9	ᆺ9	ᆫ9	ᆼ9	ᇀ9	ᆷ9	ᆸ9	ᆮ9	ᆯ9	ᆾ9
+	ᆿ	ᇁ	ᇂ	ᆽ	ퟹ	ᆩ	ퟦ	ퟍ	ᆪ	ᆬ	ᆭ
+	ᆿ9	ᇁ9	ᇂ9	ᆽ9	ퟹ9	ᆩ9	ퟦ9	ퟍ9	ᆪ9	ᆬ9	ᆭ9
+	ᆰ	ᆱ	ᆲ	ᆳ	ᆴ	ᆵ	ᆶ	ᆹ	ᇫ	ᇰ	ᇹ
+	ᆰ9	ᆱ9	ᆲ9	ᆳ9	ᆴ9	ᆵ9	ᆶ9	ᆹ9	ᇫ9	ᇰ9	ᇹ9`
+
 var UnicodeFont Font
 
 func init() {
-	(&UnicodeFont).Load("ascii.png", asciiDescriptor)
-	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor)
-	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor)
-	(&UnicodeFont).Load("supplement.png", supplementDescriptor)
-	(&UnicodeFont).Load("ipa.png", ipaDescriptor)
-	(&UnicodeFont).Load("greek.png", greekDescriptor)
-	(&UnicodeFont).Load("cyrillic.png", cyrillicDescriptor)
-	(&UnicodeFont).Load("vietnamese.png", vietnameseDescriptor)
+	(&UnicodeFont).Load("ascii.png", asciiDescriptor, "")
+	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor, "")
+	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor, "")
+	(&UnicodeFont).Load("supplement.png", supplementDescriptor, "")
+	(&UnicodeFont).Load("ipa.png", ipaDescriptor, "")
+	(&UnicodeFont).Load("greek.png", greekDescriptor, "")
+	(&UnicodeFont).Load("cyrillic.png", cyrillicDescriptor, "")
+	(&UnicodeFont).Load("vietnamese.png", vietnameseDescriptor, "")
+	(&UnicodeFont).Load("hangul0.png", hangul0Descriptor, "")
+	(&UnicodeFont).Load("hangul1.png", hangul0Descriptor, "1")
+	(&UnicodeFont).Load("hangul9.png", hangul9Descriptor, "")
+	(&UnicodeFont).Multiply(hangul0Descriptor, "x", "1", hangul9Descriptor)
+	Each(hangul0Descriptor, func(v string) error {
+		const buf = "	\u11a8\u11a9\u11aa\u11ab\u11ac\u11ad\u11ae\u11af\u11b0\u11b1\u11b2" +
+			"\u11b3\u11b4\u11b5\u11b6\u11b7\u11b8\u11b9\u11ba\u11bb\u11bc" +
+			"\u11bd\u11be\u11bf\u11c0\u11c1\u11c2"
+		for i := 1; i < 28; i++ {
+
+			var target = string([]rune(v)[0] + rune(i))
+			var bottom = string([]rune(buf)[i])
+
+			//println(v, "|",  bottom + "x" + v)
+			(&UnicodeFont).Alias(target, bottom+"x"+v)
+		}
+
+		return nil
+	})
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
 }
