@@ -153,6 +153,30 @@ var hangul9Descriptor = "" +
 	ᆰ	ᆱ	ᆲ	ᆳ	ᆴ	ᆵ	ᆶ	ᆹ	ᇫ	ᇰ	ᇹ
 	ᆰ9	ᆱ9	ᆲ9	ᆳ9	ᆴ9	ᆵ9	ᆶ9	ᆹ9	ᇫ9	ᇰ9	ᇹ9`
 
+var combiningDescriptor = "" +
+	`̀	́	̂	̃	̄	̅	̆	̇	̈
+	̉	̊		̋	̌	̍	̎	̏	̐
+	̑	̒	̓	̔		̕	̖		̗
+	̘	̙	̚	̛	̜	̝	̞	̟	̠
+	̡	̢		̣	̤	̥	̦	̧	̨
+	̩	̪	̫	̬		̭	̮		̯
+	̰	̱	̲	̳	̴	̵	̶	̷	̸
+	̹	̺		̻		̼	̽	̾	̿
+	̀	́	͂	̓	̈́	ͅ	͆		͇
+	͈	͉	͊	͋	͌	͍	͎	͏	͐
+	͑	͒		͓		͔	͕	͖	͗
+	͘	͙	͚	͛	͜		͝	͞	͟
+	͠	͡	͢	ͣ	ͤ	ͥ	ͦ	ͧ	ͨ
+	ͩ	ͪ		ͫ	ͬ	ͭ	ͮ	ͯ	`
+
+var armenianDescriptor = "" +
+	`	Ա	Բ	Գ	Դ	Ե	Զ	Է	Ը	Թ	Ժ	Ի	Լ	Խ	Ծ	Կ
+	Հ	Ձ	Ղ	Ճ	Մ	Յ	Ն	Շ	Ո	Չ	Պ	Ջ	Ռ	Ս	Վ	Տ
+	Ր	Ց	Ւ	Փ	Ք	Օ	Ֆ			ՙ	՚	՛	՜	՝	՞	՟
+		ա	բ	գ	դ	ե	զ	է	ը	թ	ժ	ի	լ	խ	ծ	կ
+	հ	ձ	ղ	ճ	մ	յ	ն	շ	ո	չ	պ	ջ	ռ	ս	վ	տ
+	ր	ց	ւ	փ	ք	օ	ֆ	և		։	֊			֍	֎	֏`
+
 var UnicodeFont Font
 
 func init() {
@@ -183,6 +207,13 @@ func init() {
 
 		return nil
 	})
+	err := (&UnicodeFont).Load("combining.png", combiningDescriptor, "")
+	if err != nil {
+		println(err.Error())
+	}
+	(&UnicodeFont).Multiply(combiningDescriptor, "", "", cyrillicDescriptor)
+	(&UnicodeFont).Load("armenian.png", armenianDescriptor, "")
+
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
 }

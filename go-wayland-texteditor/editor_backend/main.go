@@ -54,15 +54,19 @@ func isCombinable(r rune) bool {
 	return r > 128
 }
 func isCombiner(r rune) bool {
+	// combining diacritical marks block
+	if r >= 0x300 && r <= 0x36f {
+		return true
+	}
 	switch r {
 	case 0x900, 0x901, 0x902, 0x903, 0x93a, 0x93b, 0x93c, 0x93e, 0x93f, 0x940:
-		return true
+		return true // devanagari
 	case 0x941, 0x942, 0x943, 0x944, 0x945, 0x946, 0x947, 0x948, 0x949, 0x94a:
-		return true
+		return true // devanagari
 	case 0x94b, 0x94c, 0x94d, 0x94e, 0x94f, 0x955, 0x956, 0x957, 0x962, 0x963:
-		return true
+		return true // devanagari
 	default:
-		return false
+		return false // not a combiner
 	}
 }
 
