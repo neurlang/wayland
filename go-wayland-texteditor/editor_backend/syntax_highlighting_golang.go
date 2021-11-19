@@ -36,6 +36,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int
 				out = append(out, [5]int{x, y, 0, 255, 0})
 			}
 			dblquote = !dblquote
+			continue
 		case "`":
 			if backquote {
 				out = append(out, [5]int{x + 1, y, 255, 255, 255})
@@ -43,6 +44,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int
 				out = append(out, [5]int{x, y, 0, 255, 0})
 			}
 			backquote = !backquote
+			continue
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
 			loaded = hash(a[0], loaded)
 			digits = true
@@ -58,6 +60,9 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int
 			digits = false
 		default:
 			digits = false
+		}
+		if x&7 == 0 && dblquote || backquote {
+			out = append(out, [5]int{x, y, 0, 255, 0})
 		}
 	}
 	out = append(out, reprocess_syntax_highlighting_end(loaded, length, len(row), y, digits)...)
