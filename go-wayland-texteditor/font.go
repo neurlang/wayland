@@ -1,7 +1,9 @@
 package main
 
 import "os"
+import "image"
 import "image/png"
+import "image/jpeg"
 import "image/color"
 import "strings"
 import "fmt"
@@ -214,12 +216,26 @@ func (f *Font) Load(name, descriptor, trailer string) error {
 	}
 	defer file.Close()
 
-	img, err := png.Decode(file)
-	if err != nil {
-		print("Cannot decode png: ")
-		println(name)
-		return err
+	var img image.Image
+
+	if name[len(name)-2] == 'n' {
+		img, err = png.Decode(file)
+		if err != nil {
+			print("Cannot decode png: ")
+			println(name)
+			return err
+		}
+
+	} else {
+
+		img, err = jpeg.Decode(file)
+		if err != nil {
+			print("Cannot decode jpeg: ")
+			println(name)
+			return err
+		}
 	}
+
 	b := img.Bounds()
 
 	var width = b.Max.X - b.Min.X
