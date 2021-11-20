@@ -71,12 +71,16 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 
 	pos.X -= sg.LineNumbers
 
-	for pos.X > 0 && (sg.XCells*pos.Y+pos.X-1) < len(sg.Content) && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
-		pos.X--
-	}
-
 	if pos.X < 0 {
 		pos.X = 0
+	}
+
+	if pos.Y < 0 {
+		pos.Y = 0
+	}
+
+	for pos.X > 0 && (sg.XCells*pos.Y+pos.X-1) < len(sg.Content) && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
+		pos.X--
 	}
 
 	sg.Hover = pos
@@ -88,7 +92,7 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 }
 
 func (sg *StringGrid) FgColor(x, y int) [3]byte {
-	for i := x; i >= 0 && i > x-16; i-- {
+	for i := x; i >= 0 && i > x-17; i-- {
 		if sg.ContentFgColor != nil {
 			if c, ok := sg.ContentFgColor[[2]int{i, y}]; ok {
 				return c
