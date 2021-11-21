@@ -227,6 +227,38 @@ func DataOfferAddListener(p *wl.DataOffer, h DataOfferListener) {
 	p.AddActionHandler(h)
 }
 
+type DataSourceListener interface {
+	wl.DataSourceTargetHandler
+	wl.DataSourceSendHandler
+	wl.DataSourceCancelledHandler
+	wl.DataSourceDndDropPerformedHandler
+	wl.DataSourceDndFinishedHandler
+	wl.DataSourceActionHandler
+}
+func DataSourceAddListener(p *wl.DataSource, h DataSourceListener) {
+	p.AddTargetHandler(h)
+	p.AddSendHandler(h)
+	p.AddCancelledHandler(h)
+	p.AddDndDropPerformedHandler(h)
+	p.AddDndFinishedHandler(h)
+	p.AddActionHandler(h)
+}
+
+func DataSourceRemoveListener(p *wl.DataSource, h DataSourceListener) {
+	p.RemoveTargetHandler(h)
+	p.RemoveSendHandler(h)
+	p.RemoveCancelledHandler(h)
+	p.RemoveDndDropPerformedHandler(h)
+	p.RemoveDndFinishedHandler(h)
+	p.RemoveActionHandler(h)
+}
+
+
+
+
+
+
+
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
 	c := wl.NewCompositor(r.Ctx)
 	_ = r.Bind(name, "wl_compositor", version, c)

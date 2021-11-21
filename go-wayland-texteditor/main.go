@@ -37,13 +37,12 @@ const navigateLeft = 4
 const navigateRight = 8
 
 type textarea struct {
-	display    *window.Display
-	window     *window.Window
-	widget     *window.Widget
-	src        *wl.DataSource
-	CopyBuffer string
-	width      int32
-	height     int32
+	display *window.Display
+	window  *window.Window
+	widget  *window.Widget
+	src     *window.DataSource
+	width   int32
+	height  int32
 	StringGrid
 	mutex        sync.RWMutex
 	navigateHeld byte
@@ -314,16 +313,10 @@ func (textarea *textarea) Key(
 
 					textarea.handleContent(content)
 
-					textarea.CopyBuffer = string(content.Copy.Buffer)
-
 					if textarea.src != nil {
 
-						textarea.src.RemoveTargetHandler(textarea)
-						textarea.src.RemoveSendHandler(textarea)
-						textarea.src.RemoveCancelledHandler(textarea)
-						textarea.src.RemoveDndDropPerformedHandler(textarea)
-						textarea.src.RemoveDndFinishedHandler(textarea)
-						textarea.src.RemoveActionHandler(textarea)
+						textarea.src.RemoveListener(textarea)
+
 						//textarea.src.Destroy()
 						//textarea.src.Unregister()
 					}
@@ -334,15 +327,12 @@ func (textarea *textarea) Key(
 					}
 					textarea.src = src
 
+					textarea.src.CopyBuffer = string(content.Copy.Buffer)
+
 					textarea.src.Offer("UTF8_STRING")
 					textarea.src.Offer("text/plain;charset=utf-8")
 					textarea.src.Offer("text/plain;charset=UTF-8")
-					textarea.src.AddTargetHandler(textarea)
-					textarea.src.AddSendHandler(textarea)
-					textarea.src.AddCancelledHandler(textarea)
-					textarea.src.AddDndDropPerformedHandler(textarea)
-					textarea.src.AddDndFinishedHandler(textarea)
-					textarea.src.AddActionHandler(textarea)
+					textarea.src.AddListener(textarea)
 
 					input.DeviceSetSelection(textarea.src, textarea.display.GetSerial())
 
@@ -553,7 +543,6 @@ func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEve
 	println("HandleDataSourceCancelled")
 
 	textarea.src = nil
-	textarea.CopyBuffer = ""
 
 }
 func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {

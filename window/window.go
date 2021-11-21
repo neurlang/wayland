@@ -651,9 +651,9 @@ func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
 	//println("HandleDataDeviceSelection", input.selectionOffer.offer, ev.Offer)
 }
 
-func (input *Input) DeviceSetSelection(src *wl.DataSource, serial uint32) {
+func (input *Input) DeviceSetSelection(src *DataSource, serial uint32) {
 	if input.dataDevice != nil {
-		input.dataDevice.SetSelection(src, serial)
+		input.dataDevice.SetSelection(src.src, serial)
 	}
 }
 
@@ -3110,11 +3110,13 @@ func (d *Display) GetSerial() uint32 {
 }
 
 //line 6425
-func (d *Display) CreateDataSource() (*wl.DataSource, error) {
+func (d *Display) CreateDataSource() (*DataSource, error) {
 	if d.dataDeviceManager == nil {
 		return nil, errors.New("Device manager does not exist")
 	}
-	return d.dataDeviceManager.CreateDataSource()
+	ds, err := d.dataDeviceManager.CreateDataSource()
+
+	return &DataSource{ds, ""}, err
 }
 
 //line 6478

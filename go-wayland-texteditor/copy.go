@@ -22,7 +22,7 @@ func (p *Copy) Receive(fd uintptr, name string) error {
 		return nil
 	}
 
-	var clipbrd = string(p.Textarea.CopyBuffer)
+	var clipbrd = string(p.Textarea.src.CopyBuffer)
 
 	fmt.Println(io.Copy(p, strings.NewReader(clipbrd)))
 	fmt.Println(p.Close())
