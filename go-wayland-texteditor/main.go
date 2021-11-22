@@ -243,13 +243,17 @@ func (*textarea) TouchFrame(widget *window.Widget, input *window.Input) {
 }
 func (*textarea) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
-func (*textarea) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
+func (*textarea) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
+	println("axis", axis, value)
 }
 func (*textarea) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
+	println("axis source", source)
 }
 func (*textarea) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+	println("axis stop", axis)
 }
 func (*textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+	println("axis discrete", axis, discrete)
 }
 func (*textarea) PointerFrame(widget *window.Widget, input *window.Input) {
 }

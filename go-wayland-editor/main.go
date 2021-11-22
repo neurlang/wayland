@@ -85,7 +85,7 @@ func textEntryCreate(editor *editor, text string) *textEntry {
 	return entry
 }
 
-func (*textEntry) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
+func (*textEntry) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
 }
 func (*textEntry) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
 }
@@ -181,7 +181,7 @@ func (*editor) TouchFrame(widget *window.Widget, input *window.Input) {
 }
 func (*editor) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
-func (*editor) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value wl.Fixed) {
+func (*editor) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
 }
 func (*editor) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
 }

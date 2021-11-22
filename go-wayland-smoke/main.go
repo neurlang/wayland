@@ -463,7 +463,7 @@ func (*smoke) Axis(
 	input *window.Input,
 	time uint32,
 	axis uint32,
-	value wl.Fixed,
+	value float32,
 ) {
 }
 func (*smoke) AxisSource(widget *window.Widget, input *window.Input, source uint32) {

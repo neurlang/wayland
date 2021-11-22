@@ -453,7 +453,7 @@ type WidgetHandler interface {
 	TouchMotion(Widget *Widget, Input *Input, time uint32, id int32, x float32, y float32)
 	TouchFrame(Widget *Widget, Input *Input)
 	TouchCancel(Widget *Widget, width int32, height int32)
-	Axis(Widget *Widget, Input *Input, time uint32, axis uint32, value wl.Fixed)
+	Axis(Widget *Widget, Input *Input, time uint32, axis uint32, value float32)
 	AxisSource(Widget *Widget, Input *Input, source uint32)
 	AxisStop(Widget *Widget, Input *Input, time uint32, axis uint32)
 	AxisDiscrete(Widget *Widget, Input *Input, axis uint32, discrete int32)
@@ -897,39 +897,103 @@ func (input *Input) PointerButton(
 
 }
 
-func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
-
-}
-
-func (*Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32, value wl.Fixed) {
-}
-
 func (input *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
-
 }
 
-func (*Input) PointerFrame(wlPointer *wl.Pointer) {
+func (input *Input) PointerFrame(wlPointer *wl.Pointer) {
+}
+
+func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
+	input.PointerAxis(nil, ev.Time, ev.Axis, ev.Value)
+}
+
+func (input *Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32, value float32) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+
+	if Widget.Userdata != nil {
+		Widget.Userdata.Axis(Widget, input, time, axis, value)
+	} else if Window.Userdata != nil {
+		Window.Userdata.Axis(Widget, input, time, axis, value)
+	}
 }
 
 func (input *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {
-
+	input.PointerAxisSource(nil, ev.AxisSource)
 }
 
-func (*Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) {
+func (input *Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+
+	if Widget.Userdata != nil {
+		Widget.Userdata.AxisSource(Widget, input, axisSource)
+	} else if Window.Userdata != nil {
+		Window.Userdata.AxisSource(Widget, input, axisSource)
+	}
 }
 
 func (input *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {
-
+	input.PointerAxisStop(nil, ev.Time, ev.Axis)
 }
 
-func (*Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uint32) {
+func (input *Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uint32) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+
+	if Widget.Userdata != nil {
+		Widget.Userdata.AxisStop(Widget, input, time, axis)
+	} else if Window.Userdata != nil {
+		Window.Userdata.AxisStop(Widget, input, time, axis)
+	}
 }
 
 func (input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
-
+	input.PointerAxisDiscrete(nil, ev.Axis, ev.Discrete)
 }
 
-func (*Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, discrete int32) {
+func (input *Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, discrete int32) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+
+	if Widget.Userdata != nil {
+		Widget.Userdata.AxisDiscrete(Widget, input, axis, discrete)
+	} else if Window.Userdata != nil {
+		Window.Userdata.AxisDiscrete(Widget, input, axis, discrete)
+	}
 }
 
 type SeatHandler interface {

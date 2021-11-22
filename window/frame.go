@@ -129,13 +129,13 @@ func (*windowFrame) TouchMotion(
 	y float32,
 ) {
 }
-func (*windowFrame) TouchFrame(Widget *Widget, Input *Input)                                     {}
-func (*windowFrame) TouchCancel(Widget *Widget, width int32, height int32)                       {}
-func (*windowFrame) Axis(Widget *Widget, Input *Input, time uint32, axis uint32, value wl.Fixed) {}
-func (*windowFrame) AxisSource(Widget *Widget, Input *Input, source uint32)                      {}
-func (*windowFrame) AxisStop(Widget *Widget, Input *Input, time uint32, axis uint32)             {}
-func (*windowFrame) AxisDiscrete(Widget *Widget, Input *Input, axis uint32, discrete int32)      {}
-func (*windowFrame) PointerFrame(Widget *Widget, Input *Input)                                   {}
+func (*windowFrame) TouchFrame(Widget *Widget, Input *Input)                                    {}
+func (*windowFrame) TouchCancel(Widget *Widget, width int32, height int32)                      {}
+func (*windowFrame) Axis(Widget *Widget, Input *Input, time uint32, axis uint32, value float32) {}
+func (*windowFrame) AxisSource(Widget *Widget, Input *Input, source uint32)                     {}
+func (*windowFrame) AxisStop(Widget *Widget, Input *Input, time uint32, axis uint32)            {}
+func (*windowFrame) AxisDiscrete(Widget *Widget, Input *Input, axis uint32, discrete int32)     {}
+func (*windowFrame) PointerFrame(Widget *Widget, Input *Input)                                  {}
 
 type frame struct {
 	width, height int32
