@@ -12,7 +12,7 @@ type WriteRequest struct {
 }
 type PasteRequest struct {
 	X, Y   int
-	Buffer []byte
+	Buffer [][]byte
 }
 
 type ContentRequest struct {
@@ -32,7 +32,7 @@ type CopyRequest struct {
 	X0, Y0, X1, Y1 int
 }
 type CopyResponse struct {
-	Buffer []byte
+	Buffer [][]byte
 }
 
 type WriteResponse struct {

@@ -327,7 +327,14 @@ func (textarea *textarea) Key(
 					}
 					textarea.src = src
 
-					textarea.src.CopyBuffer = string(content.Copy.Buffer)
+					textarea.src.CopyBuffer = ""
+					for i, buf := range content.Copy.Buffer {
+						if i+1 == len(content.Copy.Buffer) {
+							textarea.src.CopyBuffer += string(buf)
+						} else {
+							textarea.src.CopyBuffer += string(buf) + "\n"
+						}
+					}
 
 					textarea.src.Offer("UTF8_STRING")
 					textarea.src.Offer("text/plain;charset=utf-8")

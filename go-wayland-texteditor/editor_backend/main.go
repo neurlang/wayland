@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 )
 
 const tabSize = 8
@@ -33,7 +32,7 @@ func handlerCopy(p *CopyRequest) *CopyResponse {
 	if p.X1 > len(file[p.Y1]) {
 		return &cr
 	}
-
+	cr.Buffer = [][]byte{{}}
 	for y := p.Y0; y <= p.Y1; y++ {
 		for x := 0; x < len(file[y]); x++ {
 			if y == p.Y0 && x < p.X0 {
@@ -42,10 +41,10 @@ func handlerCopy(p *CopyRequest) *CopyResponse {
 			if y == p.Y1 && x >= p.X1 {
 				break
 			}
-			cr.Buffer = append(cr.Buffer, []byte(file[y][x])...)
+			cr.Buffer[len(cr.Buffer)-1] = append(cr.Buffer[len(cr.Buffer)-1], []byte(file[y][x])...)
 		}
 		if y != p.Y1 {
-			cr.Buffer = append(cr.Buffer, '\n')
+			cr.Buffer = append(cr.Buffer, []byte{})
 		}
 	}
 	return &cr
@@ -71,15 +70,13 @@ func isCombiner(r rune) bool {
 }
 
 func handlerPaste(p *PasteRequest) {
-	var array = string(p.Buffer)
 	if p.Y >= len(file) {
 		return
 	}
 	if p.X > len(file[p.Y]) {
 		return
 	}
-
-	temp := strings.Split(strings.ReplaceAll(array, "\r\n", "\n"), "\n")
+	temp := p.Buffer
 	if len(temp) > 0 {
 		file = append(file[:p.Y+1], append(make([][]string, len(temp)-1), file[p.Y+1:]...)...)
 	}
@@ -89,7 +86,7 @@ func handlerPaste(p *PasteRequest) {
 		if len(subarray) == 0 && i+1 == len(temp) {
 			break
 		}
-		array := []rune(subarray)
+		array := []rune(string(subarray))
 		if p.Y >= len(file) {
 			file = append(file, []string{})
 		}
@@ -221,7 +218,7 @@ type WriteRequest struct {
 
 type PasteRequest struct {
 	X, Y   int
-	Buffer []byte
+	Buffer [][]byte
 }
 
 type ContentRequest struct {
@@ -242,7 +239,7 @@ type CopyRequest struct {
 	X0, Y0, X1, Y1 int
 }
 type CopyResponse struct {
-	Buffer []byte
+	Buffer [][]byte
 }
 type WriteResponse struct {
 	MoveX, MoveY int
