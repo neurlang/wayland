@@ -128,11 +128,16 @@ func CreateAnonymousFile(size int64) (fd *os.File, err error) {
 	if fd == nil {
 		return fd, ErrFileIsNil
 	}
-
-	err2 := fallocate(int(fd.Fd()), 0, 0, size)
-	if err2 != nil {
-		_ = fd.Close()
-		return nil, err2
+	for {
+		err2 := fallocate(int(fd.Fd()), 0, 0, size)
+		if err2 != nil {
+			if err2 == syscall.EINTR {
+				continue
+			}
+			_ = fd.Close()
+			return nil, err2
+		}
+		break
 	}
 
 	return fd, err
