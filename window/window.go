@@ -2865,20 +2865,39 @@ func (Window *Window) ScheduleRedraw() {
 	windowScheduleRedrawTask(Window)
 }
 
-func windowSetMaximized(window *Window, maximized bool) {
+func (Window *Window) ToggleMaximized() error {
+	return windowSetMaximized(Window, !Window.maximized)
+}
+func (Window *Window) SetMaximized(maximized bool) error {
+	return windowSetMaximized(Window, maximized)
+}
+
+func (Window *Window) SetMinimized() error {
+	return windowSetMinimized(Window)
+}
+
+func windowSetMaximized(window *Window, maximized bool) error {
 	if window.xdgToplevel == nil {
-		return
+		return errors.New("no_toplevel")
 	}
 
 	if window.maximized == maximized {
-		return
+		return errors.New("already_set")
 	}
 
 	if maximized {
-		window.xdgToplevel.SetMaximized()
+		return window.xdgToplevel.SetMaximized()
 	} else {
-		window.xdgToplevel.UnsetMaximized()
+		return window.xdgToplevel.UnsetMaximized()
 	}
+}
+
+func windowSetMinimized(window *Window) error {
+	if window.xdgToplevel == nil {
+		return errors.New("no_toplevel")
+	}
+
+	return window.xdgToplevel.SetMinimized()
 }
 
 // line 4793
