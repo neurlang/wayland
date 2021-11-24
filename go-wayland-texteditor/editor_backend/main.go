@@ -288,8 +288,15 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(bytes)
 }
-
+func handlerScrollbar(w http.ResponseWriter, r *http.Request) {
+	body, err := reprocess_scrollbar(file)
+	if err != nil {
+		return
+	}
+	w.Write(body)
+}
 func main() {
 	http.HandleFunc("/content", handlerContent)
+	http.HandleFunc("/scrollbar/live.png", handlerScrollbar)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

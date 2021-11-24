@@ -44,6 +44,8 @@ type textarea struct {
 	width   int32
 	height  int32
 	StringGrid
+	controls     StringGrid
+	scrolls      [1]Scrollbar
 	mutex        sync.RWMutex
 	navigateHeld byte
 	fullscreen   bool
@@ -86,12 +88,21 @@ func maxColor(a, b [3]byte) (o [3]byte) {
 	return o
 }
 
-func (s *surface) PutRGB(pos ObjectPosition, texture_rgb [][3]byte, texture_width int, Bg, Fg [3]byte, flip bool) {
+func (s *surface) PutRGB(position ObjectPosition, texture_rgb [][3]byte, texture_width int, Bg, Fg [3]byte, flip bool) {
 	dst8 := s.ImageSurfaceGetData()
 	width := s.ImageSurfaceGetWidth()
 	height := s.ImageSurfaceGetHeight()
 	stride := s.ImageSurfaceGetStride()
 	var texture_height = len(texture_rgb) / texture_width
+
+	var pos = position
+
+	if pos.X < 0 {
+		pos.X = width + pos.X
+	}
+	if pos.Y < 0 {
+		pos.Y = height + pos.Y
+	}
 
 	//println(pos.X, pos.Y, width, height, stride, texture_width, texture_height, texture_rgb)
 
@@ -174,6 +185,11 @@ func render(textarea *textarea, s cairo.Surface, time uint32) {
 	defer textarea.mutex.RUnlock()
 
 	textarea.StringGrid.Render(&surface{s, time})
+	textarea.controls.Render(&surface{s, time})
+
+	for i := range textarea.scrolls {
+		textarea.scrolls[i].Render(&surface{s, time})
+	}
 }
 
 func (textarea *textarea) Redraw(widget *window.Widget) {
@@ -215,9 +231,20 @@ func (s *textarea) Motion(widget *window.Widget, input *window.Input, time uint3
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if s.controls.IsHover(x, y, s.width, s.height) {
+		s.controls.Motion(ObjectPosition{1 + int((x-float32(s.width)-float32(s.controls.Pos.X))/float32(s.controls.CellWidth)), int(y / float32(s.controls.CellHeight))})
+		return window.CursorLeftPtr
+	} else {
+		s.controls.Hover.X = 0
+	}
+
 	s.StringGrid.Motion(ObjectPosition{int((x + float32(s.StringGrid.CellWidth)*0.5) / float32(s.StringGrid.CellWidth)), int(y / float32(s.StringGrid.CellHeight))})
 
-	return window.CursorIbeam
+	if s.StringGrid.IsHover(x, y, s.width, s.height) {
+		return window.CursorIbeam
+	}
+
+	return window.CursorHand1
 }
 func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
 
@@ -225,8 +252,25 @@ func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint3
 	defer s.mutex.Unlock()
 
 	if button == 272 {
-		s.StringGrid.Button(state == wl.PointerButtonStateReleased)
 
+		if s.controls.IsHoverButton() {
+			if state == wl.PointerButtonStateReleased {
+
+				switch s.controls.Hover.X {
+				case 0:
+					println("no hover")
+				case 1, 2, 3, 4:
+					s.window.SetMinimized()
+				case 5, 6, 7, 8:
+					s.window.ToggleMaximized()
+				case 9, 10, 11, 12:
+					s.display.Exit()
+				}
+
+			}
+			s.controls.IbeamCursor.Y = 10000
+		}
+		s.StringGrid.Button(state == wl.PointerButtonStateReleased)
 	} else {
 
 	}
@@ -508,6 +552,8 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 		textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
 		textarea.StringGrid.Selecting = false
 	}
+
+	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}})
 }
 
 func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) {
@@ -586,10 +632,23 @@ func main() {
 		return
 	}
 
+	textarea.controls.Font = &ControlFont
+	textarea.controls.Content = []string{" ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
+	textarea.controls.XCells = 12
+	textarea.controls.YCells = 1
+	textarea.controls.CellWidth = 12
+	textarea.controls.CellHeight = 24
+	textarea.controls.IbeamCursor.Y = 10000
+	textarea.controls.LineNumbers = 0
+	textarea.controls.LastColHint = 10000
+	textarea.controls.Pos = ObjectPosition{-48 * 3, 0}
+	textarea.controls.BgColor = [3]byte{0, 13, 26}
+	textarea.controls.FgColor = [3]byte{255, 255, 255}
+
 	textarea.StringGrid.Font = &UnicodeFont
 	textarea.StringGrid.Content = content.Content
-	textarea.StringGrid.XCells = 90
-	textarea.StringGrid.YCells = 30
+	textarea.StringGrid.XCells = 30
+	textarea.StringGrid.YCells = 10
 	textarea.StringGrid.CellWidth = 12
 	textarea.StringGrid.CellHeight = 24
 	textarea.StringGrid.IbeamCursor.X = 1
@@ -597,6 +656,16 @@ func main() {
 	textarea.StringGrid.LineNumbers = 4
 	textarea.StringGrid.LastColHint = 80
 	textarea.StringGrid.FlipColor = false
+	textarea.StringGrid.BgColor = [3]byte{0, 59, 112}
+	textarea.StringGrid.FgColor = [3]byte{255, 255, 255}
+
+	const scrollWidth = 96
+
+	textarea.scrolls[0].Pos = ObjectPosition{-scrollWidth, 24}
+	textarea.scrolls[0].Width = scrollWidth
+	textarea.scrolls[0].RGB = make([][3]byte, scrollWidth*1000)
+	textarea.scrolls[0].BgRGB = [3]byte{0, 13, 26}
+	textarea.scrolls[0].FgRGB = [3]byte{255, 255, 255}
 
 	textarea.width = int32(textarea.StringGrid.XCells * textarea.StringGrid.CellWidth)
 	textarea.height = int32(textarea.StringGrid.YCells * textarea.StringGrid.CellHeight)

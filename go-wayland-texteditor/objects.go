@@ -1,5 +1,7 @@
 package main
 
+import "time"
+import "sync"
 import "sort"
 import "fmt"
 
@@ -53,7 +55,36 @@ type StringGrid struct {
 	Selecting, IsSelected bool
 	ContentFgColor        map[[2]int][3]byte
 	lineLen               []int
+	BgColor               [3]byte
+	FgColor               [3]byte
 	FlipColor             bool
+}
+
+func (sg *StringGrid) IsHoverButton() bool {
+	return sg.Hover.X >= 0 && sg.Hover.Y >= 0
+}
+
+func (sg *StringGrid) IsHover(x, y float32, w, h int32) bool {
+	var pos = sg.Pos
+	if pos.X < 0 {
+		pos.X += int(w)
+	}
+	if pos.Y < 0 {
+		pos.Y += int(w)
+	}
+	if x < float32(pos.X)+float32(sg.CellWidth*sg.LineNumbers) {
+		return false
+	}
+	if y < float32(pos.Y) {
+		return false
+	}
+	if x-float32(pos.X) > float32(sg.CellWidth*sg.XCells) {
+		return false
+	}
+	if y-float32(pos.Y) > float32(sg.CellHeight*sg.YCells) {
+		return false
+	}
+	return true
 }
 
 func (sg *StringGrid) Button(up bool) {
@@ -91,7 +122,7 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 	}
 }
 
-func (sg *StringGrid) FgColor(x, y int) [3]byte {
+func (sg *StringGrid) GetFgColor(x, y int) [3]byte {
 	for i := x; i >= 0 && i > x-17; i-- {
 		if sg.ContentFgColor != nil {
 			if c, ok := sg.ContentFgColor[[2]int{i, y}]; ok {
@@ -99,7 +130,7 @@ func (sg *StringGrid) FgColor(x, y int) [3]byte {
 			}
 		}
 	}
-	return [3]byte{255, 255, 255}
+	return sg.FgColor
 }
 
 func (sg *StringGrid) Width() int {
@@ -161,15 +192,15 @@ func (sg *StringGrid) Render(c Canvas) {
 
 			var selected = sg.Selected(xx, y)
 			var bgcolor = [3]byte{0, 27, 51}
-			var fgcolor = sg.FgColor(xx, y)
+			var fgcolor = sg.GetFgColor(xx, y)
 			if selected {
 				bgcolor = [3]byte{0, 136, 255}
-				fgcolor = [3]byte{255, 255, 255}
+				fgcolor = sg.FgColor
 			} else if sg.RowFocused(y) {
 				if x > sg.LastColHint {
 					bgcolor = [3]byte{12, 68, 117}
 				} else {
-					bgcolor = [3]byte{0, 59, 112}
+					bgcolor = sg.BgColor
 				}
 			} else if x > sg.LastColHint {
 				bgcolor = [3]byte{12, 37, 60}
@@ -242,4 +273,89 @@ func (ic *IbeamCursor) Render(c Canvas) {
 		buf[i] = ic.RGB
 	}
 	c.PutRGB(ic.Pos, buf, 2, [3]byte{0, 0, 0}, [3]byte{255, 255, 255}, false)
+}
+
+type Scrollbar struct {
+	Pos     ObjectPosition
+	Width   int
+	mut     sync.RWMutex
+	RGB     [][3]byte
+	RGBok   [][3]byte
+	BgRGB   [3]byte
+	FgRGB   [3]byte
+	Flip    bool
+	syncing bool
+}
+
+func ScrollbarSync(sb *Scrollbar, p []patchScrollbar) {
+	sb.mut.Lock()
+	if sb.syncing {
+		sb.mut.Unlock()
+		return
+	}
+	sb.syncing = true
+	sb.mut.Unlock()
+
+	go sb.Sync(p)
+}
+
+func (sb *Scrollbar) Render(c Canvas) {
+	sb.mut.RLock()
+	var renderbuf = sb.RGBok
+	sb.mut.RUnlock()
+	c.PutRGB(sb.Pos, renderbuf, sb.Width, sb.BgRGB, sb.FgRGB, sb.Flip)
+}
+
+type patchScrollbar struct {
+	FileName string
+	Pos      ObjectPosition
+}
+
+func (sb *Scrollbar) Patch(patch patchScrollbar, data [][3]byte) {
+
+	var i = 0
+	for y := patch.Pos.Y * sb.Width; y < len(sb.RGB); y += sb.Width {
+		var j = 0
+
+		for x := patch.Pos.X; x < sb.Width; x++ {
+			if i+j >= len(data) {
+				break
+			}
+			for x+y >= len(sb.RGB) {
+				sb.RGB = append(sb.RGB, make([][3]byte, sb.Width)...)
+			}
+			sb.RGB[x+y] = data[i+j]
+			j++
+		}
+
+		i += sb.Width
+		if i >= len(data) {
+			break
+		}
+	}
+
+}
+
+func (sb *Scrollbar) Sync(p []patchScrollbar) {
+
+	for _, patch := range p {
+		var data, err = downloadScrollbarPatch(patch.FileName)
+		if err != nil {
+			println(err.Error())
+			continue
+		}
+
+		sb.Patch(patch, data)
+	}
+	var buff = make([][3]byte, len(sb.RGB))
+	copy(buff, sb.RGB)
+	sb.mut.Lock()
+	sb.RGBok = buff
+	sb.mut.Unlock()
+
+	time.Sleep(time.Second)
+
+	sb.mut.Lock()
+	sb.syncing = false
+	sb.mut.Unlock()
 }
