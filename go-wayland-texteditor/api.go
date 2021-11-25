@@ -18,16 +18,21 @@ type PasteRequest struct {
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
 	Copy                      *CopyRequest
+	Erase                     *EraseRequest
 	Write                     *WriteRequest
 	Paste                     *PasteRequest
 }
 type ContentResponse struct {
-	Content []string
-	FgColor [][5]int
-	Copy    *CopyResponse
-	Write   *WriteResponse
+	Content   []string
+	FgColor   [][5]int
+	LineCount int
+	Copy      *CopyResponse
+	Erase     *EraseResponse
+	Write     *WriteResponse
 }
-
+type EraseRequest struct {
+	X0, Y0, X1, Y1 int
+}
 type CopyRequest struct {
 	X0, Y0, X1, Y1 int
 }
@@ -37,6 +42,9 @@ type CopyResponse struct {
 
 type WriteResponse struct {
 	MoveX, MoveY int
+}
+type EraseResponse struct {
+	Erased bool
 }
 
 func (req *ContentRequest) Reader() *bytes.Reader {

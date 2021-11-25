@@ -332,22 +332,32 @@ func (textarea *textarea) Key(
 		case xkb.KeyDelete:
 			textarea.KeyReloadNoMutex("Delete", 0, time)
 			KeyRepeatSubscribe(textarea, "Delete", 0, time)
-
-		case 'c', 'v':
+		case 'c', 'v', 'x':
 
 			if input.GetModifiers() == window.ModControlMask {
 
-				if notUnicode == 'c' {
-					println("CTRL C")
+				if notUnicode == 'c' || notUnicode == 'x' {
+					println("CTRL C/X")
 
 					if !textarea.StringGrid.IsSelection() {
 						break
 
 					}
 
+					var erase = &EraseRequest{
+						X0: textarea.StringGrid.IbeamCursor.X,
+						Y0: textarea.StringGrid.IbeamCursor.Y,
+						X1: textarea.StringGrid.SelectionCursor.X,
+						Y1: textarea.StringGrid.SelectionCursor.Y,
+					}
+					if notUnicode != 'x' {
+						erase = nil
+					}
+
 					content, err := load_content(ContentRequest{
 						Width:  textarea.StringGrid.XCells,
 						Height: textarea.StringGrid.YCells,
+						Erase:  erase,
 						Copy: &CopyRequest{
 							X0: textarea.StringGrid.IbeamCursor.X,
 							Y0: textarea.StringGrid.IbeamCursor.Y,
@@ -495,6 +505,9 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 	case xkb.KeyDown:
 		textarea.navigateHeld |= navigateDown
 		textarea.StringGrid.IbeamCursor.Y++
+		if textarea.StringGrid.LineCount == textarea.StringGrid.IbeamCursor.Y {
+			textarea.StringGrid.IbeamCursor.Y--
+		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
@@ -541,10 +554,24 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 
 	textarea.StringGrid.Content = content.Content
 	textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
+	textarea.StringGrid.LineCount = content.LineCount
+
 	for _, v := range content.FgColor {
 		textarea.StringGrid.ContentFgColor[[2]int{v[0], v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
 	}
+	if content.Erase != nil && content.Erase.Erased {
 
+		if textarea.StringGrid.SelectionCursor.Less(&textarea.StringGrid.IbeamCursor) {
+
+			textarea.StringGrid.IbeamCursor = textarea.StringGrid.SelectionCursor
+
+		} else {
+
+			textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
+
+		}
+		textarea.StringGrid.Selecting = false
+	}
 	if content.Write != nil {
 		textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
 		textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
@@ -562,15 +589,30 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 		textarea.KeyNavigate(key, notUnicode, time)
 	} else {
 
+		var erase = &EraseRequest{
+			X0: textarea.StringGrid.IbeamCursor.X,
+			Y0: textarea.StringGrid.IbeamCursor.Y,
+			X1: textarea.StringGrid.SelectionCursor.X,
+			Y1: textarea.StringGrid.SelectionCursor.Y,
+		}
+		var write = &WriteRequest{
+			X:      textarea.StringGrid.IbeamCursor.Lesser(&textarea.StringGrid.SelectionCursor).X,
+			Y:      textarea.StringGrid.IbeamCursor.Lesser(&textarea.StringGrid.SelectionCursor).Y,
+			Key:    key,
+			Insert: true,
+		}
+		if !textarea.StringGrid.IsSelection() {
+			erase = nil
+		} else if key == "Delete" || key == "Backspace" {
+			write = nil
+		}
+
 		content, err := load_content(ContentRequest{
 			Width:  textarea.StringGrid.XCells,
 			Height: textarea.StringGrid.YCells,
-			Write: &WriteRequest{
-				X:      textarea.StringGrid.IbeamCursor.X,
-				Y:      textarea.StringGrid.IbeamCursor.Y,
-				Key:    key,
-				Insert: true,
-			}})
+			Erase:  erase,
+			Write:  write,
+		})
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -651,8 +693,8 @@ func main() {
 	textarea.StringGrid.YCells = 10
 	textarea.StringGrid.CellWidth = 12
 	textarea.StringGrid.CellHeight = 24
-	textarea.StringGrid.IbeamCursor.X = 1
-	textarea.StringGrid.IbeamCursor.Y = 1
+	//textarea.StringGrid.IbeamCursor.X = 1
+	//textarea.StringGrid.IbeamCursor.Y = 1
 	textarea.StringGrid.LineNumbers = 4
 	textarea.StringGrid.LastColHint = 80
 	textarea.StringGrid.FlipColor = false

@@ -14,7 +14,7 @@ type ObjectPosition struct {
 	X, Y int
 }
 
-func (o *ObjectPosition) Less(p ObjectPosition) bool {
+func (o *ObjectPosition) Less(p *ObjectPosition) bool {
 	if o.Y < p.Y {
 		return true
 	}
@@ -22,6 +22,12 @@ func (o *ObjectPosition) Less(p ObjectPosition) bool {
 		return true
 	}
 	return false
+}
+func (o *ObjectPosition) Lesser(p *ObjectPosition) *ObjectPosition {
+	if o.Less(p) {
+		return o
+	}
+	return p
 }
 
 type StringCell struct {
@@ -40,6 +46,7 @@ func (sc *StringCell) Render(c Canvas) {
 
 type StringGrid struct {
 	Pos                   ObjectPosition
+	LineCount             int
 	LineNumbers           int
 	LastColHint           int
 	XCells                int
@@ -105,7 +112,9 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 	if pos.X < 0 {
 		pos.X = 0
 	}
-
+	if pos.Y >= sg.LineCount {
+		pos.Y = sg.LineCount - 1
+	}
 	if pos.Y < 0 {
 		pos.Y = 0
 	}
@@ -153,7 +162,7 @@ func (sg *StringGrid) Selected(x, y int) bool {
 	}
 	var objs = [3]ObjectPosition{sg.SelectionCursor, sg.IbeamCursor, {x, y}}
 	sort.Slice(objs[:], func(i, j int) bool {
-		return objs[i].Less(objs[j])
+		return objs[i].Less(&objs[j])
 	})
 	return objs[1] == ObjectPosition{x, y} && objs[1] != objs[2]
 }
@@ -165,6 +174,9 @@ func (sg *StringGrid) RowFocused(y int) bool {
 func (sg *StringGrid) Render(c Canvas) {
 	for y := 0; y < sg.YCells; y++ {
 		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers-1)+"d   ", y+1)
+		if y >= sg.LineCount {
+			linenum = "                      "
+		}
 		for x := 0; x < sg.LineNumbers; x++ {
 
 			var bgcolor = [3]byte{0, 13, 26}

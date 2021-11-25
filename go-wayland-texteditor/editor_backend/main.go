@@ -68,7 +68,36 @@ func isCombiner(r rune) bool {
 		return false // not a combiner
 	}
 }
+func handlerErase(e *EraseRequest) *EraseResponse {
+	if (e.Y0 > e.Y1) || ((e.Y0 == e.Y1) && (e.X0 > e.X1)) {
+		e.X0, e.X1 = e.X1, e.X0
+		e.Y0, e.Y1 = e.Y1, e.Y0
+	}
+	if e.Y0 >= len(file) {
+		return nil
+	}
+	if e.Y1 >= len(file) {
+		return nil
+	}
+	if e.X0 > len(file[e.Y0]) {
+		return nil
+	}
+	if e.X1 > len(file[e.Y1]) {
+		return nil
+	}
 
+	if e.Y0 != e.Y1 {
+		file[e.Y0] = file[e.Y0][:e.X0]
+		file[e.Y1] = file[e.Y1][e.X1:]
+
+		file[e.Y0] = append(file[e.Y0], file[e.Y1]...)
+
+		file = append(file[:e.Y0+1], file[e.Y1+1:]...)
+	} else {
+		file[e.Y0] = append(file[e.Y0][:e.X0], file[e.Y0][e.X1:]...)
+	}
+	return &EraseResponse{Erased: true}
+}
 func handlerPaste(p *PasteRequest) {
 	if p.Y >= len(file) {
 		return
@@ -224,17 +253,22 @@ type PasteRequest struct {
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
 	Copy                      *CopyRequest
+	Erase                     *EraseRequest
 	Write                     *WriteRequest
 	Paste                     *PasteRequest
 }
 
 type ContentResponse struct {
-	Content []string
-	FgColor [][5]int
-	Copy    *CopyResponse
-	Write   *WriteResponse
+	Content   []string
+	FgColor   [][5]int
+	LineCount int
+	Copy      *CopyResponse
+	Erase     *EraseResponse
+	Write     *WriteResponse
 }
-
+type EraseRequest struct {
+	X0, Y0, X1, Y1 int
+}
 type CopyRequest struct {
 	X0, Y0, X1, Y1 int
 }
@@ -243,6 +277,9 @@ type CopyResponse struct {
 }
 type WriteResponse struct {
 	MoveX, MoveY int
+}
+type EraseResponse struct {
+	Erased bool
 }
 
 func handlerContent(w http.ResponseWriter, r *http.Request) {
@@ -262,6 +299,9 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	if cr.Copy != nil {
 		resp.Copy = handlerCopy(cr.Copy)
 	}
+	if cr.Erase != nil {
+		resp.Erase = handlerErase(cr.Erase)
+	}
 	if cr.Write != nil {
 		resp.Write = handlerWrite(cr.Write)
 	}
@@ -280,6 +320,8 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.FgColor = reprocess_syntax_highlighting_golang(file)
+
+	resp.LineCount = len(file)
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
