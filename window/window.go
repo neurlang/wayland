@@ -347,6 +347,11 @@ func (Window *Window) ToplevelConfigure(
 		}
 	}
 
+	// better have this to be sure
+	if (width < 0) || (height < 0) {
+		return
+	}
+
 	if (width > 0) && (height > 0) {
 		/* The width / height params are for Window geometry,
 		 * but window_schedule_resize takes allocation. Add
@@ -358,7 +363,6 @@ func (Window *Window) ToplevelConfigure(
 		(Window.savedAllocation.Height > 0) {
 		Window.ScheduleResize(Window.savedAllocation.Width, Window.savedAllocation.Height)
 	}
-
 }
 
 func (Window *Window) HandleToplevelClose(ev zxdg.ToplevelCloseEvent) {
@@ -2349,26 +2353,25 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	inputSetPointerImage(Input, cursor)
 }
 
-func (window *Window) SetFullscreen(fullscreen bool) {
+func (window *Window) SetFullscreen(fullscreen bool) error {
 	if window.Display.xdgShell == nil {
-		return
+		return errors.New("no xdg shell")
 	}
 
 	if (window.typ == TYPE_FULLSCREEN) == fullscreen {
-		return
+		return errors.New("bad typ")
 	}
 
 	if fullscreen {
 		window.typ = TYPE_FULLSCREEN
-		window.savedAllocation = window.mainSurface.allocation
-		window.xdgToplevel.SetFullscreen(nil)
+		return window.xdgToplevel.SetFullscreen(nil)
 	} else {
 		window.typ = TYPE_TOPLEVEL
 		window.xdgToplevel.UnsetFullscreen()
 		window.ScheduleResize(window.savedAllocation.Width,
 			window.savedAllocation.Height)
 	}
-
+	return nil
 }
 
 //line 3552
@@ -2641,7 +2644,7 @@ func windowDoResize(Window *Window) {
 
 	surfaceResize(Window.mainSurface)
 
-	if (Window.fullscreen) && (Window.maximized) {
+	if (!Window.fullscreen) && (!Window.maximized) {
 		Window.savedAllocation = Window.pendingAllocation
 	}
 }
@@ -2720,9 +2723,7 @@ func windowGetAllocation(Window *Window, allocation *Rectangle) {
 
 //line 4445
 func windowGetGeometry(Window *Window, geometry *Rectangle) {
-	if Window.fullscreen {
-		windowGetAllocation(Window, geometry)
-	}
+	windowGetAllocation(Window, geometry)
 }
 
 //line 4458
@@ -2741,7 +2742,6 @@ func windowSyncGeometry(Window *Window) {
 		geometry.Height == Window.lastGeometry.Height {
 		return
 	}
-
 	_ = Window.xdgSurface.SetWindowGeometry(
 		geometry.X,
 		geometry.Y,
@@ -2866,6 +2866,11 @@ func (Window *Window) ScheduleRedraw() {
 }
 
 func (Window *Window) ToggleMaximized() error {
+	// extra feature: un-fullscreen using toggle maximized button if fullscreen
+	if (Window.typ == TYPE_FULLSCREEN) && Window.fullscreen {
+		Window.SetFullscreen(false)
+		return nil
+	}
 	return windowSetMaximized(Window, !Window.maximized)
 }
 func (Window *Window) SetMaximized(maximized bool) error {
@@ -2886,6 +2891,7 @@ func windowSetMaximized(window *Window, maximized bool) error {
 	}
 
 	if maximized {
+		window.savedAllocation = window.mainSurface.allocation
 		return window.xdgToplevel.SetMaximized()
 	} else {
 		return window.xdgToplevel.UnsetMaximized()
