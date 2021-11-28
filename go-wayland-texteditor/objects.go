@@ -154,7 +154,7 @@ func (sg *StringGrid) IsSelection() bool {
 	if !(sg.Selecting || sg.IsSelected) {
 		return false
 	}
-	return true
+	return sg.SelectionCursor != sg.IbeamCursor
 }
 func (sg *StringGrid) Selected(x, y int) bool {
 	if !sg.IsSelection() {
@@ -290,6 +290,7 @@ func (ic *IbeamCursor) Render(c Canvas) {
 type Scrollbar struct {
 	Pos     ObjectPosition
 	Width   int
+	Height  int
 	mut     sync.RWMutex
 	RGB     [][3]byte
 	RGBok   [][3]byte
@@ -299,8 +300,9 @@ type Scrollbar struct {
 	syncing bool
 }
 
-func ScrollbarSync(sb *Scrollbar, p []patchScrollbar) {
+func ScrollbarSync(sb *Scrollbar, p []patchScrollbar, heightLines int) {
 	sb.mut.Lock()
+	sb.Height = heightLines * 2
 	if sb.syncing {
 		sb.mut.Unlock()
 		return
@@ -314,7 +316,11 @@ func ScrollbarSync(sb *Scrollbar, p []patchScrollbar) {
 func (sb *Scrollbar) Render(c Canvas) {
 	sb.mut.RLock()
 	var renderbuf = sb.RGBok
+	length := sb.Width * sb.Height
 	sb.mut.RUnlock()
+	if len(renderbuf) > length {
+		renderbuf = renderbuf[:length]
+	}
 	c.PutRGB(sb.Pos, renderbuf, sb.Width, sb.BgRGB, sb.FgRGB, sb.Flip)
 }
 

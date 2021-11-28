@@ -16,12 +16,6 @@ func (p *Copy) Receive(fd uintptr, name string) error {
 	p.Textarea.mutex.Lock()
 	defer p.Textarea.mutex.Unlock()
 
-	if !p.Textarea.StringGrid.IsSelection() {
-		//fmt.Println(io.Copy(p, strings.NewReader(p.Textarea.srcClipboard)))
-		fmt.Println(p.Close())
-		return nil
-	}
-
 	var clipbrd = string(p.Textarea.src.CopyBuffer)
 
 	fmt.Println(io.Copy(p, strings.NewReader(clipbrd)))

@@ -404,8 +404,10 @@ func (textarea *textarea) Key(
 				}
 				if notUnicode == 'v' {
 					println("CTRL V")
-					input.ReceiveSelectionData("text/plain;charset=utf-8", &Paste{Textarea: textarea})
-
+					err := input.ReceiveSelectionData("text/plain;charset=utf-8", &Paste{Textarea: textarea})
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 
 				break
@@ -580,7 +582,7 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 		textarea.StringGrid.Selecting = false
 	}
 
-	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}})
+	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
 }
 
 func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) {
