@@ -224,6 +224,32 @@ var chinese1Descriptor = "" +
 	額	顏	願	顛	類	顧	顯	風	颱	飄	飛	食	飯	飲	飼	飽	飾	餅	養	餐	餓	餘	館	餵	首	香	馬	駐	駕	駱	騎	騙	騷	驅	驕	驗	驚	骨	髒	體	高	鬆	鬥	鬧	鬼	魅
 	鮑	鮮	鳥	鴨	鴿	鷹	鹽	鹿	麥	麵	麻	黃	黑	默	點	黨	鼓	鼻	齊	齣	龍	龐																								`
 
+var devanagari1Descriptor = "" +
+	`ऍ	ए	ऎ	ऐ	ऑ	ऒ	ओ	औ	क	ः
+	ऄ	अ	आ	इ	ई	उ	ऊ	ऋ	ऌ	ं
+	ख	ग	घ	ङ	च	छ	ज	झ	ञ	ट
+	ठ	ड	ढ	ण	त	थ	द	ध	न	ऩ
+	प	फ	ब	भ	म	य	र	ऱ	ल	ळ
+	क़	ख़	ग़	ज़	ड	ढ	फ़	य़	ॠ	ॡ
+	ऴ	व	ॸ	ष	स	ह	_?_	श	ो	ौ
+	०	१	२	३	४	५	६	७	८	९
+	ा	ऻ	ि	ी	े	ॅ	ॆ	ै	ॉ	ॊ
+	़	ॎ	ऀ	ँ	ऺ	ऽ	ु	ू	ृ	ॄ
+	ॏ	ॕ	ॖ	ॗ	ॢ	ॣ	ꣿ	॥	।	ॱ`
+
+var devanagari2Descriptor = "" +
+	`ऍ्	ए्	ऎ्	ऐ्	ऑ्	ऒ्	ओ्	औ्	क्	्
+	ऄ्	अ्	आ्	इ	ई	उ्	ऊ्	ऋ्	ऌ्	ॐ
+	ख्	ग्	घ्	ङ्	च्	छ्	ज्	झ्	ञ्	ट्
+	ठ्	ड्	ढ्	ण्	त्	थ्	द्	ध्	न्	ऩ्
+	प्	फ्	ब्	भ्	म्	य्	र्	ऱ्	ल्	ळ्
+	क़्	ख़्	ग़्	ज़्	ड़्	ढ़्	फ़्	य़्	ॠ्	ॡ्
+	ऴ्	व्	_?_	ष्	स्	ह्	_?_	श्`
+
+var devanagari3Descriptor = "" +
+	`ॳ	ॹ	ॺ	ॻ	ॼ	ॽ	ॾ	ॿ	ꣴ	ꣳ
+	ꣵ	ꣶ	ꣷ	꣸	꣹	꣺	ꣻ	ꣽ	꣼	`
+
 var UnicodeFont Font
 
 func init() {
@@ -262,6 +288,67 @@ func init() {
 	(&UnicodeFont).Load("armenian.png", armenianDescriptor, "")
 
 	(&UnicodeFont).Load("chinese1.jpg", chinese1Descriptor, "")
+
+	(&UnicodeFont).Load("devanagari1.png", devanagari1Descriptor, "")
+	(&UnicodeFont).Load("devanagari2.png", devanagari2Descriptor, "")
+	(&UnicodeFont).Load("devanagari3.png", devanagari3Descriptor, "")
+	(&UnicodeFont).Combine("ः", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ं", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ा", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ऻ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ि", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ी", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("े", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॅ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॆ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ै", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॉ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॊ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ो", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ौ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("़", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॎ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ऀ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ँ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ऺ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ु", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ू", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ृ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॄ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॏ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॕ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॖ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॗ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॢ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ॣ", devanagari1Descriptor, "")
+
+	(&UnicodeFont).Combine("ों", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ें", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("़ा", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ो़", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("़ि", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("ूँ", devanagari1Descriptor, "")
+	(&UnicodeFont).Combine("़ो", devanagari1Descriptor, "")
+
+	(&UnicodeFont).Combine("ꣿ", "ए", "")
+	(&UnicodeFont).Alias("ꣾ", "एꣿ")
+	(&UnicodeFont).Alias("क़्", "क़्")
+	(&UnicodeFont).Alias("ख़्", "ख़्")
+	(&UnicodeFont).Alias("ग़्", "ग़्")
+	(&UnicodeFont).Alias("ज़्", "ज़्")
+	(&UnicodeFont).Alias("ड़्", "ड़्")
+	(&UnicodeFont).Alias("ढ़्", "ढ़्")
+	(&UnicodeFont).Alias("फ़्", "फ़्")
+	(&UnicodeFont).Alias("य़्", "य़्")
+	(&UnicodeFont).Alias("ड़", "ड़")
+	(&UnicodeFont).Alias("ढ़", "ढ़")
+	(&UnicodeFont).Alias("ॴ", "आऺ")
+	(&UnicodeFont).Alias("ॶ", "अॖ")
+	(&UnicodeFont).Alias("ॷ", "अॗ")
+	(&UnicodeFont).Alias("ॵ", "अॏ")
+	(&UnicodeFont).Alias("ॲ", "अॅ")
+	(&UnicodeFont).Alias("ꣲ", "ँ")
+	(&UnicodeFont).Alias("॰", "°")
 
 	(&UnicodeFont).Alias("\t", " ")
 	(&UnicodeFont).Alias("", " ")
