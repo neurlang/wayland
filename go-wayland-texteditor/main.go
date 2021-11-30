@@ -169,7 +169,12 @@ func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwid
 	xcells := 1 + int(pwidth)/t.StringGrid.CellWidth
 	ycells := 1 + int(pheight)/t.StringGrid.CellHeight
 
-	content, err := load_content(ContentRequest{Width: xcells, Height: ycells})
+	content, err := load_content(ContentRequest{
+		Xpos:   t.StringGrid.FilePosition.X,
+		Ypos:   t.StringGrid.FilePosition.Y,
+		Width:  xcells,
+		Height: ycells,
+	})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -177,6 +182,7 @@ func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwid
 
 	t.StringGrid.XCells = xcells
 	t.StringGrid.YCells = ycells
+	t.StringGrid.DoLineNumbers()
 	t.handleContent(content)
 }
 
@@ -296,8 +302,33 @@ func (*textarea) AxisSource(widget *window.Widget, input *window.Input, source u
 func (*textarea) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
 	println("axis stop", axis)
 }
-func (*textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
-	println("axis discrete", axis, discrete)
+func (t *textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+
+	if t.StringGrid.FilePosition.Y == 0 && discrete < 0 {
+		return
+	}
+
+	t.StringGrid.FilePosition.Y += int(discrete)
+	t.StringGrid.IbeamCursor.Y -= int(discrete)
+	t.StringGrid.SelectionCursor.Y -= int(discrete)
+	t.StringGrid.DoLineNumbers()
+	t.StringGrid.ReMotion(int(discrete))
+
+	content, err := load_content(ContentRequest{
+		Xpos:   t.StringGrid.FilePosition.X,
+		Ypos:   t.StringGrid.FilePosition.Y,
+		Width:  t.StringGrid.XCells,
+		Height: t.StringGrid.YCells,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	t.handleContent(content)
+
+	t.StringGrid.ReMotion(0)
+
 }
 func (*textarea) PointerFrame(widget *window.Widget, input *window.Input) {
 }
@@ -345,24 +376,26 @@ func (textarea *textarea) Key(
 					}
 
 					var erase = &EraseRequest{
-						X0: textarea.StringGrid.IbeamCursor.X,
-						Y0: textarea.StringGrid.IbeamCursor.Y,
-						X1: textarea.StringGrid.SelectionCursor.X,
-						Y1: textarea.StringGrid.SelectionCursor.Y,
+						X0: textarea.StringGrid.IbeamCursorAbsolute().X,     /*+ textarea.StringGrid.FilePosition.X*/
+						Y0: textarea.StringGrid.IbeamCursorAbsolute().Y,     /*+ textarea.StringGrid.FilePosition.Y*/
+						X1: textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
+						Y1: textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
 					}
 					if notUnicode != 'x' {
 						erase = nil
 					}
 
 					content, err := load_content(ContentRequest{
+						Xpos:   textarea.StringGrid.FilePosition.X,
+						Ypos:   textarea.StringGrid.FilePosition.Y,
 						Width:  textarea.StringGrid.XCells,
 						Height: textarea.StringGrid.YCells,
 						Erase:  erase,
 						Copy: &CopyRequest{
-							X0: textarea.StringGrid.IbeamCursor.X,
-							Y0: textarea.StringGrid.IbeamCursor.Y,
-							X1: textarea.StringGrid.SelectionCursor.X,
-							Y1: textarea.StringGrid.SelectionCursor.Y,
+							X0: textarea.StringGrid.IbeamCursorAbsolute().X,     /*+ textarea.StringGrid.FilePosition.X*/
+							Y0: textarea.StringGrid.IbeamCursorAbsolute().Y,     /*+ textarea.StringGrid.FilePosition.Y*/
+							X1: textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
+							Y1: textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
 						}})
 					if err != nil {
 						fmt.Println(err)
@@ -429,6 +462,7 @@ func (textarea *textarea) Key(
 			println("start")
 			if !textarea.StringGrid.IsSelection() {
 				textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
+				textarea.StringGrid.SelectionCursorAbs = textarea.StringGrid.IbeamCursorAbs
 			}
 			textarea.StringGrid.Selecting = true
 		}
@@ -496,35 +530,42 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 
 	switch notUnicode {
 	case xkb.KeyHome:
+		textarea.StringGrid.IbeamCursorAbs.X = 0
 		textarea.StringGrid.IbeamCursor.X = 0
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
 	case xkb.KeyEnd:
+		if len(textarea.StringGrid.LineLens) > textarea.StringGrid.IbeamCursor.Y {
+			textarea.StringGrid.IbeamCursorAbs.X = textarea.StringGrid.LineLens[textarea.StringGrid.IbeamCursor.Y]
+			textarea.StringGrid.IbeamCursor.X = textarea.StringGrid.IbeamCursorAbs.X - textarea.StringGrid.FilePosition.X
+		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
 	case xkb.KeyDown:
 		textarea.navigateHeld |= navigateDown
-		textarea.StringGrid.IbeamCursor.Y++
-		if textarea.StringGrid.LineCount == textarea.StringGrid.IbeamCursor.Y {
-			textarea.StringGrid.IbeamCursor.Y--
+		if textarea.StringGrid.LineCount > textarea.StringGrid.IbeamCursorAbs.Y+1 {
+			textarea.StringGrid.IbeamCursor.Y++
+			textarea.StringGrid.IbeamCursorAbs.Y++
 		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
 	case xkb.KeyUp:
 		textarea.navigateHeld |= navigateUp
-		if textarea.StringGrid.IbeamCursor.Y > 0 {
+		if textarea.StringGrid.IbeamCursorAbs.Y > 0 {
 			textarea.StringGrid.IbeamCursor.Y--
+			textarea.StringGrid.IbeamCursorAbs.Y--
 		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
 	case xkb.KeyLeft:
 		textarea.navigateHeld |= navigateLeft
-		if textarea.StringGrid.IbeamCursor.X > 0 {
+		if textarea.StringGrid.IbeamCursorAbs.X > 0 {
 			textarea.StringGrid.IbeamCursor.X--
+			textarea.StringGrid.IbeamCursorAbs.X--
 		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
@@ -532,6 +573,7 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 	case xkb.KeyRight:
 		textarea.navigateHeld |= navigateRight
 		textarea.StringGrid.IbeamCursor.X++
+		textarea.StringGrid.IbeamCursorAbs.X++
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
@@ -557,28 +599,32 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 	textarea.StringGrid.Content = content.Content
 	textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
 	textarea.StringGrid.LineCount = content.LineCount
+	textarea.StringGrid.LineLens = content.LineLens
 
 	for _, v := range content.FgColor {
-		textarea.StringGrid.ContentFgColor[[2]int{v[0], v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
+		textarea.StringGrid.ContentFgColor[[2]int{-textarea.StringGrid.FilePosition.X + v[0], -textarea.StringGrid.FilePosition.Y + v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
 	}
 	if content.Erase != nil && content.Erase.Erased {
 
 		if textarea.StringGrid.SelectionCursor.Less(&textarea.StringGrid.IbeamCursor) {
 
 			textarea.StringGrid.IbeamCursor = textarea.StringGrid.SelectionCursor
-
+			textarea.StringGrid.IbeamCursorAbs = textarea.StringGrid.SelectionCursorAbs
 		} else {
 
 			textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
-
+			textarea.StringGrid.SelectionCursorAbs = textarea.StringGrid.IbeamCursorAbs
 		}
 		textarea.StringGrid.Selecting = false
 	}
 	if content.Write != nil {
 		textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
 		textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
+		textarea.StringGrid.IbeamCursorAbs.X += content.Write.MoveX
+		textarea.StringGrid.IbeamCursorAbs.Y += content.Write.MoveY
 
 		textarea.StringGrid.SelectionCursor = textarea.StringGrid.IbeamCursor
+		textarea.StringGrid.SelectionCursorAbs = textarea.StringGrid.IbeamCursorAbs
 		textarea.StringGrid.Selecting = false
 	}
 
@@ -592,24 +638,38 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 	} else {
 
 		var erase = &EraseRequest{
-			X0: textarea.StringGrid.IbeamCursor.X,
-			Y0: textarea.StringGrid.IbeamCursor.Y,
-			X1: textarea.StringGrid.SelectionCursor.X,
-			Y1: textarea.StringGrid.SelectionCursor.Y,
+			X0: textarea.StringGrid.IbeamCursorAbsolute().X,     /*+ textarea.StringGrid.FilePosition.X*/
+			Y0: textarea.StringGrid.IbeamCursorAbsolute().Y,     /*+ textarea.StringGrid.FilePosition.Y*/
+			X1: textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
+			Y1: textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
 		}
 		var write = &WriteRequest{
-			X:      textarea.StringGrid.IbeamCursor.Lesser(&textarea.StringGrid.SelectionCursor).X,
-			Y:      textarea.StringGrid.IbeamCursor.Lesser(&textarea.StringGrid.SelectionCursor).Y,
+			X:      textarea.StringGrid.IbeamCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
+			Y:      textarea.StringGrid.IbeamCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
 			Key:    key,
 			Insert: true,
 		}
-		if !textarea.StringGrid.IsSelection() {
-			erase = nil
-		} else if key == "Delete" || key == "Backspace" {
-			write = nil
+		if key == "Delete" || key == "Backspace" {
+			if !textarea.StringGrid.IsSelection() {
+				erase = nil
+			}
+		} else {
+			if !(textarea.StringGrid.IsSelection() && textarea.StringGrid.IsSelectionStrict()) {
+				erase = nil
+			} else {
+				var writeErase = &WriteRequest{
+					X:      (&textarea.StringGrid).IbeamCursorAbsolute().Lesser(textarea.StringGrid.SelectionCursorAbsolute()).X, /*+ textarea.StringGrid.FilePosition.X*/
+					Y:      (&textarea.StringGrid).IbeamCursorAbsolute().Lesser(textarea.StringGrid.SelectionCursorAbsolute()).Y, /*+ textarea.StringGrid.FilePosition.Y*/
+					Key:    key,
+					Insert: true,
+				}
+				write = writeErase
+			}
 		}
 
 		content, err := load_content(ContentRequest{
+			Xpos:   textarea.StringGrid.FilePosition.X, /*+ textarea.StringGrid.FilePosition.X*/
+			Ypos:   textarea.StringGrid.FilePosition.Y, /*+ textarea.StringGrid.FilePosition.Y*/
 			Width:  textarea.StringGrid.XCells,
 			Height: textarea.StringGrid.YCells,
 			Erase:  erase,
@@ -684,6 +744,8 @@ func main() {
 	textarea.controls.CellHeight = 24
 	textarea.controls.IbeamCursor.Y = 10000
 	textarea.controls.LineNumbers = 0
+	textarea.controls.LineCount = 1
+	textarea.controls.LineLens = []int{10000}
 	textarea.controls.LastColHint = 10000
 	textarea.controls.Pos = ObjectPosition{-48 * 3, 0}
 	textarea.controls.BgColor = [3]byte{0, 13, 26}
@@ -697,7 +759,7 @@ func main() {
 	textarea.StringGrid.CellHeight = 24
 	//textarea.StringGrid.IbeamCursor.X = 1
 	//textarea.StringGrid.IbeamCursor.Y = 1
-	textarea.StringGrid.LineNumbers = 4
+	textarea.StringGrid.DoLineNumbers()
 	textarea.StringGrid.LastColHint = 80
 	textarea.StringGrid.FlipColor = false
 	textarea.StringGrid.BgColor = [3]byte{0, 59, 112}

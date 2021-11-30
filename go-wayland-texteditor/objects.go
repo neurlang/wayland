@@ -44,6 +44,28 @@ func (sc *StringCell) Render(c Canvas) {
 	c.PutRGB(sc.Pos, sc.Font.GetRGBTexture(sc.String), sc.CellWidth, sc.BgRGB, sc.FgRGB, sc.Flip)
 }
 
+func (sg *StringGrid) IbeamCursorAbsolute() *ObjectPosition {
+
+	if sg.IbeamCursorAbs.X != sg.FilePosition.X+sg.IbeamCursor.X {
+		panic("x mismatch")
+	}
+	if sg.IbeamCursorAbs.Y != sg.FilePosition.Y+sg.IbeamCursor.Y {
+		panic("y mismatch")
+	}
+
+	return &sg.IbeamCursorAbs
+}
+func (sg *StringGrid) SelectionCursorAbsolute() *ObjectPosition {
+	if sg.SelectionCursorAbs.X != sg.FilePosition.X+sg.SelectionCursor.X {
+		panic("x mismatch")
+	}
+	if sg.SelectionCursorAbs.Y != sg.FilePosition.Y+sg.SelectionCursor.Y {
+		panic("y mismatch")
+	}
+
+	return &sg.SelectionCursorAbs
+}
+
 type StringGrid struct {
 	Pos                   ObjectPosition
 	LineCount             int
@@ -55,16 +77,31 @@ type StringGrid struct {
 	CellWidth             int
 	CellHeight            int
 	Font                  *Font
+	FilePosition          ObjectPosition
 	IbeamCursor           ObjectPosition
+	IbeamCursorAbs        ObjectPosition
 	IbeamCursorBlinkFix   uint32
 	SelectionCursor       ObjectPosition
+	SelectionCursorAbs    ObjectPosition
 	Hover                 ObjectPosition
+	HoverOld              ObjectPosition
 	Selecting, IsSelected bool
 	ContentFgColor        map[[2]int][3]byte
 	lineLen               []int
 	BgColor               [3]byte
 	FgColor               [3]byte
 	FlipColor             bool
+	LineLens              []int
+}
+
+func (sg *StringGrid) DoLineNumbers() {
+	var maxLn = sg.YCells + sg.FilePosition.Y
+
+	println("DoLineNumbers", maxLn)
+
+	for sg.LineNumbers = 2; maxLn > 0; sg.LineNumbers++ {
+		maxLn /= 10
+	}
 }
 
 func (sg *StringGrid) IsHoverButton() bool {
@@ -101,33 +138,43 @@ func (sg *StringGrid) Button(up bool) {
 	} else {
 		sg.Selecting = true
 		sg.IsSelected = false
+
+		sg.ReMotion(0)
+
 		sg.SelectionCursor = sg.Hover
 		sg.IbeamCursor = sg.Hover
+		sg.SelectionCursorAbs.X = sg.Hover.X + sg.FilePosition.X
+		sg.SelectionCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
+		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
+		sg.IbeamCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
 	}
+}
+func (sg *StringGrid) ReMotion(i int) {
+	sg.Motion(sg.HoverOld)
 }
 func (sg *StringGrid) Motion(pos ObjectPosition) {
 
-	pos.X -= sg.LineNumbers
+	sg.HoverOld = pos
 
-	if pos.X < 0 {
-		pos.X = 0
-	}
-	if pos.Y >= sg.LineCount {
-		pos.Y = sg.LineCount - 1
-	}
+	pos.X -= sg.LineNumbers
 	if pos.Y < 0 {
 		pos.Y = 0
 	}
-
-	for pos.X > 0 && (sg.XCells*pos.Y+pos.X-1) < len(sg.Content) && sg.Content[sg.XCells*pos.Y+pos.X-1] == "" {
-		pos.X--
+	if pos.X < 0 {
+		pos.X = 0
 	}
-
+	if pos.Y >= sg.LineCount-sg.FilePosition.Y {
+		pos.Y = sg.LineCount - 1 - sg.FilePosition.Y
+	}
+	if pos.X > 0 && pos.Y >= 0 && pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
+		pos.X = sg.LineLens[pos.Y]
+	}
 	sg.Hover = pos
 
 	if sg.Selecting {
 		sg.IbeamCursor = sg.Hover
-
+		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
+		sg.IbeamCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
 	}
 }
 
@@ -150,11 +197,14 @@ func (sg *StringGrid) Height() int {
 	return sg.YCells * sg.CellHeight
 }
 
+func (sg *StringGrid) IsSelectionStrict() bool {
+	return sg.SelectionCursor != sg.IbeamCursor
+}
 func (sg *StringGrid) IsSelection() bool {
 	if !(sg.Selecting || sg.IsSelected) {
 		return false
 	}
-	return sg.SelectionCursor != sg.IbeamCursor
+	return true
 }
 func (sg *StringGrid) Selected(x, y int) bool {
 	if !sg.IsSelection() {
@@ -168,13 +218,21 @@ func (sg *StringGrid) Selected(x, y int) bool {
 }
 
 func (sg *StringGrid) RowFocused(y int) bool {
-	return sg.IbeamCursor.Y == y
+	return sg.IbeamCursorAbs.Y == y+sg.FilePosition.Y
+}
+
+func (sg *StringGrid) GetContent(x, y int) string {
+	var pos = sg.XCells*y + x
+	if len(sg.Content) > pos {
+		return sg.Content[pos]
+	}
+	return ""
 }
 
 func (sg *StringGrid) Render(c Canvas) {
 	for y := 0; y < sg.YCells; y++ {
-		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers-1)+"d   ", y+1)
-		if y >= sg.LineCount {
+		var linenum = fmt.Sprintf("% "+fmt.Sprint(sg.LineNumbers-1)+"d   ", y+sg.FilePosition.Y+1)
+		if y+sg.FilePosition.Y >= sg.LineCount {
 			linenum = "                      "
 		}
 		for x := 0; x < sg.LineNumbers; x++ {
@@ -224,7 +282,7 @@ func (sg *StringGrid) Render(c Canvas) {
 					sg.Pos.X + x*sg.CellWidth,
 					sg.Pos.Y + y*sg.CellHeight,
 				},
-				String:     sg.Content[sg.XCells*y+xx],
+				String:     sg.GetContent(xx, y),
 				CellWidth:  sg.CellWidth,
 				CellHeight: sg.CellHeight,
 				Font:       sg.Font,

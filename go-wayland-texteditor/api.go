@@ -23,12 +23,14 @@ type ContentRequest struct {
 	Paste                     *PasteRequest
 }
 type ContentResponse struct {
-	Content   []string
-	FgColor   [][5]int
-	LineCount int
-	Copy      *CopyResponse
-	Erase     *EraseResponse
-	Write     *WriteResponse
+	Content    []string
+	FgColor    [][5]int
+	LineCount  int
+	LineLens   []int
+	Xpos, Ypos int
+	Copy       *CopyResponse
+	Erase      *EraseResponse
+	Write      *WriteResponse
 }
 type EraseRequest struct {
 	X0, Y0, X1, Y1 int

@@ -259,12 +259,14 @@ type ContentRequest struct {
 }
 
 type ContentResponse struct {
-	Content   []string
-	FgColor   [][5]int
-	LineCount int
-	Copy      *CopyResponse
-	Erase     *EraseResponse
-	Write     *WriteResponse
+	Content    []string
+	FgColor    [][5]int
+	LineLens   []int
+	LineCount  int
+	Xpos, Ypos int
+	Copy       *CopyResponse
+	Erase      *EraseResponse
+	Write      *WriteResponse
 }
 type EraseRequest struct {
 	X0, Y0, X1, Y1 int
@@ -309,7 +311,8 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 		handlerPaste(cr.Paste)
 	}
 
-	for y := cr.Ypos; y < cr.Ypos+cr.Height; y++ {
+	for y := cr.Ypos; y < len(file); y++ {
+		resp.LineLens = append(resp.LineLens, len(file[y]))
 		for x := cr.Xpos; x < cr.Xpos+cr.Width; x++ {
 			if y >= len(file) || x >= len(file[y]) {
 				resp.Content = append(resp.Content, "")
@@ -322,6 +325,8 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	resp.FgColor = reprocess_syntax_highlighting_golang(file)
 
 	resp.LineCount = len(file)
+	resp.Xpos = cr.Xpos
+	resp.Ypos = cr.Ypos
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
