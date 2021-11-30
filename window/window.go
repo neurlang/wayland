@@ -923,7 +923,9 @@ func (input *Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32,
 	} else {
 		Widget = input.focusWidget
 	}
-
+	if Widget == nil {
+		return
+	}
 	if Widget.Userdata != nil {
 		Widget.Userdata.Axis(Widget, input, time, axis, value)
 	} else if Window.Userdata != nil {
@@ -946,7 +948,9 @@ func (input *Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) 
 	} else {
 		Widget = input.focusWidget
 	}
-
+	if Widget == nil {
+		return
+	}
 	if Widget.Userdata != nil {
 		Widget.Userdata.AxisSource(Widget, input, axisSource)
 	} else if Window.Userdata != nil {
@@ -969,7 +973,9 @@ func (input *Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uin
 	} else {
 		Widget = input.focusWidget
 	}
-
+	if Widget == nil {
+		return
+	}
 	if Widget.Userdata != nil {
 		Widget.Userdata.AxisStop(Widget, input, time, axis)
 	} else if Window.Userdata != nil {
@@ -991,6 +997,10 @@ func (input *Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, disc
 		Widget = input.grab
 	} else {
 		Widget = input.focusWidget
+	}
+
+	if Widget == nil {
+		return
 	}
 
 	if Widget.Userdata != nil {
