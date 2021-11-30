@@ -303,13 +303,9 @@ func (sg *StringGrid) Render(c Canvas) {
 			CellHeight: sg.CellHeight,
 			RGB:        [3]byte{127, 127, 127},
 		}
-		if cursor.Pos.X < 0 {
-			cursor.Pos.X = 0
+		if cursor.Pos.X >= 0 && cursor.Pos.Y >= 0 {
+			cursor.Render(c)
 		}
-		if cursor.Pos.Y < 0 {
-			cursor.Pos.Y = 0
-		}
-		cursor.Render(c)
 	}
 }
 
