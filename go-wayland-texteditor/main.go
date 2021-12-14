@@ -187,6 +187,9 @@ func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwid
 }
 
 func render(textarea *textarea, s cairo.Surface, time uint32) {
+
+	textarea.scrolls[0].SyncWith(&textarea.StringGrid)
+
 	textarea.mutex.RLock()
 	defer textarea.mutex.RUnlock()
 
@@ -303,6 +306,10 @@ func (*textarea) AxisStop(widget *window.Widget, input *window.Input, time uint3
 	println("axis stop", axis)
 }
 func (t *textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+	t.axisDiscrete(4 * discrete)
+}
+
+func (t *textarea) axisDiscrete(discrete int32) {
 
 	if (t.StringGrid.FilePosition.Y + int(discrete)) < 0 {
 		discrete = -int32(t.StringGrid.FilePosition.Y)
@@ -538,10 +545,10 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 
 	switch notUnicode {
 	case 65366:
-		textarea.AxisDiscrete(nil, nil, 0, int32(textarea.StringGrid.YCells))
+		textarea.axisDiscrete(int32(textarea.StringGrid.YCells))
 		return true
 	case 65365:
-		textarea.AxisDiscrete(nil, nil, 0, -int32(textarea.StringGrid.YCells))
+		textarea.axisDiscrete(-int32(textarea.StringGrid.YCells))
 		return true
 	case xkb.KeyHome:
 		textarea.StringGrid.IbeamCursorAbs.X = 0

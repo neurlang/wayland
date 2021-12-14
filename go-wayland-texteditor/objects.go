@@ -356,6 +356,17 @@ type Scrollbar struct {
 	FgRGB   [3]byte
 	Flip    bool
 	syncing bool
+
+	// copy of StringGrid position
+	FilePosition ObjectPosition
+	XCells       int
+	YCells       int
+}
+
+func (s *Scrollbar) SyncWith(g *StringGrid) {
+	s.FilePosition = g.FilePosition
+	s.XCells = g.XCells
+	s.YCells = g.YCells
 }
 
 func ScrollbarSync(sb *Scrollbar, p []patchScrollbar, heightLines int) {
@@ -380,6 +391,35 @@ func (sb *Scrollbar) Render(c Canvas) {
 		renderbuf = renderbuf[:length]
 	}
 	c.PutRGB(sb.Pos, renderbuf, sb.Width, sb.BgRGB, sb.FgRGB, sb.Flip)
+
+	//white rectangle:
+	var white [][3]byte
+	const width = 96
+	if width > sb.YCells*2 {
+		if len(white) != width*2 {
+			white = make([][3]byte, width*2)
+		}
+	} else {
+		if len(white) != sb.YCells*4 {
+			white = make([][3]byte, sb.YCells*4)
+		}
+	}
+
+	var lu, lb, ru ObjectPosition
+
+	lu = sb.Pos
+	lu.Y += sb.FilePosition.Y * 2
+
+	lb = lu
+	lb.Y += sb.YCells * 2
+
+	ru = lu
+	ru.X += width - 2
+
+	c.PutRGB(lu, white, width, sb.BgRGB, sb.FgRGB, true)
+	c.PutRGB(lb, white, width, sb.BgRGB, sb.FgRGB, true)
+	c.PutRGB(lu, white[0:sb.YCells*4], 2, sb.BgRGB, sb.FgRGB, true)
+	c.PutRGB(ru, white[0:sb.YCells*4], 2, sb.BgRGB, sb.FgRGB, true)
 }
 
 type patchScrollbar struct {
