@@ -97,6 +97,10 @@ type StringGrid struct {
 func (sg *StringGrid) DoLineNumbers() {
 	var maxLn = sg.YCells + sg.FilePosition.Y
 
+	if maxLn > sg.LineCount {
+		maxLn = sg.LineCount
+	}
+
 	println("DoLineNumbers", maxLn)
 
 	for sg.LineNumbers = 2; maxLn > 0; sg.LineNumbers++ {

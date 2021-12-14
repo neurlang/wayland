@@ -173,6 +173,9 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		wr.MoveY = 1
 	case "Delete":
 		if w.X == len(row) {
+			if len(file) <= w.Y+1 {
+				return &wr
+			}
 			file[w.Y] = append(row, file[w.Y+1]...)
 			file = append(file[:w.Y+1], file[w.Y+2:]...)
 			return &wr

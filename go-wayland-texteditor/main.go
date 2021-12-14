@@ -304,8 +304,11 @@ func (*textarea) AxisStop(widget *window.Widget, input *window.Input, time uint3
 }
 func (t *textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
 
-	if t.StringGrid.FilePosition.Y == 0 && discrete < 0 {
-		return
+	if (t.StringGrid.FilePosition.Y + int(discrete)) < 0 {
+		discrete = -int32(t.StringGrid.FilePosition.Y)
+		if discrete == 0 {
+			return
+		}
 	}
 
 	t.StringGrid.FilePosition.Y += int(discrete)
@@ -352,6 +355,7 @@ func (textarea *textarea) Key(
 	if state == wl.KeyboardKeyStatePressed && entered != 0 {
 
 		switch notUnicode {
+
 		case xkb.KeyKpEnter:
 			fallthrough
 		case xkb.KeyReturn:
@@ -456,6 +460,10 @@ func (textarea *textarea) Key(
 	} else if state == wl.KeyboardKeyStatePressed {
 
 		switch notUnicode {
+		case 65366:
+			KeyRepeatSubscribe(textarea, "", notUnicode, time)
+		case 65365:
+			KeyRepeatSubscribe(textarea, "", notUnicode, time)
 		case 65505:
 			fallthrough
 		case 65506:
@@ -529,6 +537,12 @@ func (textarea *textarea) KeyUnNavigate(key string, notUnicode, time uint32) boo
 func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool {
 
 	switch notUnicode {
+	case 65366:
+		textarea.AxisDiscrete(nil, nil, 0, int32(textarea.StringGrid.YCells))
+		return true
+	case 65365:
+		textarea.AxisDiscrete(nil, nil, 0, -int32(textarea.StringGrid.YCells))
+		return true
 	case xkb.KeyHome:
 		textarea.StringGrid.IbeamCursorAbs.X = 0
 		textarea.StringGrid.IbeamCursor.X = 0
@@ -598,8 +612,12 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 
 	textarea.StringGrid.Content = content.Content
 	textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
-	textarea.StringGrid.LineCount = content.LineCount
 	textarea.StringGrid.LineLens = content.LineLens
+
+	if textarea.StringGrid.LineCount != content.LineCount {
+		textarea.StringGrid.LineCount = content.LineCount
+		textarea.StringGrid.DoLineNumbers()
+	}
 
 	for _, v := range content.FgColor {
 		textarea.StringGrid.ContentFgColor[[2]int{-textarea.StringGrid.FilePosition.X + v[0], -textarea.StringGrid.FilePosition.Y + v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}

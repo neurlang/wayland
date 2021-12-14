@@ -73,7 +73,7 @@ func reprocess_syntax_highlighting_end(loaded uint64, length, x, y int, digits b
 	switch loaded {
 	case hashstr("func"), hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"),
 		hashstr("switch"), hashstr("len"), hashstr("append"), hashstr("range"), hashstr("else"),
-		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"):
+		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"), hashstr("struct"), hashstr("type"):
 		out = append(out, [5]int{x - length, y, 255, 128, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("int"), hashstr("uint"), hashstr("int64"), hashstr("int32"), hashstr("uint64"),
@@ -85,7 +85,7 @@ func reprocess_syntax_highlighting_end(loaded uint64, length, x, y int, digits b
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	default:
 		if digits {
-			out = append(out, [5]int{x - length, y, 255, 0, 0})
+			out = append(out, [5]int{x - length, y, 255, 0, 255})
 			out = append(out, [5]int{x, y, 255, 255, 255})
 		}
 	}
