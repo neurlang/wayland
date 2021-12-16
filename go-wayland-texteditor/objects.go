@@ -69,6 +69,7 @@ func (sg *StringGrid) SelectionCursorAbsolute() *ObjectPosition {
 type StringGrid struct {
 	Pos                   ObjectPosition
 	LineCount             int
+	EndLineLen            int
 	LineNumbers           int
 	LastColHint           int
 	XCells                int
@@ -118,7 +119,7 @@ func (sg *StringGrid) IsHover(x, y float32, w, h int32) bool {
 		pos.X += int(w)
 	}
 	if pos.Y < 0 {
-		pos.Y += int(w)
+		pos.Y += int(h)
 	}
 	if x < float32(pos.X)+float32(sg.CellWidth*sg.LineNumbers) {
 		return false
@@ -313,24 +314,6 @@ func (sg *StringGrid) Render(c Canvas) {
 	}
 }
 
-type VisualScrollBar struct {
-	Pos     ObjectPosition
-	XCells  int
-	YCells  int
-	Content string
-}
-
-const VisualScrollBarCellWidth = 2
-const VisualScrollBarCellHeight = 3
-
-func (vsb *VisualScrollBar) Width() int {
-	return vsb.XCells * VisualScrollBarCellWidth
-}
-
-func (vsb *VisualScrollBar) Height() int {
-	return vsb.YCells * VisualScrollBarCellHeight
-}
-
 type IbeamCursor struct {
 	Pos        ObjectPosition
 	CellHeight int
@@ -356,6 +339,8 @@ type Scrollbar struct {
 	FgRGB   [3]byte
 	Flip    bool
 	syncing bool
+	Hover   ObjectPosition
+	hovered bool
 
 	// copy of StringGrid position
 	FilePosition ObjectPosition
@@ -363,10 +348,69 @@ type Scrollbar struct {
 	YCells       int
 }
 
-func (s *Scrollbar) SyncWith(g *StringGrid) {
+func (s *Scrollbar) Scroll() {
+
+	var goY = s.Hover.Y
+
+	goY /= 2
+	println("scroll", goY)
+	s.FilePosition = ObjectPosition{X: 0, Y: goY}
+}
+func (s *Scrollbar) IsHover(x, y float32, w, h int32) bool {
+	var pos = s.Pos
+	if pos.X < 0 {
+		pos.X += int(w)
+	}
+	if pos.Y < 0 {
+		pos.Y += int(h)
+	}
+
+	var goX = int(x) - pos.X
+	var goY = int(y) - pos.Y
+	s.mut.RLock()
+	sw := int(s.Width)
+	sh := int(s.Height)
+	s.mut.RUnlock()
+
+	s.Hover.X = goX
+	s.Hover.Y = goY
+
+	if (goX >= 0) && (goY >= 0) && (goX <= sw) && (goY <= sh) {
+
+		s.Hover.Y -= s.YCells
+		if s.Hover.Y < 0 {
+			s.Hover.Y = 0
+		}
+
+		s.hovered = true
+		return true
+	}
+	s.hovered = false
+	return false
+}
+func (s *Scrollbar) IsHoverButton() bool {
+	return s.hovered
+}
+func (s *Scrollbar) SyncTo(g *StringGrid) {
+	g.FilePosition = s.FilePosition
+	sg := g
+	sg.SelectionCursor.X = sg.SelectionCursorAbs.X - sg.FilePosition.X
+	sg.SelectionCursor.Y = sg.SelectionCursorAbs.Y - sg.FilePosition.Y
+	sg.IbeamCursor.X = sg.IbeamCursorAbs.X - sg.FilePosition.X
+	sg.IbeamCursor.Y = sg.IbeamCursorAbs.Y - sg.FilePosition.Y
+}
+
+func (s *Scrollbar) SyncWith(g *StringGrid) bool {
 	s.FilePosition = g.FilePosition
 	s.XCells = g.XCells
 	s.YCells = g.YCells
+	h := g.YCells * g.CellHeight
+	var changed bool
+	s.mut.Lock()
+	changed = s.Height != h
+	s.Height = h
+	s.mut.Unlock()
+	return changed
 }
 
 func ScrollbarSync(sb *Scrollbar, p []patchScrollbar, heightLines int) {
@@ -381,17 +425,7 @@ func ScrollbarSync(sb *Scrollbar, p []patchScrollbar, heightLines int) {
 
 	go sb.Sync(p)
 }
-
-func (sb *Scrollbar) Render(c Canvas) {
-	sb.mut.RLock()
-	var renderbuf = sb.RGBok
-	length := sb.Width * sb.Height
-	sb.mut.RUnlock()
-	if len(renderbuf) > length {
-		renderbuf = renderbuf[:length]
-	}
-	c.PutRGB(sb.Pos, renderbuf, sb.Width, sb.BgRGB, sb.FgRGB, sb.Flip)
-
+func (sb *Scrollbar) RenderRectangle(c Canvas, y int, bgRGB, fgRGB [3]byte) {
 	//white rectangle:
 	var white [][3]byte
 	const width = 96
@@ -408,7 +442,7 @@ func (sb *Scrollbar) Render(c Canvas) {
 	var lu, lb, ru ObjectPosition
 
 	lu = sb.Pos
-	lu.Y += sb.FilePosition.Y * 2
+	lu.Y += y
 
 	lb = lu
 	lb.Y += sb.YCells * 2
@@ -416,10 +450,26 @@ func (sb *Scrollbar) Render(c Canvas) {
 	ru = lu
 	ru.X += width - 2
 
-	c.PutRGB(lu, white, width, sb.BgRGB, sb.FgRGB, true)
-	c.PutRGB(lb, white, width, sb.BgRGB, sb.FgRGB, true)
-	c.PutRGB(lu, white[0:sb.YCells*4], 2, sb.BgRGB, sb.FgRGB, true)
-	c.PutRGB(ru, white[0:sb.YCells*4], 2, sb.BgRGB, sb.FgRGB, true)
+	c.PutRGB(lu, white, width, bgRGB, fgRGB, true)
+	c.PutRGB(lb, white, width, bgRGB, fgRGB, true)
+	c.PutRGB(lu, white[0:sb.YCells*4], 2, bgRGB, fgRGB, true)
+	c.PutRGB(ru, white[0:sb.YCells*4], 2, bgRGB, fgRGB, true)
+}
+
+func (sb *Scrollbar) Render(c Canvas) {
+	sb.mut.RLock()
+	var renderbuf = sb.RGBok
+	length := sb.Width * sb.Height
+	sb.mut.RUnlock()
+	if len(renderbuf) > length {
+		renderbuf = renderbuf[:length]
+	}
+	c.PutRGB(sb.Pos, renderbuf, sb.Width, sb.BgRGB, sb.FgRGB, sb.Flip)
+
+	if sb.hovered {
+		sb.RenderRectangle(c, sb.Hover.Y, [3]byte{}, [3]byte{192, 192, 192})
+	}
+	sb.RenderRectangle(c, sb.FilePosition.Y*2, [3]byte{}, [3]byte{255, 255, 255})
 }
 
 type patchScrollbar struct {
@@ -428,28 +478,31 @@ type patchScrollbar struct {
 }
 
 func (sb *Scrollbar) Patch(patch patchScrollbar, data [][3]byte) {
+	sb.mut.RLock()
+	w := sb.Width
+	h := sb.Height
+	sb.mut.RUnlock()
+	if len(sb.RGB) < w*h {
+		sb.RGB = append(sb.RGB, make([][3]byte, (w*h)-len(sb.RGB))...)
+	}
 
 	var i = 0
-	for y := patch.Pos.Y * sb.Width; y < len(sb.RGB); y += sb.Width {
+	for y := patch.Pos.Y * w; y < len(sb.RGB); y += w {
 		var j = 0
 
-		for x := patch.Pos.X; x < sb.Width; x++ {
+		for x := patch.Pos.X; x < w; x++ {
 			if i+j >= len(data) {
 				break
-			}
-			for x+y >= len(sb.RGB) {
-				sb.RGB = append(sb.RGB, make([][3]byte, sb.Width)...)
 			}
 			sb.RGB[x+y] = data[i+j]
 			j++
 		}
 
-		i += sb.Width
+		i += w
 		if i >= len(data) {
 			break
 		}
 	}
-
 }
 
 func (sb *Scrollbar) Sync(p []patchScrollbar) {
@@ -463,7 +516,7 @@ func (sb *Scrollbar) Sync(p []patchScrollbar) {
 
 		sb.Patch(patch, data)
 	}
-	var buff = make([][3]byte, len(sb.RGB))
+	var buff = make([][3]byte, sb.Width*sb.Height)
 	copy(buff, sb.RGB)
 	sb.mut.Lock()
 	sb.RGBok = buff

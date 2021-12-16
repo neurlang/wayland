@@ -1,9 +1,9 @@
 package main
 
 func reprocess_syntax_highlighting_golang(file [][]string) (out [][5]int) {
-
+	var comments, strings bool
 	for y := range file {
-		out = append(out, reprocess_syntax_highlighting_row_golang(file[y], y)...)
+		out = append(out, reprocess_syntax_highlighting_row_golang(file[y], y, &comments, &strings)...)
 	}
 	return out
 }
@@ -23,47 +23,110 @@ func hash(b byte, x uint64) uint64 {
 	return x - 1
 }
 
-func reprocess_syntax_highlighting_row_golang(row []string, y int) (out [][5]int) {
+func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, strings *bool) (out [][5]int) {
 	var loaded uint64
-	var digits, dblquote, backquote bool
+	var digits, dblquote, backquote, comment1, comment2, comment, escape, alpha bool
+	comment = *comments
+	if comment {
+		out = append(out, [5]int{0, y, 0, 128, 255})
+	}
+	backquote = *strings
+	if backquote {
+		out = append(out, [5]int{0, y, 0, 255, 0})
+	}
 	var length int
 	for x, a := range row {
 		switch a {
-		case "\"":
-			if dblquote {
+		case "*":
+			if comment {
+				comment2 = true
+				comment1 = false
+			} else if comment1 {
+				out = append(out, [5]int{x - 1, y, 0, 128, 255})
+				*comments = true
+				comment = true
+			}
+		case "/":
+			if comment1 {
+				out = append(out, [5]int{x - 1, y, 0, 128, 255})
+				comment = true
+			} else if comment2 {
+				comment = false
+				comment1 = false
+				comment2 = false
+				*comments = false
 				out = append(out, [5]int{x + 1, y, 255, 255, 255})
 			} else {
-				out = append(out, [5]int{x, y, 0, 255, 0})
+				comment1 = true
 			}
-			dblquote = !dblquote
+		case "\\":
+			if dblquote {
+				out = append(out, [5]int{x, y, 128, 128, 255})
+				out = append(out, [5]int{x + 2, y, 0, 255, 0})
+				escape = true
+				continue
+			}
+		case "\"":
+			if dblquote && !escape {
+				out = append(out, [5]int{x + 1, y, 255, 255, 255})
+				dblquote = false
+				escape = false
+			} else {
+				out = append(out, [5]int{x, y, 0, 255, 0})
+				dblquote = true
+				escape = false
+			}
 			continue
 		case "`":
-			if backquote {
+			if backquote || !dblquote {
 				out = append(out, [5]int{x + 1, y, 255, 255, 255})
+				backquote = false
 			} else {
 				out = append(out, [5]int{x, y, 0, 255, 0})
+				backquote = !dblquote
 			}
-			backquote = !backquote
+			*strings = backquote
 			continue
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
-			loaded = hash(a[0], loaded)
-			digits = true
-			length++
-		case "f", "c", "s", "r", "v", "i", "u", "o", "a", "w", "n", "l", "p", "e", "d", "t", "h", "b", "y", "k", "g":
-			loaded = hash(a[0], loaded)
-			length++
-			digits = false
-		case "(", ")", "{", ":", " ", "", "\t", ";", ",":
-			out = append(out, reprocess_syntax_highlighting_end(loaded, length, x, y, digits)...)
+			if !comment && !dblquote && !backquote {
+				loaded = hash(a[0], loaded)
+				digits = !alpha
+				length++
+			}
+		case "f", "c", "s", "r", "v", "i", "u", "o", "a", "w", "n", "l", "p", "e", "d", "t", "h", "b", "y", "k", "g", "m":
+			if !comment && !dblquote && !backquote {
+				loaded = hash(a[0], loaded)
+				length++
+				digits = false
+				alpha = true
+			}
+		case ".":
+			if digits {
+				loaded = hash(a[0], loaded)
+				length++
+				break
+			}
+			fallthrough
+		case "(", ")", "{", ":", " ", "", "\t", ";", ",", "[", "]":
+			if !comment && !dblquote && !backquote {
+				out = append(out, reprocess_syntax_highlighting_end(loaded, length, x, y, digits)...)
+			}
 			length = 0
 			loaded = 0
-			digits = false
+			fallthrough
 		default:
 			digits = false
+			comment1 = false
+			comment2 = false
+			alpha = false
 		}
-		if x&7 == 0 && dblquote || backquote {
+		if (x&7 == 0) && (dblquote || backquote) {
 			out = append(out, [5]int{x, y, 0, 255, 0})
 		}
+		if (x&7 == 0) && (comment) {
+			out = append(out, [5]int{x, y, 0, 128, 255})
+		}
+		escape = false
 	}
 	out = append(out, reprocess_syntax_highlighting_end(loaded, length, len(row), y, digits)...)
 	return out
@@ -73,15 +136,17 @@ func reprocess_syntax_highlighting_end(loaded uint64, length, x, y int, digits b
 	switch loaded {
 	case hashstr("func"), hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"),
 		hashstr("switch"), hashstr("len"), hashstr("append"), hashstr("range"), hashstr("else"),
-		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"), hashstr("struct"), hashstr("type"):
+		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"), hashstr("struct"),
+		hashstr("type"), hashstr("import"), hashstr("break"), hashstr("continue"), hashstr("fallthrough"),
+		hashstr("const"):
 		out = append(out, [5]int{x - length, y, 255, 128, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("int"), hashstr("uint"), hashstr("int64"), hashstr("int32"), hashstr("uint64"),
-		hashstr("uint32"), hashstr("bool"), hashstr("byte"):
+		hashstr("uint32"), hashstr("bool"), hashstr("byte"), hashstr("string"), hashstr("error"):
 		out = append(out, [5]int{x - length, y, 0, 255, 255})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("true"), hashstr("false"), hashstr("nil"):
-		out = append(out, [5]int{x - length, y, 255, 0, 0})
+		out = append(out, [5]int{x - length, y, 255, 0, 255})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	default:
 		if digits {

@@ -14,6 +14,8 @@ var file = [][]string{
 	{"w", "o", "r", "l", "d"},
 }
 
+var fileColor [][5]int
+
 func handlerCopy(p *CopyRequest) *CopyResponse {
 	var cr CopyResponse
 	if (p.Y0 > p.Y1) || ((p.Y0 == p.Y1) && (p.X0 > p.X1)) {
@@ -98,12 +100,12 @@ func handlerErase(e *EraseRequest) *EraseResponse {
 	}
 	return &EraseResponse{Erased: true}
 }
-func handlerPaste(p *PasteRequest) {
+func handlerPaste(p *PasteRequest) *struct{} {
 	if p.Y >= len(file) {
-		return
+		return nil
 	}
 	if p.X > len(file[p.Y]) {
-		return
+		return nil
 	}
 	temp := p.Buffer
 	if len(temp) > 0 {
@@ -153,6 +155,7 @@ func handlerPaste(p *PasteRequest) {
 		file = append(file, []string{})
 	}
 	file[p.Y] = append(file[p.Y], rrow...)
+	return &struct{}{}
 }
 
 func handlerWrite(w *WriteRequest) *WriteResponse {
@@ -262,14 +265,16 @@ type ContentRequest struct {
 }
 
 type ContentResponse struct {
-	Content    []string
+	Content    [][]string
 	FgColor    [][5]int
 	LineLens   []int
 	LineCount  int
+	EndLineLen int
 	Xpos, Ypos int
 	Copy       *CopyResponse
 	Erase      *EraseResponse
 	Write      *WriteResponse
+	Paste      *struct{}
 }
 type EraseRequest struct {
 	X0, Y0, X1, Y1 int
@@ -301,33 +306,60 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var resp ContentResponse
+	var recolor bool
 	if cr.Copy != nil {
 		resp.Copy = handlerCopy(cr.Copy)
 	}
 	if cr.Erase != nil {
 		resp.Erase = handlerErase(cr.Erase)
+		if resp.Erase != nil {
+			recolor = true
+		}
 	}
 	if cr.Write != nil {
 		resp.Write = handlerWrite(cr.Write)
+		if resp.Write != nil {
+			recolor = true
+		}
 	}
 	if cr.Paste != nil {
-		handlerPaste(cr.Paste)
+		resp.Paste = handlerPaste(cr.Paste)
+		if resp.Paste != nil {
+			recolor = true
+		}
 	}
 
-	for y := cr.Ypos; y < len(file); y++ {
+	if recolor {
+		fileColor = reprocess_syntax_highlighting_golang(file)
+	}
+
+	var min = 0
+	var max = len(fileColor)
+
+	for i := range fileColor {
+		if fileColor[i][1] < cr.Ypos {
+			min = i
+		} else if fileColor[i][1] >= cr.Ypos+cr.Height {
+			max = i
+			break
+		}
+	}
+	resp.FgColor = fileColor[min:max]
+
+	for y := cr.Ypos; y < len(file) && y < cr.Ypos+cr.Height; y++ {
 		resp.LineLens = append(resp.LineLens, len(file[y]))
+		resp.Content = append(resp.Content, nil)
 		for x := cr.Xpos; x < cr.Xpos+cr.Width; x++ {
-			if y >= len(file) || x >= len(file[y]) {
-				resp.Content = append(resp.Content, "")
-			} else {
-				resp.Content = append(resp.Content, file[y][x])
+			if !(y >= len(file) || x >= len(file[y])) {
+				resp.Content[len(resp.Content)-1] = append(resp.Content[len(resp.Content)-1], file[y][x])
 			}
 		}
 	}
 
-	resp.FgColor = reprocess_syntax_highlighting_golang(file)
-
 	resp.LineCount = len(file)
+	if len(file) > 0 {
+		resp.EndLineLen = len(file[len(file)-1])
+	}
 	resp.Xpos = cr.Xpos
 	resp.Ypos = cr.Ypos
 

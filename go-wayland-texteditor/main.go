@@ -183,12 +183,11 @@ func (t *textarea) Resize(widget *window.Widget, width int32, height int32, pwid
 	t.StringGrid.XCells = xcells
 	t.StringGrid.YCells = ycells
 	t.StringGrid.DoLineNumbers()
-	t.handleContent(content)
+	var scroll = t.scrolls[0].SyncWith(&t.StringGrid)
+	t.handleContent(content, scroll)
 }
 
 func render(textarea *textarea, s cairo.Surface, time uint32) {
-
-	textarea.scrolls[0].SyncWith(&textarea.StringGrid)
 
 	textarea.mutex.RLock()
 	defer textarea.mutex.RUnlock()
@@ -240,6 +239,12 @@ func (s *textarea) Motion(widget *window.Widget, input *window.Input, time uint3
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	for i := range s.scrolls {
+		if s.scrolls[i].IsHover(x, y, s.width, s.height) {
+			return window.CursorHand1
+		}
+	}
+
 	if s.controls.IsHover(x, y, s.width, s.height) {
 		s.controls.Motion(ObjectPosition{1 + int((x-float32(s.width)-float32(s.controls.Pos.X))/float32(s.controls.CellWidth)), int(y / float32(s.controls.CellHeight))})
 		return window.CursorLeftPtr
@@ -261,6 +266,28 @@ func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint3
 	defer s.mutex.Unlock()
 
 	if button == 272 {
+
+		if state == wl.PointerButtonStatePressed {
+			for i := range s.scrolls {
+				if s.scrolls[i].IsHoverButton() {
+					s.scrolls[i].Scroll()
+					s.scrolls[i].SyncTo(&s.StringGrid)
+					content, err := load_content(ContentRequest{
+						Xpos:   s.StringGrid.FilePosition.X,
+						Ypos:   s.StringGrid.FilePosition.Y,
+						Width:  s.StringGrid.XCells,
+						Height: s.StringGrid.YCells,
+					})
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					s.handleContent(content, false)
+					return
+				}
+			}
+		}
 
 		if s.controls.IsHoverButton() {
 			if state == wl.PointerButtonStateReleased {
@@ -323,6 +350,7 @@ func (t *textarea) axisDiscrete(discrete int32) {
 	t.StringGrid.SelectionCursor.Y -= int(discrete)
 	t.StringGrid.DoLineNumbers()
 	t.StringGrid.ReMotion(int(discrete))
+	t.scrolls[0].SyncWith(&t.StringGrid)
 
 	content, err := load_content(ContentRequest{
 		Xpos:   t.StringGrid.FilePosition.X,
@@ -335,7 +363,7 @@ func (t *textarea) axisDiscrete(discrete int32) {
 		return
 	}
 
-	t.handleContent(content)
+	t.handleContent(content, false)
 
 	t.StringGrid.ReMotion(0)
 
@@ -374,9 +402,30 @@ func (textarea *textarea) Key(
 		case xkb.KeyDelete:
 			textarea.KeyReloadNoMutex("Delete", 0, time)
 			KeyRepeatSubscribe(textarea, "Delete", 0, time)
-		case 'c', 'v', 'x':
+		case 'c', 'v', 'x', 'a':
 
 			if input.GetModifiers() == window.ModControlMask {
+
+				if notUnicode == 'a' {
+					println("CTRL A")
+
+					var endX = textarea.StringGrid.EndLineLen
+					var endY = textarea.StringGrid.LineCount - 1
+					if endY < 0 {
+						endY = 0
+					}
+
+					textarea.StringGrid.SelectionCursor = ObjectPosition{-textarea.StringGrid.FilePosition.X, -textarea.StringGrid.FilePosition.Y}
+					textarea.StringGrid.SelectionCursorAbs = ObjectPosition{0, 0}
+					textarea.StringGrid.IbeamCursor = ObjectPosition{
+						endX - textarea.StringGrid.FilePosition.X,
+						endY - textarea.StringGrid.FilePosition.Y,
+					}
+					textarea.StringGrid.IbeamCursorAbs = ObjectPosition{endX, endY}
+					textarea.StringGrid.Selecting = false
+					textarea.StringGrid.IsSelected = true
+					break
+				}
 
 				if notUnicode == 'c' || notUnicode == 'x' {
 					println("CTRL C/X")
@@ -413,7 +462,7 @@ func (textarea *textarea) Key(
 						break
 					}
 
-					textarea.handleContent(content)
+					textarea.handleContent(content, false)
 
 					if textarea.src != nil {
 
@@ -614,12 +663,21 @@ func (textarea *textarea) KeyReload(key string, notUnicode, time uint32) {
 	defer textarea.mutex.Unlock()
 	textarea.KeyReloadNoMutex(key, notUnicode, time)
 }
+func (textarea *textarea) expandContent(content [][]string, width int) {
+	textarea.StringGrid.Content = nil
+	for i := range content {
+		textarea.StringGrid.Content = append(textarea.StringGrid.Content, content[i]...)
+		if width > len(content[i]) {
+			textarea.StringGrid.Content = append(textarea.StringGrid.Content, make([]string, width-len(content[i]))...)
+		}
+	}
+}
+func (textarea *textarea) handleContent(content *ContentResponse, needScrollBar bool) {
 
-func (textarea *textarea) handleContent(content *ContentResponse) {
-
-	textarea.StringGrid.Content = content.Content
+	textarea.expandContent(content.Content, textarea.StringGrid.XCells-content.Xpos)
 	textarea.StringGrid.ContentFgColor = make(map[[2]int][3]byte)
 	textarea.StringGrid.LineLens = content.LineLens
+	textarea.StringGrid.EndLineLen = content.EndLineLen
 
 	if textarea.StringGrid.LineCount != content.LineCount {
 		textarea.StringGrid.LineCount = content.LineCount
@@ -629,7 +687,9 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 	for _, v := range content.FgColor {
 		textarea.StringGrid.ContentFgColor[[2]int{-textarea.StringGrid.FilePosition.X + v[0], -textarea.StringGrid.FilePosition.Y + v[1]}] = [3]byte{byte(v[2]), byte(v[3]), byte(v[4])}
 	}
+
 	if content.Erase != nil && content.Erase.Erased {
+		needScrollBar = true
 
 		if textarea.StringGrid.SelectionCursor.Less(&textarea.StringGrid.IbeamCursor) {
 
@@ -643,6 +703,7 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 		textarea.StringGrid.Selecting = false
 	}
 	if content.Write != nil {
+		needScrollBar = true
 		textarea.StringGrid.IbeamCursor.X += content.Write.MoveX
 		textarea.StringGrid.IbeamCursor.Y += content.Write.MoveY
 		textarea.StringGrid.IbeamCursorAbs.X += content.Write.MoveX
@@ -652,8 +713,12 @@ func (textarea *textarea) handleContent(content *ContentResponse) {
 		textarea.StringGrid.SelectionCursorAbs = textarea.StringGrid.IbeamCursorAbs
 		textarea.StringGrid.Selecting = false
 	}
-
-	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
+	if content.Paste != nil {
+		needScrollBar = true
+	}
+	if needScrollBar {
+		ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
+	}
 }
 
 func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) {
@@ -705,7 +770,7 @@ func (textarea *textarea) KeyReloadNoMutex(key string, notUnicode, time uint32) 
 			return
 		}
 
-		textarea.handleContent(content)
+		textarea.handleContent(content, false)
 	}
 }
 
@@ -760,6 +825,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
 
 	textarea.controls.Font = &ControlFont
 	textarea.controls.Content = []string{" ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
@@ -777,7 +843,6 @@ func main() {
 	textarea.controls.FgColor = [3]byte{255, 255, 255}
 
 	textarea.StringGrid.Font = &UnicodeFont
-	textarea.StringGrid.Content = content.Content
 	textarea.StringGrid.XCells = 30
 	textarea.StringGrid.YCells = 10
 	textarea.StringGrid.CellWidth = 12
@@ -789,14 +854,16 @@ func main() {
 	textarea.StringGrid.FlipColor = false
 	textarea.StringGrid.BgColor = [3]byte{0, 59, 112}
 	textarea.StringGrid.FgColor = [3]byte{255, 255, 255}
+	textarea.expandContent(content.Content, textarea.StringGrid.XCells-content.Xpos)
 
 	const scrollWidth = 96
 
 	textarea.scrolls[0].Pos = ObjectPosition{-scrollWidth, 24}
 	textarea.scrolls[0].Width = scrollWidth
-	textarea.scrolls[0].RGB = make([][3]byte, scrollWidth*1000)
+	textarea.scrolls[0].RGB = make([][3]byte, scrollWidth*2000)
 	textarea.scrolls[0].BgRGB = [3]byte{0, 13, 26}
 	textarea.scrolls[0].FgRGB = [3]byte{255, 255, 255}
+	textarea.scrolls[0].SyncWith(&textarea.StringGrid)
 
 	textarea.width = int32(textarea.StringGrid.XCells * textarea.StringGrid.CellWidth)
 	textarea.height = int32(textarea.StringGrid.YCells * textarea.StringGrid.CellHeight)

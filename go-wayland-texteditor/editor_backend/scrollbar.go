@@ -29,20 +29,48 @@ func reprocess_scrollbar(file [][]string) (out []byte, err error) {
 
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 
+	var comments, strings bool
+
 	// Set color for each pixel.
 	for y := 0; y < height; y++ {
+
+		var color_out [][5]int
 
 		if y&1 == 1 {
 			continue
 		}
 
-		for x := 0; x < width; x++ {
+		color_out = append(color_out, reprocess_syntax_highlighting_row_golang(file[y/2], y/2, &comments, &strings)...)
 
-			reprocess_scrollbar_row(func(x, y, r, g, b int) {
-				img.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), 0xff})
-			}, file[y/2], y)
+		var xx = 0
 
-		}
+		reprocess_scrollbar_row(func(x, y, r, g, b int) {
+
+			for ; xx < len(color_out); xx++ {
+				if color_out[xx][0] >= x {
+					if color_out[xx][0] == x {
+						r *= color_out[xx][2]
+						g *= color_out[xx][3]
+						b *= color_out[xx][4]
+						r /= 255
+						g /= 255
+						b /= 255
+
+					}
+					break
+				} else {
+					r *= color_out[xx][2]
+					g *= color_out[xx][3]
+					b *= color_out[xx][4]
+					r /= 255
+					g /= 255
+					b /= 255
+				}
+			}
+
+			img.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), 0xff})
+		}, file[y/2], y)
+
 	}
 
 	var buffer bytes.Buffer

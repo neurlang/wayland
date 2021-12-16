@@ -74,6 +74,6 @@ func (p *Paste) Close() error {
 		return err
 	}
 
-	p.Textarea.handleContent(content)
+	p.Textarea.handleContent(content, false)
 	return nil
 }
