@@ -282,7 +282,7 @@ func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint3
 						fmt.Println(err)
 						return
 					}
-
+					s.StringGrid.DoLineNumbers()
 					s.handleContent(content, false)
 					return
 				}

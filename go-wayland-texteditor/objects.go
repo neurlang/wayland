@@ -1,6 +1,5 @@
 package main
 
-import "time"
 import "sync"
 import "sort"
 import "fmt"
@@ -507,24 +506,31 @@ func (sb *Scrollbar) Patch(patch patchScrollbar, data [][3]byte) {
 
 func (sb *Scrollbar) Sync(p []patchScrollbar) {
 
-	for _, patch := range p {
-		var data, err = downloadScrollbarPatch(patch.FileName)
-		if err != nil {
-			println(err.Error())
-			continue
+	var syncing = false
+
+	for !syncing {
+
+		for _, patch := range p {
+			var data, err = downloadScrollbarPatch(patch.FileName)
+			if err != nil {
+				println(err.Error())
+				continue
+			}
+
+			sb.Patch(patch, data)
 		}
+		var buff = make([][3]byte, sb.Width*sb.Height)
+		copy(buff, sb.RGB)
+		sb.mut.Lock()
+		sb.RGBok = buff
+		sb.mut.Unlock()
 
-		sb.Patch(patch, data)
+		//time.Sleep(time.Second)
+
+		sb.mut.Lock()
+		syncing = sb.syncing
+		sb.syncing = false
+		sb.mut.Unlock()
+
 	}
-	var buff = make([][3]byte, sb.Width*sb.Height)
-	copy(buff, sb.RGB)
-	sb.mut.Lock()
-	sb.RGBok = buff
-	sb.mut.Unlock()
-
-	time.Sleep(time.Second)
-
-	sb.mut.Lock()
-	sb.syncing = false
-	sb.mut.Unlock()
 }
