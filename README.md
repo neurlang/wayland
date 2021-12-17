@@ -12,9 +12,9 @@ Golang Wayland
 This includes two sample apps that render into a shared memory. Tested on pc
 (x64) and raspberry pi (arm64). The smoke app reacts on mouse input.
 
-![Screenshot of Golang Wayland Image Viewer](gophers.png?raw=true "Screenshot of Golang Wayland Image Viewer")
+![Screenshot of Golang Wayland Text Editor](gophers.png?raw=true "Screenshot of Golang Wayland Text Editor")
 
-These gophers (in this image) are courtesy of Copyright (c) 2019 Maria Letta
+This text editor is one of the sample apps. It is a Linux-only programming text editor.
 
 
 # Dependencies
@@ -78,6 +78,7 @@ Then, install them:
 go get github.com/neurlang/wayland/go-wayland-simple-shm@latest
 go get github.com/neurlang/wayland/go-wayland-smoke@latest
 go get github.com/neurlang/wayland/go-wayland-imageviewer@latest
+go get github.com/neurlang/wayland/go-wayland-texteditor@latest
 ```
 
 Using golang version < 1.16 (there is support for golang >= 1.09):
@@ -86,6 +87,7 @@ Using golang version < 1.16 (there is support for golang >= 1.09):
 go install github.com/neurlang/wayland/go-wayland-simple-shm
 go install github.com/neurlang/wayland/go-wayland-smoke
 go install github.com/neurlang/wayland/go-wayland-imageviewer
+go install github.com/neurlang/wayland/go-wayland-texteditor
 ```
 
 Finally, run weston and the executables.
