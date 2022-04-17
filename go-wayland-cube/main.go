@@ -38,7 +38,7 @@ func (w *Wland) RegistryGlobal(wl_registry *wayland.Registry, name uint32, iface
 
 	case "xdg_wm_base":
 		w.nshell = wayland.RegistryBindXdgWmBaseInterface(w.nregistry, name, 1)
-
+		wayland.XdgWmBaseAddListener(w.nshell, w)
 	case "wl_seat":
 
 		w.nseat = wayland.RegistryBindSeatInterface(w.nregistry, name, 1)
@@ -50,8 +50,20 @@ func (w *Wland) RegistryGlobal(wl_registry *wayland.Registry, name uint32, iface
 func (w *Wland) RegistryGlobalRemove(*wayland.Registry, uint32) {
 }
 
-func (w *Wland) XdgSurfaceConfigure(*wayland.XdgSurface, uint32) {
+func (w *Wland) XdgSurfaceConfigure(surface *wayland.XdgSurface, serial uint32) {
+
+	wayland.XdgSurfaceAckConfigure(surface, serial)
+
+	if w.wait_for_configure {
+		// redraw
+		w.wait_for_configure = false
+	}
+
 }
+func (w *Wland) XdgWmBasePing(shell *wayland.XdgWmBase, serial uint32) {
+	wayland.XdgWmBasePong(shell, serial)
+}
+
 func (w *Wland) XdgToplevelClose(*wayland.XdgToplevel) {
 	os.Exit(0)
 }
