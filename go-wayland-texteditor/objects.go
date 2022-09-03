@@ -94,6 +94,10 @@ type StringGrid struct {
 	LineLens              []int
 }
 
+func (sg *StringGrid) LineLen(y int) int {
+	return sg.LineLens[y]
+}
+
 func (sg *StringGrid) DoLineNumbers() {
 	var maxLn = sg.YCells + sg.FilePosition.Y
 
@@ -173,6 +177,9 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 	if pos.X > 0 && pos.Y >= 0 && pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
 		pos.X = sg.LineLens[pos.Y]
 	}
+	for (pos.X > 0) && (len(sg.GetContent(pos.X-1, pos.Y)) == 0) {
+		pos.X--
+	}
 	sg.Hover = pos
 
 	if sg.Selecting {
@@ -227,10 +234,13 @@ func (sg *StringGrid) RowFocused(y int) bool {
 
 func (sg *StringGrid) GetContent(x, y int) string {
 	var pos = sg.XCells*y + x
-	if len(sg.Content) > pos {
-		return sg.Content[pos]
+	if len(sg.Content) <= pos {
+		return ""
 	}
-	return ""
+	if pos < 0 {
+		return ""
+	}
+	return sg.Content[pos]
 }
 
 func (sg *StringGrid) Render(c Canvas) {

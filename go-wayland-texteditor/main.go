@@ -619,6 +619,12 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 			textarea.StringGrid.IbeamCursor.Y++
 			textarea.StringGrid.IbeamCursorAbs.Y++
 		}
+		var l = textarea.StringGrid.IbeamCursorAbs.X - textarea.StringGrid.LineLen(textarea.StringGrid.IbeamCursor.Y)
+		if 0 < l {
+			textarea.StringGrid.IbeamCursor.X -= l
+			textarea.StringGrid.IbeamCursorAbs.X -= l
+		}
+
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
@@ -628,6 +634,12 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 			textarea.StringGrid.IbeamCursor.Y--
 			textarea.StringGrid.IbeamCursorAbs.Y--
 		}
+		var l = textarea.StringGrid.IbeamCursorAbs.X - textarea.StringGrid.LineLen(textarea.StringGrid.IbeamCursor.Y)
+		if 0 < l {
+			textarea.StringGrid.IbeamCursor.X -= l
+			textarea.StringGrid.IbeamCursorAbs.X -= l
+		}
+
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
@@ -636,14 +648,29 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 		if textarea.StringGrid.IbeamCursorAbs.X > 0 {
 			textarea.StringGrid.IbeamCursor.X--
 			textarea.StringGrid.IbeamCursorAbs.X--
+			if "\t" == textarea.StringGrid.GetContent(textarea.StringGrid.IbeamCursor.X,
+				textarea.StringGrid.IbeamCursor.Y) {
+				for (len(textarea.StringGrid.GetContent(textarea.StringGrid.IbeamCursor.X-1,
+					textarea.StringGrid.IbeamCursor.Y)) == 0) &&
+					(textarea.StringGrid.IbeamCursorAbs.X > 0) {
+					textarea.StringGrid.IbeamCursor.X--
+					textarea.StringGrid.IbeamCursorAbs.X--
+				}
+			}
 		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
 	case xkb.KeyRight:
 		textarea.navigateHeld |= navigateRight
-		textarea.StringGrid.IbeamCursor.X++
-		textarea.StringGrid.IbeamCursorAbs.X++
+		for textarea.StringGrid.IbeamCursorAbs.X < textarea.StringGrid.LineLen(textarea.StringGrid.IbeamCursor.Y) {
+			textarea.StringGrid.IbeamCursor.X++
+			textarea.StringGrid.IbeamCursorAbs.X++
+			if len(textarea.StringGrid.GetContent(textarea.StringGrid.IbeamCursor.X-1,
+				textarea.StringGrid.IbeamCursor.Y)) != 0 {
+				break
+			}
+		}
 		textarea.StringGrid.IbeamCursorBlinkFix = (time)
 		return true
 
