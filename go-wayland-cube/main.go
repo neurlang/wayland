@@ -238,6 +238,8 @@ func choose_surface_format(vc *VkCube) vk.Format {
 		case vk.FormatR8g8b8a8Srgb:
 			fallthrough
 		case vk.FormatB8g8r8a8Srgb:
+			fallthrough
+		case vk.FormatB8g8r8a8Unorm:
 			/* These formats are all fine */
 			format = formats[i].Format
 			continue
