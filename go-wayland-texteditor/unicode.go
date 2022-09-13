@@ -250,6 +250,24 @@ var devanagari3Descriptor = "" +
 	`ॳ	ॹ	ॺ	ॻ	ॼ	ॽ	ॾ	ॿ	ꣴ	ꣳ
 	ꣵ	ꣶ	ꣷ	꣸	꣹	꣺	ꣻ	ꣽ	꣼	`
 
+var spacingmodDescriptor = "" +
+	`ʰ	ˀ	ː	ˠ	˰
+	ʱ	ˁ	ˑ	ˡ	˱
+	ʲ	˂	˒	ˢ	˲
+	ʳ	˃	˓	ˣ	˳
+	ʴ	˄	˔	ˤ	˴
+	ʵ	˅	˕	˥	˵
+	ʶ	ˆ	˖	˦	˶
+	ʷ	ˇ	˗	˧	˷
+	ʸ	ˈ	˘	˨	˸
+	ʹ	ˉ	˙	˩	˹
+	ʺ	ˊ	˚	˪	˺
+	ʻ	ˋ	˛	˫	˻
+	ʼ	ˌ	˜	ˬ	˼
+	ʽ	ˍ	˝	˭	˽
+	ʾ	ˎ	˞	ˮ	˾
+	ʿ	ˏ	˟	˯	˿`
+
 var UnicodeFont Font
 
 func init() {
@@ -257,6 +275,7 @@ func init() {
 	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor, "")
 	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor, "")
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor, "")
+	(&UnicodeFont).Load("spacingmod.png", spacingmodDescriptor, "")
 	(&UnicodeFont).Load("ipa.png", ipaDescriptor, "")
 	(&UnicodeFont).Load("greek.png", greekDescriptor, "")
 	(&UnicodeFont).Load("cyrillic.png", cyrillicDescriptor, "")
