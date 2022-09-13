@@ -1,7 +1,36 @@
 package main
 
+func detect_golang(file [][]string) bool {
+	for _, row := range file {
+		var rowhash uint64
+		for _, cell := range row {
+			if cell == "/" {
+				break
+			}
+			switch cell {
+			case "p", "a", "c", "k", "g":
+				rowhash = hash(cell[0], rowhash)
+			case "e":
+				if rowhash == hashstr("packag") {
+					return true
+				}
+			case " ", "\t", "\r", "\n":
+				rowhash = 0
+			default:
+				return false
+			}
+		}
+	}
+	return false
+}
+
 func reprocess_syntax_highlighting_golang(file [][]string) (out [][5]int) {
 	var comments, strings bool
+
+	if !detect_golang(file) {
+		return out
+	}
+
 	for y := range file {
 		out = append(out, reprocess_syntax_highlighting_row_golang(file[y], y, &comments, &strings)...)
 	}
