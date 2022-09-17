@@ -7,6 +7,10 @@
 
 Golang Wayland
 
+![Screenshot of Golang Wayland Cube app](cube.png?raw=true "Screenshot of Golang Wayland App")
+
+Go vulkan cube demo
+
 ![Screenshot of Golang Wayland App](wayland.png?raw=true "Screenshot of Golang Wayland App")
 
 This includes two sample apps that render into a shared memory. Tested on pc
@@ -84,6 +88,7 @@ go get github.com/neurlang/wayland/go-wayland-texteditor@latest
 Using golang version < 1.16 (there is support for golang >= 1.09):
 
 ```
+go install -tags wayland github.com/neurlang/wayland/go-wayland-cube
 go install github.com/neurlang/wayland/go-wayland-simple-shm
 go install github.com/neurlang/wayland/go-wayland-smoke
 go install github.com/neurlang/wayland/go-wayland-imageviewer
