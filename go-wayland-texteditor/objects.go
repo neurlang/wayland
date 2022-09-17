@@ -4,6 +4,10 @@ import "sync"
 import "sort"
 import "fmt"
 
+const rowHeight = 2
+const whiteRectThick = 2
+const scrollingOffset = 100
+
 type Canvas interface {
 	PutRGB(ObjectPosition, [][3]byte, int, [3]byte, [3]byte, bool)
 	GetTime() uint32
@@ -360,9 +364,15 @@ type Scrollbar struct {
 func (s *Scrollbar) Scroll() {
 
 	var goY = s.Hover.Y
+	goY /= rowHeight
 
-	goY /= 2
-	println("scroll", goY)
+	var oldY = s.FilePosition.Y
+
+	if oldY > scrollingOffset {
+		goY += oldY - scrollingOffset
+	}
+
+	println("scroll", goY, oldY)
 	s.FilePosition = ObjectPosition{X: 0, Y: goY}
 }
 func (s *Scrollbar) IsHover(x, y float32, w, h int32) bool {
@@ -424,7 +434,7 @@ func (s *Scrollbar) SyncWith(g *StringGrid) bool {
 
 func ScrollbarSync(sb *Scrollbar, p []patchScrollbar, heightLines int) {
 	sb.mut.Lock()
-	sb.Height = heightLines * 2
+	sb.Height = heightLines * rowHeight
 	if sb.syncing {
 		sb.mut.Unlock()
 		return
@@ -438,13 +448,13 @@ func (sb *Scrollbar) RenderRectangle(c Canvas, y int, bgRGB, fgRGB [3]byte) {
 	//white rectangle:
 	var white [][3]byte
 	const width = 96
-	if width > sb.YCells*2 {
-		if len(white) != width*2 {
-			white = make([][3]byte, width*2)
+	if width > sb.YCells*whiteRectThick {
+		if len(white) != width*whiteRectThick {
+			white = make([][3]byte, width*whiteRectThick)
 		}
 	} else {
-		if len(white) != sb.YCells*4 {
-			white = make([][3]byte, sb.YCells*4)
+		if len(white) != sb.YCells*whiteRectThick*2 {
+			white = make([][3]byte, sb.YCells*whiteRectThick*2)
 		}
 	}
 
@@ -454,20 +464,29 @@ func (sb *Scrollbar) RenderRectangle(c Canvas, y int, bgRGB, fgRGB [3]byte) {
 	lu.Y += y
 
 	lb = lu
-	lb.Y += sb.YCells * 2
+	lb.Y += sb.YCells * whiteRectThick
 
 	ru = lu
-	ru.X += width - 2
+	ru.X += width - whiteRectThick
 
 	c.PutRGB(lu, white, width, bgRGB, fgRGB, true)
 	c.PutRGB(lb, white, width, bgRGB, fgRGB, true)
-	c.PutRGB(lu, white[0:sb.YCells*4], 2, bgRGB, fgRGB, true)
-	c.PutRGB(ru, white[0:sb.YCells*4], 2, bgRGB, fgRGB, true)
+	c.PutRGB(lu, white[0:sb.YCells*whiteRectThick*2], whiteRectThick, bgRGB, fgRGB, true)
+	c.PutRGB(ru, white[0:sb.YCells*whiteRectThick*2], whiteRectThick, bgRGB, fgRGB, true)
 }
 
 func (sb *Scrollbar) Render(c Canvas) {
+
+	movedPosition := sb.FilePosition.Y
+	skippedPostion := 0
+	if movedPosition > scrollingOffset {
+		skippedPostion = movedPosition - scrollingOffset
+		movedPosition = scrollingOffset
+	}
+
 	sb.mut.RLock()
 	var renderbuf = sb.RGBok
+	renderbuf = renderbuf[rowHeight*sb.Width*skippedPostion:]
 	length := sb.Width * sb.Height
 	sb.mut.RUnlock()
 	if len(renderbuf) > length {
@@ -478,7 +497,7 @@ func (sb *Scrollbar) Render(c Canvas) {
 	if sb.hovered {
 		sb.RenderRectangle(c, sb.Hover.Y, [3]byte{}, [3]byte{192, 192, 192})
 	}
-	sb.RenderRectangle(c, sb.FilePosition.Y*2, [3]byte{}, [3]byte{255, 255, 255})
+	sb.RenderRectangle(c, movedPosition*rowHeight, [3]byte{}, [3]byte{255, 255, 255})
 }
 
 type patchScrollbar struct {
