@@ -7,8 +7,8 @@ import (
 	"unsafe"
 
 	wayland "github.com/neurlang/wayland/libwayland"
-	vulkan "github.com/neurlang/wayland/vulkan"
 	vk "github.com/vulkan-go/vulkan"
+	vulkan "github.com/vulkan-go/vulkan"
 	"golang.org/x/sys/unix"
 )
 
@@ -495,6 +495,10 @@ func init_vk(vc *VkCube) {
 		panic(err)
 	}
 
+	if err := vk.Init(); err != nil {
+		panic(err)
+	}
+
 	var inst vk.Instance
 
 	vulkan.CreateInstance(&vk.InstanceCreateInfo{
@@ -512,14 +516,14 @@ func init_vk(vc *VkCube) {
 	},
 		nil,
 		&inst)
-	vc.instance = vk.Instance(unsafe.Pointer(inst))
+	vc.instance = inst
 
-	if err := vk.InitInstance(vk.Instance(unsafe.Pointer(inst))); err != nil {
+	if err := vk.InitInstance(inst); err != nil {
 		panic(err)
 	}
 
 	var count uint32
-	var res = vk.EnumeratePhysicalDevices(vk.Instance(unsafe.Pointer(vc.instance)), &count, nil)
+	var res = vk.EnumeratePhysicalDevices(inst, &count, nil)
 	if (res != vk.Success) || (count == 0) {
 		panic("No Vulkan devices found.\n")
 	}
@@ -527,26 +531,26 @@ func init_vk(vc *VkCube) {
 	vk.EnumeratePhysicalDevices(vc.instance, &count, pd)
 	vc.physical_device = pd[0]
 	fmt.Printf("%d physical devices\n", count)
+	/*
+		var protected_features = vk.PhysicalDeviceProtectedMemoryFeatures{
+			SType: vk.StructureTypePhysicalDeviceProtectedMemoryFeatures,
+		}
+		var features = vk.PhysicalDeviceFeatures2{
+			SType: vk.StructureTypePhysicalDeviceFeatures2,
+			PNext: unsafe.Pointer(&protected_features),
+		}
+		vulkan.GetPhysicalDeviceFeatures2(vc.physical_device, &features)
 
-	var protected_features = vk.PhysicalDeviceProtectedMemoryFeatures{
-		SType: vk.StructureTypePhysicalDeviceProtectedMemoryFeatures,
-	}
-	var features = vk.PhysicalDeviceFeatures2{
-		SType: vk.StructureTypePhysicalDeviceFeatures2,
-		PNext: unsafe.Pointer(&protected_features),
-	}
-	vulkan.GetPhysicalDeviceFeatures2(vc.physical_device, &features)
+		if vc.protected_chain && 0 == protected_features.ProtectedMemory {
+			fmt.Print("Requested protected memory but not supported by device, dropping...\n")
+		}
 
-	if vc.protected_chain && 0 == protected_features.ProtectedMemory {
-		fmt.Print("Requested protected memory but not supported by device, dropping...\n")
-	}
-
-	if vc.protected_chain && protected_features.ProtectedMemory != 0 {
-		vc.protected = 1
-	} else {
-		vc.protected = 0
-	}
-
+		if vc.protected_chain && protected_features.ProtectedMemory != 0 {
+			vc.protected = 1
+		} else {
+			vc.protected = 0
+		}
+	*/
 	var properties vk.PhysicalDeviceProperties
 	vk.GetPhysicalDeviceProperties(vc.physical_device, &properties)
 

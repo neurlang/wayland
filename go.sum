@@ -8,6 +8,8 @@ github.com/rkusa/gm v0.0.0-20160203133140-acc6b6d0b64a h1:isLzfNyCDEFaua2vQtlM7c
 github.com/rkusa/gm v0.0.0-20160203133140-acc6b6d0b64a/go.mod h1:4fD+lDdURkq7V+MRsxfjkVKcgekFRZB2qPgJYflAHY8=
 github.com/vulkan-go/vulkan v0.0.0-20210402152248-956e3850d8f9 h1:WFujQpkMAAd8dqccEm10n8dly4yQ/R5d2+Us7GutowA=
 github.com/vulkan-go/vulkan v0.0.0-20210402152248-956e3850d8f9/go.mod h1:Y5Ti1uUBdKDsb0W8aPtIo9krs+29Y7p6Bc9yyy4AM6g=
+github.com/vulkan-go/vulkan v0.0.0-20220916223707-3ea69233b9d2 h1:PS3d1+TTLuWkae7njZu+RAs9j8s9phKJ2ElSxq2r1t0=
+github.com/vulkan-go/vulkan v0.0.0-20220916223707-3ea69233b9d2/go.mod h1:Y5Ti1uUBdKDsb0W8aPtIo9krs+29Y7p6Bc9yyy4AM6g=
 github.com/yalue/native_endian v1.0.1 h1:MZkkXsOTwRURxf/dM/AhbLfRUBQY+CjMdJRXp9bqd2U=
 github.com/yalue/native_endian v1.0.1/go.mod h1:cr+I2WnCwDkkPV0DvgBpGQkJV12CDWR5bAoMtT+56iE=
 golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb h1:fqpd0EBDzlHRCjiphRR5Zo/RSWWQlWv34418dnEixWk=

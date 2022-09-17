@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	vk "github.com/neurlang/wayland/vulkan"
 	"github.com/rkusa/gm/mat4"
 	"github.com/rkusa/gm/vec3"
 	vulkan "github.com/vulkan-go/vulkan"
@@ -239,7 +238,7 @@ func init_cube(vc *VkCube) {
 	var pipeline_stack = ([1]vulkan.Pipeline)(vc.pipeline)
 
 	vulkan.CreateGraphicsPipelines(vc.device,
-		vulkan.PipelineCache(*vk.NilPipelineCache),
+		nil,
 		1,
 		[]vulkan.GraphicsPipelineCreateInfo{{
 			SType:      vulkan.StructureTypeGraphicsPipelineCreateInfo,
@@ -307,7 +306,7 @@ func init_cube(vc *VkCube) {
 			Layout:             vc.pipeline_layout,
 			RenderPass:         vc.render_pass,
 			Subpass:            0,
-			BasePipelineHandle: vulkan.Pipeline(*vk.NilPipeline),
+			BasePipelineHandle: nil,
 			BasePipelineIndex:  0,
 		}},
 		nil,
