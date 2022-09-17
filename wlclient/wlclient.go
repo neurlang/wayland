@@ -235,6 +235,7 @@ type DataSourceListener interface {
 	wl.DataSourceDndFinishedHandler
 	wl.DataSourceActionHandler
 }
+
 func DataSourceAddListener(p *wl.DataSource, h DataSourceListener) {
 	p.AddTargetHandler(h)
 	p.AddSendHandler(h)
@@ -252,12 +253,6 @@ func DataSourceRemoveListener(p *wl.DataSource, h DataSourceListener) {
 	p.RemoveDndFinishedHandler(h)
 	p.RemoveActionHandler(h)
 }
-
-
-
-
-
-
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
 	c := wl.NewCompositor(r.Ctx)
