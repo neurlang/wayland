@@ -182,7 +182,14 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 		pos.X = sg.LineLens[pos.Y]
 	}
 	for (pos.X > 0) && (len(sg.GetContent(pos.X-1, pos.Y)) == 0) {
-		pos.X--
+		if sg.GetContent(pos.X, pos.Y) != "\t" {
+
+			pos.X--
+
+		} else {
+			pos.X++
+			break
+		}
 	}
 	sg.Hover = pos
 
