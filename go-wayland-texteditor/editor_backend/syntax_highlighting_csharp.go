@@ -1,6 +1,6 @@
 package main
 
-func detect_golang(file [][]string) bool {
+func detect_csharp(file [][]string) bool {
 	for _, row := range file {
 		var rowhash uint64
 		for _, cell := range row {
@@ -8,11 +8,17 @@ func detect_golang(file [][]string) bool {
 				break
 			}
 			switch cell {
-			case "p", "a", "c", "k", "g":
+			case "n", "a", "m", "p", "u", "s", "i", "c":
 				rowhash = hash(cell[0], rowhash)
-			case "e":
-				if rowhash == hashstr("packag") {
+			case "g":
+				if rowhash == hashstr("usin") {
 					return true
+				}
+			case "e":
+				if rowhash == hashstr("namespac") {
+					return true
+				} else {
+					rowhash = hash(cell[0], rowhash)
 				}
 			case " ", "\t", "\r", "\n", "":
 				rowhash = 0
@@ -24,50 +30,31 @@ func detect_golang(file [][]string) bool {
 	return false
 }
 
-func reprocess_syntax_highlighting_golang(file [][]string) (out [][5]int) {
+func reprocess_syntax_highlighting_csharp(file [][]string) (out [][5]int) {
 	var comments, strings bool
 
-	if !detect_golang(file) {
+	if !detect_csharp(file) {
 		return out
 	}
 
 	for y := range file {
-		out = append(out, reprocess_syntax_highlighting_row_golang(file[y], y, &comments, &strings)...)
+		out = append(out, reprocess_syntax_highlighting_row_csharp(file[y], y, &comments, &strings)...)
 	}
 	return out
 }
 
-func hashstr(str string) (x uint64) {
-	for i := range str {
-		x = hash(str[i], x)
-	}
-	return x
-}
-
-func hash(b byte, x uint64) uint64 {
-	x += uint64(b)
-	x ^= x << 13
-	x ^= x >> 7
-	x ^= x << 17
-	return x - 1
-}
-
-func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, strings *bool) (out [][5]int) {
+func reprocess_syntax_highlighting_row_csharp(row []string, y int, comments, strings *bool) (out [][5]int) {
 	var loaded uint64
-	var digits, dblquote, backquote, comment1, comment2, comment, escape, alpha bool
+	var digits, dblquote, snglquote, comment1, comment2, comment, escape, alpha bool
 	comment = *comments
 	if comment {
 		out = append(out, [5]int{0, y, 0, 128, 255})
-	}
-	backquote = *strings
-	if backquote {
-		out = append(out, [5]int{0, y, 0, 255, 0})
 	}
 	var length int
 	for x, a := range row {
 		switch a {
 		case "*":
-			if !dblquote && !backquote {
+			if !dblquote && !snglquote {
 				if comment {
 					comment2 = true
 					comment1 = false
@@ -78,7 +65,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				}
 			}
 		case "/":
-			if !dblquote && !backquote {
+			if !dblquote && !snglquote {
 				if comment1 {
 					out = append(out, [5]int{x - 1, y, 0, 128, 255})
 					comment = true
@@ -93,7 +80,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				}
 			}
 		case "\\":
-			if dblquote {
+			if dblquote || snglquote {
 				out = append(out, [5]int{x, y, 128, 128, 255})
 				out = append(out, [5]int{x + 2, y, 0, 255, 0})
 				escape = true
@@ -112,20 +99,21 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				}
 			}
 			continue
-		case "`":
+		case "'":
 			if !comment {
-				if backquote && !dblquote {
+				if snglquote && !escape {
 					out = append(out, [5]int{x + 1, y, 255, 255, 255})
-					backquote = false
+					snglquote = false
+					escape = false
 				} else {
 					out = append(out, [5]int{x, y, 0, 255, 0})
-					backquote = !dblquote
+					snglquote = true
+					escape = false
 				}
-				*strings = backquote
 			}
 			continue
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "x":
-			if !comment && !dblquote && !backquote {
+			if !comment && !dblquote && !snglquote {
 				loaded = hash(a[0], loaded)
 				digits = !alpha
 				length++
@@ -133,21 +121,23 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment1 = false
 			comment2 = false
 		case "a", "b", "c", "d", "e", "f", "A", "B", "C", "D", "E", "F":
-			if !comment && !dblquote && !backquote {
+			if !comment && !dblquote && !snglquote {
 				loaded = hash(a[0], loaded)
 				length++
 			}
 			comment1 = false
 			comment2 = false
-		case "j", "q", "z":
+		case "q", "z":
 			fallthrough
-		case "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z":
+		case "H", "K", "M", "P", "Q", "S", "U", "V", "W", "X", "Y", "Z":
 			comment1 = false
 			comment2 = false
 			digits = false
 			alpha = true
-		case "s", "r", "v", "i", "u", "o", "w", "n", "l", "p", "t", "h", "y", "k", "g", "m":
-			if !comment && !dblquote && !backquote {
+		case "G", "J", "R", "T", "L", "I", "N", "O":
+			fallthrough
+		case "j", "s", "r", "v", "i", "u", "o", "w", "n", "l", "p", "t", "h", "y", "k", "g", "m":
+			if !comment && !dblquote && !snglquote {
 				loaded = hash(a[0], loaded)
 				length++
 				digits = false
@@ -155,7 +145,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			}
 			comment1 = false
 			comment2 = false
-		case ".":
+		case ".", ">", "<":
 			if digits {
 				loaded = hash(a[0], loaded)
 				length++
@@ -163,8 +153,8 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			}
 			fallthrough
 		case "(", ")", "{", ":", " ", "", "\t", ";", ",", "[", "]", "+", "&", "|", "-", "}":
-			if !comment && !dblquote && !backquote {
-				out = append(out, reprocess_syntax_highlighting_end_golang(loaded, length, x, y, digits)...)
+			if !comment && !dblquote && !snglquote {
+				out = append(out, reprocess_syntax_highlighting_end_csharp(loaded, length, x, y, digits)...)
 			}
 			length = 0
 			loaded = 0
@@ -175,7 +165,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment2 = false
 			alpha = false
 		}
-		if (x&7 == 0) && (dblquote || backquote) {
+		if (x&7 == 0) && (dblquote || snglquote) {
 			out = append(out, [5]int{x, y, 0, 255, 0})
 		}
 		if (x&7 == 0) && (comment) {
@@ -183,26 +173,38 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 		}
 		escape = false
 	}
-	out = append(out, reprocess_syntax_highlighting_end_golang(loaded, length, len(row), y, digits)...)
+	out = append(out, reprocess_syntax_highlighting_end_csharp(loaded, length, len(row), y, digits)...)
 	return out
 }
 
-func reprocess_syntax_highlighting_end_golang(loaded uint64, length, x, y int, digits bool) (out [][5]int) {
+func reprocess_syntax_highlighting_end_csharp(loaded uint64, length, x, y int, digits bool) (out [][5]int) {
 	switch loaded {
-	case hashstr("func"), hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"),
-		hashstr("switch"), hashstr("len"), hashstr("append"), hashstr("range"), hashstr("else"),
-		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"), hashstr("struct"),
-		hashstr("type"), hashstr("import"), hashstr("break"), hashstr("continue"), hashstr("fallthrough"),
-		hashstr("const"), hashstr("interface"), hashstr("cap"):
+	case hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"), hashstr("const"), hashstr("protected"),
+		hashstr("switch"), hashstr("while"), hashstr("foreach"), hashstr("else"), hashstr("enum"),
+		hashstr("namespace"), hashstr("else"), hashstr("using"), hashstr("var"), hashstr("class"), hashstr("struct"),
+		hashstr("public"), hashstr("private"), hashstr("break"), hashstr("continue"), hashstr("async"),
+		hashstr("await"), hashstr("readonly"), hashstr("interface"), hashstr("override"), hashstr("object"),
+		hashstr("try"), hashstr("catch"), hashstr("finally"), hashstr("new"), hashstr("throw"), hashstr("null"),
+		hashstr("int"), hashstr("uint"), hashstr("bool"), hashstr("byte"), hashstr("string"), hashstr("short"),
+		hashstr("char"), hashstr("float"), hashstr("decimal"), hashstr("out"), hashstr("where"),
+		hashstr("void"), hashstr("in"), hashstr("static"), hashstr("this"):
 		out = append(out, [5]int{x - length, y, 255, 128, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
-	case hashstr("int"), hashstr("uint"), hashstr("int64"), hashstr("int32"), hashstr("uint64"),
-		hashstr("uint32"), hashstr("bool"), hashstr("byte"), hashstr("string"), hashstr("error"),
-		hashstr("int8"), hashstr("uint8"), hashstr("float32"), hashstr("float64"):
+	case hashstr("base"),
+		hashstr("Encoding"), hashstr("Convert"), hashstr("JsonConvert"),
+		hashstr("Task"), hashstr("Tuple"), hashstr("IEnumerable"),
+		hashstr("JRaw"), hashstr("Exception"), hashstr("List"), hashstr("Dictionary"):
 		out = append(out, [5]int{x - length, y, 0, 255, 255})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("true"), hashstr("false"), hashstr("nil"):
 		out = append(out, [5]int{x - length, y, 255, 0, 255})
+		out = append(out, [5]int{x, y, 255, 255, 255})
+	case hashstr("Guid"), hashstr("Action"):
+		out = append(out, [5]int{x - length, y, 128, 128, 255})
+		out = append(out, [5]int{x, y, 255, 255, 255})
+	case hashstr("get"), hashstr("set"),
+		hashstr("IsNullOrEmpty"), hashstr("Add"):
+		out = append(out, [5]int{x - length, y, 255, 255, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	default:
 		if digits && (loaded != hashstr("x")) {

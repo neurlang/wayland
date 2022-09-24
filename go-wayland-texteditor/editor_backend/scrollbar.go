@@ -29,7 +29,10 @@ func reprocess_scrollbar(file [][]string) (out []byte, err error) {
 
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 
-	var comments, strings bool
+	var comments, strings, is_golang, is_csharp bool
+
+	is_golang = detect_golang(file)
+	is_csharp = detect_csharp(file)
 
 	// Set color for each pixel.
 	for y := 0; y < height; y++ {
@@ -40,7 +43,12 @@ func reprocess_scrollbar(file [][]string) (out []byte, err error) {
 			continue
 		}
 
-		color_out = append(color_out, reprocess_syntax_highlighting_row_golang(file[y/2], y/2, &comments, &strings)...)
+		if is_golang {
+			color_out = append(color_out, reprocess_syntax_highlighting_row_golang(file[y/2], y/2, &comments, &strings)...)
+		}
+		if is_csharp {
+			color_out = append(color_out, reprocess_syntax_highlighting_row_csharp(file[y/2], y/2, &comments, &strings)...)
+		}
 
 		var xx = 0
 		var docolorxx = -1

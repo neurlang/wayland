@@ -331,6 +331,11 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 
 	if recolor {
 		fileColor = reprocess_syntax_highlighting_golang(file)
+		recolor = fileColor == nil
+	}
+	if recolor {
+		fileColor = reprocess_syntax_highlighting_csharp(file)
+		recolor = fileColor == nil
 	}
 
 	var min = 0
