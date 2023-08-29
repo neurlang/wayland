@@ -1,6 +1,6 @@
 package main
 
-import "github.com/rkusa/gm/mat4"
+import "github.com/neurlang/gm/mat4"
 
 func Frustum(result *mat4.Mat4, left, right, bottom, top, nearZ, farZ float32) {
 	var deltaX = right - left

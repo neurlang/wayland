@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/rkusa/gm/mat4"
-	"github.com/rkusa/gm/vec3"
+	"github.com/neurlang/gm/mat4"
+	"github.com/neurlang/gm/vec3"
 	vulkan "github.com/vulkan-go/vulkan"
 	"reflect"
 	"unsafe"
