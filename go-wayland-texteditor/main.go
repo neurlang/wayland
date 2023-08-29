@@ -385,7 +385,7 @@ func (textarea *textarea) Key(
 	textarea.mutex.Lock()
 	defer textarea.mutex.Unlock()
 
-	var entered = input.GetRune(notUnicode)
+	var entered = input.GetRune(&notUnicode, key)
 
 	if state == wl.KeyboardKeyStatePressed && entered != 0 {
 
@@ -509,8 +509,8 @@ func (textarea *textarea) Key(
 			fallthrough
 
 		default:
-			println(string(input.GetRune(notUnicode)))
-			textarea.KeyReloadNoMutex(string(input.GetRune(notUnicode)), 0, time)
+			println(string(input.GetRune(&notUnicode, key)))
+			textarea.KeyReloadNoMutex(string(input.GetRune(&notUnicode, key)), 0, time)
 		}
 
 	} else if state == wl.KeyboardKeyStatePressed {
@@ -554,7 +554,7 @@ func (textarea *textarea) Key(
 			textarea.StringGrid.Selecting = false
 		}
 
-		fmt.Println("input.GetRune(notUnicode)=", string(input.GetRune(notUnicode)),
+		fmt.Println("input.GetRune(&notUnicode, key)=", string(input.GetRune(&notUnicode, key)),
 			"input.GetUtf8()=", string(input.GetUtf8()),
 			"key=", key, "notUnicode=", notUnicode)
 	}
@@ -678,7 +678,7 @@ func (textarea *textarea) KeyNavigate(key string, notUnicode, time uint32) bool 
 
 		/*
 
-			fmt.Println("input.GetRune(notUnicode)=", string(input.GetRune(notUnicode)),
+			fmt.Println("input.GetRune(&notUnicode, key)=", string(input.GetRune(&notUnicode, key)),
 				"input.GetUtf8()=", string(input.GetUtf8()),
 				"key=", key, "notUnicode=", notUnicode)*/
 	}

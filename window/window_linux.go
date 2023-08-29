@@ -1148,8 +1148,8 @@ func (input *Input) GetModifiers() ModType {
 }
 
 // This gets the UTF32 rune from the key sym ("notUnicode")
-func (input *Input) GetRune(sym uint32) (r rune) {
-	r = rune(xkb.KeysymToUtf32(sym))
+func (input *Input) GetRune(sym *uint32, _ uint32) (r rune) {
+	r = rune(xkb.KeysymToUtf32(*sym))
 	return
 }
 
