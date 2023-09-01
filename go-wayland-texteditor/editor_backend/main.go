@@ -114,6 +114,10 @@ func handlerPaste(p *PasteRequest) *struct{} {
 	var rrow []string
 
 	for i, subarray := range temp {
+		if i > 0 {
+			p.X = 0
+			p.Y++
+		}
 		if len(subarray) == 0 && i+1 == len(temp) {
 			break
 		}
@@ -147,9 +151,6 @@ func handlerPaste(p *PasteRequest) *struct{} {
 			}
 		}
 		file[p.Y] = row
-
-		p.X = 0
-		p.Y++
 	}
 	if p.Y >= len(file) {
 		file = append(file, []string{})
