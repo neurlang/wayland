@@ -76,6 +76,12 @@ Install wayland-client and vulkan for cube:
 sudo apt-get install libwayland-dev libvulkan-dev
 ```
 
+On NVIDIA, install nvidia-egl-wayland for cube:
+
+```
+sudo apt-get install libnvidia-egl-wayland1
+```
+
 
 # Pre-Installation Windows
 
