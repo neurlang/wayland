@@ -69,6 +69,14 @@ or in Fedora:
 ```
 sudo dnf install libxkbcommon-devel
 ```
+
+Install wayland-client and vulkan for cube:
+
+```
+sudo apt-get install libwayland-dev libvulkan-dev
+```
+
+
 # Pre-Installation Windows
 
 You don't need to do anything special on Windows, simply continue using the install steps below
