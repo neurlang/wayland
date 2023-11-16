@@ -2,10 +2,9 @@ package wl
 
 import (
 	"errors"
-	"github.com/neurlang/wayland/os"
 	"net"
 
-	"fmt"
+	"github.com/neurlang/wayland/os"
 	"github.com/yalue/native_endian"
 )
 
@@ -107,8 +106,61 @@ func isNilBetter(i Proxy) bool {
 	case *DataSource:
 		v := i.(*DataSource)
 		ret = v == nil
+	case *Registry:
+		v := i.(*Registry)
+		ret = v == nil
+	case *Shm:
+		v := i.(*Shm)
+		ret = v == nil
+	case *ShmPool:
+		v := i.(*ShmPool)
+		ret = v == nil
+	case *Compositor:
+		v := i.(*Compositor)
+		ret = v == nil
+	case *Subcompositor:
+		v := i.(*Subcompositor)
+		ret = v == nil
+	case *Seat:
+		v := i.(*Seat)
+		ret = v == nil
+	case *Display:
+		v := i.(*Display)
+		ret = v == nil
+	case *Surface:
+		v := i.(*Surface)
+		ret = v == nil
+	case *Subsurface:
+		v := i.(*Subsurface)
+		ret = v == nil
+	case *Keyboard:
+		v := i.(*Keyboard)
+		ret = v == nil
+	case *Pointer:
+		v := i.(*Pointer)
+		ret = v == nil
+	case *Touch:
+		v := i.(*Touch)
+		ret = v == nil
+	case *Region:
+		v := i.(*Region)
+		ret = v == nil
+	case *Shell:
+		v := i.(*Shell)
+		ret = v == nil
+	case *ShellSurface:
+		v := i.(*ShellSurface)
+		ret = v == nil
+	case *DataDevice:
+		v := i.(*DataDevice)
+		ret = v == nil
+	case *DataOffer:
+		v := i.(*DataOffer)
+		ret = v == nil
+	case *DataDeviceManager:
+		v := i.(*DataDeviceManager)
+		ret = v == nil
 	default:
-		fmt.Printf("Please add %T to isNilBetter. Thank you.\n", i)
 		ret = false
 	}
 	return ret
