@@ -4,8 +4,7 @@ import (
 	"errors"
 	"github.com/neurlang/wayland/os"
 	"net"
-
-	"fmt"
+	"reflect"
 	"github.com/yalue/native_endian"
 )
 
@@ -85,38 +84,13 @@ func (r *Request) PutUint32(u uint32) {
 	r.data = append(r.data, buf...)
 }
 
-//func isNil(i interface{}) bool {
-//	return i == nil || reflect.ValueOf(i).IsNil()
-//}
-
-func isNilBetter(i Proxy) bool {
-	var ret bool
-	switch i.(type) {
-	case *BaseProxy:
-		v := i.(*BaseProxy)
-		ret = v == nil
-	case *Output:
-		v := i.(*Output)
-		ret = v == nil
-	case *Buffer:
-		v := i.(*Buffer)
-		ret = v == nil
-	case *Callback:
-		v := i.(*Callback)
-		ret = v == nil
-	case *DataSource:
-		v := i.(*DataSource)
-		ret = v == nil
-	default:
-		fmt.Printf("Please add %T to isNilBetter. Thank you.\n", i)
-		ret = false
-	}
-	return ret
+func isNil(this Proxy) bool {
+	return this == nil || reflect.ValueOf(this).IsNil()
 }
 
 // PutProxy (Request PutProxy) writes a proxy argument to the compositor
 func (r *Request) PutProxy(p Proxy) {
-	if p == nil || isNilBetter(p) {
+	if p == nil || isNil(p) {
 		r.PutUint32(0)
 		return
 	}
