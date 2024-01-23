@@ -1,6 +1,6 @@
 package window
 
-import "github.com/tadvi/winc"
+import "github.com/neurlang/winc"
 
 type Display struct {
 	mustResize []*mustResize
