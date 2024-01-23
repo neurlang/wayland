@@ -65,6 +65,5 @@ server during runtime).
 # xdg
 
 Stable xdg protocol. Depends on wl.
-
 */
 package wayland

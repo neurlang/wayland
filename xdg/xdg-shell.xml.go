@@ -217,25 +217,25 @@ func NewWmBase(ctx *Context) *WmBase {
 	return ret
 }
 
-// Destroydestroy xdg_wm_base
+// Destroy destroy xdg_wm_base
 func (p *WmBase) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// CreatePositionercreate a positioner object
+// CreatePositioner create a positioner object
 func (p *WmBase) CreatePositioner() (*Positioner, error) {
 	retId := NewPositioner(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
 
-// GetSurfacecreate a shell surface from a surface
+// GetSurface create a shell surface from a surface
 func (p *WmBase) GetSurface(Surface *WlSurface) (*Surface, error) {
 	retId := NewSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId, Surface)
 }
 
-// Pongrespond to a ping event
+// Pong respond to a ping event
 func (p *WmBase) Pong(Serial uint32) error {
 
 	return p.Context().SendRequest(p, 3, Serial)
@@ -303,49 +303,49 @@ func NewPositioner(ctx *Context) *Positioner {
 	return ret
 }
 
-// Destroydestroy the xdg_positioner object
+// Destroy destroy the xdg_positioner object
 func (p *Positioner) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// SetSizeset the size of the to-be positioned rectangle
+// SetSize set the size of the to-be positioned rectangle
 func (p *Positioner) SetSize(Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 1, Width, Height)
 }
 
-// SetAnchorRectset the anchor rectangle within the parent surface
+// SetAnchorRect set the anchor rectangle within the parent surface
 func (p *Positioner) SetAnchorRect(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
 }
 
-// SetAnchorset anchor rectangle anchor
+// SetAnchor set anchor rectangle anchor
 func (p *Positioner) SetAnchor(Anchor uint32) error {
 
 	return p.Context().SendRequest(p, 3, Anchor)
 }
 
-// SetGravityset child surface gravity
+// SetGravity set child surface gravity
 func (p *Positioner) SetGravity(Gravity uint32) error {
 
 	return p.Context().SendRequest(p, 4, Gravity)
 }
 
-// SetConstraintAdjustmentset the adjustment to be done when constrained
+// SetConstraintAdjustment set the adjustment to be done when constrained
 func (p *Positioner) SetConstraintAdjustment(ConstraintAdjustment uint32) error {
 
 	return p.Context().SendRequest(p, 5, ConstraintAdjustment)
 }
 
-// SetOffsetset surface position offset
+// SetOffset set surface position offset
 func (p *Positioner) SetOffset(X int32, Y int32) error {
 
 	return p.Context().SendRequest(p, 6, X, Y)
 }
 
-// SetReactivecontinuously reconstrain the surface
+// SetReactive continuously reconstrain the surface
 func (p *Positioner) SetReactive() error {
 
 	return p.Context().SendRequest(p, 7)
@@ -357,7 +357,7 @@ func (p *Positioner) SetParentSize(ParentWidth int32, ParentHeight int32) error 
 	return p.Context().SendRequest(p, 8, ParentWidth, ParentHeight)
 }
 
-// SetParentConfigureset parent configure this is a response to
+// SetParentConfigure set parent configure this is a response to
 func (p *Positioner) SetParentConfigure(Serial uint32) error {
 
 	return p.Context().SendRequest(p, 9, Serial)
@@ -384,31 +384,31 @@ func NewSurface(ctx *Context) *Surface {
 	return ret
 }
 
-// Destroydestroy the xdg_surface
+// Destroy destroy the xdg_surface
 func (p *Surface) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// GetToplevelassign the xdg_toplevel surface role
+// GetToplevel assign the xdg_toplevel surface role
 func (p *Surface) GetToplevel() (*Toplevel, error) {
 	retId := NewToplevel(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
 
-// GetPopupassign the xdg_popup surface role
+// GetPopup assign the xdg_popup surface role
 func (p *Surface) GetPopup(Parent *Surface, Positioner *Positioner) (*Popup, error) {
 	retId := NewPopup(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId, Parent, Positioner)
 }
 
-// SetWindowGeometryset the new window geometry
+// SetWindowGeometry set the new window geometry
 func (p *Surface) SetWindowGeometry(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 3, X, Y, Width, Height)
 }
 
-// AckConfigureack a configure event
+// AckConfigure ack a configure event
 func (p *Surface) AckConfigure(Serial uint32) error {
 
 	return p.Context().SendRequest(p, 4, Serial)
@@ -481,85 +481,85 @@ func NewToplevel(ctx *Context) *Toplevel {
 	return ret
 }
 
-// Destroydestroy the xdg_toplevel
+// Destroy destroy the xdg_toplevel
 func (p *Toplevel) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// SetParentset the parent of this surface
+// SetParent set the parent of this surface
 func (p *Toplevel) SetParent(Parent *Toplevel) error {
 
 	return p.Context().SendRequest(p, 1, Parent)
 }
 
-// SetTitleset surface title
+// SetTitle set surface title
 func (p *Toplevel) SetTitle(Title string) error {
 
 	return p.Context().SendRequest(p, 2, Title)
 }
 
-// SetAppIdset application ID
+// SetAppId set application ID
 func (p *Toplevel) SetAppId(AppId string) error {
 
 	return p.Context().SendRequest(p, 3, AppId)
 }
 
-// ShowWindowMenushow the window menu
+// ShowWindowMenu show the window menu
 func (p *Toplevel) ShowWindowMenu(Seat *Seat, Serial uint32, X int32, Y int32) error {
 
 	return p.Context().SendRequest(p, 4, Seat, Serial, X, Y)
 }
 
-// Movestart an interactive move
+// Move start an interactive move
 func (p *Toplevel) Move(Seat *Seat, Serial uint32) error {
 
 	return p.Context().SendRequest(p, 5, Seat, Serial)
 }
 
-// Resizestart an interactive resize
+// Resize start an interactive resize
 func (p *Toplevel) Resize(Seat *Seat, Serial uint32, Edges uint32) error {
 
 	return p.Context().SendRequest(p, 6, Seat, Serial, Edges)
 }
 
-// SetMaxSizeset the maximum size
+// SetMaxSize set the maximum size
 func (p *Toplevel) SetMaxSize(Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 7, Width, Height)
 }
 
-// SetMinSizeset the minimum size
+// SetMinSize set the minimum size
 func (p *Toplevel) SetMinSize(Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 8, Width, Height)
 }
 
-// SetMaximizedmaximize the window
+// SetMaximized maximize the window
 func (p *Toplevel) SetMaximized() error {
 
 	return p.Context().SendRequest(p, 9)
 }
 
-// UnsetMaximizedunmaximize the window
+// UnsetMaximized unmaximize the window
 func (p *Toplevel) UnsetMaximized() error {
 
 	return p.Context().SendRequest(p, 10)
 }
 
-// SetFullscreenset the window as fullscreen on an output
+// SetFullscreen set the window as fullscreen on an output
 func (p *Toplevel) SetFullscreen(Output *Output) error {
 
 	return p.Context().SendRequest(p, 11, Output)
 }
 
-// UnsetFullscreenunset the window as fullscreen
+// UnsetFullscreen unset the window as fullscreen
 func (p *Toplevel) UnsetFullscreen() error {
 
 	return p.Context().SendRequest(p, 12)
 }
 
-// SetMinimizedset the window as minimized
+// SetMinimized set the window as minimized
 func (p *Toplevel) SetMinimized() error {
 
 	return p.Context().SendRequest(p, 13)
@@ -766,19 +766,19 @@ func NewPopup(ctx *Context) *Popup {
 	return ret
 }
 
-// Destroyremove xdg_popup interface
+// Destroy remove xdg_popup interface
 func (p *Popup) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// Grabmake the popup take an explicit grab
+// Grab make the popup take an explicit grab
 func (p *Popup) Grab(Seat *Seat, Serial uint32) error {
 
 	return p.Context().SendRequest(p, 1, Seat, Serial)
 }
 
-// Repositionrecalculate the popup's location
+// Reposition recalculate the popup's location
 func (p *Popup) Reposition(Positioner *Positioner, Token uint32) error {
 
 	return p.Context().SendRequest(p, 2, Positioner, Token)

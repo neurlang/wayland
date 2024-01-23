@@ -97,7 +97,6 @@ func NewZxdgDecorationManagerV1(ctx *client.Context) *ZxdgDecorationManagerV1 {
 //
 // Destroy the decoration manager. This doesn't destroy objects created
 // with the manager.
-//
 func (i *ZxdgDecorationManagerV1) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -112,7 +111,6 @@ func (i *ZxdgDecorationManagerV1) Destroy() error {
 // client to attach or manipulate a buffer prior to the first
 // xdg_toplevel_decoration.configure event must also be treated as
 // errors.
-//
 func (i *ZxdgDecorationManagerV1) GetToplevelDecoration(toplevel *xdgshell.Toplevel) (*ZxdgToplevelDecorationV1, error) {
 	id := NewZxdgToplevelDecorationV1(i.Context())
 	err := i.Context().SendRequest(i, 1, id, toplevel)
@@ -151,7 +149,6 @@ func NewZxdgToplevelDecorationV1(ctx *client.Context) *ZxdgToplevelDecorationV1 
 //
 // Switch back to a mode without any server-side decorations at the next
 // commit.
-//
 func (i *ZxdgToplevelDecorationV1) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -190,7 +187,6 @@ func (i *ZxdgToplevelDecorationV1) SetMode(mode uint32) error {
 // that the client doesn't prefer a particular decoration mode.
 //
 // This request has the same semantics as set_mode.
-//
 func (i *ZxdgToplevelDecorationV1) UnsetMode() error {
 	err := i.Context().SendRequest(i, 2)
 	return err

@@ -265,7 +265,6 @@ func ShmAddListener(wl_callback *Shm, formater ShmListener) {
 	C._wl_shm_add_listener((*C.struct_wl_shm)(unsafe.Pointer(wl_callback)), unsafe.Pointer(i))
 }
 
-//
 type SeatListener interface {
 	SeatCapabilities(wl_seat *Seat, capabilities uint32)
 	SeatName(wl_seat *Seat, name string)
@@ -304,7 +303,6 @@ func SeatAddListener(wl_seat *Seat, doner SeatListener) {
 	C._wl_seat_add_listener((*C.struct_wl_seat)(unsafe.Pointer(wl_seat)), unsafe.Pointer(i))
 }
 
-//
 type OutputListener interface {
 	OutputGeometry(wl_output *Output, x int, y int, physical_width int, physical_height int, subpixel int, make string, model string, transform int)
 	OutputDone(wl_output *Output)
@@ -369,7 +367,6 @@ func OutputAddListener(wl_output *Output, doner OutputListener) {
 	C._wl_output_add_listener((*C.struct_wl_output)(unsafe.Pointer(wl_output)), unsafe.Pointer(i))
 }
 
-//
 type PointerListener interface {
 	PointerEnter(wl_pointer *Pointer, serial uint32, wl_surface *Surface, surface_x Fixed, surface_y Fixed)
 	PointerLeave(wl_pointer *Pointer, serial uint32, wl_surface *Surface)

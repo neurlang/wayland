@@ -269,14 +269,11 @@ func NewZwpInputMethodContextV1(ctx *wl.Context) *ZwpInputMethodContextV1 {
 }
 
 // Destroy will .
-//
-//
 func (p *ZwpInputMethodContextV1) Destroy() error {
 	return p.Context().SendRequest(p, 0)
 }
 
 // CommitString will commit string.
-//
 //
 // Send the commit string text for insertion to the application.
 //
@@ -287,13 +284,11 @@ func (p *ZwpInputMethodContextV1) Destroy() error {
 // cursor_position).
 //
 // Any previously set composing text will be removed.
-//
 func (p *ZwpInputMethodContextV1) CommitString(serial uint32, text string) error {
 	return p.Context().SendRequest(p, 1, serial, text)
 }
 
 // PreeditString will pre-edit string.
-//
 //
 // Send the pre-edit string text to the application text input.
 //
@@ -302,13 +297,11 @@ func (p *ZwpInputMethodContextV1) CommitString(serial uint32, text string) error
 //
 // Previously sent preedit_style and preedit_cursor requests are also
 // processed by the text_input.
-//
 func (p *ZwpInputMethodContextV1) PreeditString(serial uint32, text string, commit string) error {
 	return p.Context().SendRequest(p, 2, serial, text, commit)
 }
 
 // PreeditStyling will pre-edit styling.
-//
 //
 // Set the styling information on composing text. The style is applied for
 // length in bytes from index relative to the beginning of
@@ -316,13 +309,11 @@ func (p *ZwpInputMethodContextV1) PreeditString(serial uint32, text string, comm
 // be applied to a composing text.
 //
 // This request should be sent before sending a preedit_string request.
-//
 func (p *ZwpInputMethodContextV1) PreeditStyling(index uint32, length uint32, style uint32) error {
 	return p.Context().SendRequest(p, 3, index, length, style)
 }
 
 // PreeditCursor will pre-edit cursor.
-//
 //
 // Set the cursor position inside the composing text (as byte offset)
 // relative to the start of the composing text.
@@ -330,25 +321,21 @@ func (p *ZwpInputMethodContextV1) PreeditStyling(index uint32, length uint32, st
 // When index is negative no cursor should be displayed.
 //
 // This request should be sent before sending a preedit_string request.
-//
 func (p *ZwpInputMethodContextV1) PreeditCursor(index int32) error {
 	return p.Context().SendRequest(p, 4, index)
 }
 
 // DeleteSurroundingText will delete text.
 //
-//
 // Remove the surrounding text.
 //
 // This request will be handled on the text_input side directly following
 // a commit_string request.
-//
 func (p *ZwpInputMethodContextV1) DeleteSurroundingText(index int32, length uint32) error {
 	return p.Context().SendRequest(p, 5, index, length)
 }
 
 // CursorPosition will set cursor to a new position.
-//
 //
 // Set the cursor and anchor to a new position. Index is the new cursor
 // position in bytes (when >= 0 this is relative to the end of the inserted text,
@@ -360,38 +347,31 @@ func (p *ZwpInputMethodContextV1) DeleteSurroundingText(index int32, length uint
 //
 // This request will be handled on the text_input side directly following
 // a commit_string request.
-//
 func (p *ZwpInputMethodContextV1) CursorPosition(index int32, anchor int32) error {
 	return p.Context().SendRequest(p, 6, index, anchor)
 }
 
 // ModifiersMap will .
-//
-//
 func (p *ZwpInputMethodContextV1) ModifiersMap(map_ []int32) error {
 	return p.Context().SendRequest(p, 7, map_)
 }
 
 // Keysym will keysym.
 //
-//
 // Notify when a key event was sent. Key events should not be used for
 // normal text input operations, which should be done with commit_string,
 // delete_surrounding_text, etc. The key event follows the wl_keyboard key
 // event convention. Sym is an XKB keysym, state is a wl_keyboard key_state.
-//
 func (p *ZwpInputMethodContextV1) Keysym(serial uint32, time uint32, sym uint32, state uint32, modifiers uint32) error {
 	return p.Context().SendRequest(p, 8, serial, time, sym, state, modifiers)
 }
 
 // GrabKeyboard will grab hardware keyboard.
 //
-//
 // Allow an input method to receive hardware keyboard input and process
 // key events to generate text events (with pre-edit) over the wire. This
 // allows input methods which compose multiple key events for inputting
 // text like it is done for CJK languages.
-//
 func (p *ZwpInputMethodContextV1) GrabKeyboard() (*wl.Keyboard, error) {
 	ret := wl.NewKeyboard(p.Context())
 	return ret, p.Context().SendRequest(p, 9, wl.Proxy(ret))
@@ -399,40 +379,32 @@ func (p *ZwpInputMethodContextV1) GrabKeyboard() (*wl.Keyboard, error) {
 
 // Key will forward key event.
 //
-//
 // Forward a wl_keyboard::key event to the client that was not processed
 // by the input method itself. Should be used when filtering key events
 // with grab_keyboard.  The arguments should be the ones from the
 // wl_keyboard::key event.
 //
 // For generating custom key events use the keysym request instead.
-//
 func (p *ZwpInputMethodContextV1) Key(serial uint32, time uint32, key uint32, state uint32) error {
 	return p.Context().SendRequest(p, 10, serial, time, key, state)
 }
 
 // Modifiers will forward modifiers event.
 //
-//
 // Forward a wl_keyboard::modifiers event to the client that was not
 // processed by the input method itself.  Should be used when filtering
 // key events with grab_keyboard. The arguments should be the ones
 // from the wl_keyboard::modifiers event.
-//
 func (p *ZwpInputMethodContextV1) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) error {
 	return p.Context().SendRequest(p, 11, serial, modsDepressed, modsLatched, modsLocked, group)
 }
 
 // Language will .
-//
-//
 func (p *ZwpInputMethodContextV1) Language(serial uint32, language string) error {
 	return p.Context().SendRequest(p, 12, serial, language)
 }
 
 // TextDirection will .
-//
-//
 func (p *ZwpInputMethodContextV1) TextDirection(serial uint32, direction uint32) error {
 	return p.Context().SendRequest(p, 13, serial, direction)
 }
@@ -542,8 +514,6 @@ func NewZwpInputPanelV1(ctx *wl.Context) *ZwpInputPanelV1 {
 }
 
 // GetInputPanelSurface will .
-//
-//
 func (p *ZwpInputPanelV1) GetInputPanelSurface(surface *wl.Surface) (*ZwpInputPanelSurfaceV1, error) {
 	ret := NewZwpInputPanelSurfaceV1(p.Context())
 	return ret, p.Context().SendRequest(p, 0, wl.Proxy(ret), surface)
@@ -561,23 +531,19 @@ func NewZwpInputPanelSurfaceV1(ctx *wl.Context) *ZwpInputPanelSurfaceV1 {
 
 // SetToplevel will set the surface type as a keyboard.
 //
-//
 // Set the input_panel_surface type to keyboard.
 //
 // A keyboard surface is only shown when a text input is active.
-//
 func (p *ZwpInputPanelSurfaceV1) SetToplevel(output *wl.Output, position uint32) error {
 	return p.Context().SendRequest(p, 0, output, position)
 }
 
 // SetOverlayPanel will set the surface type as an overlay panel.
 //
-//
 // Set the input_panel_surface to be an overlay panel.
 //
 // This is shown near the input cursor above the application window when
 // a text input is active.
-//
 func (p *ZwpInputPanelSurfaceV1) SetOverlayPanel() error {
 	return p.Context().SendRequest(p, 1)
 }

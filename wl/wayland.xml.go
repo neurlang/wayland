@@ -623,13 +623,13 @@ func NewDisplay(ctx *Context) *Display {
 	return ret
 }
 
-// Syncasynchronous roundtrip
+// Sync asynchronous roundtrip
 func (p *Display) Sync() (*Callback, error) {
 	retCallback := NewCallback(p.Context())
 	return retCallback, p.Context().SendRequest(p, 0, retCallback)
 }
 
-// GetRegistryget global registry object
+// GetRegistry get global registry object
 func (p *Display) GetRegistry() (*Registry, error) {
 	retRegistry := NewRegistry(p.Context())
 	return retRegistry, p.Context().SendRequest(p, 1, retRegistry)
@@ -749,7 +749,7 @@ func NewRegistry(ctx *Context) *Registry {
 	return ret
 }
 
-// Bindbind an object to the display
+// Bind bind an object to the display
 func (p *Registry) Bind(Name uint32, Iface string, Version uint32, Id Proxy) error {
 
 	return p.Context().SendRequest(p, 0, Name, Iface, Version, Id)
@@ -932,13 +932,13 @@ func NewCompositor(ctx *Context) *Compositor {
 	return ret
 }
 
-// CreateSurfacecreate new surface
+// CreateSurface create new surface
 func (p *Compositor) CreateSurface() (*Surface, error) {
 	retId := NewSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
 
-// CreateRegioncreate new region
+// CreateRegion create new region
 func (p *Compositor) CreateRegion() (*Region, error) {
 	retId := NewRegion(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
@@ -963,19 +963,19 @@ func NewShmPool(ctx *Context) *ShmPool {
 	return ret
 }
 
-// CreateBuffercreate a buffer from the pool
+// CreateBuffer create a buffer from the pool
 func (p *ShmPool) CreateBuffer(Offset int32, Width int32, Height int32, Stride int32, Format uint32) (*Buffer, error) {
 	retId := NewBuffer(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Offset, Width, Height, Stride, Format)
 }
 
-// Destroydestroy the pool
+// Destroy destroy the pool
 func (p *ShmPool) Destroy() error {
 
 	return p.Context().SendRequest(p, 1)
 }
 
-// Resizechange the size of the pool mapping
+// Resize change the size of the pool mapping
 func (p *ShmPool) Resize(Size int32) error {
 
 	return p.Context().SendRequest(p, 2, Size)
@@ -1002,13 +1002,13 @@ func NewShm(ctx *Context) *Shm {
 	return ret
 }
 
-// CreatePoolcreate a shm pool
+// CreatePool create a shm pool
 func (p *Shm) CreatePool(Fd uintptr, Size int32) (*ShmPool, error) {
 	retId := NewShmPool(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Fd, Size)
 }
 
-// Releaserelease the shm object
+// Release release the shm object
 func (p *Shm) Release() error {
 
 	return p.Context().SendRequest(p, 1)
@@ -1078,7 +1078,7 @@ func NewBuffer(ctx *Context) *Buffer {
 	return ret
 }
 
-// Destroydestroy a buffer
+// Destroy destroy a buffer
 func (p *Buffer) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
@@ -1149,31 +1149,31 @@ func NewDataOffer(ctx *Context) *DataOffer {
 	return ret
 }
 
-// Acceptaccept one of the offered mime types
+// Accept accept one of the offered mime types
 func (p *DataOffer) Accept(Serial uint32, MimeType string) error {
 
 	return p.Context().SendRequest(p, 0, Serial, MimeType)
 }
 
-// Receiverequest that the data is transferred
+// Receive request that the data is transferred
 func (p *DataOffer) Receive(MimeType string, Fd uintptr) error {
 
 	return p.Context().SendRequest(p, 1, MimeType, Fd)
 }
 
-// Destroydestroy data offer
+// Destroy destroy data offer
 func (p *DataOffer) Destroy() error {
 
 	return p.Context().SendRequest(p, 2)
 }
 
-// Finishthe offer will no longer be used
+// Finish the offer will no longer be used
 func (p *DataOffer) Finish() error {
 
 	return p.Context().SendRequest(p, 3)
 }
 
-// SetActionsset the available/preferred drag-and-drop actions
+// SetActions set the available/preferred drag-and-drop actions
 func (p *DataOffer) SetActions(DndActions uint32, PreferredAction uint32) error {
 
 	return p.Context().SendRequest(p, 4, DndActions, PreferredAction)
@@ -1334,19 +1334,19 @@ func NewDataSource(ctx *Context) *DataSource {
 	return ret
 }
 
-// Offeradd an offered mime type
+// Offer add an offered mime type
 func (p *DataSource) Offer(MimeType string) error {
 
 	return p.Context().SendRequest(p, 0, MimeType)
 }
 
-// Destroydestroy the data source
+// Destroy destroy the data source
 func (p *DataSource) Destroy() error {
 
 	return p.Context().SendRequest(p, 1)
 }
 
-// SetActionsset the available drag-and-drop actions
+// SetActions set the available drag-and-drop actions
 func (p *DataSource) SetActions(DndActions uint32) error {
 
 	return p.Context().SendRequest(p, 2, DndActions)
@@ -1632,19 +1632,19 @@ func NewDataDevice(ctx *Context) *DataDevice {
 	return ret
 }
 
-// StartDragstart drag-and-drop operation
+// StartDrag start drag-and-drop operation
 func (p *DataDevice) StartDrag(Source *DataSource, Origin *Surface, Icon *Surface, Serial uint32) error {
 
 	return p.Context().SendRequest(p, 0, Source, Origin, Icon, Serial)
 }
 
-// SetSelectioncopy data to the selection
+// SetSelection copy data to the selection
 func (p *DataDevice) SetSelection(Source *DataSource, Serial uint32) error {
 
 	return p.Context().SendRequest(p, 1, Source, Serial)
 }
 
-// Releasedestroy data device
+// Release destroy data device
 func (p *DataDevice) Release() error {
 
 	return p.Context().SendRequest(p, 2)
@@ -1939,13 +1939,13 @@ func NewDataDeviceManager(ctx *Context) *DataDeviceManager {
 	return ret
 }
 
-// CreateDataSourcecreate a new data source
+// CreateDataSource create a new data source
 func (p *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 	retId := NewDataSource(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
 
-// GetDataDevicecreate a new data device
+// GetDataDevice create a new data device
 func (p *DataDeviceManager) GetDataDevice(Seat *Seat) (*DataDevice, error) {
 	retId := NewDataDevice(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Seat)
@@ -1970,7 +1970,7 @@ func NewShell(ctx *Context) *Shell {
 	return ret
 }
 
-// GetShellSurfacecreate a shell surface from a surface
+// GetShellSurface create a shell surface from a surface
 func (p *Shell) GetShellSurface(Surface *Surface) (*ShellSurface, error) {
 	retId := NewShellSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Surface)
@@ -1999,61 +1999,61 @@ func NewShellSurface(ctx *Context) *ShellSurface {
 	return ret
 }
 
-// Pongrespond to a ping event
+// Pong respond to a ping event
 func (p *ShellSurface) Pong(Serial uint32) error {
 
 	return p.Context().SendRequest(p, 0, Serial)
 }
 
-// Movestart an interactive move
+// Move start an interactive move
 func (p *ShellSurface) Move(Seat *Seat, Serial uint32) error {
 
 	return p.Context().SendRequest(p, 1, Seat, Serial)
 }
 
-// Resizestart an interactive resize
+// Resize start an interactive resize
 func (p *ShellSurface) Resize(Seat *Seat, Serial uint32, Edges uint32) error {
 
 	return p.Context().SendRequest(p, 2, Seat, Serial, Edges)
 }
 
-// SetToplevelmake the surface a toplevel surface
+// SetToplevel make the surface a toplevel surface
 func (p *ShellSurface) SetToplevel() error {
 
 	return p.Context().SendRequest(p, 3)
 }
 
-// SetTransientmake the surface a transient surface
+// SetTransient make the surface a transient surface
 func (p *ShellSurface) SetTransient(Parent *Surface, X int32, Y int32, Flags uint32) error {
 
 	return p.Context().SendRequest(p, 4, Parent, X, Y, Flags)
 }
 
-// SetFullscreenmake the surface a fullscreen surface
+// SetFullscreen make the surface a fullscreen surface
 func (p *ShellSurface) SetFullscreen(Method uint32, Framerate uint32, Output *Output) error {
 
 	return p.Context().SendRequest(p, 5, Method, Framerate, Output)
 }
 
-// SetPopupmake the surface a popup surface
+// SetPopup make the surface a popup surface
 func (p *ShellSurface) SetPopup(Seat *Seat, Serial uint32, Parent *Surface, X int32, Y int32, Flags uint32) error {
 
 	return p.Context().SendRequest(p, 6, Seat, Serial, Parent, X, Y, Flags)
 }
 
-// SetMaximizedmake the surface a maximized surface
+// SetMaximized make the surface a maximized surface
 func (p *ShellSurface) SetMaximized(Output *Output) error {
 
 	return p.Context().SendRequest(p, 7, Output)
 }
 
-// SetTitleset surface title
+// SetTitle set surface title
 func (p *ShellSurface) SetTitle(Title string) error {
 
 	return p.Context().SendRequest(p, 8, Title)
 }
 
-// SetClassset surface class
+// SetClass set surface class
 func (p *ShellSurface) SetClass(Class string) error {
 
 	return p.Context().SendRequest(p, 9, Class)
@@ -2215,67 +2215,67 @@ func NewSurface(ctx *Context) *Surface {
 	return ret
 }
 
-// Destroydelete surface
+// Destroy delete surface
 func (p *Surface) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// Attachset the surface contents
+// Attach set the surface contents
 func (p *Surface) Attach(Buffer *Buffer, X int32, Y int32) error {
 
 	return p.Context().SendRequest(p, 1, Buffer, X, Y)
 }
 
-// Damagemark part of the surface damaged
+// Damage mark part of the surface damaged
 func (p *Surface) Damage(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
 }
 
-// Framerequest a frame throttling hint
+// Frame request a frame throttling hint
 func (p *Surface) Frame() (*Callback, error) {
 	retCallback := NewCallback(p.Context())
 	return retCallback, p.Context().SendRequest(p, 3, retCallback)
 }
 
-// SetOpaqueRegionset opaque region
+// SetOpaqueRegion set opaque region
 func (p *Surface) SetOpaqueRegion(Region *Region) error {
 
 	return p.Context().SendRequest(p, 4, Region)
 }
 
-// SetInputRegionset input region
+// SetInputRegion set input region
 func (p *Surface) SetInputRegion(Region *Region) error {
 
 	return p.Context().SendRequest(p, 5, Region)
 }
 
-// Commitcommit pending surface state
+// Commit commit pending surface state
 func (p *Surface) Commit() error {
 
 	return p.Context().SendRequest(p, 6)
 }
 
-// SetBufferTransformsets the buffer transformation
+// SetBufferTransform sets the buffer transformation
 func (p *Surface) SetBufferTransform(Transform int32) error {
 
 	return p.Context().SendRequest(p, 7, Transform)
 }
 
-// SetBufferScalesets the buffer scaling factor
+// SetBufferScale sets the buffer scaling factor
 func (p *Surface) SetBufferScale(Scale int32) error {
 
 	return p.Context().SendRequest(p, 8, Scale)
 }
 
-// DamageBuffermark part of the surface damaged using buffer coordinates
+// DamageBuffer mark part of the surface damaged using buffer coordinates
 func (p *Surface) DamageBuffer(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 9, X, Y, Width, Height)
 }
 
-// Offsetset the surface contents offset
+// Offset set the surface contents offset
 func (p *Surface) Offset(X int32, Y int32) error {
 
 	return p.Context().SendRequest(p, 10, X, Y)
@@ -2475,25 +2475,25 @@ func NewSeat(ctx *Context) *Seat {
 	return ret
 }
 
-// GetPointerreturn pointer object
+// GetPointer return pointer object
 func (p *Seat) GetPointer() (*Pointer, error) {
 	retId := NewPointer(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
 
-// GetKeyboardreturn keyboard object
+// GetKeyboard return keyboard object
 func (p *Seat) GetKeyboard() (*Keyboard, error) {
 	retId := NewKeyboard(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
 
-// GetTouchreturn touch object
+// GetTouch return touch object
 func (p *Seat) GetTouch() (*Touch, error) {
 	retId := NewTouch(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId)
 }
 
-// Releaserelease the seat object
+// Release release the seat object
 func (p *Seat) Release() error {
 
 	return p.Context().SendRequest(p, 3)
@@ -2616,13 +2616,13 @@ func NewPointer(ctx *Context) *Pointer {
 	return ret
 }
 
-// SetCursorset the pointer surface
+// SetCursor set the pointer surface
 func (p *Pointer) SetCursor(Serial uint32, Surface *Surface, HotspotX int32, HotspotY int32) error {
 
 	return p.Context().SendRequest(p, 0, Serial, Surface, HotspotX, HotspotY)
 }
 
-// Releaserelease the pointer object
+// Release release the pointer object
 func (p *Pointer) Release() error {
 
 	return p.Context().SendRequest(p, 1)
@@ -3173,7 +3173,7 @@ func NewKeyboard(ctx *Context) *Keyboard {
 	return ret
 }
 
-// Releaserelease the keyboard object
+// Release release the keyboard object
 func (p *Keyboard) Release() error {
 
 	return p.Context().SendRequest(p, 0)
@@ -3505,7 +3505,7 @@ func NewTouch(ctx *Context) *Touch {
 	return ret
 }
 
-// Releaserelease the touch object
+// Release release the touch object
 func (p *Touch) Release() error {
 
 	return p.Context().SendRequest(p, 0)
@@ -3871,7 +3871,7 @@ func NewOutput(ctx *Context) *Output {
 	return ret
 }
 
-// Releaserelease the output object
+// Release release the output object
 func (p *Output) Release() error {
 
 	return p.Context().SendRequest(p, 0)
@@ -4181,19 +4181,19 @@ func NewRegion(ctx *Context) *Region {
 	return ret
 }
 
-// Destroydestroy region
+// Destroy destroy region
 func (p *Region) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// Addadd rectangle to region
+// Add add rectangle to region
 func (p *Region) Add(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 1, X, Y, Width, Height)
 }
 
-// Subtractsubtract rectangle from region
+// Subtract subtract rectangle from region
 func (p *Region) Subtract(X int32, Y int32, Width int32, Height int32) error {
 
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
@@ -4218,13 +4218,13 @@ func NewSubcompositor(ctx *Context) *Subcompositor {
 	return ret
 }
 
-// Destroyunbind from the subcompositor interface
+// Destroy unbind from the subcompositor interface
 func (p *Subcompositor) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// GetSubsurfacegive a surface the role sub-surface
+// GetSubsurface give a surface the role sub-surface
 func (p *Subcompositor) GetSubsurface(Surface *Surface, Parent *Surface) (*Subsurface, error) {
 	retId := NewSubsurface(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Surface, Parent)
@@ -4249,37 +4249,37 @@ func NewSubsurface(ctx *Context) *Subsurface {
 	return ret
 }
 
-// Destroyremove sub-surface interface
+// Destroy remove sub-surface interface
 func (p *Subsurface) Destroy() error {
 
 	return p.Context().SendRequest(p, 0)
 }
 
-// SetPositionreposition the sub-surface
+// SetPosition reposition the sub-surface
 func (p *Subsurface) SetPosition(X int32, Y int32) error {
 
 	return p.Context().SendRequest(p, 1, X, Y)
 }
 
-// PlaceAboverestack the sub-surface
+// PlaceAbove restack the sub-surface
 func (p *Subsurface) PlaceAbove(Sibling *Surface) error {
 
 	return p.Context().SendRequest(p, 2, Sibling)
 }
 
-// PlaceBelowrestack the sub-surface
+// PlaceBelow restack the sub-surface
 func (p *Subsurface) PlaceBelow(Sibling *Surface) error {
 
 	return p.Context().SendRequest(p, 3, Sibling)
 }
 
-// SetSyncset sub-surface to synchronized mode
+// SetSync set sub-surface to synchronized mode
 func (p *Subsurface) SetSync() error {
 
 	return p.Context().SendRequest(p, 4)
 }
 
-// SetDesyncset sub-surface to desynchronized mode
+// SetDesync set sub-surface to desynchronized mode
 func (p *Subsurface) SetDesync() error {
 
 	return p.Context().SendRequest(p, 5)

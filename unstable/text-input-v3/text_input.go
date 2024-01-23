@@ -115,7 +115,6 @@ func NewZwpTextInputV3(ctx *client.Context) *ZwpTextInputV3 {
 //
 // Destroy the wp_text_input object. Also disables all surfaces enabled
 // through this wp_text_input object.
-//
 func (i *ZwpTextInputV3) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -152,7 +151,6 @@ func (i *ZwpTextInputV3) Destroy() error {
 //
 // The changes must be applied by the compositor after issuing a
 // zwp_text_input_v3.commit request.
-//
 func (i *ZwpTextInputV3) Enable() error {
 	err := i.Context().SendRequest(i, 1)
 	return err
@@ -165,7 +163,6 @@ func (i *ZwpTextInputV3) Enable() error {
 //
 // State set with this request is double-buffered. It will get applied on
 // the next zwp_text_input_v3.commit request.
-//
 func (i *ZwpTextInputV3) Disable() error {
 	err := i.Context().SendRequest(i, 2)
 	return err
@@ -204,7 +201,6 @@ func (i *ZwpTextInputV3) Disable() error {
 // The initial state for affected fields is empty, meaning that the text
 // input does not support sending surrounding text. If the empty values
 // get applied, subsequent attempts to change them may have no effect.
-//
 func (i *ZwpTextInputV3) SetSurroundingText(text string, cursor, anchor int32) error {
 	err := i.Context().SendRequest(i, 3, text, cursor, anchor)
 	return err
@@ -226,7 +222,6 @@ func (i *ZwpTextInputV3) SetSurroundingText(text string, cursor, anchor int32) e
 // and reset to initial at the next zwp_text_input_v3.commit request.
 //
 // The initial value of cause is input_method.
-//
 func (i *ZwpTextInputV3) SetTextChangeCause(cause uint32) error {
 	err := i.Context().SendRequest(i, 4, cause)
 	return err
@@ -245,7 +240,6 @@ func (i *ZwpTextInputV3) SetTextChangeCause(cause uint32) error {
 //
 // The initial value for hint is none, and the initial value for purpose
 // is normal.
-//
 func (i *ZwpTextInputV3) SetContentType(hint, purpose uint32) error {
 	err := i.Context().SendRequest(i, 5, hint, purpose)
 	return err
@@ -270,7 +264,6 @@ func (i *ZwpTextInputV3) SetContentType(hint, purpose uint32) error {
 // the text input does not support describing the cursor area. If the
 // empty values get applied, subsequent attempts to change them may have
 // no effect.
-//
 func (i *ZwpTextInputV3) SetCursorRectangle(x, y, width, height int32) error {
 	err := i.Context().SendRequest(i, 6, x, y, width, height)
 	return err
@@ -301,7 +294,6 @@ func (i *ZwpTextInputV3) SetCursorRectangle(x, y, width, height int32) error {
 // The compositor must count the number of commit requests coming from
 // each zwp_text_input_v3 object and use the count as the serial in done
 // events.
-//
 func (i *ZwpTextInputV3) Commit() error {
 	err := i.Context().SendRequest(i, 7)
 	return err
@@ -820,7 +812,6 @@ func NewZwpTextInputManagerV3(ctx *client.Context) *ZwpTextInputManagerV3 {
 // Destroy : Destroy the wp_text_input_manager
 //
 // Destroy the wp_text_input_manager object.
-//
 func (i *ZwpTextInputManagerV3) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -829,7 +820,6 @@ func (i *ZwpTextInputManagerV3) Destroy() error {
 // GetTextInput : create a new text input object
 //
 // Creates a new text-input object for a given seat.
-//
 func (i *ZwpTextInputManagerV3) GetTextInput(seat *client.Seat) (*ZwpTextInputV3, error) {
 	id := NewZwpTextInputV3(i.Context())
 	err := i.Context().SendRequest(i, 1, id, seat)

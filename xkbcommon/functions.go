@@ -121,19 +121,17 @@ func (state *ComposeState) GetOneSym() uint32 {
 // the format CURRENT STATUS => NEXT STATUS, given a non-ignored input
 // keysym `keysym`:
 //
-//
-// 	NOTHING or CANCELLED or COMPOSED =>
-// 	NOTHING   if keysym does not start a sequence.
-// 	COMPOSING if keysym starts a sequence.
-// 	COMPOSED  if keysym starts and terminates a single-keysym sequence.
-// 	COMPOSING =>
-// 	COMPOSING if keysym advances any of the currently possible
-// 	       sequences but does not terminate any of them.
-// 	COMPOSED  if keysym terminates one of the currently possible
-// 	       sequences.
-// 	CANCELLED if keysym does not advance any of the currently
-// 	       possible sequences.
-//
+//	NOTHING or CANCELLED or COMPOSED =>
+//	NOTHING   if keysym does not start a sequence.
+//	COMPOSING if keysym starts a sequence.
+//	COMPOSED  if keysym starts and terminates a single-keysym sequence.
+//	COMPOSING =>
+//	COMPOSING if keysym advances any of the currently possible
+//	       sequences but does not terminate any of them.
+//	COMPOSED  if keysym terminates one of the currently possible
+//	       sequences.
+//	CANCELLED if keysym does not advance any of the currently
+//	       possible sequences.
 //
 // The current Compose formats do not support multiple-keysyms.
 // Therefore, if you are using a function such as StateKeyGetSyms()
@@ -337,12 +335,14 @@ func (state *State) KeyGetUtf32(keysym uint32) uint32 {
 // useful when the status is ComposeComposed.
 //
 // parameter state
-//     The compose state.
+//
+//	The compose state.
 //
 // Returns
-//   The bytes required for the string, excluding the NUL byte.
-//   If the sequence is not complete, or does not have a viable result
-//   string, sets `buffer` to the empty string.
+//
+//	The bytes required for the string, excluding the NUL byte.
+//	If the sequence is not complete, or does not have a viable result
+//	string, sets `buffer` to the empty string.
 func (state *ComposeState) GetUtf8() (buffer []byte) {
 	var l = int(C.xkb_compose_state_get_utf8(state.cs, (*C.char)(nil), C.ulong(0)))
 	if l == 0 {

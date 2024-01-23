@@ -124,7 +124,6 @@ func NewZwpFullscreenShellV1(ctx *client.Context) *ZwpFullscreenShellV1 {
 // This destroys the server-side object and frees this binding.  If
 // the client binds to wl_fullscreen_shell multiple times, it may wish
 // to free some of those bindings.
-//
 func (i *ZwpFullscreenShellV1) Release() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -149,7 +148,6 @@ func (i *ZwpFullscreenShellV1) Release() error {
 // operation on the surface.  This will override any kind of output
 // scaling, so the buffer_scale property of the surface is effectively
 // ignored.
-//
 func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.Surface, method uint32, output *client.Output) error {
 	err := i.Context().SendRequest(i, 1, surface, method, output)
 	return err
@@ -194,7 +192,6 @@ func (i *ZwpFullscreenShellV1) PresentSurface(surface *client.Surface, method ui
 // then the compositor may choose a mode that matches either the buffer
 // size or the surface size.  In either case, the surface will fill the
 // output.
-//
 func (i *ZwpFullscreenShellV1) PresentSurfaceForMode(surface *client.Surface, output *client.Output,
 	framerate int32) (*ZwpFullscreenShellModeFeedbackV1, error) {
 	feedback := NewZwpFullscreenShellModeFeedbackV1(i.Context())

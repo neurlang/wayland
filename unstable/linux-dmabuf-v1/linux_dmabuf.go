@@ -170,7 +170,6 @@ func NewZwpLinuxDmabufV1(ctx *client.Context) *ZwpLinuxDmabufV1 {
 //
 // Objects created through this interface, especially wl_buffers, will
 // remain valid.
-//
 func (i *ZwpLinuxDmabufV1) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err
@@ -182,7 +181,6 @@ func (i *ZwpLinuxDmabufV1) Destroy() error {
 // a single batch to create a wl_buffer. It can only be used once and
 // should be destroyed after a 'created' or 'failed' event has been
 // received.
-//
 func (i *ZwpLinuxDmabufV1) CreateParams() (*ZwpLinuxBufferParamsV1, error) {
 	paramsID := NewZwpLinuxBufferParamsV1(i.Context())
 	err := i.Context().SendRequest(i, 1, paramsID)
@@ -413,7 +411,6 @@ func NewZwpLinuxBufferParamsV1(ctx *client.Context) *ZwpLinuxBufferParamsV1 {
 //
 // Cleans up the temporary data sent to the server for dmabuf-based
 // wl_buffer creation.
-//
 func (i *ZwpLinuxBufferParamsV1) Destroy() error {
 	err := i.Context().SendRequest(i, 0)
 	return err

@@ -152,7 +152,7 @@ func (f *GoMethod) AddEventArg(s *GoArg, t *GoType) {
 
 func (m *GoMethod) Serialize(num int, s *GoStruct) string {
 	var b strings.Builder
-	b.WriteString(`// ` + m.Name + m.Comment + "\n" + `func (p *` + s.Name + `) ` + m.Name + `(`)
+	b.WriteString(`// ` + m.Name + " " + m.Comment + "\n" + `func (p *` + s.Name + `) ` + m.Name + `(`)
 	var first = true
 	for _, arg := range m.Args {
 		if arg.IsInput() {

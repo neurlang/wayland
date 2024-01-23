@@ -4,8 +4,8 @@ package wlcursor
 import (
 	"fmt"
 	sys "github.com/neurlang/wayland/os"
-	"io/ioutil"
 	"github.com/neurlang/wayland/wl"
+	"io/ioutil"
 	"os"
 	"strconv"
 
