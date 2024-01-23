@@ -2,8 +2,8 @@ package window
 
 import (
 	cairo "github.com/neurlang/wayland/cairoshim"
-	"github.com/neurlang/wayland/wl"
 	"github.com/tadvi/winc"
+	"github.com/neurlang/wayland/wl"
 	"time"
 )
 

@@ -3,7 +3,6 @@ package wlclient
 
 import "github.com/neurlang/wayland/wl"
 import "github.com/neurlang/wayland/xdg"
-import "github.com/neurlang/wayland/unstable"
 
 func DisplayDispatch(d *wl.Display) error {
 	return d.Context().Run()
@@ -12,7 +11,7 @@ func PointerSetUserData(p *wl.Pointer, data interface{}) {
 }
 
 func SurfaceSetUserData(p *wl.Surface, data interface{}) {
-	p.UserData = data
+	wl.SetUserData(p, &data)
 }
 
 type PointerListener interface {
@@ -40,14 +39,17 @@ func PointerAddListener(p *wl.Pointer, h PointerListener) {
 
 }
 func PointerDestroy(p *wl.Pointer) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
 func ShmDestroy(p *wl.Shm) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
 func RegistryDestroy(p *wl.Registry) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
@@ -78,6 +80,7 @@ type SeatListener interface {
 }
 
 func SeatDestroy(p *wl.Seat) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
@@ -116,6 +119,7 @@ func KeyboardAddListener(kb *wl.Keyboard, l KeyboardListener) {
 	kb.AddRepeatInfoHandler(l)
 }
 func KeyboardDestroy(p *wl.Keyboard) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
@@ -142,6 +146,7 @@ func TouchAddListener(to *wl.Touch, tl TouchListener) {
 	to.AddOrientationHandler(tl)
 }
 func TouchDestroy(p *wl.Touch) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
@@ -173,24 +178,29 @@ func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
 	p.AddFormatHandler(data)
 }
 func RegionDestroy(p *wl.Region) {
+	wl.DeleteUserData(p)
 	p.Destroy()
 	p.Unregister()
 }
 func CallbackDestroy(p *wl.Callback) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
 func SubsurfaceDestroy(p *wl.Subsurface) {
+	wl.DeleteUserData(p)
 	p.Destroy()
 	p.Unregister()
 }
 func DataDeviceDestroy(p *wl.DataDevice) {
+	wl.DeleteUserData(p)
 	//p.Destroy()
 	p.Unregister()
 }
-func DataDeviceManagerDestroy(d *wl.DataDeviceManager) {
+func DataDeviceManagerDestroy(p *wl.DataDeviceManager) {
+	wl.DeleteUserData(p)
 	//d.Destroy()
-	d.Unregister()
+	p.Unregister()
 }
 
 type DataDeviceListener interface {
@@ -218,6 +228,7 @@ type DataOfferListener interface {
 }
 
 func DataOfferDestroy(p *wl.DataOffer) {
+	wl.DeleteUserData(p)
 	//d.Destroy()
 	p.Unregister()
 }
@@ -255,13 +266,17 @@ func DataSourceRemoveListener(p *wl.DataSource, h DataSourceListener) {
 }
 
 func RegistryBindCompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Compositor {
-	c := wl.NewCompositor(r.Ctx)
+
+	ctx, _ := wl.GetUserData[wl.Context](r)
+
+	c := wl.NewCompositor(ctx)
 	_ = r.Bind(name, "wl_compositor", version, c)
 	return c
 }
 
 func RegistryBindShmInterface(r *wl.Registry, name uint32, version uint32) *wl.Shm {
-	s := wl.NewShm(r.Ctx)
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	s := wl.NewShm(ctx)
 	_ = r.Bind(name, "wl_shm", version, s)
 	return s
 }
@@ -271,41 +286,30 @@ func RegistryBindDataDeviceManagerInterface(
 	name uint32,
 	version uint32,
 ) *wl.DataDeviceManager {
-	d := wl.NewDataDeviceManager(r.Ctx)
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	d := wl.NewDataDeviceManager(ctx)
 	_ = r.Bind(name, "wl_data_device_manager", version, d)
 	return d
 }
 
 func RegistryBindOutputInterface(r *wl.Registry, name uint32, version uint32) *wl.Output {
-	d := wl.NewOutput(r.Ctx)
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	d := wl.NewOutput(ctx)
 	_ = r.Bind(name, "wl_output", version, d)
 	return d
 }
 
 func RegistryBindSeatInterface(r *wl.Registry, name uint32, version uint32) *wl.Seat {
-	d := wl.NewSeat(r.Ctx)
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	d := wl.NewSeat(ctx)
 	_ = r.Bind(name, "wl_seat", version, d)
 	return d
 }
 
 func RegistryBindWmBaseInterface(r *wl.Registry, name uint32, version uint32) *xdg.WmBase {
-	d := xdg.NewShell(r.Ctx)
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	d := xdg.NewShell(ctx)
 	_ = r.Bind(name, "xdg_wm_base", version, d)
-	return d
-}
-
-func RegistryBindUnstableInterface(
-	r *wl.Registry,
-	name uint32,
-	iface string,
-	version uint32,
-) wl.Proxy {
-	function := unstable.GetNewFunc(iface)
-	if function == nil {
-		return nil
-	}
-	d := function(r.Ctx)
-	_ = r.Bind(name, iface, version, d)
 	return d
 }
 
@@ -324,6 +328,7 @@ func DisplayRoundtrip(d *wl.Display) error {
 	if err != nil {
 		return err
 	}
+
 	err = d.Context().RunTill(cb)
 	return err
 }

@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-//Go Wayland SimpleShm demo
+// Go Wayland SimpleShm demo
 package main
 
 import "github.com/neurlang/wayland/wl"
@@ -186,6 +186,7 @@ func createDisplay() *display {
 
 	wlclient.RegistryAddListener(disp.registry, disp)
 	handle(wlclient.DisplayRoundtrip(disp.display))
+
 	if disp.shm == nil {
 		log.Fatal("No wl_shm global\n")
 	}
@@ -325,7 +326,9 @@ func (window *window) CallbackDone(callback *wl.Callback, time uint32) {
 }
 
 func redraw(win *window, callback *wl.Callback, time uint32) {
-
+	if win.callback != nil {
+		wlclient.CallbackDestroy(win.callback)
+	}
 	buffer := windowNextBuffer(win)
 
 	win.paintPixels(time, buffer)

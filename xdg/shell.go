@@ -5,6 +5,7 @@ package xdg
 
 import "github.com/neurlang/wayland/wl"
 
+type WlSurface = wl.Surface
 type BaseProxy = wl.BaseProxy
 type Event = wl.Event
 type Context = wl.Context

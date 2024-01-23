@@ -493,7 +493,7 @@ func (sb *Scrollbar) Render(c Canvas) {
 
 	sb.mut.RLock()
 	var renderbuf = sb.RGBok
-	pos := rowHeight*sb.Width*skippedPostion
+	pos := rowHeight * sb.Width * skippedPostion
 	if pos > len(renderbuf) {
 		pos = len(renderbuf)
 	}

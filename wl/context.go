@@ -47,6 +47,9 @@ func (ctx *Context) Register(proxy Proxy) {
 	}
 	proxy.SetId(ctx.currentId)
 	proxy.SetContext(ctx)
+	if c, ok := proxy.(*Registry); ok {
+		SetUserData(c, &ctx)
+	}
 	ctx.objects[ctx.currentId] = proxy
 	ctx.mu.Unlock()
 }

@@ -566,7 +566,7 @@ func (input *Input) HandleDataDeviceDataOffer(ev wl.DataDeviceDataOfferEvent) {
 	var offer dataOffer
 
 	offer.input = input
-	offer.offer = ev.Offer
+	offer.offer = ev.Id
 
 	wlclient.DataOfferAddListener(offer.offer, &offer)
 
@@ -574,7 +574,7 @@ func (input *Input) HandleDataDeviceDataOffer(ev wl.DataDeviceDataOfferEvent) {
 		input.offerData = make(map[*wl.DataOffer]*dataOffer)
 	}
 
-	input.offerData[ev.Offer] = &offer
+	input.offerData[ev.Id] = &offer
 
 	println("HandleDataDeviceDataOffer")
 }
@@ -588,11 +588,12 @@ func (input *Input) HandleDataDeviceEnter(ev wl.DataDeviceEnterEvent) {
 		return
 	}
 
-	window := surface.UserData.(*Window)
+	window, _ := wl.GetUserData[Window](surface)
+
 	var typesData []string
 
-	if ev.Offer != nil {
-		input.dragOffer = input.offerData[ev.Offer]
+	if ev.Id != nil {
+		input.dragOffer = input.offerData[ev.Id]
 
 		typesData = input.dragOffer.types
 
@@ -638,9 +639,9 @@ func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
 
 	}
 
-	if ev.Offer != nil {
+	if ev.Id != nil {
 
-		var another = input.offerData[ev.Offer]
+		var another = input.offerData[ev.Id]
 
 		if another == input.selectionOffer {
 			input.selectionOffer = nil
@@ -1109,7 +1110,8 @@ func (input *Input) HandleKeyboardEnter(e wl.KeyboardEnterEvent) {
 	}
 
 	input.Display.serial = serial
-	input.keyboardFocus = (surface.UserData).(*Window)
+
+	input.keyboardFocus, _ = wl.GetUserData[Window](surface)
 
 	window = input.keyboardFocus
 	if window != nil && window.keyboardHandler != nil {
@@ -1222,7 +1224,7 @@ func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
 
 func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 
-	var fd, err = e.Fd()
+	var fd, err = e.Fd, e.FdError
 	if err != nil {
 		println(err.Error())
 		return
@@ -3168,10 +3170,6 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 	_ = createCursors(d)
 
 	return d, nil
-}
-
-func (d *Display) BindUnstableInterface(name uint32, iface string, version uint32) wl.Proxy {
-	return wlclient.RegistryBindUnstableInterface(d.registry, name, iface, version)
 }
 
 func (d *Display) SetUserData(data interface{}) {

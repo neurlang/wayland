@@ -176,3 +176,8 @@ func (ev *Event) next(n int) []byte {
 	ev.off += n
 	return ret
 }
+
+func (ev *Event) NewId(i Proxy, c *Context) Proxy {
+	c.RegisterMapped(i, ev.Uint32())
+	return i
+}

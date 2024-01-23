@@ -1,6 +1,6 @@
 module github.com/neurlang/wayland
 
-go 1.16
+go 1.18
 
 require (
 	github.com/fogleman/gg v1.3.0
