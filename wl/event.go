@@ -127,9 +127,13 @@ func (ev *Event) Uint32() uint32 {
 func (ev *Event) Proxy(c *Context) Proxy {
 	id := ev.Uint32()
 	if id != 0 {
-		return c.LookupProxy(ProxyId(id))
+		proxy := c.LookupProxy(ProxyId(id))
+		if isNil(proxy) {
+			return Proxy(nil)
+		}
+		return proxy
 	}
-	return nil
+	return Proxy(nil)
 }
 
 // ErrUnableToParseString (Error unable to parse string) is returned when the buffer is too short to contain a specific string
