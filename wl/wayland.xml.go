@@ -1667,10 +1667,10 @@ func (p *DataDevice) Dispatch(event *Event) {
 		if len(p.privateDataDeviceEnters) > 0 {
 			ev := DataDeviceEnterEvent{}
 			ev.Serial = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			ev.X = event.Float32()
 			ev.Y = event.Float32()
-			ev.Id = event.Proxy(p.Context()).(*DataOffer)
+			ev.Id = SafeCast[*DataOffer](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privateDataDeviceEnters {
 				h.HandleDataDeviceEnter(ev)
@@ -1710,7 +1710,7 @@ func (p *DataDevice) Dispatch(event *Event) {
 	case 5:
 		if len(p.privateDataDeviceSelections) > 0 {
 			ev := DataDeviceSelectionEvent{}
-			ev.Id = event.Proxy(p.Context()).(*DataOffer)
+			ev.Id = SafeCast[*DataOffer](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privateDataDeviceSelections {
 				h.HandleDataDeviceSelection(ev)
@@ -2287,7 +2287,7 @@ func (p *Surface) Dispatch(event *Event) {
 	case 0:
 		if len(p.privateSurfaceEnters) > 0 {
 			ev := SurfaceEnterEvent{}
-			ev.Output = event.Proxy(p.Context()).(*Output)
+			ev.Output = SafeCast[*Output](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privateSurfaceEnters {
 				h.HandleSurfaceEnter(ev)
@@ -2297,7 +2297,7 @@ func (p *Surface) Dispatch(event *Event) {
 	case 1:
 		if len(p.privateSurfaceLeaves) > 0 {
 			ev := SurfaceLeaveEvent{}
-			ev.Output = event.Proxy(p.Context()).(*Output)
+			ev.Output = SafeCast[*Output](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privateSurfaceLeaves {
 				h.HandleSurfaceLeave(ev)
@@ -2635,7 +2635,7 @@ func (p *Pointer) Dispatch(event *Event) {
 		if len(p.privatePointerEnters) > 0 {
 			ev := PointerEnterEvent{}
 			ev.Serial = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			ev.SurfaceX = event.Float32()
 			ev.SurfaceY = event.Float32()
 			p.mu.RLock()
@@ -2648,7 +2648,7 @@ func (p *Pointer) Dispatch(event *Event) {
 		if len(p.privatePointerLeaves) > 0 {
 			ev := PointerLeaveEvent{}
 			ev.Serial = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privatePointerLeaves {
 				h.HandlePointerLeave(ev)
@@ -3198,7 +3198,7 @@ func (p *Keyboard) Dispatch(event *Event) {
 		if len(p.privateKeyboardEnters) > 0 {
 			ev := KeyboardEnterEvent{}
 			ev.Serial = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			ev.Keys = event.Array()
 			p.mu.RLock()
 			for _, h := range p.privateKeyboardEnters {
@@ -3210,7 +3210,7 @@ func (p *Keyboard) Dispatch(event *Event) {
 		if len(p.privateKeyboardLeaves) > 0 {
 			ev := KeyboardLeaveEvent{}
 			ev.Serial = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			p.mu.RLock()
 			for _, h := range p.privateKeyboardLeaves {
 				h.HandleKeyboardLeave(ev)
@@ -3519,7 +3519,7 @@ func (p *Touch) Dispatch(event *Event) {
 			ev := TouchDownEvent{}
 			ev.Serial = event.Uint32()
 			ev.Time = event.Uint32()
-			ev.Surface = event.Proxy(p.Context()).(*Surface)
+			ev.Surface = SafeCast[*Surface](event.Proxy(p.Context()))
 			ev.Id = event.Int32()
 			ev.X = event.Float32()
 			ev.Y = event.Float32()
