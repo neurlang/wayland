@@ -123,17 +123,19 @@ func (ev *Event) Uint32() uint32 {
 	return native_endian.NativeEndian().Uint32(buf)
 }
 
+// SafeCast casts to any type, it doesn't panic if proxy is nil
+func SafeCast[T any](p Proxy) (out T) {
+	out, _ = p.(T)
+	return
+}
+
 // Proxy (Event Proxy) decodes Proxy by it's Id from the Event
 func (ev *Event) Proxy(c *Context) Proxy {
 	id := ev.Uint32()
 	if id != 0 {
-		proxy := c.LookupProxy(ProxyId(id))
-		if isNil(proxy) {
-			return Proxy(nil)
-		}
-		return proxy
+		return c.LookupProxy(ProxyId(id))
 	}
-	return Proxy(nil)
+	return nil
 }
 
 // ErrUnableToParseString (Error unable to parse string) is returned when the buffer is too short to contain a specific string

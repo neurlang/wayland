@@ -313,14 +313,14 @@ func (a *GoArg) Serialize() string {
 	return "\t// " + a.Name + " is the " + a.Comment + "\n\t" + a.Name + " " + a.Type.Serialize() + "\n"
 }
 func (a *GoArg) SerializeCall() string {
-	call := a.Type.SerializeCall()
+	call := a.Type.SerializeCall("event.")
 	if call == "" {
 		return ""
 	}
 	if a.IsCanError() {
-		return "\t\t\tev." + a.Name + ", ev." + a.Name + "Error = event." + call + "\n"
+		return "\t\t\tev." + a.Name + ", ev." + a.Name + "Error = " + call + "\n"
 	}
-	return "\t\t\tev." + a.Name + " = event." + call + "\n"
+	return "\t\t\tev." + a.Name + " = " + call + "\n"
 }
 
 type GoType struct {
@@ -362,27 +362,27 @@ func (a *GoType) Serialize() string {
 		return "struct {} // unknown type"
 	}
 }
-func (a *GoType) SerializeCall() string {
+func (a *GoType) SerializeCall(eventDot string) string {
 	switch a.Type {
 	case "string":
-		return "String()"
+		return eventDot + "String()"
 	case "object":
 		if a.Interface == "" {
-			return "Proxy(p.Context())"
+			return eventDot + "Proxy(p.Context())"
 		}
-		return "Proxy(p.Context()).(*" + a.Interface + ")"
+		return "SafeCast[*" + a.Interface + "](" + eventDot + "Proxy(p.Context()))"
 	case "uint":
-		return "Uint32()"
+		return eventDot + "Uint32()"
 	case "int":
-		return "Int32()"
+		return eventDot + "Int32()"
 	case "fd":
-		return "FD()"
+		return eventDot + "FD()"
 	case "fixed":
-		return "Float32()"
+		return eventDot + "Float32()"
 	case "array":
-		return "Array()"
+		return eventDot + "Array()"
 	case "new_id":
-		return "NewId(new(" + a.Interface + "), p.Context()).(*" + a.Interface + ")"
+		return eventDot + "NewId(new(" + a.Interface + "), p.Context()).(*" + a.Interface + ")"
 	case "error":
 		return ""
 	default:
