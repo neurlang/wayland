@@ -3,6 +3,7 @@ module github.com/neurlang/wayland
 go 1.18
 
 require (
+	github.com/ebitengine/purego v0.5.2
 	github.com/fogleman/gg v1.3.0
 	github.com/neurlang/gm v0.0.2
 	github.com/neurlang/winc v0.1.0
@@ -12,7 +13,7 @@ require (
 	github.com/zzl/go-win32api/v2 v2.1.0
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.6.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.7.0
 )
 
 require (
