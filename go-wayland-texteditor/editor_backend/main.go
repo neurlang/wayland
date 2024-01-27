@@ -331,12 +331,17 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if recolor {
-		fileColor = reprocess_syntax_highlighting_golang(file)
-		recolor = fileColor == nil
-	}
-	if recolor {
-		fileColor = reprocess_syntax_highlighting_csharp(file)
-		recolor = fileColor == nil
+		var highlights = []func([][]string) [][5]int{
+			reprocess_syntax_highlighting_golang,
+			reprocess_syntax_highlighting_csharp,
+		}
+		for _, highlight := range highlights {
+			fileColor = highlight(file)
+			recolor = fileColor == nil
+			if !recolor {
+				break
+			}
+		}
 	}
 
 	var min = 0
