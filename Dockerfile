@@ -10,8 +10,14 @@ RUN go get -d -v ./...
 RUN go install -v ./go-wayland-simple-shm
 RUN go install -v ./go-wayland-smoke
 RUN go install -v ./go-wayland-imageviewer
+RUN go install -v ./go-wayland-texteditor
+RUN go install -v ./go-wayland-texteditor/editor_backend
 RUN go install -tags wayland -v ./go-wayland-cube
 
+RUN echo "#!/bin/sh" > /go/bin/texteditor
+RUN echo "cd /go/src/app/go-wayland-texteditor" >> /go/bin/texteditor
+RUN echo "/go/bin/editor_backend & /go/bin/go-wayland-texteditor" >> /go/bin/texteditor
+RUN chmod +x /go/bin/texteditor
 
 RUN apt-get --assume-yes install unzip build-essential autoconf libtool libxext-dev libx11-dev x11proto-gl-dev
 RUN wget https://github.com/NVIDIA/libglvnd/archive/refs/tags/v1.3.4.zip

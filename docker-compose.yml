@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  texteditor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - XDG_RUNTIME_DIR=/tmp
+      - WAYLAND_DISPLAY
+    volumes:
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}
+    user: "${UID}:${GID}"
+    command: ["/go/bin/texteditor"]
+    entrypoint:
+      - /go/bin/texteditor
+
