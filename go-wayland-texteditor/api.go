@@ -64,6 +64,9 @@ func load_content(creq ContentRequest) (*ContentResponse, error) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 	var cr ContentResponse
 	//println(string(body))
 	err = json.Unmarshal(body, &cr)
