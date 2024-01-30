@@ -8,6 +8,7 @@ require (
 	github.com/neurlang/gm v0.0.2
 	github.com/neurlang/winc v0.1.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/vulkan-go/vulkan v0.0.0-20220916223707-3ea69233b9d2
 	github.com/yalue/native_endian v1.0.1
 	github.com/zzl/go-win32api/v2 v2.1.0

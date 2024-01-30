@@ -263,6 +263,7 @@ type ContentRequest struct {
 	Erase                     *EraseRequest
 	Write                     *WriteRequest
 	Paste                     *PasteRequest
+	MultiClick                *MultiClickRequest
 }
 
 type ContentResponse struct {
@@ -276,12 +277,18 @@ type ContentResponse struct {
 	Erase      *EraseResponse
 	Write      *WriteResponse
 	Paste      *struct{}
+	MultiClick *MultiClickResponse
 }
 type EraseRequest struct {
 	X0, Y0, X1, Y1 int
 }
 type CopyRequest struct {
 	X0, Y0, X1, Y1 int
+}
+type MultiClickRequest struct {
+	Double bool
+}
+type MultiClickResponse struct {
 }
 type CopyResponse struct {
 	Buffer [][]byte

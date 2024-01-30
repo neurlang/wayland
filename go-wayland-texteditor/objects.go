@@ -3,6 +3,7 @@ package main
 import "sync"
 import "sort"
 import "fmt"
+import "unicode"
 
 const rowHeight = 2
 const whiteRectThick = 2
@@ -96,9 +97,13 @@ type StringGrid struct {
 	FgColor               [3]byte
 	FlipColor             bool
 	LineLens              []int
+	wasDoubleClick        bool
 }
 
 func (sg *StringGrid) LineLen(y int) int {
+	if y >= len(sg.LineLens) {
+		return 0
+	}
 	return sg.LineLens[y]
 }
 
@@ -142,16 +147,88 @@ func (sg *StringGrid) IsHover(x, y float32, w, h int32) bool {
 	}
 	return true
 }
+func (sg *StringGrid) isTripleClick() bool {
+	return !sg.Selecting && sg.IsSelected && sg.SelectionCursor != sg.Hover && sg.IbeamCursor == sg.Hover
 
-func (sg *StringGrid) Button(up bool) {
+}
+
+func (sg *StringGrid) isDoubleClick() bool {
+	return !sg.Selecting && sg.IsSelected && sg.SelectionCursor == sg.Hover && sg.IbeamCursor == sg.Hover
+}
+
+func (sg *StringGrid) WasDoubleClick() bool {
+	return sg.wasDoubleClick
+}
+
+func (sg *StringGrid) Button(up bool) (changedSelection bool) {
 	if up {
+		changedSelection = false
+
 		sg.IsSelected = sg.Selecting
 		sg.Selecting = false
-	} else {
+
+	} else if sg.isDoubleClick() && !sg.wasDoubleClick {
+		changedSelection = true
+
+		sg.wasDoubleClick = true
 		sg.Selecting = true
 		sg.IsSelected = false
 
-		sg.ReMotion(0)
+		sg.ReMotion()
+
+		var add = 0
+		for ; unicode.IsLetter(sg.GetContentRune(sg.Hover.X+add, sg.Hover.Y)); add++ {
+			if sg.Hover.Y < len(sg.LineLens) && sg.LineLens[sg.Hover.Y] <= sg.Hover.X+add {
+				break
+			}
+		}
+
+		sg.SelectionCursor = sg.Hover
+		sg.IbeamCursor = sg.Hover
+
+		sg.SelectionCursor.X += add
+
+		sg.SelectionCursorAbs.X = sg.Hover.X + sg.FilePosition.X + add
+		sg.SelectionCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
+		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
+		sg.IbeamCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
+
+	} else if sg.isTripleClick() && sg.wasDoubleClick {
+		changedSelection = true
+
+		sg.wasDoubleClick = false
+		sg.Selecting = true
+		sg.IsSelected = false
+
+		sg.ReMotion()
+
+		sg.Hover.X = 0
+
+		var add = 0
+		for ; true; add++ {
+			if sg.Hover.Y < len(sg.LineLens) && sg.LineLens[sg.Hover.Y] <= sg.Hover.X+add {
+				break
+			}
+		}
+
+		sg.SelectionCursor = sg.Hover
+		sg.IbeamCursor = sg.Hover
+
+		sg.SelectionCursor.X += add
+
+		sg.SelectionCursorAbs.X = sg.Hover.X + sg.FilePosition.X + add
+		sg.SelectionCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
+		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
+		sg.IbeamCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
+
+	} else {
+		changedSelection = false
+
+		sg.Selecting = true
+		sg.IsSelected = false
+		sg.wasDoubleClick = false
+
+		sg.ReMotion()
 
 		sg.SelectionCursor = sg.Hover
 		sg.IbeamCursor = sg.Hover
@@ -160,8 +237,9 @@ func (sg *StringGrid) Button(up bool) {
 		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
 		sg.IbeamCursorAbs.Y = sg.Hover.Y + sg.FilePosition.Y
 	}
+	return
 }
-func (sg *StringGrid) ReMotion(i int) {
+func (sg *StringGrid) ReMotion() {
 	sg.Motion(sg.HoverOld)
 }
 func (sg *StringGrid) Motion(pos ObjectPosition) {
@@ -191,6 +269,25 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 			break
 		}
 	}
+
+	if sg.Selecting && sg.wasDoubleClick {
+		if (pos.X > 0) && (pos.Y < len(sg.LineLens)) && (sg.LineLens[pos.Y] == pos.X) {
+			pos.X--
+		}
+
+		for (pos.X > 0) && (unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y))) {
+			pos.X--
+		}
+		if (pos.X > 0) && (!unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y))) {
+			pos.X++
+		}
+		if pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
+			if !unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y)) {
+				pos.X++
+			}
+		}
+	}
+
 	sg.Hover = pos
 
 	if sg.Selecting {
@@ -242,7 +339,13 @@ func (sg *StringGrid) Selected(x, y int) bool {
 func (sg *StringGrid) RowFocused(y int) bool {
 	return sg.IbeamCursorAbs.Y == y+sg.FilePosition.Y
 }
-
+func (sg *StringGrid) GetContentRune(x, y int) rune {
+	arr := []rune(sg.GetContent(x, y))
+	if len(arr) == 0 {
+		return 0
+	}
+	return arr[0]
+}
 func (sg *StringGrid) GetContent(x, y int) string {
 	var pos = sg.XCells*y + x
 	if len(sg.Content) <= pos {

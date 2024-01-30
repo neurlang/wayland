@@ -306,7 +306,24 @@ func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint3
 			}
 			s.controls.IbeamCursor.Y = 10000
 		}
-		s.StringGrid.Button(state == wl.PointerButtonStateReleased)
+		if s.StringGrid.Button(state == wl.PointerButtonStateReleased) {
+			content, err := load_content(ContentRequest{
+				Xpos:   s.StringGrid.FilePosition.X,
+				Ypos:   s.StringGrid.FilePosition.Y,
+				Width:  s.StringGrid.XCells,
+				Height: s.StringGrid.YCells,
+				MultiClick: &MultiClickRequest{
+					Double: s.StringGrid.WasDoubleClick(),
+				},
+			})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			s.StringGrid.DoLineNumbers()
+			s.handleContent(content, false)
+			return
+		}
 	} else {
 
 	}
@@ -349,7 +366,7 @@ func (t *textarea) axisDiscrete(discrete int32) {
 	t.StringGrid.IbeamCursor.Y -= int(discrete)
 	t.StringGrid.SelectionCursor.Y -= int(discrete)
 	t.StringGrid.DoLineNumbers()
-	t.StringGrid.ReMotion(int(discrete))
+	t.StringGrid.ReMotion()
 	t.scrolls[0].SyncWith(&t.StringGrid)
 
 	content, err := load_content(ContentRequest{
@@ -365,7 +382,7 @@ func (t *textarea) axisDiscrete(discrete int32) {
 
 	t.handleContent(content, false)
 
-	t.StringGrid.ReMotion(0)
+	t.StringGrid.ReMotion()
 
 }
 func (*textarea) PointerFrame(widget *window.Widget, input *window.Input) {
