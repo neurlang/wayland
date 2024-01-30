@@ -98,8 +98,13 @@ type StringGrid struct {
 	FlipColor             bool
 	LineLens              []int
 	wasDoubleClick        bool
+	MatchingBrace         ObjectPosition
+	control               bool
 }
 
+func (sg *StringGrid) Control(ctrl bool) {
+	sg.control = ctrl
+}
 func (sg *StringGrid) LineLen(y int) int {
 	if y >= len(sg.LineLens) {
 		return 0
@@ -242,6 +247,46 @@ func (sg *StringGrid) Button(up bool) (changedSelection bool) {
 func (sg *StringGrid) ReMotion() {
 	sg.Motion(sg.HoverOld)
 }
+
+func (sg *StringGrid) lookupBraceWhenMotion(pos ObjectPosition) {
+	var color1 = sg.GetFgColor(pos.X, pos.Y)
+	switch sg.GetContentRune(pos.X, pos.Y) {
+	case '{', '[', '(':
+		for ; pos.Y < len(sg.LineLens); pos.Y++ {
+			for ; pos.X < sg.LineLens[pos.Y]; pos.X++ {
+				switch sg.GetContentRune(pos.X, pos.Y) {
+				case '}', ']', ')':
+					if color1 == sg.GetFgColor(pos.X, pos.Y) {
+						sg.MatchingBrace.X = pos.X
+						sg.MatchingBrace.Y = pos.Y
+						return
+					}
+				}
+			}
+			if pos.X == sg.LineLens[pos.Y] {
+				pos.X = 0
+			}
+		}
+	case '}', ']', ')':
+		for ; pos.Y >= 0; pos.Y-- {
+			if pos.X < 0 {
+				pos.X = sg.LineLens[pos.Y]
+			}
+			for ; pos.X >= 0; pos.X-- {
+				switch sg.GetContentRune(pos.X, pos.Y) {
+				case '{', '[', '(':
+					if color1 == sg.GetFgColor(pos.X, pos.Y) {
+						sg.MatchingBrace.X = pos.X
+						sg.MatchingBrace.Y = pos.Y
+						return
+					}
+				}
+			}
+		}
+	}
+
+}
+
 func (sg *StringGrid) Motion(pos ObjectPosition) {
 
 	sg.HoverOld = pos
@@ -290,6 +335,12 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 
 	sg.Hover = pos
 
+	sg.MatchingBrace = pos
+
+	sg.lookupBraceWhenMotion(pos)
+	pos.X--
+	sg.lookupBraceWhenMotion(pos)
+
 	if sg.Selecting {
 		sg.IbeamCursor = sg.Hover
 		sg.IbeamCursorAbs.X = sg.Hover.X + sg.FilePosition.X
@@ -324,6 +375,26 @@ func (sg *StringGrid) IsSelection() bool {
 		return false
 	}
 	return true
+}
+func (sg *StringGrid) Highlighted(x, y int) bool {
+	if sg.Selecting && !sg.control &&
+		((x == sg.Hover.X || x == sg.Hover.X-1) && y == sg.Hover.Y ||
+			x == sg.MatchingBrace.X && y == sg.MatchingBrace.Y) {
+		return true
+	}
+	if sg.control {
+		switch sg.GetContentRune(x, y) {
+		case '}', ')', ']':
+			var fg = sg.GetFgColor(x, y)
+			return fg == sg.GetFgColor(sg.Hover.X, sg.Hover.Y) ||
+				fg == sg.GetFgColor(sg.Hover.X-1, sg.Hover.Y)
+		case '{', '(', '[':
+			var fg = sg.GetFgColor(x, y)
+			return fg == sg.GetFgColor(sg.Hover.X, sg.Hover.Y) ||
+				fg == sg.GetFgColor(sg.Hover.X-1, sg.Hover.Y)
+		}
+	}
+	return false
 }
 func (sg *StringGrid) Selected(x, y int) bool {
 	if !sg.IsSelection() {
@@ -389,10 +460,14 @@ func (sg *StringGrid) Render(c Canvas) {
 			xx := x - sg.LineNumbers
 
 			var selected = sg.Selected(xx, y)
+			var highlighted = sg.Highlighted(xx, y)
 			var bgcolor = [3]byte{0, 27, 51}
 			var fgcolor = sg.GetFgColor(xx, y)
 			if selected {
 				bgcolor = [3]byte{0, 136, 255}
+				fgcolor = sg.FgColor
+			} else if highlighted {
+				bgcolor = [3]byte{0, 255, 128}
 				fgcolor = sg.FgColor
 			} else if sg.RowFocused(y) {
 				if x > sg.LastColHint {

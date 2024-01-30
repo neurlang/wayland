@@ -301,19 +301,21 @@ func reprocess_syntax_highlighting_end_golang(loaded uint64, length, x, y int, d
 		hashstr("switch"), hashstr("len"), hashstr("append"), hashstr("range"), hashstr("else"),
 		hashstr("package"), hashstr("else"), hashstr("default"), hashstr("var"), hashstr("struct"),
 		hashstr("type"), hashstr("import"), hashstr("break"), hashstr("continue"), hashstr("fallthrough"),
-		hashstr("const"), hashstr("interface"), hashstr("cap"), hashstr("go"), hashstr("make"), hashstr("new"):
+		hashstr("const"), hashstr("interface"), hashstr("cap"), hashstr("go"), hashstr("make"),
+		hashstr("new"), hashstr("panic"):
 		out = append(out, [5]int{x - length, y, 255, 128, 0})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("int"), hashstr("uint"), hashstr("int64"), hashstr("int32"), hashstr("uint64"),
 		hashstr("uint32"), hashstr("bool"), hashstr("byte"), hashstr("string"), hashstr("error"),
-		hashstr("int8"), hashstr("uint8"), hashstr("float32"), hashstr("float64"), hashstr("chan"):
+		hashstr("int8"), hashstr("uint8"), hashstr("float32"), hashstr("float64"),
+		hashstr("chan"), hashstr("map"):
 		out = append(out, [5]int{x - length, y, 0, 255, 255})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	case hashstr("true"), hashstr("false"), hashstr("nil"):
 		out = append(out, [5]int{x - length, y, 255, 0, 255})
 		out = append(out, [5]int{x, y, 255, 255, 255})
 	default:
-		if (!((loaded == hashstr("x") || loaded == hashstr("xx")))) {
+		if !(loaded == hashstr("x") || loaded == hashstr("xx")) {
 			if digits {
 				out = append(out, [5]int{x - length, y, 255, 0, 255})
 				out = append(out, [5]int{x, y, 255, 255, 255})

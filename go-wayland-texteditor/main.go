@@ -402,6 +402,8 @@ func (textarea *textarea) Key(
 	textarea.mutex.Lock()
 	defer textarea.mutex.Unlock()
 
+	textarea.StringGrid.Control((input.GetModifiers() & window.ModControlMask) == 0)
+
 	var entered = input.GetRune(&notUnicode, key)
 
 	if state == wl.KeyboardKeyStatePressed && entered != 0 {
@@ -885,6 +887,7 @@ func main() {
 	textarea.controls.Pos = ObjectPosition{-48 * 3, 0}
 	textarea.controls.BgColor = [3]byte{0, 13, 26}
 	textarea.controls.FgColor = [3]byte{255, 255, 255}
+	textarea.controls.Control(true)
 
 	textarea.StringGrid.Font = &UnicodeFont
 	textarea.StringGrid.XCells = 30
