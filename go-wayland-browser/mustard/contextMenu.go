@@ -60,8 +60,8 @@ func (window *Window) PrepareContextMenu() {
 	overlay := extractOverlay(
 		menuWidth, menuHeight,
 		image.Point{
-			int(window.cursorX),
-			int(window.cursorY),
+			int(window.cursorX + menuWidth/2),
+			int(window.cursorY + menuHeight/2),
 		})
 
 	window.SetContextMenuOverlay(overlay)
