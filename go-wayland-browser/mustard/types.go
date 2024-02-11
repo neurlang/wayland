@@ -23,6 +23,8 @@ type Overlay struct {
 	height float64
 
 	position image.Point
+
+	popup *window.Popup
 }
 
 type contextMenu struct {

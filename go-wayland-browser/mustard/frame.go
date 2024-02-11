@@ -194,6 +194,7 @@ func (frame *Frame) Motion(widget *window.Widget, input *window.Input, time uint
 func (frame *Frame) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
 
 	if state == 1 {
+		frame.window.clickSerial = frame.window.window.Display.GetSerial()
 		return
 	}
 

@@ -3,6 +3,7 @@ package mustard
 import (
 	gg "github.com/danfragoso/thdwb/gg"
 	"github.com/neurlang/wayland/window"
+	"github.com/neurlang/wayland/wl"
 	"image"
 )
 
@@ -18,6 +19,7 @@ type App struct {
 
 type Window struct {
 	window            *window.Window
+	seat              *wl.Seat
 	contextMenu       *contextMenu
 	rootFrame         *Frame
 	title             string
@@ -37,6 +39,8 @@ type Window struct {
 
 	selectedWidget Widget
 	activeInput    *InputWidget
+
+	clickSerial uint32
 }
 
 func (window *Window) SetTitle(str string) {
@@ -109,14 +113,31 @@ func CreateStaticOverlay(string, *gg.Context, image.Point) string {
 	return ""
 }
 
+func (w *Window) Capabilities(i *window.Input, seat *wl.Seat, caps uint32) {
+	// only one seat for now
+	w.seat = seat
+}
+func (w *Window) Name(i *window.Input, seat *wl.Seat, name string) {
+	// only one seat for now
+	w.seat = seat
+}
+
 // AddOverlay adds an overlay to the window
 func (w *Window) AddOverlay(content *Overlay) {
 
+	popup := w.window.CreatePopup(w.seat, w.clickSerial, uint32(content.width), uint32(content.height))
+
+	content.popup = popup
+	popup.Renderer = w.contextMenu
+
+	w.hasActiveOverlay = true
 }
 
 // RemoveOverlay removes the overlay from the window
-func (w *Window) RemoveOverlay(*Overlay) {
+func (w *Window) RemoveOverlay(o *Overlay) {
+	o.popup.Destroy()
 
+	w.hasActiveOverlay = false
 }
 
 func drawRootFrame(window *Window, w, h float64) {

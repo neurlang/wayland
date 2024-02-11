@@ -1,10 +1,10 @@
 package mustard
 
 import (
-	//assets "github.com/danfragoso/thdwb/assets"
+	assets "github.com/danfragoso/thdwb/assets"
 	gg "github.com/danfragoso/thdwb/gg"
+	"github.com/goki/freetype/truetype"
 	"image"
-	//"github.com/goki/freetype/truetype"
 )
 
 func (window *Window) EnableContextMenus() {
@@ -50,55 +50,60 @@ func prepEntry(ctx *gg.Context, entry string, width float64) string {
 	return entry
 }
 
+func (window *Window) PrepareContextMenu() {
+
+	menuLeft := float64(0)
+	menuTop := float64(0)
+
+	//  menuWidth := float64(200)
+	// menuHeight := float64(len(window.contextMenu.entries) * 20)
+
+	overlay := extractOverlay(
+		100, 100,
+		image.Point{
+			int(menuLeft),
+			int(menuTop),
+		})
+
+	window.SetContextMenuOverlay(overlay)
+}
 func (window *Window) DrawContextMenu() {
-	/*
-	   menuWidth := float64(200)
-	   menuHeight := float64(len(window.contextMenu.entries) * 20)
+	window.PrepareContextMenu()
+	window.contextMenu.DrawContextMenu()
+}
+func (contextMenu *contextMenu) DrawContextMenu() {
 
-	   menuTop := float64(window.cursorY)
-	   menuLeft := float64(window.cursorX)
+	menuLeft := float64(0)
+	menuTop := float64(0)
 
-	   	if menuLeft+menuWidth > float64(window.width) {
-	   		menuLeft = float64(window.width) - menuWidth
-	   	}
+	menuWidth := float64(200)
+	menuHeight := float64(len(contextMenu.entries) * 20)
 
-	   	if menuTop+menuHeight > float64(window.height) {
-	   		menuTop = float64(window.height) - menuHeight
-	   	}
+	surf := contextMenu.overlay.popup.PopupGetSurface()
+	ctx := makeContextFromCairo(surf)
 
-	   ctx := gg.NewContext(int(menuWidth), int(menuHeight))
-	   ctx.DrawRectangle(0, 0, menuWidth, menuHeight)
-	   ctx.SetHexColor("#eee")
-	   ctx.Fill()
+	ctx.DrawRectangle(0, 0, menuWidth, menuHeight)
+	ctx.SetHexColor("#eee")
+	ctx.Fill()
 
-	   font, _ := truetype.Parse(assets.OpenSans(400))
-	   ctx.SetHexColor("#222")
-	   ctx.SetFont(font, 16)
+	font, _ := truetype.Parse(assets.OpenSans(400))
+	ctx.SetHexColor("#222")
+	ctx.SetFont(font, 16)
 
-	   textLeft := 4.
+	textLeft := 4.
 
-	   	for idx, entry := range window.contextMenu.entries {
-	   		top, left := 16+float64(idx*20), 0.
+	for idx, entry := range contextMenu.entries {
+		top, left := 16+float64(idx*20), 0.
 
-	   		entry.setCoords(menuTop+top-16, menuLeft+left, menuWidth, 20)
-	   		ctx.DrawString(prepEntry(ctx, entry.entryText, menuWidth-textLeft), textLeft, top)
-	   		ctx.Fill()
-	   	}
+		entry.setCoords(menuTop+top-16, menuLeft+left, menuWidth, 20)
+		ctx.DrawString(prepEntry(ctx, entry.entryText, menuWidth-textLeft), textLeft, top)
+		ctx.Fill()
+	}
 
-	   ctx.DrawRectangle(0, 0, menuWidth, menuHeight)
-	   ctx.SetHexColor("#ddd")
-	   ctx.Stroke()
+	ctx.DrawRectangle(0, 0, menuWidth, menuHeight)
+	ctx.SetHexColor("#ddd")
+	ctx.Stroke()
 
-	   overlay := extractOverlay(
-
-	   	ctx.Image().(*image.RGBA),
-	   	image.Point{
-	   		int(menuLeft),
-	   		int(menuTop),
-	   	})
-
-	   window.SetContextMenuOverlay(overlay)
-	*/
 }
 
 func (window *Window) SetContextMenuOverlay(overlay *Overlay) {
@@ -106,30 +111,29 @@ func (window *Window) SetContextMenuOverlay(overlay *Overlay) {
 	window.AddOverlay(overlay)
 }
 
-func (window *Window) refreshContextMenu() {
-	/*
-	   ctx := gg.NewContextForRGBA(window.contextMenu.overlay.buffer)
-	   menuWidth := float64(window.contextMenu.overlay.buffer.Rect.Max.X)
-	   textLeft := 4.
-	   ctx.SetHexColor("#eee")
-	   ctx.Clear()
+func (cm *contextMenu) Render(s Surface, time uint32) {
+	ctx := makeContextFromCairo(s)
 
-	   font, _ := truetype.Parse(assets.OpenSans(400))
-	   ctx.SetHexColor("#222")
-	   ctx.SetFont(font, 16)
+	menuWidth := float64(s.ImageSurfaceGetWidth())
+	textLeft := 4.
+	ctx.SetHexColor("#eee")
+	ctx.Clear()
 
-	   	for idx, entry := range window.contextMenu.entries {
-	   		if window.contextMenu.selectedEntry == entry {
-	   			ctx.DrawRectangle(0, float64(idx*20), menuWidth, 20)
-	   			ctx.SetHexColor("#ccc")
-	   			ctx.Fill()
-	   		}
+	font, _ := truetype.Parse(assets.OpenSans(400))
+	ctx.SetHexColor("#222")
+	ctx.SetFont(font, 16)
 
-	   		ctx.SetHexColor("#222")
-	   		ctx.DrawString(prepEntry(ctx, entry.entryText, menuWidth-textLeft), textLeft, 16+float64(idx*20))
-	   		ctx.Fill()
-	   	}
-	*/
+	for idx, entry := range cm.entries {
+		if cm.selectedEntry == entry {
+			ctx.DrawRectangle(0, float64(idx*20), menuWidth, 20)
+			ctx.SetHexColor("#ccc")
+			ctx.Fill()
+		}
+
+		ctx.SetHexColor("#222")
+		ctx.DrawString(prepEntry(ctx, entry.entryText, menuWidth-textLeft), textLeft, 16+float64(idx*20))
+		ctx.Fill()
+	}
 }
 
 func extractOverlay(width, height float64, postion image.Point) *Overlay {
@@ -149,14 +153,14 @@ func extractOverlay(width, height float64, postion image.Point) *Overlay {
 
 func (window *Window) SelectEntry(entry *menuEntry) {
 	window.contextMenu.selectedEntry = entry
-	window.refreshContextMenu()
+	//window.PrepareContextMenu()
 	window.SetCursor(PointerCursor)
 }
 
 func (window *Window) DeselectEntries() {
 	if window.contextMenu.selectedEntry != nil {
 		window.contextMenu.selectedEntry = nil
-		window.refreshContextMenu()
+		//window.PrepareContextMenu()
 		window.SetCursor(DefaultCursor)
 	}
 }

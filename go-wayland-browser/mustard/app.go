@@ -23,6 +23,7 @@ func (app *App) AddWindow(w *Window) {
 	w.window.SetBufferType(window.BufferTypeShm)
 	w.rootFrame.widget = w.window.AddWidget(w.rootFrame)
 	w.window.SetKeyboardHandler(w.rootFrame)
+	w.window.Display.SetSeatHandler(w)
 
 	// hack, we reuse these variables for the initial window size
 	w.rootFrame.widget.ScheduleResize(int32(w.cursorX), int32(w.cursorY))

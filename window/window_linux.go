@@ -214,6 +214,183 @@ type ResizeHandler interface {
 	MinimumSize() (int32, int32)
 }
 
+type Renderer interface {
+	Render(cairo.Surface, uint32)
+}
+
+type Popup struct {
+	Popup    *zxdg.Popup
+	xdgsurf  *zxdg.Surface
+	Display  *Display
+	rect     Rectangle
+	surf     *wl.Surface
+	callback *wl.Callback
+
+	Renderer Renderer
+
+	mainSurface *surface
+}
+
+func (w *Popup) Destroy() {
+	w.Popup.Destroy()
+	w.xdgsurf.Destroy()
+	w.surf.Destroy()
+}
+
+func (w *Popup) HandleCallbackDone(ev wl.CallbackDoneEvent) {
+
+	w.Destroy()
+}
+
+func (w *Popup) HandleBufferRelease(ev wl.BufferReleaseEvent) {
+	w.BufferRelease(ev.B)
+}
+
+func (w *Popup) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
+
+	w.SurfaceConfigure(ev.Serial)
+}
+func (w *Popup) HandlePopupConfigure(ev zxdg.PopupConfigureEvent) {
+
+	w.PopupConfigure(ev.X, ev.Y, ev.Width, ev.Height)
+}
+func (w *Popup) HandlePopupPopupDone(ev zxdg.PopupPopupDoneEvent) {
+
+	w.PopupPopupDone()
+}
+func (w *Popup) BufferRelease(buffer *wl.Buffer) {
+
+}
+
+func (w *Popup) PopupConfigure(x, y, width, height int32) {
+	//wind := (*Window2)(unsafe.Pointer(w.window))
+	//xdgsurf := (*xdg.Surface)(unsafe.Pointer(wind.xdgSurface))
+
+	println(x, y, width, height)
+
+	w.rect.X = 0
+	w.rect.Y = 0
+	w.rect.Width = width
+	w.rect.Height = height
+
+}
+func (w *Popup) PopupPopupDone() {
+	//wind := (*Window2)(unsafe.Pointer(w.window))
+	//xdgsurf := (*xdg.Surface)(unsafe.Pointer(wind.xdgSurface))
+
+	println("popup done")
+
+}
+func (w *Popup) SurfaceConfigure(serial uint32) {
+	//wind := (*Window2)(unsafe.Pointer(w.window))
+	//xdgsurf := (*xdg.Surface)(unsafe.Pointer(wind.xdgSurface))
+
+	println("surface configure", serial)
+	w.xdgsurf.AckConfigure(serial)
+
+	w.mainSurface = &surface{}
+
+	w.mainSurface.surface_ = w.surf
+	w.mainSurface.bufferScale = 1
+
+	w.mainSurface.allocation = w.rect
+
+	w.popupCreateSurface(w.mainSurface, 0)
+
+	w.Renderer.Render(w.mainSurface.cairoSurface, 0)
+
+	surfaceFlush(w.mainSurface)
+
+
+}
+
+//line 1462
+func (w *Popup) popupCreateSurface(surface *surface, flags uint32) {
+	var Display = w.Display
+	var allocation = surface.allocation
+
+	if surface.toysurface == nil {
+		var toy = shmSurfaceCreate(Display, surface.surface_, flags, &allocation)
+
+		surface.toysurface = &toy
+	}
+
+	surface.cairoSurface = (*surface.toysurface).prepare(
+		0, 0,
+		allocation.Width, allocation.Height, flags,
+		uint32(surface.bufferTransform), surface.bufferScale)
+
+}
+
+//line 2036
+func (p *Popup) PopupGetSurface() cairo.Surface {
+	if p == nil {
+		return nil
+	}
+	var mainSurface = p.mainSurface
+	if mainSurface == nil {
+		return nil
+	}
+	var cairoSurface = mainSurface.cairoSurface
+	if cairoSurface == nil {
+		return nil
+	}
+	return cairoSurface.Reference()
+}
+
+func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height uint32) *Popup {
+	disp := w.Display
+	shell := disp.xdgShell
+
+	p := &Popup{}
+
+	surface := surfaceCreate(w)
+
+	_ = shell
+	_ = surface
+
+	// Create a positioner
+	positioner, err := shell.CreatePositioner()
+	if err != nil {
+		panic(err.Error())
+	}
+	positioner.SetSize(int32(width), int32(height))
+	positioner.SetAnchor(zxdg.PositionerAnchorTop)
+
+	// Set up the xdg_surface
+	xdgSurface, err := shell.GetSurface(surface.surface_)
+	if err != nil {
+		panic(err.Error())
+
+	}
+	_ = xdgSurface
+	xdgSurface.AddListener(p)
+
+	p.xdgsurf = (*zxdg.Surface)((xdgSurface))
+
+	// Get the popup
+	popup, err := p.xdgsurf.GetPopup(w.xdgSurface, positioner)
+	if err != nil {
+		panic(err.Error())
+
+	}
+
+	positioner.Destroy()
+
+	popup.AddConfigureHandler(p)
+	popup.AddPopupDoneHandler(p)
+
+	popup.Grab(seat, clickSerial)
+
+	surface.surface_.Commit()
+
+	p.Popup = popup
+	p.Display = disp
+	p.surf = surface.surface_
+
+	return p
+}
+
 type Window struct {
 	Display          *Display
 	windowOutputList [2]uintptr
@@ -828,7 +1005,13 @@ func (input *Input) PointerEnter(
 
 	var Window = input.Display.surface2window[surface]
 
-	if surface != Window.mainSurface.surface_ {
+	if Window == nil || surface != Window.mainSurface.surface_ {
+		input.Display.serial = 0
+		input.pointerEnterSerial = 0
+		input.pointerFocus = Window
+
+		input.sx = 0
+		input.sy = 0
 		//		DBG("Ignoring Input event from subsurface %p\n", surface);
 		return
 	}
@@ -2149,7 +2332,6 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 	case "wl_subcompositor":
 
 	default:
-
 	}
 	if d.globalHandler != nil {
 		d.globalHandler.HandleGlobal(d, id, iface, version, d.userData)

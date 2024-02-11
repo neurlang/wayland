@@ -9,11 +9,15 @@ import cairo "github.com/neurlang/wayland/cairoshim"
 type Surface = cairo.Surface
 
 func makeContextFromCairo(s cairo.Surface) *gg.Context {
+	if s == nil {
+		println("no cairo")
+		return gg.NewContext(0, 0)
+	}
+
 	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
 	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
 	return context
 }
-
 
 func copyWidgetToBuffer(widget Widget, src image.Image) {
 }
