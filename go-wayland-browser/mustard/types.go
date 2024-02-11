@@ -25,6 +25,9 @@ type Overlay struct {
 	position image.Point
 
 	popup *window.Popup
+
+	window *Window
+	widget *window.Widget
 }
 
 type contextMenu struct {

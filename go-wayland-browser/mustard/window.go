@@ -125,18 +125,22 @@ func (w *Window) Name(i *window.Input, seat *wl.Seat, name string) {
 // AddOverlay adds an overlay to the window
 func (w *Window) AddOverlay(content *Overlay) {
 
-	popup := w.window.CreatePopup(w.seat, w.clickSerial, uint32(content.width), uint32(content.height))
+	popup := w.window.CreatePopup(w.seat, w.clickSerial,
+		uint32(content.width), uint32(content.height),
+		uint32(content.position.X), uint32(content.position.Y))
 
 	content.popup = popup
-	popup.Renderer = w.contextMenu
+	popup.Popuper = w.contextMenu
 
 	w.hasActiveOverlay = true
+	content.window = w
 }
 
 // RemoveOverlay removes the overlay from the window
 func (w *Window) RemoveOverlay(o *Overlay) {
 	o.popup.Destroy()
 
+	o.window = nil
 	w.hasActiveOverlay = false
 }
 

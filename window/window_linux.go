@@ -214,8 +214,16 @@ type ResizeHandler interface {
 	MinimumSize() (int32, int32)
 }
 
-type Renderer interface {
+type Popuper interface {
 	Render(cairo.Surface, uint32)
+	Done()
+	Configure() *Widget
+}
+
+//line 1675
+func (Window *Window) AddPopupWidget(p *Popup, data WidgetHandler) *Widget {
+	var w = widgetCreate(Window, p.mainSurface, data)
+	return w
 }
 
 type Popup struct {
@@ -226,7 +234,7 @@ type Popup struct {
 	surf     *wl.Surface
 	callback *wl.Callback
 
-	Renderer Renderer
+	Popuper Popuper
 
 	mainSurface *surface
 }
@@ -273,12 +281,31 @@ func (w *Popup) PopupConfigure(x, y, width, height int32) {
 	w.rect.Width = width
 	w.rect.Height = height
 
+	w.mainSurface = &surface{}
+	w.mainSurface.allocation = Rectangle{x, y, width, height}
+
+	widget := w.Popuper.Configure()
+
+	for _, input := range w.Display.inputList {
+		input.grab = widget
+	}
+
 }
 func (w *Popup) PopupPopupDone() {
 	//wind := (*Window2)(unsafe.Pointer(w.window))
 	//xdgsurf := (*xdg.Surface)(unsafe.Pointer(wind.xdgSurface))
 
 	println("popup done")
+	//w.Popup.Destroy()
+	//w.xdgsurf.Destroy()
+	//w.surf.Destroy()
+	//surfaceDestroy(w.mainSurface)
+
+	w.Popuper.Done()
+
+	for _, input := range w.Display.inputList {
+		input.grab = nil
+	}
 
 }
 func (w *Popup) SurfaceConfigure(serial uint32) {
@@ -297,11 +324,9 @@ func (w *Popup) SurfaceConfigure(serial uint32) {
 
 	w.popupCreateSurface(w.mainSurface, 0)
 
-	w.Renderer.Render(w.mainSurface.cairoSurface, 0)
+	w.Popuper.Render(w.mainSurface.cairoSurface, 0)
 
 	surfaceFlush(w.mainSurface)
-
-
 }
 
 //line 1462
@@ -338,7 +363,7 @@ func (p *Popup) PopupGetSurface() cairo.Surface {
 	return cairoSurface.Reference()
 }
 
-func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height uint32) *Popup {
+func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uint32) *Popup {
 	disp := w.Display
 	shell := disp.xdgShell
 
@@ -354,8 +379,10 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height uint32) *
 	if err != nil {
 		panic(err.Error())
 	}
+
+	positioner.SetOffset(int32(x), int32(y))
 	positioner.SetSize(int32(width), int32(height))
-	positioner.SetAnchor(zxdg.PositionerAnchorTop)
+	positioner.SetAnchor(zxdg.PositionerAnchorTopLeft)
 
 	// Set up the xdg_surface
 	xdgSurface, err := shell.GetSurface(surface.surface_)
@@ -387,6 +414,8 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height uint32) *
 	p.Popup = popup
 	p.Display = disp
 	p.surf = surface.surface_
+
+	disp.surface2window[surface.surface_] = w
 
 	return p
 }
@@ -1006,12 +1035,7 @@ func (input *Input) PointerEnter(
 	var Window = input.Display.surface2window[surface]
 
 	if Window == nil || surface != Window.mainSurface.surface_ {
-		input.Display.serial = 0
-		input.pointerEnterSerial = 0
-		input.pointerFocus = Window
 
-		input.sx = 0
-		input.sy = 0
 		//		DBG("Ignoring Input event from subsurface %p\n", surface);
 		return
 	}
@@ -2503,7 +2527,7 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	var cursor int
 
 	if Window == nil {
-		return
+		goto end
 	}
 
 	Input.sx = sx
@@ -2526,6 +2550,7 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 		inputSetFocusWidget(Input, Widget, sx, sy)
 
 	}
+end:
 
 	if Input.grab != nil {
 		Widget = Input.grab

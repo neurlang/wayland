@@ -6,6 +6,8 @@ import (
 	"github.com/goki/freetype/truetype"
 	"image"
 )
+import window "github.com/neurlang/wayland/window"
+import wl "github.com/neurlang/wayland/wl"
 
 func (window *Window) EnableContextMenus() {
 	window.contextMenu = &contextMenu{
@@ -52,17 +54,14 @@ func prepEntry(ctx *gg.Context, entry string, width float64) string {
 
 func (window *Window) PrepareContextMenu() {
 
-	menuLeft := float64(0)
-	menuTop := float64(0)
-
-	//  menuWidth := float64(200)
-	// menuHeight := float64(len(window.contextMenu.entries) * 20)
+	menuWidth := float64(200)
+	menuHeight := float64(len(window.contextMenu.entries) * 20)
 
 	overlay := extractOverlay(
-		100, 100,
+		menuWidth, menuHeight,
 		image.Point{
-			int(menuLeft),
-			int(menuTop),
+			int(window.cursorX),
+			int(window.cursorY),
 		})
 
 	window.SetContextMenuOverlay(overlay)
@@ -70,6 +69,7 @@ func (window *Window) PrepareContextMenu() {
 func (window *Window) DrawContextMenu() {
 	window.PrepareContextMenu()
 	window.contextMenu.DrawContextMenu()
+
 }
 func (contextMenu *contextMenu) DrawContextMenu() {
 
@@ -109,8 +109,19 @@ func (contextMenu *contextMenu) DrawContextMenu() {
 func (window *Window) SetContextMenuOverlay(overlay *Overlay) {
 	window.contextMenu.overlay = overlay
 	window.AddOverlay(overlay)
-}
 
+}
+func (cm *contextMenu) Configure() *window.Widget {
+	overlay := cm.overlay
+	overlay.widget = overlay.window.window.AddPopupWidget(overlay.popup, overlay)
+	return overlay.widget
+}
+func (cm *contextMenu) Done() {
+	cm.entries = nil
+	cm.selectedEntry = nil
+	cm.overlay.window.DestroyContextMenu()
+
+}
 func (cm *contextMenu) Render(s Surface, time uint32) {
 	ctx := makeContextFromCairo(s)
 
@@ -141,8 +152,8 @@ func extractOverlay(width, height float64, postion image.Point) *Overlay {
 		ref:    "contextMenu",
 		active: true,
 
-		top:  float64(postion.Y),
-		left: float64(postion.X),
+		top:  0,
+		left: 0,
 
 		width:  width,
 		height: height,
@@ -184,4 +195,78 @@ func (entry *menuEntry) getCoords() (float64, float64, float64, float64) {
 func (entry *menuEntry) setCoords(top, left, width, height float64) {
 	entry.top, entry.left = top, left
 	entry.width, entry.height = width, height
+}
+
+func (overlay *Overlay) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
+}
+func (overlay *Overlay) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
+}
+func (overlay *Overlay) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+	println("axis stop", axis)
+}
+func (overlay *Overlay) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+	if axis == 0 {
+		overlay.window.ProcessScroll(0, -float64(discrete))
+	} else {
+		overlay.window.ProcessScroll(-float64(discrete), 0)
+	}
+}
+func (overlay *Overlay) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
+
+	overlay.window.cursorX = float64(x)
+	overlay.window.cursorY = float64(y)
+
+	for _, f := range overlay.window.pointerPositionEventListeners {
+
+		f(float64(x), float64(y))
+	}
+
+	overlay.window.ProcessPointerPosition()
+
+	return overlay.window.cursor
+}
+func (overlay *Overlay) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
+
+	if state == 1 {
+		overlay.window.clickSerial = overlay.window.window.Display.GetSerial()
+		return
+	}
+
+	overlay.window.ProcessPointerClick(int(button))
+}
+
+func (overlay *Overlay) PointerFrame(widget *window.Widget, input *window.Input) {
+}
+func (overlay *Overlay) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
+
+	overlay.window.cursorX = float64(x)
+	overlay.window.cursorY = float64(y)
+
+	for _, f := range overlay.window.pointerPositionEventListeners {
+
+		f(float64(x), float64(y))
+	}
+
+	overlay.window.ProcessPointerPosition()
+
+}
+func (overlay *Overlay) Leave(widget *window.Widget, input *window.Input) {
+	println("leave")
+}
+func (overlay *Overlay) Redraw(widget *window.Widget) {
+}
+func (overlay *Overlay) Resize(widget *window.Widget, width int32, height int32, pwidth int32, pheight int32) {
+}
+
+func (overlay *Overlay) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
+}
+func (overlay *Overlay) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
+	println(x, y)
+}
+func (overlay *Overlay) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+	println(x, y)
+}
+func (overlay *Overlay) TouchFrame(widget *window.Widget, input *window.Input) {
+}
+func (overlay *Overlay) TouchCancel(widget *window.Widget, width int32, height int32) {
 }
