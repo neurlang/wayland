@@ -4,12 +4,9 @@ import (
 	"log"
 
 	gg "github.com/danfragoso/thdwb/gg"
-
-	"image"
-
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateImageWidget - Creates and returns a new Image Widget
+
+// CreateImageWidget - Creates and returns a new Image Widget
 func CreateImageWidget(path []byte) *ImageWidget {
 	var widgets []Widget
 
@@ -36,24 +33,22 @@ func CreateImageWidget(path []byte) *ImageWidget {
 	}
 }
 
-//SetWidth - Sets the label width
+// SetWidth - Sets the label width
 func (label *ImageWidget) SetWidth(width float64) {
 	label.box.width = width
 	label.fixedWidth = true
 	label.RequestReflow()
 }
 
-//SetHeight - Sets the label height
+// SetHeight - Sets the label height
 func (label *ImageWidget) SetHeight(height float64) {
 	label.box.height = height
 	label.fixedHeight = true
 	label.RequestReflow()
 }
 
-func (im *ImageWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
-
+func (im *ImageWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 
 	top, left, _, _ := im.computedBox.GetCoords()
 	context.DrawImage(im.img, int(left)+15, int(top)+3)

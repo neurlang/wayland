@@ -4,12 +4,9 @@ import (
 	assets "github.com/danfragoso/thdwb/assets"
 
 	"github.com/goki/freetype/truetype"
-
-	gg "github.com/danfragoso/thdwb/gg"
-	"image"
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateInputWidget - Creates and returns a new Input Widget
+
+// CreateInputWidget - Creates and returns a new Input Widget
 func CreateInputWidget() *InputWidget {
 	var widgets []Widget
 	font, _ := truetype.Parse(assets.OpenSans(400))
@@ -34,21 +31,21 @@ func CreateInputWidget() *InputWidget {
 	}
 }
 
-//SetWidth - Sets the input width
+// SetWidth - Sets the input width
 func (input *InputWidget) SetWidth(width float64) {
 	input.box.width = width
 	input.fixedWidth = true
 	input.RequestReflow()
 }
 
-//SetHeight - Sets the input height
+// SetHeight - Sets the input height
 func (input *InputWidget) SetHeight(height float64) {
 	input.box.height = height
 	input.fixedHeight = true
 	input.RequestReflow()
 }
 
-//SetFontSize - Sets the input font size
+// SetFontSize - Sets the input font size
 func (input *InputWidget) SetFontSize(fontSize float64) {
 	input.fontSize = fontSize
 	input.needsRepaint = true
@@ -58,7 +55,7 @@ func (input *InputWidget) SetReturnCallback(returnCallback func()) {
 	input.returnCallback = returnCallback
 }
 
-//SetFontColor - Sets the input font color
+// SetFontColor - Sets the input font color
 func (input *InputWidget) SetFontColor(fontColor string) {
 	if len(fontColor) > 0 && string(fontColor[0]) == "#" {
 		input.fontColor = fontColor
@@ -66,13 +63,13 @@ func (input *InputWidget) SetFontColor(fontColor string) {
 	}
 }
 
-//SetFontColor - Sets the input font color
+// SetFontColor - Sets the input font color
 func (input *InputWidget) SetValue(value string) {
 	input.value = value
 	input.needsRepaint = true
 }
 
-//SetFontColor - Sets the input font color
+// SetFontColor - Sets the input font color
 func (input *InputWidget) GetValue() string {
 	return input.value
 }
@@ -81,7 +78,7 @@ func (input *InputWidget) GetCursorPos() int {
 	return input.cursorPosition
 }
 
-//SetBackgroundColor - Sets the input background color
+// SetBackgroundColor - Sets the input background color
 func (input *InputWidget) SetBackgroundColor(backgroundColor string) {
 	if len(backgroundColor) > 0 && string(backgroundColor[0]) == "#" {
 		input.backgroundColor = backgroundColor
@@ -89,9 +86,8 @@ func (input *InputWidget) SetBackgroundColor(backgroundColor string) {
 	}
 }
 
-func (input *InputWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+func (input *InputWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 
 	input.padding = 4
 	top, left, width, height := input.computedBox.GetCoords()
@@ -148,7 +144,6 @@ func (input *InputWidget) render(s cairo.Surface, time uint32) {
 
 	context.Fill()
 
-
 	if input.active {
 		context.SetHexColor("#000")
 
@@ -166,8 +161,6 @@ func (input *InputWidget) render(s cairo.Surface, time uint32) {
 
 		context.Fill()
 	}
-
-
 
 	context.SetHexColor("#000")
 	context.SetLineWidth(.4)

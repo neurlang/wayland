@@ -2,10 +2,9 @@ package mustard
 
 import window "github.com/neurlang/wayland/window"
 import wl "github.com/neurlang/wayland/wl"
-import cairo "github.com/neurlang/wayland/cairoshim"
-import	gg "github.com/danfragoso/thdwb/gg"
-import	"image"
-//CreateFrame - Creates and returns a new Frame
+import "github.com/neurlang/wayland/external/swizzle"
+
+// CreateFrame - Creates and returns a new Frame
 func CreateFrame(orientation FrameOrientation) *Frame {
 	var widgets []Widget
 
@@ -23,7 +22,7 @@ func CreateFrame(orientation FrameOrientation) *Frame {
 	}
 }
 
-//SetBackgroundColor - Sets the frame background color
+// SetBackgroundColor - Sets the frame background color
 func (frame *Frame) SetBackgroundColor(backgroundColor string) {
 	if len(backgroundColor) > 0 && string(backgroundColor[0]) == "#" {
 		frame.backgroundColor = backgroundColor
@@ -31,27 +30,26 @@ func (frame *Frame) SetBackgroundColor(backgroundColor string) {
 	}
 }
 
-//SetWidth - Sets the frame width
+// SetWidth - Sets the frame width
 func (frame *Frame) SetWidth(width float64) {
 	frame.box.width = width
 	frame.fixedWidth = true
 	frame.RequestReflow()
 }
 
-//SetHeight - Sets the frame height
+// SetHeight - Sets the frame height
 func (frame *Frame) SetHeight(height float64) {
 	frame.box.height = height
 	frame.fixedHeight = true
 	frame.RequestReflow()
 }
 
-//SetHeight - Sets the frame height
+// SetHeight - Sets the frame height
 func (frame *Frame) GetHeight() float64 {
 	return frame.box.height
 }
 
 // kb
-
 
 func (frame *Frame) Key(
 	win *window.Window,
@@ -89,7 +87,7 @@ func (frame *Frame) Key(
 				window.activeInput.needsRepaint = true
 			}
 		}
-		break
+		return
 	case 1:
 		if action == Release {
 			window.DestroyContextMenu()
@@ -117,12 +115,12 @@ func (frame *Frame) Key(
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("left")
 		}
-		break
+		return
 	case 106:
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("right")
 		}
-		break
+		return
 	case 47:
 		if action == Release && input.GetModifiers()&ModControlMask != 0 {
 			if window.activeInput != nil {
@@ -143,33 +141,28 @@ func (frame *Frame) Key(
 		break
 	case 54:
 		break
-	default:
-		if action == Release {
-			break
-		}
-		if window.activeInput != nil {
-			inputVal, cursorPos := window.activeInput.value, window.activeInput.cursorPosition
-
-			window.activeInput.value = inputVal[:len(inputVal)+cursorPos] + string(entered) + inputVal[len(inputVal)+cursorPos:]
-			window.activeInput.needsRepaint = true
-		}
-		break
 	}
 
+	if action == Release {
+		return
+	}
+	if window.activeInput != nil {
+		inputVal, cursorPos := window.activeInput.value, window.activeInput.cursorPosition
 
+		window.activeInput.value = inputVal[:len(inputVal)+cursorPos] + string(entered) + inputVal[len(inputVal)+cursorPos:]
+		window.activeInput.needsRepaint = true
+	}
 
 }
 func (frame *Frame) Focus(window *window.Window, device *window.Input) {
 
-
 }
+
 //end kb
 
 func (frame *Frame) PointerFrame(widget *window.Widget, input *window.Input) {
 }
 func (frame *Frame) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
-	println("enter", x, y)
-
 	frame.window.cursorX = float64(x)
 	frame.window.cursorY = float64(y)
 
@@ -179,7 +172,6 @@ func (frame *Frame) Enter(widget *window.Widget, input *window.Input, x float32,
 	}
 
 	frame.window.ProcessPointerPosition()
-
 
 }
 func (frame *Frame) Leave(widget *window.Widget, input *window.Input) {
@@ -206,21 +198,15 @@ func (frame *Frame) Button(widget *window.Widget, input *window.Input, time uint
 	}
 
 	frame.window.ProcessPointerClick(int(button))
-
-	println("button", button, state)
 }
 func (frame *Frame) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
-	println("axis", axis, value)
 }
 func (frame *Frame) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
-	println("axis source", source)
 }
 func (frame *Frame) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
 	println("axis stop", axis)
 }
 func (frame *Frame) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
-	println("axis discrete", axis, discrete)
-
 	if axis == 0 {
 		frame.window.ProcessScroll(0, -float64(discrete))
 	} else {
@@ -228,16 +214,14 @@ func (frame *Frame) AxisDiscrete(widget *window.Widget, input *window.Input, axi
 	}
 }
 
-func (frame *Frame) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
-	
+func (frame *Frame) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
+
 	top, left, width, height := frame.computedBox.GetCoords()
 
 	context.SetHexColor(frame.backgroundColor)
 	context.DrawRectangle(float64(left), float64(top), float64(width), float64(height))
 	context.Fill()
-
 
 	childrenLen := len(frame.widgets)
 	if childrenLen > 0 {
@@ -253,7 +237,6 @@ func (frame *Frame) render(s cairo.Surface, time uint32) {
 
 func (frame *Frame) Redraw(widget *window.Widget) {
 
-
 	var time = (uint32)(widget.WidgetGetLastTime())
 
 	var surface = frame.window.window.WindowGetSurface()
@@ -261,6 +244,7 @@ func (frame *Frame) Redraw(widget *window.Widget) {
 	if surface != nil {
 
 		frame.render(surface, time)
+		swizzle.BGRA(surface.ImageSurfaceGetData())
 		surface.Destroy()
 	}
 

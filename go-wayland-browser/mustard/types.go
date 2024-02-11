@@ -5,7 +5,6 @@ import (
 
 	gg "github.com/danfragoso/thdwb/gg"
 
-
 	"github.com/goki/freetype/truetype"
 )
 
@@ -24,7 +23,6 @@ type Overlay struct {
 	height float64
 
 	position image.Point
-
 }
 
 type contextMenu struct {
@@ -126,7 +124,6 @@ const (
 	HandCursor cursorType = 11
 	//IbeamCursor
 	IbeamCursor cursorType = 10
-
 )
 
 type widgetType int
@@ -167,7 +164,7 @@ const (
 	MouseRight
 )
 
-//Frame - Layout frame type
+// Frame - Layout frame type
 type Frame struct {
 	baseWidget
 

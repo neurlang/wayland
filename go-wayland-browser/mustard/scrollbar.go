@@ -2,12 +2,10 @@ package mustard
 
 import (
 	assets "github.com/danfragoso/thdwb/assets"
-	gg "github.com/danfragoso/thdwb/gg"
-	"image"
 	"github.com/goki/freetype/truetype"
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateScrollBarWidget - Creates and returns a new ScrollBar Widget
+
+// CreateScrollBarWidget - Creates and returns a new ScrollBar Widget
 func CreateScrollBarWidget(orientation ScrollBarOrientation) *ScrollBarWidget {
 	var widgets []Widget
 	font, _ := truetype.Parse(assets.OpenSans(400))
@@ -30,21 +28,21 @@ func CreateScrollBarWidget(orientation ScrollBarOrientation) *ScrollBarWidget {
 	}
 }
 
-//SetWidth - Sets the scrollBar width
+// SetWidth - Sets the scrollBar width
 func (scrollBar *ScrollBarWidget) SetWidth(width float64) {
 	scrollBar.box.width = width
 	scrollBar.fixedWidth = true
 	scrollBar.RequestReflow()
 }
 
-//SetHeight - Sets the scrollBar height
+// SetHeight - Sets the scrollBar height
 func (scrollBar *ScrollBarWidget) SetHeight(height float64) {
 	scrollBar.box.height = height
 	scrollBar.fixedHeight = true
 	scrollBar.RequestReflow()
 }
 
-//SetBackgroundColor - Sets the scrollBar background color
+// SetBackgroundColor - Sets the scrollBar background color
 func (scrollBar *ScrollBarWidget) SetTrackColor(backgroundColor string) {
 	if len(backgroundColor) > 0 && string(backgroundColor[0]) == "#" {
 		scrollBar.backgroundColor = backgroundColor
@@ -72,9 +70,8 @@ func (scrollBar *ScrollBarWidget) SetScrollerOffset(scrollerOffset float64) {
 	scrollBar.needsRepaint = true
 }
 
-func (scrollBar *ScrollBarWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+func (scrollBar *ScrollBarWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 
 	top := float64(scrollBar.computedBox.top)
 	left := float64(scrollBar.computedBox.left)
@@ -95,6 +92,5 @@ func (scrollBar *ScrollBarWidget) render(s cairo.Surface, time uint32) {
 		context.DrawRectangle(left+1, top-(thumbOffset/scrollJump), width-2, thumbSize)
 		context.Fill()
 	}
-
 
 }

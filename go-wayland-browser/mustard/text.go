@@ -4,11 +4,9 @@ import (
 	assets "github.com/danfragoso/thdwb/assets"
 	gg "github.com/danfragoso/thdwb/gg"
 	"github.com/goki/freetype/truetype"
-
-	"image"
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateTextWidget - Creates and returns a new Text Widget
+
+// CreateTextWidget - Creates and returns a new Text Widget
 func CreateTextWidget(content string) *TextWidget {
 	var widgets []Widget
 	font, _ := truetype.Parse(assets.OpenSans(400))
@@ -34,39 +32,39 @@ func CreateTextWidget(content string) *TextWidget {
 	}
 }
 
-//SetWidth - Sets the text width
+// SetWidth - Sets the text width
 func (text *TextWidget) SetWidth(width float64) {
 	text.box.width = width
 	text.fixedWidth = true
 	text.RequestReflow()
 }
 
-//SetHeight - Sets the text height
+// SetHeight - Sets the text height
 func (text *TextWidget) SetHeight(height float64) {
 	text.box.height = height
 	text.fixedHeight = true
 	text.RequestReflow()
 }
 
-//SetFontSize - Sets the text font size
+// SetFontSize - Sets the text font size
 func (text *TextWidget) SetFontSize(fontSize float64) {
 	text.fontSize = fontSize
 	text.needsRepaint = true
 }
 
-//SetContent - Sets the text content
+// SetContent - Sets the text content
 func (text *TextWidget) SetContent(content string) {
 	text.content = content
 	text.needsRepaint = true
 	text.RequestReflow()
 }
 
-//GetContent - Gets the text content
+// GetContent - Gets the text content
 func (text *TextWidget) GetContent() string {
 	return text.content
 }
 
-//SetFontColor - Sets the text font color
+// SetFontColor - Sets the text font color
 func (text *TextWidget) SetFontColor(fontColor string) {
 	if len(fontColor) > 0 && string(fontColor[0]) == "#" {
 		text.fontColor = fontColor
@@ -74,7 +72,7 @@ func (text *TextWidget) SetFontColor(fontColor string) {
 	}
 }
 
-//SetBackgroundColor - Sets the text background color
+// SetBackgroundColor - Sets the text background color
 func (text *TextWidget) SetBackgroundColor(backgroundColor string) {
 	if len(backgroundColor) > 0 && string(backgroundColor[0]) == "#" {
 		text.backgroundColor = backgroundColor
@@ -82,9 +80,8 @@ func (text *TextWidget) SetBackgroundColor(backgroundColor string) {
 	}
 }
 
-func (text *TextWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+func (text *TextWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 	top, left, width, height := text.computedBox.GetCoords()
 
 	context.SetFont(text.font, text.fontSize)

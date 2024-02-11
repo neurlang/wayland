@@ -2,13 +2,9 @@ package mustard
 
 import (
 	gg "github.com/danfragoso/thdwb/gg"
-
-
-	"image"
-
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateImageWidget - Creates and returns a new Image Widget
+
+// CreateImageWidget - Creates and returns a new Image Widget
 func CreateCanvasWidget(renderer func(*CanvasWidget)) *CanvasWidget {
 	var widgets []Widget
 
@@ -16,10 +12,8 @@ func CreateCanvasWidget(renderer func(*CanvasWidget)) *CanvasWidget {
 		baseWidget: baseWidget{
 			needsRepaint: true,
 			widgets:      widgets,
-			widgetType: canvasWidget,
-			cursor: ArrowCursor,
-
-
+			widgetType:   canvasWidget,
+			cursor:       ArrowCursor,
 
 			backgroundColor: "#fff",
 		},
@@ -31,14 +25,14 @@ func CreateCanvasWidget(renderer func(*CanvasWidget)) *CanvasWidget {
 	}
 }
 
-//SetWidth - Sets the label width
+// SetWidth - Sets the label width
 func (canvas *CanvasWidget) SetWidth(width float64) {
 	canvas.box.width = width
 	canvas.fixedWidth = true
 	canvas.RequestReflow()
 }
 
-//SetHeight - Sets the label height
+// SetHeight - Sets the label height
 func (canvas *CanvasWidget) SetHeight(height float64) {
 	canvas.box.height = height
 	canvas.fixedHeight = true
@@ -74,9 +68,8 @@ func (cavas *CanvasWidget) SetDrawingRepaint(repaint bool) {
 	cavas.drawingRepaint = repaint
 }
 
-func (ctx *CanvasWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+func (ctx *CanvasWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 	top, left, width, height := ctx.computedBox.GetCoords()
 	currentContextSize := ctx.context.Image().Bounds().Size()
 
@@ -90,29 +83,10 @@ func (ctx *CanvasWidget) render(s cairo.Surface, time uint32) {
 		ctx.renderer(ctx)
 		ctx.drawingRepaint = false
 	}
-
 	ctx.context.DrawImage(ctx.drawingContext.Image(), int(left), ctx.offset)
 	context.DrawImage(ctx.context.Image(), int(left), int(top))
 }
 
 func createCtxScrollBar(ctx *CanvasWidget) {
-/*
-	top, _, width, height := ctx.computedBox.GetCoords()
-	context := ctx.window.context
-
-	//Scroll Track
-	context.SetHexColor("#c1c1c1")
-	context.DrawRectangle(float64(width-12), float64(top), 12, float64(height))
-	context.Fill()
-
-	//Scroll Arrow
-	context.SetHexColor("#ff0000")
-	context.DrawRectangle(float64(width-12), 30, 10, 10)
-	context.Fill()
-
-	//Scroll Thumb
-	context.SetHexColor("#565656")
-	context.DrawRectangle(float64(width-12), float64(top), 12, 200)
-	context.Fill()
-*/
+	// TODO: unused
 }

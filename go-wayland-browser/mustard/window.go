@@ -1,33 +1,33 @@
 package mustard
 
 import (
-	"github.com/neurlang/wayland/window"
 	gg "github.com/danfragoso/thdwb/gg"
+	"github.com/neurlang/wayland/window"
 	"image"
 )
 
 // Define Constants
 func SetGLFWHints() {
-    // implementation here
+	// implementation here
 }
 
 // Implement type App
 type App struct {
-    display *window.Display
+	display *window.Display
 }
 
 type Window struct {
-	window *window.Window
-	contextMenu *contextMenu
-	rootFrame *Frame
-	title string
-	registeredTrees []*TreeWidget
+	window            *window.Window
+	contextMenu       *contextMenu
+	rootFrame         *Frame
+	title             string
+	registeredTrees   []*TreeWidget
 	registeredButtons []*ButtonWidget
 	registeredInputs  []*InputWidget
 
 	cursorX float64
 	cursorY float64
-	cursor int
+	cursor  int
 
 	pointerPositionEventListeners []func(float64, float64)
 	scrollEventListeners          []func(int)
@@ -36,30 +36,22 @@ type Window struct {
 	hasActiveOverlay bool
 
 	selectedWidget Widget
-	activeInput *InputWidget
+	activeInput    *InputWidget
 }
 
-
-
-
-
-
 func (window *Window) SetTitle(str string) {
-    // implementation here
-	window.title = str 
+	window.title = str
 }
 
 // RemoveStaticOverlay removes static overlay from the window
 func (w *Window) RemoveStaticOverlay(str string) {
-    // Dummy implementation
-    println("Removing static overlay from the window", str)
-}
-// RemoveStaticOverlay removes static overlay from the window
-func (w *Window) AddStaticOverlay(str string) {
-    // Dummy implementation
-    println("Adding static overlay from the window", str)
+	// Dummy implementation
 }
 
+// RemoveStaticOverlay removes static overlay from the window
+func (w *Window) AddStaticOverlay(str string) {
+	// Dummy implementation
+}
 
 func (window *Window) RegisterButton(button *ButtonWidget, callback func()) {
 	button.onClick = callback
@@ -103,18 +95,20 @@ func (w *Window) SetCursor(cursorType cursorType) {
 }
 
 // CreateNewWindow creates a new window
-func CreateNewWindow(string, int, int, bool) *Window {
-	w := &Window{} // Returning a dummy window
-	//w.addEvents()
-
+func CreateNewWindow(title string, x int, y int, bb bool) *Window {
+	w := &Window{}
+	w.title = title
+	// hack, we reuse these variables for the initial window size
+	w.cursorX = float64(x)
+	w.cursorY = float64(y)
 	return w
 }
 
-
 // CreateStaticOverlay creates a new static overlay
 func CreateStaticOverlay(string, *gg.Context, image.Point) string {
-    return ""
+	return ""
 }
+
 // AddOverlay adds an overlay to the window
 func (w *Window) AddOverlay(content *Overlay) {
 
@@ -135,47 +129,3 @@ func (window *Window) RequestReflow() {
 	rect := window.rootFrame.widget.GetAllocation()
 	drawRootFrame(window, float64(rect.Width), float64(rect.Height))
 }
-
-
-func (window *Window) addEvents() {
-
-
-/*
-	window.glw.SetSizeCallback(func(w *glfw.Window, width, height int) {
-		xscale, yscale := float32(1), float32(1)
-		if window.hiDPI {
-			xscale, yscale = w.GetContentScale()
-		}
-
-		swidth := int(float32(width) / xscale)
-		sheight := int(float32(height) / yscale)
-
-		window.width, window.height = swidth, sheight
-		window.RecreateContext()
-		//window.RecreateOverlayContext()
-		window.needsReflow = true
-	})
-
-	window.glw.SetCharCallback(func(w *glfw.Window, char rune) {
-	})
-
-	window.glw.SetCloseCallback(func(w *glfw.Window) {
-		os.Exit(0)
-	})
-
-	window.glw.SetKeyCallback(func(w *glfw.Window, key glfw.Key, sc int, action glfw.Action, mods glfw.ModifierKey) {
-		
-	})
-
-	window.glw.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
-		if action == glfw.Release {
-			window.ProcessPointerClick(button)
-		}
-	})
-
-	window.glw.SetScrollCallback(func(w *glfw.Window, x, y float64) {
-		window.ProcessScroll(x, y)
-	})
-*/
-}
-

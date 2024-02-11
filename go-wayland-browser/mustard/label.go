@@ -2,12 +2,10 @@ package mustard
 
 import (
 	assets "github.com/danfragoso/thdwb/assets"
-gg "github.com/danfragoso/thdwb/gg"
-"image"
 	"github.com/goki/freetype/truetype"
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
-//CreateLabelWidget - Creates and returns a new Label Widget
+
+// CreateLabelWidget - Creates and returns a new Label Widget
 func CreateLabelWidget(content string) *LabelWidget {
 	var widgets []Widget
 	font, _ := truetype.Parse(assets.OpenSans(400))
@@ -33,38 +31,38 @@ func CreateLabelWidget(content string) *LabelWidget {
 	}
 }
 
-//SetWidth - Sets the label width
+// SetWidth - Sets the label width
 func (label *LabelWidget) SetWidth(width float64) {
 	label.box.width = width
 	label.fixedWidth = true
 	label.RequestReflow()
 }
 
-//SetHeight - Sets the label height
+// SetHeight - Sets the label height
 func (label *LabelWidget) SetHeight(height float64) {
 	label.box.height = height
 	label.fixedHeight = true
 	label.RequestReflow()
 }
 
-//SetFontSize - Sets the label font size
+// SetFontSize - Sets the label font size
 func (label *LabelWidget) SetFontSize(fontSize float64) {
 	label.fontSize = fontSize
 	label.needsRepaint = true
 }
 
-//SetContent - Sets the label content
+// SetContent - Sets the label content
 func (label *LabelWidget) SetContent(content string) {
 	label.content = content
 	label.needsRepaint = true
 }
 
-//GetContent - Gets the label content
+// GetContent - Gets the label content
 func (label *LabelWidget) GetContent() string {
 	return label.content
 }
 
-//SetFontColor - Sets the label font color
+// SetFontColor - Sets the label font color
 func (label *LabelWidget) SetFontColor(fontColor string) {
 	if len(fontColor) > 0 && string(fontColor[0]) == "#" {
 		label.fontColor = fontColor
@@ -72,7 +70,7 @@ func (label *LabelWidget) SetFontColor(fontColor string) {
 	}
 }
 
-//SetBackgroundColor - Sets the label background color
+// SetBackgroundColor - Sets the label background color
 func (label *LabelWidget) SetBackgroundColor(backgroundColor string) {
 	if len(backgroundColor) > 0 && string(backgroundColor[0]) == "#" {
 		label.backgroundColor = backgroundColor
@@ -80,9 +78,8 @@ func (label *LabelWidget) SetBackgroundColor(backgroundColor string) {
 	}
 }
 
-func (label *LabelWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+func (label *LabelWidget) render(s Surface, time uint32) {
+	context := makeContextFromCairo(s)
 	top, left, width, height := label.computedBox.GetCoords()
 
 	context.SetHexColor(label.backgroundColor)

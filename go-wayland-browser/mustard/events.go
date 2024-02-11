@@ -1,6 +1,5 @@
 package mustard
 
-
 func (window *Window) ProcessPointerPosition() {
 	if window.hasActiveOverlay {
 		window.ProcessContextMenu()

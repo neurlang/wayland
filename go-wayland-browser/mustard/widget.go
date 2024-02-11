@@ -3,6 +3,17 @@ package mustard
 import (
 	"image"
 )
+import gg "github.com/danfragoso/thdwb/gg"
+import cairo "github.com/neurlang/wayland/cairoshim"
+
+type Surface = cairo.Surface
+
+func makeContextFromCairo(s cairo.Surface) *gg.Context {
+	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
+	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+	return context
+}
+
 
 func copyWidgetToBuffer(widget Widget, src image.Image) {
 }
@@ -213,11 +224,11 @@ func (widget *baseWidget) SetNeedsRepaint(value bool) {
 }
 
 func (widget *baseWidget) IsPointInside(x, y float64) bool {
-/*
-	if widget.window.hasActiveOverlay {
-		return false
-	}
-*/
+	/*
+		if widget.window.hasActiveOverlay {
+			return false
+		}
+	*/
 	top, left, width, height := widget.GetRect()
 	return x > float64(left) && x < float64(left+width) && y > float64(top) && y < float64(top+height)
 }
