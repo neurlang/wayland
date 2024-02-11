@@ -138,9 +138,11 @@ func (frame *Frame) Key(
 		if action == Release {
 			window.ProcessReturnKey()
 		}
-		break
+		return
 	case 54:
-		break
+		return
+	case 42:
+		return
 	}
 
 	if action == Release {
