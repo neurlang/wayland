@@ -79,6 +79,9 @@ func (window *Window) AttachClickEventListener(callback func(MustardKey)) {
 }
 
 func (window *Window) GetCursorPosition() (float64, float64) {
+	if window == nil {
+		return 0, 0
+	}
 	return window.cursorX, window.cursorY
 }
 

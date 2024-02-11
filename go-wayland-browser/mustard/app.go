@@ -31,6 +31,8 @@ func (app *App) AddWindow(w *Window) {
 }
 
 func (app *App) DestroyWindow(window *Window) {
+	window.window.Destroy()
+	window.window = nil
 }
 
 func setWidgetWindow(widget Widget, window *Window) {

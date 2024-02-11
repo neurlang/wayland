@@ -320,8 +320,12 @@ func DisplayGetRegistry(d *wl.Display) (*wl.Registry, error) {
 	return d.GetRegistry()
 }
 
-func DisplayRun(d *wl.Display) error {
-	return d.Context().Run()
+func DisplayRun(d *wl.Display) (err error) {
+	err = d.Context().Run()
+	for err == wl.ErrContextRunProxyNil {
+		err = d.Context().Run()
+	}
+	return err
 }
 func DisplayRoundtrip(d *wl.Display) error {
 	cb, err := d.Sync()
