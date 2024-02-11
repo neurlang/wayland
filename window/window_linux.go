@@ -243,6 +243,10 @@ func (w *Popup) Destroy() {
 	w.Popup.Destroy()
 	w.xdgsurf.Destroy()
 	w.surf.Destroy()
+
+	for _, input := range w.Display.inputList {
+		input.grab = nil
+	}
 }
 
 func (w *Popup) HandleCallbackDone(ev wl.CallbackDoneEvent) {
