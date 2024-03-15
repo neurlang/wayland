@@ -5,7 +5,6 @@ import (
 	"fmt"
 	sys "github.com/neurlang/wayland/os"
 	"github.com/neurlang/wayland/wl"
-	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -117,7 +116,7 @@ func (t *Theme) GetCursor(name string) (*Cursor, error) {
 func (t *Theme) loadCursor(name string, size uint32) (*Cursor, error) {
 	iconPath := xcursor.Load(t.Name).LoadIcon(name)
 
-	buf, err := ioutil.ReadFile(iconPath)
+	buf, err := os.ReadFile(iconPath)
 	if err != nil {
 		return nil, err
 	}
