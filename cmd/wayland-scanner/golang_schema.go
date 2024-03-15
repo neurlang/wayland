@@ -57,7 +57,7 @@ func (p *` + s.Name + `) Dispatch(event *Event) {
 	switch event.Opcode {
 `)
 	for num, e := range s.Events {
-		b.WriteString(e.SerializeCase(num, s))
+		b.WriteString(e.SerializeCase(num))
 	}
 	b.WriteString("\n\t}\n}\n")
 	return b.String()
@@ -245,7 +245,7 @@ type ` + m.Name + `Event struct {
 	return b.String()
 }
 
-func (m *GoEvent) SerializeCase(num int, s *GoStruct) string {
+func (m *GoEvent) SerializeCase(num int) string {
 	var b strings.Builder
 	b.WriteString(`	case ` + fmt.Sprintf("%d", num) + `:
 		if len(p.private` + m.Name + `s) > 0 {
