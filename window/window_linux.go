@@ -2597,11 +2597,6 @@ func (window *Window) SetFullscreen(fullscreen bool) error {
 	return nil
 }
 
-//line 3552
-func inputGetSeat(Input *Input) *wl.Seat {
-	return Input.seat
-}
-
 //line 3754
 func inputSetPointerImageIndex(Input *Input, index int) {
 	if Input.pointer == nil {
@@ -3221,7 +3216,7 @@ func (Window *Window) SetBufferType(t int32) {
 	Window.mainSurface.bufferType = t
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
@@ -3285,7 +3280,7 @@ func displayAddOutput(d *Display, id uint32) {
 func displayAddInput(d *Display, id uint32, displaySeatVersion int) {
 
 	var input_ *Input
-	var seatVersion = min(displaySeatVersion, 7)
+	var seatVersion = minInt(displaySeatVersion, 7)
 
 	_ = seatVersion
 
