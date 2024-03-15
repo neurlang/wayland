@@ -22,7 +22,6 @@
 package os
 
 import "os"
-import "io/ioutil"
 import "syscall"
 import "errors"
 import "crypto/rand"
@@ -79,7 +78,7 @@ func MkOsTemp(tmpdir string, tmpname []byte, flags int, x1 byte, x2 byte, x3 byt
 
 	//println(string(tmpname))
 
-	return ioutil.TempFile(tmpdir, string(tmpname))
+	return os.CreateTemp(tmpdir, string(tmpname))
 }
 
 // CreateTmpfileCloexec creates a temp file that will be cloexec. In case of the ErrUnlink error, the fd is valid.

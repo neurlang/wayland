@@ -105,7 +105,7 @@ go install github.com/neurlang/wayland/go-wayland-texteditor@latest
 go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
 ```
 
-Using older golang:
+Using older golang (there is support for golang >= 1.16):
 
 ```
 go get github.com/neurlang/wayland/go-wayland-simple-shm@latest
@@ -113,17 +113,6 @@ go get github.com/neurlang/wayland/go-wayland-smoke@latest
 go get github.com/neurlang/wayland/go-wayland-imageviewer@latest
 go get github.com/neurlang/wayland/go-wayland-texteditor@latest
 go get github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
-```
-
-Using golang version < 1.16 (there is support for golang >= 1.09):
-
-```
-go install -tags wayland github.com/neurlang/wayland/go-wayland-cube
-go install github.com/neurlang/wayland/go-wayland-simple-shm
-go install github.com/neurlang/wayland/go-wayland-smoke
-go install github.com/neurlang/wayland/go-wayland-imageviewer
-go install github.com/neurlang/wayland/go-wayland-texteditor
-go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend
 ```
 
 Finally, run weston and the executables.
