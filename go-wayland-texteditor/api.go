@@ -1,7 +1,9 @@
 package main
 
-import "net/http"
-import "io/ioutil"
+import (
+	"io"
+	"net/http"
+)
 import "encoding/json"
 import "bytes"
 
@@ -70,7 +72,7 @@ func load_content(creq ContentRequest) (*ContentResponse, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
