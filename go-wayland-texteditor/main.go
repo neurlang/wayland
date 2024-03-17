@@ -60,20 +60,6 @@ func (s *surface) GetTime() uint32 {
 	return s.time
 }
 
-func minColor(a, b [3]byte) (o [3]byte) {
-	o = b
-	if a[0] < b[0] {
-		o[0] = a[0]
-	}
-	if a[1] < b[1] {
-		o[1] = a[1]
-	}
-	if a[2] < b[2] {
-		o[2] = a[2]
-	}
-	return o
-}
-
 func maxColor(a, b [3]byte) (o [3]byte) {
 	o = b
 	if a[0] > b[0] {
@@ -200,22 +186,22 @@ func render(textarea *textarea, s cairo.Surface, time uint32) {
 	}
 }
 
-func (textarea *textarea) Redraw(widget *window.Widget) {
+func (textarea *textarea) Redraw(_ *window.Widget) {
 
-	var time = (uint32)(textarea.widget.WidgetGetLastTime())
+	var lastTime = textarea.widget.WidgetGetLastTime()
 
 	var surface = textarea.window.WindowGetSurface()
 
 	if surface != nil {
 
-		render(textarea, surface, time)
+		render(textarea, surface, lastTime)
 		surface.Destroy()
 	}
 
 	textarea.widget.ScheduleRedraw()
 }
 
-func (s *textarea) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
+func (s *textarea) Enter(_ *window.Widget, _ *window.Input, x float32, y float32) {
 
 	println("enter")
 
@@ -226,7 +212,7 @@ func (s *textarea) Enter(widget *window.Widget, input *window.Input, x float32, 
 	s.StringGrid.Motion(ObjectPosition{int((x + float32(s.StringGrid.CellWidth)*0.5) / float32(s.StringGrid.CellWidth)), int(y / float32(s.StringGrid.CellHeight))})
 
 }
-func (s *textarea) Leave(widget *window.Widget, input *window.Input) {
+func (s *textarea) Leave(_ *window.Widget, _ *window.Input) {
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -234,7 +220,7 @@ func (s *textarea) Leave(widget *window.Widget, input *window.Input) {
 	s.StringGrid.Selecting = false
 
 }
-func (s *textarea) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
+func (s *textarea) Motion(_ *window.Widget, _ *window.Input, time uint32, x float32, y float32) int {
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -260,7 +246,7 @@ func (s *textarea) Motion(widget *window.Widget, input *window.Input, time uint3
 
 	return window.CursorHand1
 }
-func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
+func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button uint32, state wl.PointerButtonState, _ window.WidgetHandler) {
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -328,28 +314,28 @@ func (s *textarea) Button(widget *window.Widget, input *window.Input, time uint3
 
 	}
 }
-func (*textarea) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
+func (*textarea) TouchUp(_ *window.Widget, _ *window.Input, serial uint32, time uint32, id int32) {
 }
-func (*textarea) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
+func (*textarea) TouchDown(_ *window.Widget, _ *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
 	println(x, y)
 }
-func (s *textarea) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+func (s *textarea) TouchMotion(_ *window.Widget, _ *window.Input, time uint32, id int32, x float32, y float32) {
 	println(x, y)
 }
-func (*textarea) TouchFrame(widget *window.Widget, input *window.Input) {
+func (*textarea) TouchFrame(_ *window.Widget, _ *window.Input) {
 }
-func (*textarea) TouchCancel(widget *window.Widget, width int32, height int32) {
+func (*textarea) TouchCancel(_ *window.Widget, _ int32, height int32) {
 }
-func (*textarea) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
+func (*textarea) Axis(_ *window.Widget, _ *window.Input, time uint32, axis uint32, value float32) {
 	println("axis", axis, value)
 }
-func (*textarea) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
+func (*textarea) AxisSource(_ *window.Widget, _ *window.Input, source uint32) {
 	println("axis source", source)
 }
-func (*textarea) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+func (*textarea) AxisStop(_ *window.Widget, _ *window.Input, time uint32, axis uint32) {
 	println("axis stop", axis)
 }
-func (t *textarea) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+func (t *textarea) AxisDiscrete(_ *window.Widget, _ *window.Input, axis uint32, discrete int32) {
 	t.axisDiscrete(4 * discrete)
 }
 
@@ -385,7 +371,7 @@ func (t *textarea) axisDiscrete(discrete int32) {
 	t.StringGrid.ReMotion()
 
 }
-func (*textarea) PointerFrame(widget *window.Widget, input *window.Input) {
+func (*textarea) PointerFrame(_ *window.Widget, _ *window.Input) {
 }
 func (textarea *textarea) Key(
 	win *window.Window,
@@ -394,7 +380,7 @@ func (textarea *textarea) Key(
 	key uint32,
 	notUnicode uint32,
 	state wl.KeyboardKeyState,
-	data window.WidgetHandler,
+	_ window.WidgetHandler,
 ) {
 
 	win.UninhibitRedraw()
@@ -402,7 +388,9 @@ func (textarea *textarea) Key(
 	textarea.mutex.Lock()
 	defer textarea.mutex.Unlock()
 
-	textarea.StringGrid.Control((input.GetModifiers() & window.ModControlMask) == 0)
+	println("Control:", (input.GetModifiers()&window.ModControlMask) != window.ModControlMask)
+
+	textarea.StringGrid.Control((input.GetModifiers() & window.ModControlMask) != window.ModControlMask)
 
 	var entered = input.GetRune(&notUnicode, key)
 
@@ -578,9 +566,14 @@ func (textarea *textarea) Key(
 			"key=", key, "notUnicode=", notUnicode)
 	}
 }
-func (*textarea) Focus(window *window.Window, device *window.Input) {
+func (textarea *textarea) Focus(window *window.Window, device *window.Input) {
 
 	if device == nil {
+
+		println("Control musk: false")
+
+		textarea.StringGrid.Control(false)
+
 		window.InhibitRedraw()
 	} else {
 		window.UninhibitRedraw()
@@ -829,27 +822,27 @@ func (textarea *textarea) HandleDataSourceSend(ev wl.DataSourceSendEvent) {
 	c.Receive(ev.Fd, ev.MimeType)
 
 }
-func (textarea *textarea) HandleDataSourceAction(ev wl.DataSourceActionEvent) {
+func (textarea *textarea) HandleDataSourceAction(_ wl.DataSourceActionEvent) {
 	println("HandleDataSourceActions")
 }
-func (textarea *textarea) HandleDataSourceTarget(ev wl.DataSourceTargetEvent) {
+func (textarea *textarea) HandleDataSourceTarget(_ wl.DataSourceTargetEvent) {
 	println("HandleDataSourceTarget")
 }
-func (textarea *textarea) HandleDataSourceCancelled(ev wl.DataSourceCancelledEvent) {
+func (textarea *textarea) HandleDataSourceCancelled(_ wl.DataSourceCancelledEvent) {
 
 	println("HandleDataSourceCancelled")
 
 	textarea.src = nil
 
 }
-func (textarea *textarea) HandleDataSourceDndDropPerformed(ev wl.DataSourceDndDropPerformedEvent) {
+func (textarea *textarea) HandleDataSourceDndDropPerformed(_ wl.DataSourceDndDropPerformedEvent) {
 	println("HandleDataSourceDndDropPerformed")
 }
-func (textarea *textarea) HandleDataSourceDndFinished(ev wl.DataSourceDndFinishedEvent) {
+func (textarea *textarea) HandleDataSourceDndFinished(_ wl.DataSourceDndFinishedEvent) {
 	println("HandleDataSourceDndFinished")
 }
 
-func (textarea *textarea) Fullscreen(w *window.Window, wh window.WidgetHandler) {
+func (textarea *textarea) Fullscreen(w *window.Window, _ window.WidgetHandler) {
 
 	textarea.fullscreen = !textarea.fullscreen
 	w.SetFullscreen(textarea.fullscreen)
@@ -887,7 +880,7 @@ func main() {
 	textarea.controls.Pos = ObjectPosition{-48 * 3, 0}
 	textarea.controls.BgColor = [3]byte{0, 13, 26}
 	textarea.controls.FgColor = [3]byte{255, 255, 255}
-	textarea.controls.Control(true)
+	textarea.controls.Control(false)
 
 	textarea.StringGrid.Font = &UnicodeFont
 	textarea.StringGrid.XCells = 30
