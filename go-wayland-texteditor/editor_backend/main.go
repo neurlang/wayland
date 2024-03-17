@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -302,7 +302,7 @@ type EraseResponse struct {
 
 func handlerContent(w http.ResponseWriter, r *http.Request) {
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return
 	}
@@ -351,18 +351,18 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var min = 0
-	var max = len(fileColor)
+	var minI = 0
+	var maxI = len(fileColor)
 
 	for i := range fileColor {
 		if fileColor[i][1] < cr.Ypos {
-			min = i
+			minI = i
 		} else if fileColor[i][1] >= cr.Ypos+cr.Height {
-			max = i
+			maxI = i
 			break
 		}
 	}
-	resp.FgColor = fileColor[min:max]
+	resp.FgColor = fileColor[minI:maxI]
 
 	for y := cr.Ypos; y < len(file) && y < cr.Ypos+cr.Height; y++ {
 		resp.LineLens = append(resp.LineLens, len(file[y]))
@@ -388,7 +388,7 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(bytes)
 }
-func handlerScrollbar(w http.ResponseWriter, r *http.Request) {
+func handlerScrollbar(w http.ResponseWriter, _ *http.Request) {
 	body, err := reprocess_scrollbar(file)
 	if err != nil {
 		return
