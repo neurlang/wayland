@@ -49,7 +49,7 @@ type smoke struct {
 	lx, ly float32
 }
 
-func diffuse(smoke *smoke, time uint32, source []float32, dest []float32, width int32, height int32) {
+func diffuse(_ *smoke, time uint32, source []float32, dest []float32, width int32, height int32) {
 	var s, d []float32
 	var x, y, k, stride int32
 	var t float32
@@ -71,7 +71,7 @@ func diffuse(smoke *smoke, time uint32, source []float32, dest []float32, width 
 }
 
 func advect(
-	smoke *smoke,
+	_ *smoke,
 	time uint32,
 	uu []float32,
 	vv []float32,
@@ -162,7 +162,7 @@ func project(smoke *smoke, time uint32, u []float32, v []float32, p []float32, d
 const maxx = 512
 const maxy = 256
 
-func (smoke *smoke) Resize(widget *window.Widget, _ int32, _ int32, width int32, height int32) {
+func (smoke *smoke) Resize(_ *window.Widget, _ int32, _ int32, width int32, height int32) {
 
 	if smoke.smallwidth == width && smoke.smallheight == height {
 		return
@@ -376,13 +376,13 @@ func smokeMotionHandler(smoke *smoke, x float32, y float32) {
 	}
 }
 func (smoke *smoke) Key(
-	window *window.Window,
-	input *window.Input,
+	_ *window.Window,
+	_ *window.Input,
 	time uint32,
 	key uint32,
 	notUnicode uint32,
-	state wl.KeyboardKeyState,
-	data window.WidgetHandler,
+	_ wl.KeyboardKeyState,
+	_ window.WidgetHandler,
 ) {
 	println(notUnicode)
 
@@ -391,17 +391,17 @@ func (smoke *smoke) Key(
 		smoke.display.Exit()
 	}
 }
-func (*smoke) Focus(window *window.Window, device *window.Input) {
+func (*smoke) Focus(_ *window.Window, _ *window.Input) {
 
 }
-func (*smoke) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
+func (*smoke) Enter(_ *window.Widget, _ *window.Input, x float32, y float32) {
 }
-func (*smoke) Leave(widget *window.Widget, input *window.Input) {
+func (*smoke) Leave(_ *window.Widget, _ *window.Input) {
 }
 
 func (smoke *smoke) Motion(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	time uint32,
 	x float32,
 	y float32,
@@ -412,18 +412,18 @@ func (smoke *smoke) Motion(
 }
 
 func (*smoke) Button(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	time uint32,
 	button uint32,
-	state wl.PointerButtonState,
-	data window.WidgetHandler,
+	_ wl.PointerButtonState,
+	_ window.WidgetHandler,
 ) {
 }
 
 func (*smoke) TouchUp(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	serial uint32,
 	time uint32,
 	id int32,
@@ -431,8 +431,8 @@ func (*smoke) TouchUp(
 }
 
 func (*smoke) TouchDown(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	serial uint32,
 	time uint32,
 	id int32,
@@ -442,8 +442,8 @@ func (*smoke) TouchDown(
 }
 
 func (smoke *smoke) TouchMotion(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	time uint32,
 	id int32,
 	x float32,
@@ -453,9 +453,9 @@ func (smoke *smoke) TouchMotion(
 	smokeMotionHandler(smoke, x, y)
 
 }
-func (*smoke) TouchFrame(widget *window.Widget, input *window.Input) {
+func (*smoke) TouchFrame(_ *window.Widget, _ *window.Input) {
 }
-func (*smoke) TouchCancel(widget *window.Widget, width int32, height int32) {
+func (*smoke) TouchCancel(_ *window.Widget, width int32, height int32) {
 }
 
 func (*smoke) Axis(
@@ -466,19 +466,19 @@ func (*smoke) Axis(
 	value float32,
 ) {
 }
-func (*smoke) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
+func (*smoke) AxisSource(_ *window.Widget, _ *window.Input, source uint32) {
 }
-func (*smoke) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+func (*smoke) AxisStop(_ *window.Widget, _ *window.Input, time uint32, axis uint32) {
 }
 
 func (*smoke) AxisDiscrete(
-	widget *window.Widget,
-	input *window.Input,
+	_ *window.Widget,
+	_ *window.Input,
 	axis uint32,
 	discrete int32,
 ) {
 }
-func (*smoke) PointerFrame(widget *window.Widget, input *window.Input) {
+func (*smoke) PointerFrame(_ *window.Widget, _ *window.Input) {
 }
 
 func (smoke *smoke) free() {
