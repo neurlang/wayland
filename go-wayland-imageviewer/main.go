@@ -511,7 +511,7 @@ type bufferReleaser struct {
 	buf *wl.Buffer
 }
 
-func (b bufferReleaser) HandleBufferRelease(e wl.BufferReleaseEvent) {
+func (b bufferReleaser) HandleBufferRelease(_ wl.BufferReleaseEvent) {
 	if err := b.buf.Destroy(); err != nil {
 		log.Printf("unable to destroy buffer: %v", err)
 	}
