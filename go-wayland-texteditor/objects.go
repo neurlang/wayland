@@ -182,7 +182,7 @@ func (sg *StringGrid) Button(up bool) (changedSelection bool) {
 		sg.ReMotion()
 
 		var add = 0
-		for ; unicode.IsLetter(sg.GetContentRune(sg.Hover.X+add, sg.Hover.Y)); add++ {
+		for ; isLetterOrDigit(sg.GetContentRune(sg.Hover.X+add, sg.Hover.Y)); add++ {
 			if sg.Hover.Y < len(sg.LineLens) && sg.LineLens[sg.Hover.Y] <= sg.Hover.X+add {
 				break
 			}
@@ -287,6 +287,10 @@ func (sg *StringGrid) lookupBraceWhenMotion(pos ObjectPosition) {
 
 }
 
+func isLetterOrDigit(l rune) bool {
+	return unicode.IsLetter(l) || unicode.IsDigit(l)
+}
+
 func (sg *StringGrid) Motion(pos ObjectPosition) {
 
 	sg.HoverOld = pos
@@ -320,14 +324,14 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 			pos.X--
 		}
 
-		for (pos.X > 0) && (unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y))) {
+		for (pos.X > 0) && (isLetterOrDigit(sg.GetContentRune(pos.X, pos.Y))) {
 			pos.X--
 		}
-		if (pos.X > 0) && (!unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y))) {
+		if (pos.X > 0) && (!isLetterOrDigit(sg.GetContentRune(pos.X, pos.Y))) {
 			pos.X++
 		}
 		if pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
-			if !unicode.IsLetter(sg.GetContentRune(pos.X, pos.Y)) {
+			if !isLetterOrDigit(sg.GetContentRune(pos.X, pos.Y)) {
 				pos.X++
 			}
 		}
@@ -380,7 +384,11 @@ func (sg *StringGrid) Highlighted(x, y int) bool {
 	if sg.Selecting && !sg.control &&
 		((x == sg.Hover.X || x == sg.Hover.X-1) && y == sg.Hover.Y ||
 			x == sg.MatchingBrace.X && y == sg.MatchingBrace.Y) {
-		return true
+		switch sg.GetContentRune(x, y) {
+		case '}', ')', ']', '{', '(', '[':
+			return true
+		}
+		return false
 	}
 	if sg.control {
 		switch sg.GetContentRune(x, y) {
