@@ -6,7 +6,6 @@ import (
 	"github.com/neurlang/gm/mat4"
 	"github.com/neurlang/gm/vec3"
 	vulkan "github.com/vulkan-go/vulkan"
-	"reflect"
 	"unsafe"
 )
 
@@ -365,21 +364,15 @@ func init_cube(vc *VkCube) {
 
 	vc.mapping = mapping
 
-	var vertex_offset_slice []float32
-	vertex_offset_slice_hdr := (*reflect.SliceHeader)(unsafe.Pointer(&vertex_offset_slice))
-	vertex_offset_slice_hdr.Data = (uintptr(unsafe.Pointer(vc.mapping)) + uintptr(vc.vertex_offset))
-	vertex_offset_slice_hdr.Len = len(vVertices)
-	vertex_offset_slice_hdr.Cap = len(vVertices)
-	var colors_offset_slice []float32
-	colors_offset_slice_hdr := (*reflect.SliceHeader)(unsafe.Pointer(&colors_offset_slice))
-	colors_offset_slice_hdr.Data = (uintptr(unsafe.Pointer(vc.mapping)) + uintptr(vc.colors_offset))
-	colors_offset_slice_hdr.Len = len(vColors)
-	colors_offset_slice_hdr.Cap = len(vColors)
-	var normals_offset_slice []float32
-	normals_offset_slice_hdr := (*reflect.SliceHeader)(unsafe.Pointer(&normals_offset_slice))
-	normals_offset_slice_hdr.Data = (uintptr(unsafe.Pointer(vc.mapping)) + uintptr(vc.normals_offset))
-	normals_offset_slice_hdr.Len = len(vNormals)
-	normals_offset_slice_hdr.Cap = len(vNormals)
+	vertex_offset_slice := unsafe.Slice((*float32)(
+		unsafe.Pointer(uintptr(unsafe.Pointer(vc.mapping))+uintptr(vc.vertex_offset))),
+		len(vVertices))
+	colors_offset_slice := unsafe.Slice((*float32)(
+		unsafe.Pointer(uintptr(unsafe.Pointer(vc.mapping))+uintptr(vc.colors_offset))),
+		len(vColors))
+	normals_offset_slice := unsafe.Slice((*float32)(
+		unsafe.Pointer(uintptr(unsafe.Pointer(vc.mapping))+uintptr(vc.normals_offset))),
+		len(vNormals))
 
 	for i, v := range vVertices {
 		vertex_offset_slice[i] = v

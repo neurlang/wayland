@@ -12,8 +12,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const WL_PROXY_FLAG_ID_DELETED = 1
-
 const MAX_NUM_IMAGES = 4
 
 type Wland struct {
@@ -30,7 +28,7 @@ type Wland struct {
 	nregistry     *wayland.Registry
 }
 
-func (w *Wland) RegistryGlobal(wl_registry *wayland.Registry, name uint32, iface string, version uint32) {
+func (w *Wland) RegistryGlobal(_ *wayland.Registry, name uint32, iface string, version uint32) {
 
 	switch iface {
 	case "wl_compositor":
