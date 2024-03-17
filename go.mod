@@ -21,12 +21,12 @@ require (
 	github.com/neurlang/winc v0.1.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/vulkan-go/vulkan v0.0.0-20220916223707-3ea69233b9d2
-	github.com/yalue/native_endian v1.0.1
+	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
+	github.com/yalue/native_endian v1.0.2
 	github.com/zzl/go-win32api/v2 v2.1.0
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.15.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/sys v0.16.0
 )
 
 require (
