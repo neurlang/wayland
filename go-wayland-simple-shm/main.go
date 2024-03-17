@@ -26,6 +26,7 @@ import zxdg "github.com/neurlang/wayland/xdg"
 import "github.com/neurlang/wayland/wlclient"
 import "log"
 import "github.com/neurlang/wayland/os"
+import os2 "os"
 
 type display struct {
 	display    *wl.Display
@@ -112,11 +113,12 @@ func (window *window) SurfaceConfigure(sf *zxdg.Surface, serial uint32) {
 
 }
 
-func (window *window) HandleToplevelConfigure(ev zxdg.ToplevelConfigureEvent) {
+func (window *window) HandleToplevelConfigure(_ zxdg.ToplevelConfigureEvent) {
 
 }
 
-func (window *window) HandleToplevelClose(ev zxdg.ToplevelCloseEvent) {
+func (window *window) HandleToplevelClose(_ zxdg.ToplevelCloseEvent) {
+	os2.Exit(0)
 }
 
 func (d *display) HandleShmFormat(ev wl.ShmFormatEvent) {
@@ -135,7 +137,7 @@ func (d *display) HandleRegistryGlobal(ev wl.RegistryGlobalEvent) {
 	d.RegistryGlobal(d.registry, ev.Name, ev.Interface, ev.Version)
 }
 
-func (d *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
+func (d *display) RegistryGlobal(_ *wl.Registry, goid uint32, face string,
 	version uint32) {
 
 	goFace := face
@@ -160,7 +162,7 @@ func (d *display) RegistryGlobal(reg *wl.Registry, goid uint32, face string,
 	}
 }
 
-func (*display) HandleRegistryGlobalRemove(ev wl.RegistryGlobalRemoveEvent) {
+func (*display) HandleRegistryGlobalRemove(_ wl.RegistryGlobalRemoveEvent) {
 
 }
 
