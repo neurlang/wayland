@@ -89,7 +89,7 @@ func reprocess_syntax_highlighting_row_golang_color(x, y int, constant, id uint6
 
 func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, strings *bool, open *[3]int) (out [][5]int) {
 	var loaded uint64
-	var digits, dblquote, backquote, comment1, comment2, comment, escape, alpha bool
+	var digits, sglquote, dblquote, backquote, comment1, comment2, comment, escape, alpha bool
 	comment = *comments
 	if comment {
 		out = append(out, [5]int{0, y, 0, 128, 255})
@@ -102,7 +102,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 	for x, a := range row {
 		switch a {
 		case "*":
-			if !dblquote && !backquote {
+			if !sglquote && !dblquote && !backquote {
 				if comment {
 					comment2 = true
 					comment1 = false
@@ -112,13 +112,13 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 					comment = true
 				}
 			}
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				out = append(out, reprocess_syntax_highlighting_end_golang(loaded, length, x, y, digits)...)
 				length = 0
 				loaded = 0
 			}
 		case "/":
-			if !dblquote && !backquote {
+			if !sglquote && !dblquote && !backquote {
 				if comment1 {
 					out = append(out, [5]int{x - 1, y, 0, 128, 255})
 					comment = true
@@ -142,6 +142,21 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				escape = true
 				continue
 			}
+		case "'":
+			if !comment {
+				if sglquote && !escape {
+					out = append(out, [5]int{x + 1, y, 255, 255, 255})
+					sglquote = false
+					escape = false
+					length = 0
+					loaded = 0
+				} else {
+					out = append(out, [5]int{x, y, 0, 255, 0})
+					sglquote = true
+					escape = false
+				}
+			}
+			break
 		case "\"":
 			if !comment {
 				if dblquote && !escape {
@@ -159,7 +174,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			break
 		case "`":
 			if !comment {
-				if backquote && !dblquote {
+				if backquote && !dblquote && !sglquote {
 					out = append(out, [5]int{x + 1, y, 255, 255, 255})
 					backquote = false
 					length = 0
@@ -172,7 +187,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			}
 			continue
 		case "x":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				if !(length == 1 && digits && !alpha) {
 					length++
 					break
@@ -182,7 +197,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			}
 			fallthrough
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				loaded = hash(a[0], loaded)
 				if !digits {
 					digits = !alpha
@@ -193,7 +208,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment1 = false
 			comment2 = false
 		case "a", "b", "c", "d", "e", "f", "A", "B", "C", "D", "E", "F":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				if !(digits && !alpha) {
 					digits = false
 				}
@@ -209,11 +224,11 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment2 = false
 			digits = false
 			alpha = true
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				length++
 			}
 		case "s", "r", "v", "i", "u", "o", "w", "n", "l", "p", "t", "h", "y", "k", "g", "m":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				loaded = hash(a[0], loaded)
 				length++
 				digits = false
@@ -224,7 +239,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment2 = false
 
 		case ".":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				if digits {
 					loaded = hash(a[0], loaded)
 					length++
@@ -235,7 +250,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			}
 			fallthrough
 		case ":", " ", "", "\t", ";", ",", "+", "&", "|", "-", ">", "<":
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				out = append(out, reprocess_syntax_highlighting_end_golang(loaded, length, x, y, digits)...)
 				length = 0
 				loaded = 0
@@ -243,7 +258,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			fallthrough
 		case "(", ")", "{", "[", "]", "}":
 			comment1 = false
-			if !comment && !dblquote && !backquote {
+			if !comment && !sglquote && !dblquote && !backquote {
 				out = append(out, reprocess_syntax_highlighting_end_golang(loaded, length, x, y, digits)...)
 				length = 0
 				loaded = 0
@@ -280,7 +295,7 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 			comment2 = false
 			alpha = false
 		}
-		if (x&7 == 0) && !comment && (dblquote || backquote) {
+		if (x&7 == 0) && !comment && (sglquote || dblquote || backquote) {
 			out = append(out, [5]int{x, y, 0, 255, 0})
 		}
 		if (x&7 == 0) && (comment) {
