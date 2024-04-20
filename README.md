@@ -105,7 +105,7 @@ go install github.com/neurlang/wayland/go-wayland-texteditor@latest
 go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
 ```
 
-Using older golang (there is support for golang >= 1.16):
+Using older golang (there is support for golang >= 1.18):
 
 ```
 go get github.com/neurlang/wayland/go-wayland-simple-shm@latest

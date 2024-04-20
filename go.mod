@@ -15,7 +15,7 @@ require (
 	github.com/danfragoso/thdwb/mustard v0.0.0-00010101000000-000000000000
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb
-	github.com/ebitengine/purego v0.5.2
+	github.com/ebitengine/purego v0.7.1
 	github.com/fogleman/gg v1.3.0
 	github.com/neurlang/gm v0.0.2
 	github.com/neurlang/winc v0.1.0
