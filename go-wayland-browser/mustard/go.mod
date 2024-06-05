@@ -1,16 +1,16 @@
 module github.com/neurlang/wayland/go-wayland-browser/mustard
 
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.9
+
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.9
+
 go 1.18
-
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.8
-
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.8
 
 require (
 	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/goki/freetype v1.0.5
-	github.com/neurlang/wayland v0.1.6
+	github.com/neurlang/wayland v0.1.9
 )
 
 require (
