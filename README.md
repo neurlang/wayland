@@ -101,10 +101,10 @@ Then, install them:
 go install github.com/neurlang/wayland/go-wayland-simple-shm@latest
 go install github.com/neurlang/wayland/go-wayland-smoke@latest
 go install github.com/neurlang/wayland/go-wayland-imageviewer@latest
+go install -tags wayland github.com/neurlang/wayland/go-wayland-cube@latest
 go install github.com/neurlang/wayland/go-wayland-texteditor@latest
 go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
 go install github.com/neurlang/wayland/go-wayland-browser/browser@latest
-go install github.com/neurlang/wayland/go-wayland-browser/browser
 ```
 
 Using older golang (there is support for golang >= 1.18):
