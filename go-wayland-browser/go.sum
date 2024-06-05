@@ -8,8 +8,6 @@ github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDi
 github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
 github.com/goki/freetype v1.0.5 h1:yi2lQeUhXnBgSMqYd0vVmPw6RnnfIeTP3N4uvaJXd7A=
 github.com/goki/freetype v1.0.5/go.mod h1:wKmKxddbzKmeci9K96Wknn5kjTWLyfC8tKOqAFbEX8E=
-github.com/neurlang/wayland v0.1.28 h1:60ZiYB67TnxTXyaQSr1fDbhGD5YIOi3zKC/2HBxogRM=
-github.com/neurlang/wayland v0.1.28/go.mod h1:dpyPmR7834kUnveoYb4JknjoC47t/PeOVA/vN47cQC8=
 github.com/neurlang/winc v0.1.1 h1:0Nu1f6mlJ7F0KselI1xrbvFvqOgPz0PzeTEd4iqessM=
 github.com/neurlang/winc v0.1.1/go.mod h1:M3RhPpObvIhmGBJtjVAlCUke88Bf4qAhu9kHqpCkqNA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
