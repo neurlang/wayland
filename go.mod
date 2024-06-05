@@ -1,9 +1,5 @@
 module github.com/neurlang/wayland
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.20
-
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.20
-
 go 1.18
 
 require (
@@ -19,6 +15,8 @@ require (
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.15.0
 	golang.org/x/sys v0.21.0
+	github.com/neurlang/wayland/go-wayland-browser/assets v0.1.21
+	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.21
 )
 
 require (
