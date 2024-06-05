@@ -28,6 +28,8 @@ func (i *Input) GetRune(notUnicode *uint32, key uint32) rune {
 		xkb.KeyBackspace,
 		xkb.KeyDelete:
 		*notUnicode = key
+	case xkb.KeyControl: // Handle Ctrl key press/release
+		i.ctrl = !i.ctrl
 	}
 	keyboardBuf := i.keyboardBuf[:]
 	_, getKeyboardStateErr := win32.GetKeyboardState(&keyboardBuf[0])
@@ -42,22 +44,18 @@ func (i *Input) GetRune(notUnicode *uint32, key uint32) rune {
 	case "\u0016":
 		*notUnicode = 'v'
 		i.last = ""
-		i.ctrl = true
 		return 'v'
 	case "\u0001":
 		*notUnicode = 'a'
 		i.last = ""
-		i.ctrl = true
 		return 'a'
 	case "\u0002":
 		*notUnicode = 'b'
 		i.last = ""
-		i.ctrl = true
 		return 'b'
 	case "\u0003":
 		*notUnicode = 'c'
 		i.last = ""
-		i.ctrl = true
 		return 'c'
 	}
 	return rune(unicodeBuf[0])

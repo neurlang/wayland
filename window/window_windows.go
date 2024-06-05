@@ -4,6 +4,7 @@ import (
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/winc"
+	"github.com/neurlang/winc/w32"
 	"time"
 )
 
@@ -17,6 +18,8 @@ type Window struct {
 	maximized      bool
 	down           [2]uint32
 	up             [2]uint32
+
+	Display *Display
 }
 
 func Create(d *Display) *Window {
@@ -41,7 +44,7 @@ func (w *Window) SetKeyboardHandler(t KeyboardHandler) {
 			if !w.inhibited {
 				widget.destroyed = false
 				widget.ScheduleRedraw()
-				w.redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
+				redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
 			}
 		}
 	}
@@ -95,7 +98,7 @@ func (w *Window) SetTitle(s string) {
 func (w Window) SetBufferType(shm interface{}) {
 
 }
-func (w *Window) redrawer(widget *Widget, canvas *winc.Canvas) {
+func redrawer(widget *Widget, canvas *winc.Canvas) {
 outer:
 	for i := 0; i < len(widget.buffer); i += BUFFER_BYTES {
 		now := i / BUFFER_BYTES
@@ -167,21 +170,21 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 	}
 	w.widgets[widget] = struct{}{}
 
-	redrawer := func(canvas *winc.Canvas) {
-		w.redrawer(widget, canvas)
+	canvasRedrawer := func(canvas *winc.Canvas) {
+		redrawer(widget, canvas)
 	}
 
 	allRedrawer := func() {
 		if !w.inhibited {
 			t.Redraw(widget)
-			w.redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
+			redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
 		}
 	}
 	w.form.OnPaint().Bind(func(arg *winc.Event) {
 
 		if !w.inhibited && !widget.destroyed {
 			t.Redraw(widget)
-			redrawer(arg.Data.(*winc.PaintEventData).Canvas)
+			canvasRedrawer(arg.Data.(*winc.PaintEventData).Canvas)
 		}
 
 	})
@@ -216,6 +219,14 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 	})
 	w.form.OnLBUp().Bind(func(arg *winc.Event) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 272, wl.PointerButtonStateReleased, t)
+		allRedrawer()
+	})
+	w.form.OnRBDown().Bind(func(arg *winc.Event) {
+		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 273, wl.PointerButtonStatePressed, t)
+		allRedrawer()
+	})
+	w.form.OnRBUp().Bind(func(arg *winc.Event) {
+		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 273, wl.PointerButtonStateReleased, t)
 		allRedrawer()
 	})
 
@@ -269,4 +280,126 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 		})
 	}
 
+}
+
+func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
+	p.widget.handler = handler
+
+	canvasRedrawer := func(canvas *winc.Canvas) {
+		redrawer(&p.widget, canvas)
+	}
+	allRedrawer := func() {
+		if !w.inhibited {
+			if p.form != nil {
+				if p.Popuper != nil {
+					p.Popuper.Render(&p.widget, 0)
+				}
+				redrawer(&p.widget, winc.NewCanvasFromHwnd(p.form.Handle()))
+			}
+		}
+	}
+	p.form.OnPaint().Bind(func(arg *winc.Event) {
+
+		if !p.inhibited && !p.widget.destroyed {
+			p.Popuper.Render(&p.widget, 0)
+			canvasRedrawer(arg.Data.(*winc.PaintEventData).Canvas)
+		}
+
+	})
+	p.form.OnSize().Bind(func(arg *winc.Event) {
+		p.widget.destroyed = false
+
+		xy := arg.Data.(*winc.SizeEventData)
+
+		p.widget.SetAllocation(0, 0, int32(xy.X), int32(xy.Y))
+
+		p.Popuper.Configure()
+	})
+
+	hover := func(arg *winc.Event) {
+		if p.widget.handler == nil {
+			return
+		}
+		xy := arg.Data.(*winc.MouseEventData)
+
+		p.widget.handler.Motion(&p.widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
+		allRedrawer()
+	}
+
+	p.form.OnMouseMove().Bind(hover)
+	p.form.OnMouseHover().Bind(hover)
+
+	p.form.OnLBDown().Bind(func(arg *winc.Event) {
+		p.widget.handler.Button(&p.widget, w.input, uint32(time.Now().UnixNano()/1000000), 272, wl.PointerButtonStatePressed, p.widget.handler)
+		allRedrawer()
+	})
+	p.form.OnLBUp().Bind(func(arg *winc.Event) {
+		p.widget.handler.Button(&p.widget, w.input, uint32(time.Now().UnixNano()/1000000), 272, wl.PointerButtonStateReleased, p.widget.handler)
+		allRedrawer()
+	})
+
+	p.form.OnClose().Bind(func(arg *winc.Event) {
+		p.form.OnMouseMove().Bind(nil)
+		p.form.OnMouseHover().Bind(nil)
+		p.form.OnLBDown().Bind(nil)
+		p.form.OnLBUp().Bind(nil)
+		p.Destroy()
+	})
+	p.form.Show()
+
+	return &p.widget
+}
+func (w *Window) CreatePopup(_ *wl.Seat, _, width, height, x, y uint32) (popup *Popup) {
+	form := winc.NewCustomForm(w.form, 0, w32.WS_POPUP)
+
+	//var bx = (w.form.Width() - w.form.ClientWidth())
+	//var by = w.form.Height() - w.form.ClientHeight()
+
+	form.SetSize(int(width), int(height))
+	form.SetPos(int(x), int(y)+int(height))
+
+	popup = &Popup{
+		form: form,
+	}
+
+	popup.widget.SetAllocation(int(x), int(y), int32(width), int32(height))
+	return
+}
+
+type Popuper interface {
+	Render(cairo.Surface, uint32)
+	Done()
+	Configure() *Widget
+}
+
+type Popup struct {
+	form *winc.Form
+
+	widget Widget
+
+	Popuper Popuper
+
+	inhibited, configured bool
+}
+
+func (p *Popup) Destroy() {
+	form := p.form
+	if form != nil {
+		p.form = nil
+		form.Close()
+	}
+	p.widget.destroyed = true
+	p.Popuper = nil
+	p.inhibited = true
+	p.configured = true
+}
+
+func (p *Popup) PopupGetSurface() cairo.Surface {
+
+	if !p.configured {
+		p.Popuper.Configure()
+		p.configured = true
+	}
+
+	return &p.widget
 }

@@ -95,3 +95,14 @@ func (w *Widget) ScheduleRedraw() {
 
 	}
 }
+
+type Rectangle struct {
+	X      int32
+	Y      int32
+	Width  int32
+	Height int32
+}
+
+func (w *Widget) GetAllocation() Rectangle {
+	return Rectangle{}
+}

@@ -40,3 +40,6 @@ func DisplayRun(d *Display) {
 
 	winc.RunMainLoop()
 }
+
+func (d *Display) SetSeatHandler(_ interface{}) {
+}
