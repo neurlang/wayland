@@ -2,9 +2,9 @@ module github.com/neurlang/wayland
 
 go 1.18
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.7
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.8
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.7
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.8
 
 require (
 	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb
