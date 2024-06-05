@@ -2,20 +2,21 @@ module github.com/neurlang/wayland
 
 go 1.18
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.7-20240605181052-168ebfb672a13f0bdfce52f062d69c74095e807e
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.7
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.7-20240605181052-168ebfb672a13f0bdfce52f062d69c74095e807e
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.7
 
 require (
+	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/ebitengine/purego v0.7.1
 	github.com/fogleman/gg v1.3.0
-	github.com/goki/freetype v1.0.4
 	github.com/neurlang/gm v0.0.2
 	github.com/neurlang/winc v0.1.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -31,6 +32,9 @@ require (
 require (
 	github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/danfragoso/thdwb/pages v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
+	github.com/goki/freetype v1.0.4 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
