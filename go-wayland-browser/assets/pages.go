@@ -2,14 +2,29 @@ package assets
 
 import _ "embed"
 
-//go:embed pages/defaultPage.html
-var defaultPage []byte
 func DefaultPage() []byte {
 	return defaultPage
 }
 
-//go:embed pages/homePage.html
-var homePage []byte
 func HomePage() []byte {
 	return homePage
 }
+
+//go:embed pages/defaultPage.html
+var defaultPage []byte
+
+
+/*
+var DefaultPage = func() []byte {
+	return defaultPage
+}
+*/
+//go:embed pages/homePage.html
+var homePage []byte
+
+
+/*
+var HomePage = func() []byte {
+	return homePage
+}
+*/

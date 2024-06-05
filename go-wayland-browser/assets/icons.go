@@ -50,3 +50,9 @@ func Tools() []byte {
 	return tools
 }
 
+//go:embed icons/gopher.png
+var logo []byte
+func Logo() []byte {
+	return logo
+}
+
