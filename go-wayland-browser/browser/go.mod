@@ -1,8 +1,10 @@
 module github.com/neurlang/wayland/go-wayland-browser/browser
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.18
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.19
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.18
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.19
+
+replace github.com/neurlang/wayland => ../../
 
 go 1.18
 
@@ -15,7 +17,6 @@ require (
 	github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb
-	github.com/neurlang/wayland v0.1.18
 )
 
 require (
