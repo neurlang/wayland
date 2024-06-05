@@ -10,6 +10,7 @@ const KeyKpEnter = 0
 const KeyReturn = 13
 const KeyBackspace = 8
 const KeyDelete = 46
+const KeyControl = 0x1d
 
 const KeyQ = 81
 const KEYq = 81
