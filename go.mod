@@ -2,12 +2,11 @@ module github.com/neurlang/wayland
 
 go 1.18
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.6
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard a4edb1f3eee1cda75a00ee1c79c0739e188aa970
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.6
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets a4edb1f3eee1cda75a00ee1c79c0739e188aa970
 
 require (
-	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb
@@ -31,7 +30,6 @@ require (
 
 require (
 	github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb // indirect
-	github.com/danfragoso/thdwb/mustard v0.0.0-00010101000000-000000000000 // indirect
 	github.com/danfragoso/thdwb/pages v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
