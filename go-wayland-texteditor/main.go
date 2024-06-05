@@ -388,9 +388,14 @@ func (textarea *textarea) Key(
 	textarea.mutex.Lock()
 	defer textarea.mutex.Unlock()
 
-	println("Control:", (input.GetModifiers()&window.ModControlMask) != window.ModControlMask)
+	var control_key = ((state == wl.KeyboardKeyStatePressed) &&
+		(notUnicode == xkb.KeyControlL ||
+			notUnicode == xkb.KeyControlR ||
+			(input.GetModifiers()&window.ModControlMask) != 0))
 
-	textarea.StringGrid.Control((input.GetModifiers() & window.ModControlMask) != window.ModControlMask)
+	println("Control:", control_key)
+
+	textarea.StringGrid.Control(control_key)
 
 	var entered = input.GetRune(&notUnicode, key)
 
@@ -569,8 +574,6 @@ func (textarea *textarea) Key(
 func (textarea *textarea) Focus(window *window.Window, device *window.Input) {
 
 	if device == nil {
-
-		println("Control musk: false")
 
 		textarea.StringGrid.Control(false)
 
