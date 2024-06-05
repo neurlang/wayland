@@ -6,7 +6,7 @@ import (
 	bun "github.com/danfragoso/thdwb/bun"
 	gg "github.com/danfragoso/thdwb/gg"
 	hotdog "github.com/danfragoso/thdwb/hotdog"
-	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
+	mustard "github.com/neurlang/wayland/go-wayland-browser/browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
 
 )

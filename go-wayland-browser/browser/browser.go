@@ -10,7 +10,7 @@ import (
 	gg "github.com/danfragoso/thdwb/gg"
 	hotdog "github.com/danfragoso/thdwb/hotdog"
 	ketchup "github.com/danfragoso/thdwb/ketchup"
-	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
+	mustard "github.com/neurlang/wayland/go-wayland-browser/browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
 	sauce "github.com/danfragoso/thdwb/sauce"
 )
