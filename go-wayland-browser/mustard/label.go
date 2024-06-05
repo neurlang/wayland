@@ -1,7 +1,7 @@
 package mustard
 
 import (
-	assets "github.com/danfragoso/thdwb/assets"
+	assets "github.com/neurlang/wayland/go-wayland-browser/assets"
 	"github.com/goki/freetype/truetype"
 )
 

@@ -85,13 +85,13 @@ func (window *Window) GetCursorPosition() (float64, float64) {
 	return window.cursorX, window.cursorY
 }
 
-func (window *Window) RegisterTree(tree *TreeWidget) {
-	window.registeredTrees = append(window.registeredTrees, tree)
+func (window *Window) RegisterTree(tree interface{}) {
+	window.registeredTrees = append(window.registeredTrees, tree.(*TreeWidget))
 }
 
-func (window *Window) SetRootFrame(f *Frame) {
-	f.window = window
-	window.rootFrame = f
+func (window *Window) SetRootFrame(f interface{}) {
+	f.(*Frame).window = window
+	window.rootFrame = f.(*Frame)
 }
 func (window *Window) Show() {
 }

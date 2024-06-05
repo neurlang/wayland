@@ -5,14 +5,14 @@ import (
 	"image"
 	"strings"
 
-	"github.com/danfragoso/thdwb/bun"
+	"github.com/neurlang/wayland/go-wayland-browser/bun"
 
 	gg "github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/danfragoso/thdwb/hotdog"
-	ketchup "github.com/danfragoso/thdwb/ketchup"
+	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	ketchup "github.com/neurlang/wayland/go-wayland-browser/ketchup"
 	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
-	sauce "github.com/danfragoso/thdwb/sauce"
+	sauce "github.com/neurlang/wayland/go-wayland-browser/sauce"
 )
 
 func loadDocument(browser *hotdog.WebBrowser, link string) {

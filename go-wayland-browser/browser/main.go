@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
-	bun "github.com/danfragoso/thdwb/bun"
+	bun "github.com/neurlang/wayland/go-wayland-browser/bun"
 	gg "github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/danfragoso/thdwb/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
 	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
 
@@ -115,7 +115,7 @@ func main() {
 				browser.ActiveDocument.DebugFlag = false
 
 				if browser.ActiveDocument.DebugWindow != nil {
-					app.DestroyWindow(browser.ActiveDocument.DebugWindow)
+					app.DestroyWindow((browser.ActiveDocument.DebugWindow).(*mustard.Window))
 					browser.ActiveDocument.DebugWindow = nil
 					browser.ActiveDocument.DebugTree = nil
 				}
@@ -129,7 +129,7 @@ func main() {
 		if browser.ActiveDocument.DebugFlag {
 			if browser.ActiveDocument.DebugWindow != nil {
 				window.AddContextMenuEntry("Hide Tree", func() {
-					app.DestroyWindow(browser.ActiveDocument.DebugWindow)
+					app.DestroyWindow((browser.ActiveDocument.DebugWindow).(*mustard.Window))
 					browser.ActiveDocument.DebugWindow = nil
 					browser.ActiveDocument.DebugTree = nil
 				})
@@ -148,7 +148,7 @@ func main() {
 					browser.ActiveDocument.DebugWindow.SetRootFrame(rFrame)
 					browser.ActiveDocument.DebugWindow.Show()
 
-					app.AddWindow(browser.ActiveDocument.DebugWindow)
+					app.AddWindow(browser.ActiveDocument.DebugWindow.(*mustard.Window))
 
 					treeNodeDOM := treeNodeFromDOM(browser.ActiveDocument.DOM)
 					tree.SetSelectCallback(func(selectedNode *mustard.TreeWidgetNode) {

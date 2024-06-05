@@ -114,7 +114,7 @@ type baseWidget struct {
 	widget *window.Widget
 }
 
-type cursorType int
+type cursorType = int
 
 const (
 	//DefaultCursor - Default arrow cursor

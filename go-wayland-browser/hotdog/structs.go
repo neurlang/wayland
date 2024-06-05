@@ -2,7 +2,6 @@ package hotdog
 
 import (
 	"fmt"
-	"github.com/neurlang/wayland/go-wayland-browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
 	"net/url"
 )
@@ -11,10 +10,22 @@ type WebBrowser struct {
 	ActiveDocument *Document
 	Documents      []*Document
 
-	Viewport    *mustard.CanvasWidget
-	StatusLabel *mustard.LabelWidget
+	Viewport    interface{
+		GetOffset() int
+		GetTop() float64
+		SetDrawingRepaint(bool)
+	}
+	StatusLabel interface{
+		SetContent(string)
+		RequestRepaint()
+	}
 	History     *History
-	Window      *mustard.Window
+	Window      interface{
+		SetTitle(string)
+		SetCursor(int)
+		RemoveStaticOverlay(string)
+		AddStaticOverlay(string)
+	}
 	Profiler    *profiler.Profiler
 	BuildInfo   *BuildInfo
 	Settings    *Settings
@@ -29,8 +40,15 @@ type Document struct {
 	DOM         *NodeDOM
 
 	DebugFlag       bool
-	DebugWindow     *mustard.Window
-	DebugTree       *mustard.TreeWidget
+	DebugWindow     interface{
+		RegisterTree(interface{})
+		SetRootFrame(interface{})
+		Show()
+	}
+	DebugTree       interface{
+		SelectNodeByValue(string)
+		RequestRepaint()
+	}
 	SelectedElement *NodeDOM
 
 	OffsetY int
