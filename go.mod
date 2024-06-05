@@ -1,16 +1,10 @@
 module github.com/neurlang/wayland
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.15
-
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.15
-
 go 1.18
 
 require (
-	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/ebitengine/purego v0.7.1
 	github.com/fogleman/gg v1.3.0
-	github.com/goki/freetype v1.0.5
 	github.com/neurlang/gm v0.0.2
 	github.com/neurlang/winc v0.1.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646

@@ -1,6 +1,4 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb h1:cBIhq1aSHfk4cTqPPSQsJxUi4FN/22BuiRrbCrThq7I=
-github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:m5xMTMf9giivgMuX2BugZxtmBrR6i6VvWM/gTfQZA6U=
 github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb h1:6LI6UFqMp9x34SYSg7TORMKs3uiLkNu0CPQ2SHUn5CQ=
 github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:PZtfhGr0JOIXWYQgVeH+ZhKXudEx5jHiDcE6h8J8zeg=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb h1:KhU9EuC8nlkMhK06nFbJBxYszzcOM9wQHZHWfJKbMzU=
@@ -11,8 +9,6 @@ github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb h1:FcDfNi
 github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:0IqGivQeXd2mugbkObz0PRy7raF1oSUadqfmFeOeRL0=
 github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb h1:VyuchmbBBgpLv76M75GZ0wI/T+P3Ts7GSEg8CioEl3U=
 github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:UIm6wpmKQTSkly6HUqMFCFZt0i7k86Jhu3BK1ucbnQg=
-github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb h1:78CtJ2TvVJBhhH8mWiki1Kk1QRKyJaHv49w9vmEw1sw=
-github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:41CSte9hkX9mY5MbI/z9zC1FkR6zq67xhmaY5/vq5FU=
 github.com/danfragoso/thdwb/pages v0.0.0-20210612223625-beb2b4a85bbb h1:OltkEgNmjbguNnkXwTRnzi7xfLKHPmCqTuW1c5eX0s8=
 github.com/danfragoso/thdwb/pages v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:2FjK7SNIT50OXq6hs4Zy+tweI/sWguPqbm8BTIUax58=
 github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb h1:lgooLiwfHhpgs1gu66xhlNxTMh34lhuA5WkdgSZtywY=
@@ -22,18 +18,10 @@ github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:r
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDiPA=
 github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
-github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
-github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
-github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a h1:vxnBhFDDT+xzxf1jTJKMKZw3H0swfWk9RpWbBbDK5+0=
-github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/goki/freetype v1.0.5 h1:yi2lQeUhXnBgSMqYd0vVmPw6RnnfIeTP3N4uvaJXd7A=
 github.com/goki/freetype v1.0.5/go.mod h1:wKmKxddbzKmeci9K96Wknn5kjTWLyfC8tKOqAFbEX8E=
-github.com/neurlang/wayland v0.1.11 h1:jfdtetyT39fCQzSOFCK8HW7RWb18rTN+uRU5Y0cu7H8=
-github.com/neurlang/wayland v0.1.11/go.mod h1:dpyPmR7834kUnveoYb4JknjoC47t/PeOVA/vN47cQC8=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.11 h1:3HM7yxAIkLDrW5s5pTb4WAmHrO6phOQrn5zNdmVbUaM=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.11/go.mod h1:UKdznPleburb/Auq3mz7kPRsT5ZqOjw/AVbfGnE7CGM=
-github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.11 h1:7DxvNmtjThjN7w39COcBUtLo81VRfGKH1/TfRB7SwN4=
-github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.11/go.mod h1:sT1eu/EiiwOMVH5K8lFZb6PSNJzQ6+Z2sEB7bz7p4PE=
+github.com/neurlang/wayland v0.1.15 h1:iGyaxMfyyXMP1orNGfJjWJ6Um5S/Cb1LFt+7kKPK8aU=
+github.com/neurlang/wayland v0.1.15/go.mod h1:m4DrCqaPO4E/AVBjxMFcjHmjodWMlnmo6OIkfvfEJ4I=
 github.com/neurlang/winc v0.1.1 h1:0Nu1f6mlJ7F0KselI1xrbvFvqOgPz0PzeTEd4iqessM=
 github.com/neurlang/winc v0.1.1/go.mod h1:M3RhPpObvIhmGBJtjVAlCUke88Bf4qAhu9kHqpCkqNA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
