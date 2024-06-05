@@ -1,12 +1,12 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
+github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb h1:cBIhq1aSHfk4cTqPPSQsJxUi4FN/22BuiRrbCrThq7I=
+github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:m5xMTMf9giivgMuX2BugZxtmBrR6i6VvWM/gTfQZA6U=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb h1:KhU9EuC8nlkMhK06nFbJBxYszzcOM9wQHZHWfJKbMzU=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:v2nmvay4XFmMFWYPpbuCE8WtWPBZUq5N87a4d71PEpE=
 github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDiPA=
 github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
 github.com/goki/freetype v1.0.5 h1:yi2lQeUhXnBgSMqYd0vVmPw6RnnfIeTP3N4uvaJXd7A=
 github.com/goki/freetype v1.0.5/go.mod h1:wKmKxddbzKmeci9K96Wknn5kjTWLyfC8tKOqAFbEX8E=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.11 h1:3HM7yxAIkLDrW5s5pTb4WAmHrO6phOQrn5zNdmVbUaM=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.11/go.mod h1:UKdznPleburb/Auq3mz7kPRsT5ZqOjw/AVbfGnE7CGM=
 github.com/neurlang/winc v0.1.1 h1:0Nu1f6mlJ7F0KselI1xrbvFvqOgPz0PzeTEd4iqessM=
 github.com/neurlang/winc v0.1.1/go.mod h1:M3RhPpObvIhmGBJtjVAlCUke88Bf4qAhu9kHqpCkqNA=
 github.com/yalue/native_endian v1.0.2 h1:e4SxBbaCoOOO4E3axd7FSriUhzc1bIzqZGG5jl6Evbg=
