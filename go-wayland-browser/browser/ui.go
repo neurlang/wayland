@@ -2,7 +2,7 @@ package main
 
 import (
 	assets "github.com/neurlang/wayland/go-wayland-browser/assets"
-	hotdog "github.com/danfragoso/thdwb/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
 	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
 )
 

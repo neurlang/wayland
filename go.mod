@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
-	github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
@@ -22,7 +21,8 @@ require (
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.15.0
 	golang.org/x/sys v0.21.0
-	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.24
+	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.25
+	github.com/neurlang/wayland/go-wayland-browser/hotdog v0.1.25
 )
 
 require (

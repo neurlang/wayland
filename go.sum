@@ -5,8 +5,6 @@ github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb h1:6LI6UFqMp9
 github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:PZtfhGr0JOIXWYQgVeH+ZhKXudEx5jHiDcE6h8J8zeg=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb h1:KhU9EuC8nlkMhK06nFbJBxYszzcOM9wQHZHWfJKbMzU=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:v2nmvay4XFmMFWYPpbuCE8WtWPBZUq5N87a4d71PEpE=
-github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb h1:pYfJaXAymurwqI6a+LEl3m1L9CqshEVhLdruQ5QDaCs=
-github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:tv5W3TNlZ0CYDLlFA0gtGhoF3GwftXDs4cxZD+6NAx4=
 github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb h1:FcDfNiUQeeNMBc+DJBUMYKzJcZril/SEnf0Nyy0W7jI=
 github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:0IqGivQeXd2mugbkObz0PRy7raF1oSUadqfmFeOeRL0=
 github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb h1:VyuchmbBBgpLv76M75GZ0wI/T+P3Ts7GSEg8CioEl3U=
