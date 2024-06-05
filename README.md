@@ -98,11 +98,12 @@ go get github.com/neurlang/wayland/...
 Then, install them:
 
 ```
-go install github.com/neurlang/wayland/go-wayland-simple-shm@latest
-go install github.com/neurlang/wayland/go-wayland-smoke@latest
-go install github.com/neurlang/wayland/go-wayland-imageviewer@latest
-go install github.com/neurlang/wayland/go-wayland-texteditor@latest
-go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
+go install github.com/neurlang/wayland/go-wayland-simple-shm
+go install github.com/neurlang/wayland/go-wayland-smoke
+go install github.com/neurlang/wayland/go-wayland-imageviewer
+go install github.com/neurlang/wayland/go-wayland-texteditor
+go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend
+go install github.com/neurlang/wayland/go-wayland-browser/browser
 ```
 
 Using older golang (there is support for golang >= 1.18):

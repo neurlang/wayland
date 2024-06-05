@@ -26,6 +26,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF0
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
 github.com/neurlang/gm v0.0.2 h1:EkpxDN7pVtO4MIxFKqprP8dwbTwMppodrrkzOwIhfVg=
 github.com/neurlang/gm v0.0.2/go.mod h1:tEtZIcgkJWJddVyVrtA6FBmPjY6vKFrCuzsThhmCgnE=
+github.com/neurlang/wayland/go-wayland-browser/assets v0.0.0-20240605150111-18f1dcb81b57 h1:2QJOM51fPV0D3OyMD3yvEi8Siq3z/J+2N+B6ThOvX1o=
+github.com/neurlang/wayland/go-wayland-browser/assets v0.0.0-20240605150111-18f1dcb81b57/go.mod h1:kAWccKkfM7m+Q2Pv1Fy2HzJeGD0OmZHixEe5mGDFIcU=
 github.com/neurlang/wayland/go-wayland-browser/mustard v0.0.0-20240420104651-4a5a33140724 h1:mNyYluLVFKlUeWNIbYzWFP+i1tsgfxFvet1tfSKyHb8=
 github.com/neurlang/wayland/go-wayland-browser/mustard v0.0.0-20240420104651-4a5a33140724/go.mod h1:2YnylUoej8Fg1VMBND0N9jf+Vfo5bmcenhDnHQfV46U=
 github.com/neurlang/winc v0.1.1 h1:0Nu1f6mlJ7F0KselI1xrbvFvqOgPz0PzeTEd4iqessM=
