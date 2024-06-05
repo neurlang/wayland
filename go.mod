@@ -1,5 +1,9 @@
 module github.com/neurlang/wayland
 
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.20
+
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.20
+
 go 1.18
 
 require (
@@ -18,6 +22,9 @@ require (
 )
 
 require (
+	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/goki/freetype v1.0.5 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect

@@ -1,7 +1,7 @@
 package main
 
 import (
-	assets "github.com/danfragoso/thdwb/assets"
+	assets "github.com/neurlang/wayland/go-wayland-browser/assets"
 	hotdog "github.com/danfragoso/thdwb/hotdog"
 	mustard "github.com/danfragoso/thdwb/mustard"
 )
