@@ -22,7 +22,7 @@ require (
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.15.0
 	golang.org/x/sys v0.21.0
-	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.22
+	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.23
 )
 
 require (
