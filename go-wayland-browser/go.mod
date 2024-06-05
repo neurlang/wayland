@@ -14,7 +14,7 @@ require (
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/goki/freetype v1.0.5
-	github.com/neurlang/wayland v0.1.11
+	github.com/neurlang/wayland v0.1.12
 )
 
 require (
