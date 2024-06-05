@@ -1,6 +1,4 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb h1:cBIhq1aSHfk4cTqPPSQsJxUi4FN/22BuiRrbCrThq7I=
-github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:m5xMTMf9giivgMuX2BugZxtmBrR6i6VvWM/gTfQZA6U=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb h1:KhU9EuC8nlkMhK06nFbJBxYszzcOM9wQHZHWfJKbMzU=
 github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb/go.mod h1:v2nmvay4XFmMFWYPpbuCE8WtWPBZUq5N87a4d71PEpE=
 github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDiPA=
