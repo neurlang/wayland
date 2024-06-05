@@ -8,7 +8,7 @@ import (
 	"github.com/danfragoso/thdwb/bun"
 
 	gg "github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	hotdog "github.com/danfragoso/thdwb/hotdog"
 	ketchup "github.com/danfragoso/thdwb/ketchup"
 	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
