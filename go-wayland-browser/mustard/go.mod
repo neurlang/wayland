@@ -1,10 +1,10 @@
 module github.com/neurlang/wayland/go-wayland-browser/mustard
 
-replace github.com/neurlang/wayland => github.com/neurlang/wayland v0.1.16
+replace github.com/neurlang/wayland => github.com/neurlang/wayland v0.1.17
 
-replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.16
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets v0.1.17
 
-replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.16
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.17
 
 go 1.18
 
