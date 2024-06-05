@@ -3,6 +3,13 @@ module github.com/neurlang/wayland
 go 1.18
 
 require (
+	github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/hotdog v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/ketchup v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/mustard v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
+	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/ebitengine/purego v0.7.1
 	github.com/fogleman/gg v1.3.0
 	github.com/neurlang/gm v0.0.2
@@ -15,15 +22,17 @@ require (
 	golang.design/x/clipboard v0.7.0
 	golang.org/x/image v0.15.0
 	golang.org/x/sys v0.21.0
-	github.com/neurlang/wayland/go-wayland-browser/assets v0.1.21
-	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.21
+	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.22
 )
 
 require (
-	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb // indirect
-	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/danfragoso/thdwb/mayo v0.0.0-20210612223625-beb2b4a85bbb // indirect
+	github.com/danfragoso/thdwb/pages v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/goki/freetype v1.0.5 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
+	golang.org/x/net v0.26.0 // indirect
 )
