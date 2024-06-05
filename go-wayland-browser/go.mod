@@ -1,16 +1,15 @@
 module github.com/neurlang/wayland/go-wayland-browser
 
-replace github.com/danfragoso/thdwb/mustard => ./mustard/
+replace github.com/danfragoso/thdwb/mustard => github.com/neurlang/wayland/go-wayland-browser/mustard/ v0.1.28
 
-replace github.com/danfragoso/thdwb/hotdog => ./hotdog/
+replace github.com/danfragoso/thdwb/hotdog => github.com/neurlang/wayland/go-wayland-browser/hotdog/ v0.1.28
 
-replace github.com/danfragoso/thdwb/assets => ./assets/
-
-replace github.com/neurlang/wayland => ../
+replace github.com/danfragoso/thdwb/assets => github.com/neurlang/wayland/go-wayland-browser/assets/ v0.1.28
 
 go 1.18
 
 require (
+	github.com/neurlang/wayland v0.1.28
 	github.com/danfragoso/thdwb/assets v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/danfragoso/thdwb/bun v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/danfragoso/thdwb/gg v0.0.0-20210612223625-beb2b4a85bbb // indirect
@@ -22,9 +21,9 @@ require (
 	github.com/danfragoso/thdwb/sauce v0.0.0-20210612223625-beb2b4a85bbb // indirect
 	github.com/ebitengine/purego v0.7.1 // indirect
 	github.com/goki/freetype v1.0.5 // indirect
-	github.com/neurlang/wayland v0.1.23 // indirect
-	github.com/neurlang/wayland/go-wayland-browser/assets v0.1.21 // indirect
-	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.23 // indirect
+	github.com/neurlang/wayland v0.1.28 // indirect
+	github.com/neurlang/wayland/go-wayland-browser/assets v0.1.28 // indirect
+	github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.28 // indirect
 	github.com/neurlang/winc v0.1.1 // indirect
 	github.com/yalue/native_endian v1.0.2 // indirect
 	github.com/zzl/go-win32api/v2 v2.1.0 // indirect

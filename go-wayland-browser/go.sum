@@ -21,12 +21,6 @@ github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDi
 github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
 github.com/goki/freetype v1.0.5 h1:yi2lQeUhXnBgSMqYd0vVmPw6RnnfIeTP3N4uvaJXd7A=
 github.com/goki/freetype v1.0.5/go.mod h1:wKmKxddbzKmeci9K96Wknn5kjTWLyfC8tKOqAFbEX8E=
-github.com/neurlang/wayland v0.1.23 h1:/y/ozWmSX/ZdJogH4Sb+bElIbWn1PR5V0DatYcI1PWo=
-github.com/neurlang/wayland v0.1.23/go.mod h1:Ij/dcIbzOnPmEcjRgDAtp/gX1bDdvywblmpYgI/60io=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.21 h1:hpk+4wuwhjRforim/JepBpA/GJ8fn9ns1P9NTGPLAjc=
-github.com/neurlang/wayland/go-wayland-browser/assets v0.1.21/go.mod h1:UKdznPleburb/Auq3mz7kPRsT5ZqOjw/AVbfGnE7CGM=
-github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.23 h1:rLv/xFwqFs8fS07dsJuoTnmEIyQwv/WjsnPnSCbPX/0=
-github.com/neurlang/wayland/go-wayland-browser/mustard v0.1.23/go.mod h1:JxLSFNJAQa8ufbDgpLZjfKQTarsKLcNpuUWvCgcFtVc=
 github.com/neurlang/winc v0.1.1 h1:0Nu1f6mlJ7F0KselI1xrbvFvqOgPz0PzeTEd4iqessM=
 github.com/neurlang/winc v0.1.1/go.mod h1:M3RhPpObvIhmGBJtjVAlCUke88Bf4qAhu9kHqpCkqNA=
 github.com/yalue/native_endian v1.0.2 h1:e4SxBbaCoOOO4E3axd7FSriUhzc1bIzqZGG5jl6Evbg=
