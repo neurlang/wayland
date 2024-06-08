@@ -2,7 +2,7 @@ package bun
 
 import (
 	gg "github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 
 func paintListItemElement(ctx *gg.Context, node *hotdog.NodeDOM) {

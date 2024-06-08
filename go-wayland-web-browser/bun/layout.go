@@ -2,7 +2,7 @@ package bun
 
 import (
 	"github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 
 func createRenderTree(root *hotdog.NodeDOM) *hotdog.NodeDOM {

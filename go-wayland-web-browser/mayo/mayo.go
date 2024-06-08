@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 
 func getDefaultElementDisplay(element string) string {

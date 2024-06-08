@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/neurlang/wayland/go-wayland-browser/assets"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
-	pages "github.com/neurlang/wayland/go-wayland-browser/pages"
+	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
+	pages "github.com/neurlang/wayland/go-wayland-web-browser/pages"
 )
 
 var client = &http.Client{}

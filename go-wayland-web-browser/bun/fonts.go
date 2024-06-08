@@ -1,7 +1,7 @@
 package bun
 
 import (
-	"github.com/neurlang/wayland/go-wayland-browser/assets"
+	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
 
 	"github.com/goki/freetype/truetype"
 )

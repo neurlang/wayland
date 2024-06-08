@@ -1,9 +1,9 @@
 package main
 
 import (
-	assets "github.com/neurlang/wayland/go-wayland-browser/assets"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
-	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
+	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
+	mustard "github.com/neurlang/wayland/go-wayland-web-browser/mustard"
 )
 
 func createMainBar(window *mustard.Window, browser *hotdog.WebBrowser) (*mustard.Frame, *mustard.LabelWidget, *mustard.ButtonWidget, *mustard.ButtonWidget, *mustard.ButtonWidget, *mustard.ButtonWidget, *mustard.InputWidget) {

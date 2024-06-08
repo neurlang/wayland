@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 
-	bun "github.com/neurlang/wayland/go-wayland-browser/bun"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 	gg "github.com/danfragoso/thdwb/gg"
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
-	mustard "github.com/neurlang/wayland/go-wayland-browser/mustard"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
+	mustard "github.com/neurlang/wayland/go-wayland-web-browser/mustard"
 	profiler "github.com/danfragoso/thdwb/profiler"
 
 )

@@ -3,7 +3,7 @@ package mayo
 import (
 	"regexp"
 
-	hotdog "github.com/neurlang/wayland/go-wayland-browser/hotdog"
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 
 var rgba = regexp.MustCompile(`rgba?\([\.?\d?\.?\d?%?\s?,?]+\)`)
