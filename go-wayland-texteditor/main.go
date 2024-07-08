@@ -251,6 +251,9 @@ func (s *textarea) Motion(_ *window.Widget, _ *window.Input, time uint32, x floa
 
 	return window.CursorHand1
 }
+
+var lastCommand *exec.Cmd
+
 func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button uint32, state wl.PointerButtonState, _ window.WidgetHandler) {
 
 	s.mutex.Lock()
@@ -290,6 +293,13 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 					separator := fmt.Sprintf("%x", sep)
 					cmd := exec.Command("zenity", "--multiple", "--file-selection", "--separator", separator)
 					go func(cmd *exec.Cmd) {
+						s.mutex.Lock()
+						if lastCommand != nil {
+							lastCommand.Process.Kill()
+						}
+						lastCommand = cmd
+						s.mutex.Unlock()
+
 						var outb, errb bytes.Buffer
 						cmd.Stdout = &outb
 						cmd.Stderr = &errb
@@ -327,6 +337,9 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 				case 13, 14, 15, 16:
 					s.window.ToggleMaximized()
 				case 17, 18, 19, 20:
+					if lastCommand != nil {
+						lastCommand.Process.Kill()
+					}
 					s.display.Exit()
 				}
 
