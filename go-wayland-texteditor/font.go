@@ -1,12 +1,16 @@
 package main
 
-import "os"
+import "embed"
 import "image"
 import "image/png"
 import "image/jpeg"
 import "image/color"
 import "strings"
 import "fmt"
+
+//go:embed *.jpg
+//go:embed *.png
+var embedFonts embed.FS
 
 type Font struct {
 	cellx   int
@@ -209,13 +213,12 @@ func (f *Font) Combine(combiner, descriptor, textureName string) error {
 }
 
 func (f *Font) Load(name, descriptor, trailer string) error {
-	file, err := os.Open(name)
+	file, err := embedFonts.Open(name)
 	if err != nil {
 		print("Font not found: ")
 		println(name)
 		return err
 	}
-	defer file.Close()
 
 	var img image.Image
 
