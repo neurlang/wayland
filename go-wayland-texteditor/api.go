@@ -19,6 +19,7 @@ type PasteRequest struct {
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
+	Tab                       string
 	Copy                      *CopyRequest
 	Erase                     *EraseRequest
 	Write                     *WriteRequest

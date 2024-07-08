@@ -19,12 +19,12 @@ type Font struct {
 }
 
 var hexfont = "" +
-	" #    # ##  ##   #  ###  ## ###  #   #   #  ##   #  ##  ### ### " +
-	"# #  ##   #   # #   #   #     # # # # # # # # # # # # # #   #   " +
-	"# # # #   #  #  ### ##  ##   #   #   ## # # ##  #   # # ### ### " +
-	"# #   #  #    #  #    # # #  #  # #   # ### # # # # # # #   #   " +
-	" #    # ### ##   #  ##   #   #   #  ##  # # ##   #  ##  ### #   " +
-	"                                                                "
+	" #    # ##  ##   #  ###  ## ###  #   #   #  ##   #  ##  ### ### ### " +
+	"# #  ##   #   # #   #   #     # # # # # # # # # # # # # #   #   ### " +
+	"# # # #   #  #  ### ##  ##   #   #   ## # # ##  #   # # ### ### ### " +
+	"# #   #  #    #  #    # # #  #  # #   # ### # # # # # # #   #   ### " +
+	" #    # ### ##   #  ##   #   #   #  ##  # # ##   #  ##  ### #   ### " +
+	"                                                                    "
 
 func hexfontGet(hex, x, y byte) bool {
 	switch hex {
@@ -60,9 +60,8 @@ func hexfontGet(hex, x, y byte) bool {
 		hex = 14
 	case 'F', 'f':
 		hex = 15
-	}
-	if hex >= 16 {
-		panic("")
+	default:
+		hex = 16
 	}
 	if x >= 4 {
 		panic("")
@@ -71,7 +70,7 @@ func hexfontGet(hex, x, y byte) bool {
 		panic("")
 	}
 
-	return hexfont[4*int(hex)+int(y)*64+int(x)] == '#'
+	return hexfont[4*int(hex)+int(y)*17*4+int(x)] == '#'
 }
 
 func (f *Font) GetRGBTexture(code string) [][3]byte {

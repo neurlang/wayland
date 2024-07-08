@@ -5,6 +5,7 @@ import "fmt"
 type Paste struct {
 	linesBuffer [][]byte
 	buffer      []byte
+	all         bool
 	Textarea    *textarea
 }
 
@@ -51,8 +52,25 @@ func (p *Paste) Close() error {
 		X1: p.Textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
 		Y1: p.Textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
 	}
-	if !(p.Textarea.StringGrid.IsSelection() && p.Textarea.StringGrid.IsSelectionStrict()) {
+	if !p.all && !(p.Textarea.StringGrid.IsSelection() && p.Textarea.StringGrid.IsSelectionStrict()) {
 		erase = nil
+	} else if p.all {
+		var endY = p.Textarea.StringGrid.LineCount
+		if endY < 0 {
+			endY = 0
+		}
+		erase = &EraseRequest{
+			X0: 0,
+			Y0: 0,
+			X1: 0,
+			Y1: endY,
+		}
+		var pasteErase = &PasteRequest{
+			X:      0,
+			Y:      0,
+			Buffer: append(p.linesBuffer, p.buffer),
+		}
+		paste = pasteErase
 	} else {
 		var pasteErase = &PasteRequest{
 			X:      (&p.Textarea.StringGrid).IbeamCursorAbsolute().Lesser(p.Textarea.StringGrid.SelectionCursorAbsolute()).X, /*+ textarea.StringGrid.FilePosition.X*/

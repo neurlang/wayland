@@ -30,6 +30,11 @@ import xkb "github.com/neurlang/wayland/xkbcommon"
 import window "github.com/neurlang/wayland/window"
 import "fmt"
 import "sync"
+import "os/exec"
+import "strings"
+import "bytes"
+import "os"
+import "io"
 
 const navigateUp = 1
 const navigateDown = 2
@@ -252,7 +257,6 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 	defer s.mutex.Unlock()
 
 	if button == 272 {
-
 		if state == wl.PointerButtonStatePressed {
 			for i := range s.scrolls {
 				if s.scrolls[i].IsHoverButton() {
@@ -274,7 +278,6 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 				}
 			}
 		}
-
 		if s.controls.IsHoverButton() {
 			if state == wl.PointerButtonStateReleased {
 
@@ -282,10 +285,47 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 				case 0:
 					println("no hover")
 				case 1, 2, 3, 4:
-					s.window.SetMinimized()
+					var sep [8]byte
+					rand.Read(sep[:])
+					separator := fmt.Sprintf("%x", sep)
+
+					cmd := exec.Command("zenity", "--multiple", "--file-selection", "--separator", separator)
+					var outb, errb bytes.Buffer
+					cmd.Stdout = &outb
+					cmd.Stderr = &errb
+					err := cmd.Run()
+					if err == nil {
+						files := strings.Split(outb.String(), separator)
+						for _, srcPath := range files {
+							if srcPath[len(srcPath)-1] == '\n' {
+								srcPath = srcPath[0 : len(srcPath)-1]
+							}
+
+							println(srcPath)
+
+							// Open the source file
+							sourceFile, err := os.Open(srcPath)
+							if err != nil {
+								println(err.Error())
+								continue
+							}
+							dest := &Paste{Textarea: s, all: true}
+							_, err = io.Copy(dest, sourceFile)
+							if err != nil {
+								println(err.Error())
+							}
+							sourceFile.Close()
+							go dest.Close()
+							break // singletab load
+						}
+					}
 				case 5, 6, 7, 8:
-					s.window.ToggleMaximized()
+					println("new file")
 				case 9, 10, 11, 12:
+					s.window.SetMinimized()
+				case 13, 14, 15, 16:
+					s.window.ToggleMaximized()
+				case 17, 18, 19, 20:
 					s.display.Exit()
 				}
 
@@ -870,8 +910,8 @@ func main() {
 	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
 
 	textarea.controls.Font = &ControlFont
-	textarea.controls.Content = []string{" ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
-	textarea.controls.XCells = 12
+	textarea.controls.Content = []string{" ", "Ctr3l", "Ctr3r", " ", " ", "Ctr4l", "Ctr4r", " ", " ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
+	textarea.controls.XCells = len(textarea.controls.Content)
 	textarea.controls.YCells = 1
 	textarea.controls.CellWidth = 12
 	textarea.controls.CellHeight = 24
@@ -880,7 +920,7 @@ func main() {
 	textarea.controls.LineCount = 1
 	textarea.controls.LineLens = []int{10000}
 	textarea.controls.LastColHint = 10000
-	textarea.controls.Pos = ObjectPosition{-48 * 3, 0}
+	textarea.controls.Pos = ObjectPosition{-48 * 5, 0}
 	textarea.controls.BgColor = [3]byte{0, 13, 26}
 	textarea.controls.FgColor = [3]byte{255, 255, 255}
 	textarea.controls.Control(false)

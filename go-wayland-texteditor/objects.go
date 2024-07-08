@@ -304,6 +304,9 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 	}
 	if pos.Y >= sg.LineCount-sg.FilePosition.Y {
 		pos.Y = sg.LineCount - 1 - sg.FilePosition.Y
+		if pos.Y < 0 {
+			pos.Y = 0
+		}
 	}
 	if pos.X > 0 && pos.Y >= 0 && pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
 		pos.X = sg.LineLens[pos.Y]
