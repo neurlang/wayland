@@ -10,7 +10,16 @@ import (
 func getSystemLibrary() string {
 	switch runtime.GOOS {
 	case "linux":
-		return "libxkbcommon.so"
+		"libxkbcommon.so"
+	default:
+		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
+	}
+}
+
+func getSystemLibraryDotVersion() string {
+	switch runtime.GOOS {
+	case "linux":
+		".0"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}
@@ -42,7 +51,10 @@ var xkb_state_update_mask func(uintptr, uint, uint, uint, uint, uint, uint) uint
 func init() {
 	libxkbcommon, err := purego.Dlopen(getSystemLibrary(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {
-		panic(err)
+		libxkbcommon, err = purego.Dlopen(getSystemLibrary()+getSystemLibraryDotVersion(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			panic(err)
+		}
 	}
 	purego.RegisterLibFunc(&xkb_compose_state_feed, libxkbcommon, "xkb_compose_state_feed")
 	purego.RegisterLibFunc(&xkb_compose_state_get_one_sym, libxkbcommon, "xkb_compose_state_get_one_sym")
@@ -66,5 +78,5 @@ func init() {
 	purego.RegisterLibFunc(&xkb_state_serialize_mods, libxkbcommon, "xkb_state_serialize_mods")
 	purego.RegisterLibFunc(&xkb_state_unref, libxkbcommon, "xkb_state_unref")
 	purego.RegisterLibFunc(&xkb_state_update_mask, libxkbcommon, "xkb_state_update_mask")
-	
+
 }
