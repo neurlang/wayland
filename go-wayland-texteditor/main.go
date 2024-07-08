@@ -288,37 +288,38 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 					var sep [8]byte
 					rand.Read(sep[:])
 					separator := fmt.Sprintf("%x", sep)
-
 					cmd := exec.Command("zenity", "--multiple", "--file-selection", "--separator", separator)
-					var outb, errb bytes.Buffer
-					cmd.Stdout = &outb
-					cmd.Stderr = &errb
-					err := cmd.Run()
-					if err == nil {
-						files := strings.Split(outb.String(), separator)
-						for _, srcPath := range files {
-							if srcPath[len(srcPath)-1] == '\n' {
-								srcPath = srcPath[0 : len(srcPath)-1]
-							}
+					go func(cmd *exec.Cmd) {
+						var outb, errb bytes.Buffer
+						cmd.Stdout = &outb
+						cmd.Stderr = &errb
+						err := cmd.Run()
+						if err == nil {
+							files := strings.Split(outb.String(), separator)
+							for _, srcPath := range files {
+								if srcPath[len(srcPath)-1] == '\n' {
+									srcPath = srcPath[0 : len(srcPath)-1]
+								}
 
-							println(srcPath)
+								println(srcPath)
 
-							// Open the source file
-							sourceFile, err := os.Open(srcPath)
-							if err != nil {
-								println(err.Error())
-								continue
+								// Open the source file
+								sourceFile, err := os.Open(srcPath)
+								if err != nil {
+									println(err.Error())
+									continue
+								}
+								dest := &Paste{Textarea: s, all: true}
+								_, err = io.Copy(dest, sourceFile)
+								if err != nil {
+									println(err.Error())
+								}
+								sourceFile.Close()
+								dest.Close()
+								break // singletab load
 							}
-							dest := &Paste{Textarea: s, all: true}
-							_, err = io.Copy(dest, sourceFile)
-							if err != nil {
-								println(err.Error())
-							}
-							sourceFile.Close()
-							go dest.Close()
-							break // singletab load
 						}
-					}
+					}(cmd)
 				case 5, 6, 7, 8:
 					println("new file")
 				case 9, 10, 11, 12:
