@@ -88,6 +88,10 @@ func handlerErase(tab string, e *EraseRequest) *EraseResponse {
 		e.X0, e.X1 = e.X1, e.X0
 		e.Y0, e.Y1 = e.Y1, e.Y0
 	}
+	if e.X1 == 0 && e.Y1 >= len(file) && e.Y1 > 0 { // all file erase
+		e.Y1 = len(file) - 1
+		e.X1 = len(file[e.Y1])
+	}
 	if e.Y0 >= len(file) {
 		return nil
 	}
