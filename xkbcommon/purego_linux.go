@@ -10,7 +10,7 @@ import (
 func getSystemLibrary() string {
 	switch runtime.GOOS {
 	case "linux":
-		"libxkbcommon.so"
+		return "libxkbcommon.so"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}
@@ -19,7 +19,7 @@ func getSystemLibrary() string {
 func getSystemLibraryDotVersion() string {
 	switch runtime.GOOS {
 	case "linux":
-		".0"
+		return ".0"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}
