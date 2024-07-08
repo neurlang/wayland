@@ -5,18 +5,26 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
+	"sync"
 )
 
 const tabSize = 8
 
-var file = [][]string{
-	{"H", "e", "l", "l", "o", "c", "r", "u", "e", "l"},
-	{"w", "o", "r", "l", "d"},
+var fileMutex sync.Mutex
+var fileTab = map[string][][]string{
+	"": {{"H", "e", "l", "l", "o", "c", "r", "u", "e", "l"},
+		{"w", "o", "r", "l", "d"}},
 }
 
 var fileColor [][5]int
 
-func handlerCopy(p *CopyRequest) *CopyResponse {
+func handlerCopy(tab string, p *CopyRequest) *CopyResponse {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[tab]
+
 	var cr CopyResponse
 	if (p.Y0 > p.Y1) || ((p.Y0 == p.Y1) && (p.X0 > p.X1)) {
 		p.X0, p.X1 = p.X1, p.X0
@@ -70,7 +78,12 @@ func isCombiner(r rune) bool {
 		return false // not a combiner
 	}
 }
-func handlerErase(e *EraseRequest) *EraseResponse {
+func handlerErase(tab string, e *EraseRequest) *EraseResponse {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[tab]
+
 	if (e.Y0 > e.Y1) || ((e.Y0 == e.Y1) && (e.X0 > e.X1)) {
 		e.X0, e.X1 = e.X1, e.X0
 		e.Y0, e.Y1 = e.Y1, e.Y0
@@ -95,12 +108,19 @@ func handlerErase(e *EraseRequest) *EraseResponse {
 		file[e.Y0] = append(file[e.Y0], file[e.Y1]...)
 
 		file = append(file[:e.Y0+1], file[e.Y1+1:]...)
+
+		fileTab[tab] = file
 	} else {
 		file[e.Y0] = append(file[e.Y0][:e.X0], file[e.Y0][e.X1:]...)
 	}
 	return &EraseResponse{Erased: true}
 }
-func handlerPaste(p *PasteRequest) *struct{} {
+func handlerPaste(tab string, p *PasteRequest) *struct{} {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[tab]
+
 	if p.Y >= len(file) {
 		return nil
 	}
@@ -110,6 +130,8 @@ func handlerPaste(p *PasteRequest) *struct{} {
 	temp := p.Buffer
 	if len(temp) > 0 {
 		file = append(file[:p.Y+1], append(make([][]string, len(temp)-1), file[p.Y+1:]...)...)
+
+		fileTab[tab] = file
 	}
 	var rrow []string
 
@@ -124,6 +146,8 @@ func handlerPaste(p *PasteRequest) *struct{} {
 		array := []rune(string(subarray))
 		if p.Y >= len(file) {
 			file = append(file, []string{})
+
+			fileTab[tab] = file
 		}
 		var row = file[p.Y]
 		if p.X > len(row) {
@@ -154,12 +178,19 @@ func handlerPaste(p *PasteRequest) *struct{} {
 	}
 	if p.Y >= len(file) {
 		file = append(file, []string{})
+
+		fileTab[tab] = file
 	}
 	file[p.Y] = append(file[p.Y], rrow...)
 	return &struct{}{}
 }
 
-func handlerWrite(w *WriteRequest) *WriteResponse {
+func handlerWrite(tab string, w *WriteRequest) *WriteResponse {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[tab]
+
 	var wr WriteResponse
 	if w.Y >= len(file) {
 		return &wr
@@ -175,6 +206,8 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 		file[w.Y+1] = file[w.Y+1][w.X:]
 		wr.MoveX = -w.X
 		wr.MoveY = 1
+
+		fileTab[tab] = file
 	case "Delete":
 		if w.X == len(row) {
 			if len(file) <= w.Y+1 {
@@ -182,6 +215,9 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 			}
 			file[w.Y] = append(row, file[w.Y+1]...)
 			file = append(file[:w.Y+1], file[w.Y+2:]...)
+
+			fileTab[tab] = file
+
 			return &wr
 		}
 		for row[w.X] == "" {
@@ -197,6 +233,8 @@ func handlerWrite(w *WriteRequest) *WriteResponse {
 				wr.MoveY = -1
 				file[w.Y-1] = append(file[w.Y-1], row...)
 				file = append(file[:w.Y], file[w.Y+1:]...)
+
+				fileTab[tab] = file
 			}
 
 			return &wr
@@ -259,6 +297,7 @@ type PasteRequest struct {
 
 type ContentRequest struct {
 	Xpos, Ypos, Width, Height int
+	Tab                       string
 	Copy                      *CopyRequest
 	Erase                     *EraseRequest
 	Write                     *WriteRequest
@@ -316,26 +355,30 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 	var resp ContentResponse
 	var recolor bool
 	if cr.Copy != nil {
-		resp.Copy = handlerCopy(cr.Copy)
+		resp.Copy = handlerCopy(cr.Tab, cr.Copy)
 	}
 	if cr.Erase != nil {
-		resp.Erase = handlerErase(cr.Erase)
+		resp.Erase = handlerErase(cr.Tab, cr.Erase)
 		if resp.Erase != nil {
 			recolor = true
 		}
 	}
 	if cr.Write != nil {
-		resp.Write = handlerWrite(cr.Write)
+		resp.Write = handlerWrite(cr.Tab, cr.Write)
 		if resp.Write != nil {
 			recolor = true
 		}
 	}
 	if cr.Paste != nil {
-		resp.Paste = handlerPaste(cr.Paste)
+		resp.Paste = handlerPaste(cr.Tab, cr.Paste)
 		if resp.Paste != nil {
 			recolor = true
 		}
 	}
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[cr.Tab]
 
 	if recolor {
 		var highlights = []func([][]string) [][5]int{
@@ -388,7 +431,23 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(bytes)
 }
-func handlerScrollbar(w http.ResponseWriter, _ *http.Request) {
+func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
+
+	path := req.URL.Path[strings.LastIndex(req.URL.Path, "/"):]
+	if strings.HasSuffix(path, ".png") {
+		path = path[:len(path)-4]
+	}
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
+	}
+	if path == "live" {
+		path = ""
+	}
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	file := fileTab[path]
+
 	body, err := reprocess_scrollbar(file)
 	if err != nil {
 		return
@@ -397,6 +456,6 @@ func handlerScrollbar(w http.ResponseWriter, _ *http.Request) {
 }
 func main() {
 	http.HandleFunc("/content", handlerContent)
-	http.HandleFunc("/scrollbar/live.png", handlerScrollbar)
+	http.HandleFunc("/scrollbar/", handlerScrollbar)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
