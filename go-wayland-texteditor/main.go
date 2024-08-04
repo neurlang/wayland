@@ -288,6 +288,11 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 				case 0:
 					println("no hover")
 				case 1, 2, 3, 4:
+
+					file := s.openedFile
+					go s.saveToFileOperation(file)
+
+				case 5, 6, 7, 8:
 					var sep [8]byte
 					rand.Read(sep[:])
 					separator := fmt.Sprintf("%x", sep)
@@ -310,9 +315,9 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 								if srcPath[len(srcPath)-1] == '\n' {
 									srcPath = srcPath[0 : len(srcPath)-1]
 								}
-
-								println(srcPath)
-
+								s.mutex.Lock()
+								s.openedFile = srcPath
+								s.mutex.Unlock()
 								// Open the source file
 								sourceFile, err := os.Open(srcPath)
 								if err != nil {
@@ -330,13 +335,13 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 							}
 						}
 					}(cmd)
-				case 5, 6, 7, 8:
-					println("new file")
 				case 9, 10, 11, 12:
-					s.window.SetMinimized()
+					println("new file")
 				case 13, 14, 15, 16:
-					s.window.ToggleMaximized()
+					s.window.SetMinimized()
 				case 17, 18, 19, 20:
+					s.window.ToggleMaximized()
+				case 21, 22, 23, 24:
 					if lastCommand != nil {
 						lastCommand.Process.Kill()
 					}
@@ -475,21 +480,7 @@ func (textarea *textarea) Key(
 				if notUnicode == 'a' {
 					println("CTRL A")
 
-					var endX = textarea.StringGrid.EndLineLen
-					var endY = textarea.StringGrid.LineCount - 1
-					if endY < 0 {
-						endY = 0
-					}
-
-					textarea.StringGrid.SelectionCursor = ObjectPosition{-textarea.StringGrid.FilePosition.X, -textarea.StringGrid.FilePosition.Y}
-					textarea.StringGrid.SelectionCursorAbs = ObjectPosition{0, 0}
-					textarea.StringGrid.IbeamCursor = ObjectPosition{
-						endX - textarea.StringGrid.FilePosition.X,
-						endY - textarea.StringGrid.FilePosition.Y,
-					}
-					textarea.StringGrid.IbeamCursorAbs = ObjectPosition{endX, endY}
-					textarea.StringGrid.Selecting = false
-					textarea.StringGrid.IsSelected = true
+					textarea.selectAll()
 					break
 				}
 
@@ -501,64 +492,7 @@ func (textarea *textarea) Key(
 
 					}
 
-					var erase = &EraseRequest{
-						X0: textarea.StringGrid.IbeamCursorAbsolute().X,     /*+ textarea.StringGrid.FilePosition.X*/
-						Y0: textarea.StringGrid.IbeamCursorAbsolute().Y,     /*+ textarea.StringGrid.FilePosition.Y*/
-						X1: textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
-						Y1: textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
-					}
-					if notUnicode != 'x' {
-						erase = nil
-					}
-
-					content, err := load_content(ContentRequest{
-						Xpos:   textarea.StringGrid.FilePosition.X,
-						Ypos:   textarea.StringGrid.FilePosition.Y,
-						Width:  textarea.StringGrid.XCells,
-						Height: textarea.StringGrid.YCells,
-						Erase:  erase,
-						Copy: &CopyRequest{
-							X0: textarea.StringGrid.IbeamCursorAbsolute().X,     /*+ textarea.StringGrid.FilePosition.X*/
-							Y0: textarea.StringGrid.IbeamCursorAbsolute().Y,     /*+ textarea.StringGrid.FilePosition.Y*/
-							X1: textarea.StringGrid.SelectionCursorAbsolute().X, /*+ textarea.StringGrid.FilePosition.X*/
-							Y1: textarea.StringGrid.SelectionCursorAbsolute().Y, /*+ textarea.StringGrid.FilePosition.Y*/
-						}})
-					if err != nil {
-						fmt.Println(err)
-						break
-					}
-
-					textarea.handleContent(content, false)
-
-					if textarea.src != nil {
-
-						textarea.src.RemoveListener(textarea)
-
-						//textarea.src.Destroy()
-						//textarea.src.Unregister()
-					}
-
-					src, err := textarea.display.CreateDataSource()
-					if err != nil {
-						fmt.Println(err)
-					}
-					textarea.src = src
-
-					textarea.src.CopyBuffer = ""
-					for i, buf := range content.Copy.Buffer {
-						if i+1 == len(content.Copy.Buffer) {
-							textarea.src.CopyBuffer += string(buf)
-						} else {
-							textarea.src.CopyBuffer += string(buf) + "\n"
-						}
-					}
-
-					textarea.src.Offer("UTF8_STRING")
-					textarea.src.Offer("text/plain;charset=utf-8")
-					textarea.src.Offer("text/plain;charset=UTF-8")
-					textarea.src.AddListener(textarea)
-
-					input.DeviceSetSelection(textarea.src, textarea.display.GetSerial())
+					textarea.copyOperation(input, notUnicode == 'x')
 
 				}
 				if notUnicode == 'v' {
@@ -924,7 +858,7 @@ func main() {
 	ScrollbarSync(&(textarea.scrolls[0]), []patchScrollbar{{scrollTestFilename, ObjectPosition{0, 0}}}, content.LineCount)
 
 	textarea.controls.Font = &ControlFont
-	textarea.controls.Content = []string{" ", "Ctr3l", "Ctr3r", " ", " ", "Ctr4l", "Ctr4r", " ", " ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
+	textarea.controls.Content = []string{" ", "Ctr5l", "Ctr5r", " ", " ", "Ctr3l", "Ctr3r", " ", " ", "Ctr4l", "Ctr4r", " ", " ", "Ctr0l", "Ctr0r", " ", " ", "Ctr1l", "Ctr1r", " ", " ", "Ctr2l", "Ctr2r", " "}
 	textarea.controls.XCells = len(textarea.controls.Content)
 	textarea.controls.YCells = 1
 	textarea.controls.CellWidth = 12
@@ -934,7 +868,7 @@ func main() {
 	textarea.controls.LineCount = 1
 	textarea.controls.LineLens = []int{10000}
 	textarea.controls.LastColHint = 10000
-	textarea.controls.Pos = ObjectPosition{-48 * 5, 0}
+	textarea.controls.Pos = ObjectPosition{-48 * 6, 0}
 	textarea.controls.BgColor = [3]byte{0, 13, 26}
 	textarea.controls.FgColor = [3]byte{255, 255, 255}
 	textarea.controls.Control(false)

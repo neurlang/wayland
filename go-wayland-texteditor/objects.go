@@ -100,6 +100,8 @@ type StringGrid struct {
 	wasDoubleClick        bool
 	MatchingBrace         ObjectPosition
 	control               bool
+
+	openedFile string
 }
 
 func (sg *StringGrid) Control(ctrl bool) {
