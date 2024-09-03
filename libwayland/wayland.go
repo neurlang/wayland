@@ -606,6 +606,23 @@ func SurfaceDamage(s *Surface, a, b, c, d int32) {
 func (c *Compositor) CreateSurface() (*Surface, error) {
 	return (*Surface)(C.wl_compositor_create_surface((*C.struct_wl_compositor)(unsafe.Pointer(c)))), nil
 }
+func (c *Subcompositor) GetSubsurface(surface, parent *Surface) (*Subsurface, error) {
+	return (*Subsurface)(C.wl_subcompositor_get_subsurface((*C.struct_wl_subcompositor)(unsafe.Pointer(c)),
+		(*C.struct_wl_surface)(unsafe.Pointer(surface)),
+		(*C.struct_wl_surface)(unsafe.Pointer(parent)))), nil
+}
+
+func (sub *Subsurface) SetDesync() {
+	C.wl_subsurface_set_desync((*C.struct_wl_subsurface)(unsafe.Pointer(sub)))
+}
+
+func (sub *Subsurface) SetSync() {
+	C.wl_subsurface_set_sync((*C.struct_wl_subsurface)(unsafe.Pointer(sub)))
+}
+
+func (sub *Subsurface) SetPosition(x, y int) {
+	C.wl_subsurface_set_position((*C.struct_wl_subsurface)(unsafe.Pointer(sub)), (C.int32_t)(x), (C.int32_t)(y))
+}
 
 func DisplayDispatch(d *Display) int {
 	return (int)(C.wl_display_dispatch((*C.struct_wl_display)(unsafe.Pointer(d))))
@@ -661,6 +678,9 @@ func XdgSurfaceAckConfigure(sf *XdgSurface, serial uint32) {
 
 func RegistryBindCompositorInterface(r *Registry, name uint32, version uint32) *Compositor {
 	return (*Compositor)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_compositor_interface, (C.uint32_t)(version)))
+}
+func RegistryBindSubcompositorInterface(r *Registry, name uint32, version uint32) *Subcompositor {
+	return (*Subcompositor)(C.wl_registry_bind((*C.struct_wl_registry)(unsafe.Pointer(r)), (C.uint32_t)(name), &C.wl_subcompositor_interface, (C.uint32_t)(version)))
 }
 
 func RegistryBindShmInterface(r *Registry, name uint32, version uint32) *Shm {

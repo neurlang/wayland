@@ -6,26 +6,35 @@ import (
 	"syscall"
 	"unsafe"
 
+	decor "github.com/neurlang/wayland/libdecor"
 	wayland "github.com/neurlang/wayland/libwayland"
 	vk "github.com/vulkan-go/vulkan"
 	vulkan "github.com/vulkan-go/vulkan"
 	"golang.org/x/sys/unix"
+
+	sys "github.com/neurlang/wayland/os"
 )
 
 const MAX_NUM_IMAGES = 4
 
 type Wland struct {
-	wait_for_configure bool
+	has_xrgb bool
 
 	ndisplay      *wayland.Display
 	nseat         *wayland.Seat
 	nkeyboard     *wayland.Keyboard
 	nshell        *wayland.XdgWmBase
 	ncompositor   *wayland.Compositor
+	subcompositor *wayland.Subcompositor
 	nsurface      *wayland.Surface
+	fsurface      *wayland.Surface
+	bsurface      *wayland.Subsurface
 	nxdg_toplevel *wayland.XdgToplevel
 	nxdg_surface  *wayland.XdgSurface
 	nregistry     *wayland.Registry
+	nshm          *wayland.Shm
+	pool          *wayland.ShmPool
+	buffer        *wayland.Buffer
 }
 
 func (w *Wland) RegistryGlobal(_ *wayland.Registry, name uint32, iface string, version uint32) {
@@ -33,6 +42,8 @@ func (w *Wland) RegistryGlobal(_ *wayland.Registry, name uint32, iface string, v
 	switch iface {
 	case "wl_compositor":
 		w.ncompositor = wayland.RegistryBindCompositorInterface(w.nregistry, name, 1)
+	case "wl_subcompositor":
+		w.subcompositor = wayland.RegistryBindSubcompositorInterface(w.nregistry, name, 1)
 
 	case "xdg_wm_base":
 		w.nshell = wayland.RegistryBindXdgWmBaseInterface(w.nregistry, name, 1)
@@ -41,8 +52,18 @@ func (w *Wland) RegistryGlobal(_ *wayland.Registry, name uint32, iface string, v
 
 		w.nseat = wayland.RegistryBindSeatInterface(w.nregistry, name, 1)
 
+	case "wl_shm":
+
+		w.nshm = wayland.RegistryBindShmInterface(w.nregistry, name, 1)
+		wayland.ShmAddListener(w.nshm, w)
 	}
 
+}
+
+func (w *Wland) ShmFormat(wl_shm *wayland.Shm, format uint32) {
+	if format == wayland.SHM_FORMAT_XRGB8888 {
+		w.has_xrgb = true
+	}
 }
 
 func (w *Wland) RegistryGlobalRemove(*wayland.Registry, uint32) {
@@ -51,11 +72,6 @@ func (w *Wland) RegistryGlobalRemove(*wayland.Registry, uint32) {
 func (w *Wland) XdgSurfaceConfigure(surface *wayland.XdgSurface, serial uint32) {
 
 	wayland.XdgSurfaceAckConfigure(surface, serial)
-
-	if w.wait_for_configure {
-		// redraw
-		w.wait_for_configure = false
-	}
 
 }
 func (w *Wland) XdgWmBasePing(shell *wayland.XdgWmBase, serial uint32) {
@@ -111,6 +127,12 @@ type VkCube struct {
 	instance          vk.Instance
 
 	protected_chain bool
+
+	libdecorContext *decor.Libdecor
+	libdecorFrame   *decor.LibdecorFrame
+	initialized     bool
+
+	swapchainResize func()
 }
 
 func (vc *VkCube) Render(buf *VkCubeBuffer, wait_semaphore uint8) {
@@ -118,6 +140,7 @@ func (vc *VkCube) Render(buf *VkCubeBuffer, wait_semaphore uint8) {
 }
 func (vc *VkCube) Init() {
 	init_cube(vc)
+	vc.swapchainResize = func() {}
 }
 
 type VkCubeBuffer struct {
@@ -268,15 +291,25 @@ func mainloop(vc *VkCube) {
 	fds := []unix.PollFd{{Fd: int32(wayland.DisplayGetFd(vc.wl.ndisplay)), Events: unix.POLLIN}}
 
 	for {
+
 		var index uint32
+		vc.swapchainResize()
+		vc.swapchainResize = func() {}
 
 		for wayland.DisplayPrepareRead(vc.wl.ndisplay) != 0 {
+
+			if vc.libdecorContext != nil && (vc.libdecorContext.Dispatch(0) < 0) {
+				print("libdecor Dispatch error")
+				return
+			}
 			wayland.DisplayDispatchPending(vc.wl.ndisplay)
 		}
+
 		n, err := wayland.DisplayFlush(vc.wl.ndisplay)
 		if errno, ok := err.(syscall.Errno); n < 0 && ok {
 			if int(errno) != wayland.ErrAgain {
 				wayland.DisplayCancelRead(vc.wl.ndisplay)
+				println("DisplayFlush error", errno)
 				return
 			}
 		}
@@ -285,8 +318,14 @@ func mainloop(vc *VkCube) {
 			panic(err)
 		}
 		if err == nil && n > 0 {
+
 			wayland.DisplayReadEvents(vc.wl.ndisplay)
+			if vc.libdecorContext != nil && (vc.libdecorContext.Dispatch(0) < 0) {
+				print("libdecor Dispatch error")
+				return
+			}
 			wayland.DisplayDispatchPending(vc.wl.ndisplay)
+
 		} else {
 			wayland.DisplayCancelRead(vc.wl.ndisplay)
 		}
@@ -294,6 +333,7 @@ func mainloop(vc *VkCube) {
 		var result = [1]vk.Result{vk.AcquireNextImage(vc.device, vc.swap_chain[0], 60,
 			vc.semaphore, nil, &index)}
 		if result[0] != vk.Success {
+			println("AcquireNextImage is not success")
 			return
 		}
 
@@ -312,10 +352,15 @@ func mainloop(vc *VkCube) {
 				PResults:       result[:],
 			})
 		if result[0] != vk.Success {
+			println("QueuePresent is not success")
 			return
 		}
 
 		vk.QueueWaitIdle(vc.queue)
+
+		// Commit the rendered frame
+		vc.wl.nsurface.Commit()
+
 	}
 
 }
@@ -484,6 +529,55 @@ func create_swapchain(vc *VkCube) {
 		init_buffer(vc, &vc.buffers[i])
 	}
 }
+func destroy_swapchain(vc *VkCube) {
+	// Ensure the swap chain is valid
+	if vc.swap_chain[0] != nil {
+		// Destroy the swap chain
+		vk.DestroySwapchain(vc.device, vc.swap_chain[0], nil)
+		vc.swap_chain[0] = nil
+	}
+
+	// Clean up buffers and images
+	for i := uint32(0); i < vc.image_count; i++ {
+		// Destroy image views
+		if vc.buffers[i].view[0] != nil {
+			vk.DestroyImageView(vc.device, vc.buffers[i].view[0], nil)
+			vc.buffers[i].view[0] = nil
+		}
+
+		// Destroy framebuffers
+		if vc.buffers[i].framebuffer != nil {
+			vk.DestroyFramebuffer(vc.device, vc.buffers[i].framebuffer, nil)
+			vc.buffers[i].framebuffer = nil
+		}
+
+		// Destroy command buffers
+		if vc.buffers[i].cmd_buffer[0] != nil {
+			var buf = vc.buffers[i].cmd_buffer
+			vk.FreeCommandBuffers(vc.device, vc.cmd_pool, 1, buf[:])
+			vc.buffers[i].cmd_buffer[0] = nil
+		}
+
+		// Destroy fences
+		if vc.buffers[i].fence != nil {
+			vk.DestroyFence(vc.device, vc.buffers[i].fence, nil)
+			vc.buffers[i].fence = nil
+		}
+
+		// Destroy images
+		if vc.buffers[i].image != nil {
+			//vk.DestroyImage(vc.device, vc.buffers[i].image, nil)
+			vc.buffers[i].image = nil
+		}
+	}
+
+	// Reset image count
+	vc.image_count = 0
+
+	// Optional: Clean up other resources if they are associated with the swapchain
+	// e.g., destroy_framebuffers(vc)
+	// e.g., destroy_render_pass(vc)
+}
 
 func init_vk(vc *VkCube) {
 	const extension = "VK_KHR_wayland_surface\000"
@@ -615,7 +709,6 @@ func init_vk(vc *VkCube) {
 }
 
 func main() {
-
 	var vc VkCube
 	vc.wl = &wland
 	vc.width = 1024
@@ -647,35 +740,62 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if decor.Available() {
+		vc.wl.fsurface, err = vc.wl.ncompositor.CreateSurface()
+		if err != nil {
+			panic(err)
+		}
 
-	if nil == vc.wl.nshell {
+		// Create the subsurface
+		sub, err := vc.wl.subcompositor.GetSubsurface(vc.wl.nsurface, vc.wl.fsurface)
+		if err != nil {
+			panic("Failed to create subsurface: " + err.Error())
+		}
+
+		// Position the subsurface relative to the parent surface
+		sub.SetPosition(0, 0)
+
+		// Choose synchronization mode (SetSync or SetDesync)
+		// SetSync: Subsurface will be rendered only when the parent surface is rendered
+		// SetDesync: Subsurface can be rendered independently of the parent surface
+		sub.SetDesync() // or sub.SetDesync()
+	} else {
+		if nil == vc.wl.nshell {
+			panic("Compositor is missing xdg_wm_base protocol support")
+		}
+
+		vc.wl.nxdg_surface, err = vc.wl.nshell.GetSurface(vc.wl.nsurface)
+		if err != nil {
+			panic(err)
+		}
+		vc.wl.nxdg_surface.AddListener(vc.wl)
+
+		vc.wl.nxdg_toplevel, err = vc.wl.nxdg_surface.GetToplevel()
+		if err != nil {
+			panic(err)
+		}
+		wayland.XdgToplevelAddListener(vc.wl.nxdg_toplevel, vc.wl)
+
+		vc.wl.nxdg_toplevel.SetTitle("vkcube")
+
+		vc.wl.nsurface.Commit()
+
+	}
+
+	if vc.wl.nshell == nil {
 		panic("Compositor is missing xdg_wm_base protocol support")
 	}
 
-	vc.wl.nxdg_surface, err = vc.wl.nshell.GetSurface(vc.wl.nsurface)
-	if err != nil {
-		panic(err)
-	}
-	vc.wl.nxdg_surface.AddListener(vc.wl)
-
-	vc.wl.nxdg_toplevel, err = vc.wl.nxdg_surface.GetToplevel()
-	if err != nil {
-		panic(err)
-	}
-	wayland.XdgToplevelAddListener(vc.wl.nxdg_toplevel, vc.wl)
-
-	vc.wl.nxdg_toplevel.SetTitle("vkcube")
-	vc.wl.wait_for_configure = true
-
-	vc.wl.nsurface.Commit()
-
 	wayland.DisplayRoundtrip(vc.wl.ndisplay)
+
+	if !vc.wl.has_xrgb {
+		panic("No XRGB shm format")
+	}
 
 	init_vk(&vc)
 
 	if !vulkan.GetPhysicalDeviceWaylandPresentationSupport(
-		(vc.physical_device), 0, uintptr(unsafe.Pointer(vc.wl.ndisplay))) {
-
+		vc.physical_device, 0, uintptr(unsafe.Pointer(vc.wl.ndisplay))) {
 		panic("no wl support on physical device")
 	}
 
@@ -694,11 +814,125 @@ func main() {
 	vc.image_format = choose_surface_format(&vc)
 
 	init_vk_objects(&vc)
-
 	create_swapchain(&vc)
 
-	mainloop(&vc)
+	if decor.Available() {
 
+		// Initialize libdecor
+		libdecorContext, err := decor.LibdecorNew(uintptr(unsafe.Pointer(vc.wl.ndisplay)), 0)
+		if err != nil {
+			panic("Failed to initialize libdecor: " + err.Error())
+		}
+		defer decor.LibdecorUnref(&libdecorContext)
+
+		// Implement the frame_configure, frame_close, frame_commit callbacks
+		frameInterface := decor.CreateFrameInterface(decor.FrameInterface{
+			Configure: func(_, configuration, cube uintptr) {
+				//vkcube := (*VkCube)(unsafe.Pointer(cube))
+				libdecorFrame := vc.libdecorFrame
+
+				var w, h int
+				libdecorFrame.ConfigurationGetContentSize(configuration, &w, &h)
+
+				if w == 0 || h == 0 {
+					w = vc.width
+					h = vc.height
+				} else if vc.width != w || vc.height != h {
+					println(w, h)
+					vc.width = w
+					vc.height = h
+					vc.swapchainResize = func() {
+						destroy_swapchain(&vc)
+						create_swapchain(&vc)
+					}
+				} else {
+					return
+				}
+
+				state := decor.LibdecorStateNew(w, h)
+				libdecorFrame.Commit(state, configuration)
+				decor.LibdecorStateFree(&state)
+
+				if libdecorFrame.IsFloating() {
+					println("is floating")
+				}
+				fd, err := sys.CreateAnonymousFile(int64(vc.width * vc.height * 4))
+				if err != nil {
+					println("creating a buffer file failed")
+					println(err.Error())
+					return
+				}
+
+				if vc.wl.pool != nil {
+					wayland.ShmPoolDestroy(vc.wl.pool)
+				}
+				if vc.wl.buffer != nil {
+					wayland.BufferDestroy(vc.wl.buffer)
+				}
+
+				pool := wayland.ShmCreatePool(vc.wl.nshm, int32(fd.Fd()), int32(vc.width*vc.height*4))
+
+				buffer := wayland.ShmPoolCreateBuffer(pool, 0, int32(vc.width), int32(vc.height), int32(vc.width), wayland.SHM_FORMAT_XRGB8888)
+				wayland.SurfaceAttach(vc.wl.fsurface, buffer, 0, 0)
+				wayland.SurfaceDamage(vc.wl.fsurface, 0, 0, int32(vc.width), int32(vc.height))
+
+				vc.wl.fsurface.Commit()
+				vc.wl.nsurface.Commit()
+
+				vc.wl.pool = pool
+				vc.wl.buffer = buffer
+
+				println("initialized callback")
+				vc.initialized = true
+			},
+			Close: func(_, userData uintptr) {
+				println("close")
+				os.Exit(0)
+			},
+			Commit: func(_, cube uintptr) {
+
+				// Commit the parent surface
+				vc.wl.nsurface.Commit()
+
+				// Commit the subsurface
+				vc.wl.fsurface.Commit()
+			},
+		})
+
+		// Decorate the Wayland surface with libdecor
+		libdecorFrame, err := libdecorContext.Decorate(uintptr(unsafe.Pointer(vc.wl.fsurface)), uintptr(unsafe.Pointer(frameInterface)), uintptr(unsafe.Pointer(&vc)))
+		if err != nil {
+			panic("Failed to decorate the surface with libdecor: " + err.Error())
+		}
+		defer decor.LibdecorFrameUnref(&libdecorFrame)
+
+		vc.libdecorFrame = libdecorFrame
+
+		// Set application ID and title
+		libdecorFrame.SetAppID("vkcube")
+		libdecorFrame.SetTitle("vkcube")
+		libdecorFrame.SetVisibility(true)
+
+		wayland.DisplayRoundtrip(vc.wl.ndisplay) // Ensure all is synced
+
+		// Map the libdecor frame
+		libdecorFrame.Map()
+
+		wayland.DisplayRoundtrip(vc.wl.ndisplay)
+
+		// Wait for the frame to be fully initialized
+		for !vc.initialized {
+			if libdecorContext.Dispatch(0) < 0 {
+				print("libdecor Dispatch error")
+				return
+			}
+		}
+
+		vc.libdecorContext = libdecorContext
+
+	}
+
+	mainloop(&vc)
 }
 
 // sudo dnf install libdrm-devel
