@@ -912,7 +912,6 @@ func main() {
 		// Set application ID and title
 		libdecorFrame.SetAppID("vkcube")
 		libdecorFrame.SetTitle("vkcube")
-		libdecorFrame.SetVisibility(true)
 
 		wayland.DisplayRoundtrip(vc.wl.ndisplay) // Ensure all is synced
 
@@ -928,6 +927,8 @@ func main() {
 				return
 			}
 		}
+
+		libdecorFrame.SetVisibility(true)
 
 		vc.libdecorContext = libdecorContext
 		vc.frameIface = frameInterface
