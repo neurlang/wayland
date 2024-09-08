@@ -8,7 +8,7 @@ require (
 	github.com/ebitengine/purego v0.7.1
 	github.com/fogleman/gg v1.3.0
 	github.com/goki/freetype v1.0.5
-	github.com/neurlang/gm v0.0.2
+	github.com/neurlang/gm v0.0.3
 	github.com/neurlang/winc v0.1.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/spaolacci/murmur3 v1.1.0
