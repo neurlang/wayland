@@ -41,17 +41,10 @@ type runner interface {
 	Run(uint32)
 }
 
-const SurfaceOpaque = 0x01
-const SurfaceShm = 0x02
 
-const SurfaceHintResize = 0x10
-const SurfaceHintRgb565 = 0x100
-
-const PreferredFormatNone = 0
-const PreferredFormatRgb565 = 1
-
-const BufferTypeEglWindow = 0
 const BufferTypeShm = 1
+
+
 
 const CursorBottomLeft = 0
 const CursorBottomRight = 1
@@ -70,9 +63,6 @@ const CursorDndMove = 13
 const CursorDndCopy = 14
 const CursorDndForbidden = 15
 const CursorBlank = 16
-
-const ZwpRelativePointerManagerV1Version = 1
-const ZwpPointerConstraintsV1Version = 1
 
 type global struct {
 	name    uint32
@@ -234,7 +224,7 @@ type Popup struct {
 	surf     *wl.Surface
 	callback *wl.Callback
 
-	Popuper Popuper
+	popuper Popuper
 
 	mainSurface *surface
 }
@@ -273,6 +263,9 @@ func (w *Popup) HandlePopupPopupDone(ev zxdg.PopupPopupDoneEvent) {
 func (w *Popup) BufferRelease(buffer *wl.Buffer) {
 
 }
+func (p *Popup) SetPopupHandler(ph Popuper) {
+	p.popuper = ph
+}
 
 func (w *Popup) PopupConfigure(x, y, width, height int32) {
 	//wind := (*Window2)(unsafe.Pointer(w.window))
@@ -288,7 +281,7 @@ func (w *Popup) PopupConfigure(x, y, width, height int32) {
 	w.mainSurface = &surface{}
 	w.mainSurface.allocation = Rectangle{x, y, width, height}
 
-	widget := w.Popuper.Configure()
+	widget := w.popuper.Configure()
 
 	for _, input := range w.Display.inputList {
 		input.grab = widget
@@ -305,7 +298,7 @@ func (w *Popup) PopupPopupDone() {
 	//w.surf.Destroy()
 	//surfaceDestroy(w.mainSurface)
 
-	w.Popuper.Done()
+	w.popuper.Done()
 
 	for _, input := range w.Display.inputList {
 		input.grab = nil
@@ -328,7 +321,7 @@ func (w *Popup) SurfaceConfigure(serial uint32) {
 
 	w.popupCreateSurface(w.mainSurface, 0)
 
-	w.Popuper.Render(w.mainSurface.cairoSurface, 0)
+	w.popuper.Render(w.mainSurface.cairoSurface, 0)
 
 	surfaceFlush(w.mainSurface)
 }
@@ -606,7 +599,11 @@ type Widget struct {
 	 * such as using EGL directly */
 	useCairo int32
 
-	Userdata WidgetHandler
+	userdata WidgetHandler
+}
+
+func (w *Widget) SetUserDataWidgetHandler(wh WidgetHandler) {
+	w.userdata = wh
 }
 
 type widgetList struct {
@@ -1099,11 +1096,11 @@ func (input *Input) PointerButton(
 	}
 
 	widget = input.grab
-	if widget != nil && widget.Userdata != nil {
-		widget.Userdata.Button(widget,
+	if widget != nil && widget.userdata != nil {
+		widget.userdata.Button(widget,
 			input, time,
 			button, state,
-			input.grab.Userdata)
+			input.grab.userdata)
 	}
 
 	if input.grab != nil && input.grabButton == button &&
@@ -1138,8 +1135,8 @@ func (input *Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32,
 	if Widget == nil {
 		return
 	}
-	if Widget.Userdata != nil {
-		Widget.Userdata.Axis(Widget, input, time, axis, value)
+	if Widget.userdata != nil {
+		Widget.userdata.Axis(Widget, input, time, axis, value)
 	} else if Window.Userdata != nil {
 		Window.Userdata.Axis(Widget, input, time, axis, value)
 	}
@@ -1163,8 +1160,8 @@ func (input *Input) PointerAxisSource(wlPointer *wl.Pointer, axisSource uint32) 
 	if Widget == nil {
 		return
 	}
-	if Widget.Userdata != nil {
-		Widget.Userdata.AxisSource(Widget, input, axisSource)
+	if Widget.userdata != nil {
+		Widget.userdata.AxisSource(Widget, input, axisSource)
 	} else if Window.Userdata != nil {
 		Window.Userdata.AxisSource(Widget, input, axisSource)
 	}
@@ -1188,8 +1185,8 @@ func (input *Input) PointerAxisStop(wlPointer *wl.Pointer, time uint32, axis uin
 	if Widget == nil {
 		return
 	}
-	if Widget.Userdata != nil {
-		Widget.Userdata.AxisStop(Widget, input, time, axis)
+	if Widget.userdata != nil {
+		Widget.userdata.AxisStop(Widget, input, time, axis)
 	} else if Window.Userdata != nil {
 		Window.Userdata.AxisStop(Widget, input, time, axis)
 	}
@@ -1215,8 +1212,8 @@ func (input *Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, disc
 		return
 	}
 
-	if Widget.Userdata != nil {
-		Widget.Userdata.AxisDiscrete(Widget, input, axis, discrete)
+	if Widget.userdata != nil {
+		Widget.userdata.AxisDiscrete(Widget, input, axis, discrete)
 	} else if Window.Userdata != nil {
 		Window.Userdata.AxisDiscrete(Widget, input, axis, discrete)
 	}
@@ -2251,7 +2248,7 @@ func widgetCreate(Window *Window, surface *surface, data WidgetHandler) *Widget 
 	var w = new(Widget)
 	w.Window = Window
 	w.surface = surface
-	w.Userdata = data
+	w.userdata = data
 	w.allocation = surface.allocation
 	w.childList = new(widgetList)
 	w.opaque = 0
@@ -2466,7 +2463,7 @@ func (Window *Window) FrameCreate(data WidgetHandler) *Widget {
 	frame.widget = Window.AddWidget(frame)
 	frame.child = frame.widget.AddWidget(data)
 
-	frame.widget.Userdata = data
+	frame.widget.userdata = data
 
 	Window.frame = frame
 
@@ -2562,8 +2559,8 @@ end:
 		Widget = Input.focusWidget
 	}
 	if Widget != nil {
-		if Widget.Userdata != nil {
-			cursor = Widget.Userdata.Motion(Input.focusWidget,
+		if Widget.userdata != nil {
+			cursor = Widget.userdata.Motion(Input.focusWidget,
 				Input, time, sx, sy)
 		} else {
 			cursor = int(Widget.defaultCursor)
@@ -2833,8 +2830,8 @@ func (input *Input) ReceiveSelectionData(mimeType string, function io.WriteClose
 func surfaceResize(surface *surface) {
 	var Widget = surface.Widget
 
-	if Widget.Userdata != nil {
-		Widget.Userdata.Resize(Widget,
+	if Widget.userdata != nil {
+		Widget.userdata.Resize(Widget,
 			Widget.allocation.Width,
 			Widget.allocation.Height,
 			Widget.Window.pendingAllocation.Width,
@@ -2989,8 +2986,8 @@ func windowFlush(Window *Window) {
 
 // line 4505
 func widgetRedraw(Widget *Widget) {
-	if Widget.Userdata != nil {
-		Widget.Userdata.Redraw(Widget)
+	if Widget.userdata != nil {
+		Widget.userdata.Redraw(Widget)
 	}
 }
 

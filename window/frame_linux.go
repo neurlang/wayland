@@ -48,8 +48,8 @@ func (frame *windowFrame) Resize(Widget *Widget, width int32, height int32, pwid
 	child.SetAllocation(interior.X, interior.Y,
 		interior.Width, interior.Height)
 
-	if child.Userdata != nil {
-		child.Userdata.Resize(child, interior.Width, interior.Height, width, height)
+	if child.userdata != nil {
+		child.userdata.Resize(child, interior.Width, interior.Height, width, height)
 
 		if Widget.Window.fullscreen {
 			width = child.allocation.Width

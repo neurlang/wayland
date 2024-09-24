@@ -3,9 +3,11 @@ package window
 import (
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/winc"
 	"github.com/neurlang/winc/w32"
 	"time"
+	"sync"
 )
 
 type Window struct {
@@ -28,11 +30,24 @@ func Create(d *Display) *Window {
 	form.Center()
 
 	form.Show()
+
+
+	w := &Window{form: form, parent_display: d}
 	form.OnClose().Bind(func(arg *winc.Event) {
-		winc.Exit()
+		d.count--
+		for widget := range w.widgets {
+			widget.destroyed = true
+		}
+		if d.count == 0 {
+			winc.Exit()
+		} else {
+			form.Close()
+		}
 	})
 
-	return &Window{form: form, parent_display: d}
+	d.count++
+
+	return w
 }
 
 func (w *Window) SetKeyboardHandler(t KeyboardHandler) {
@@ -44,7 +59,7 @@ func (w *Window) SetKeyboardHandler(t KeyboardHandler) {
 			if !w.inhibited {
 				widget.destroyed = false
 				widget.ScheduleRedraw()
-				redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
+				//redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
 			}
 		}
 	}
@@ -98,70 +113,296 @@ func (w *Window) SetTitle(s string) {
 func (w Window) SetBufferType(shm interface{}) {
 
 }
-func redrawer(widget *Widget, canvas *winc.Canvas) {
+
+const patch_dim_x = 512
+const patch_dim_y = 512
+
+type rect struct {
+    x0, y0, x1, y1 int  // Coordinates of the rectangle
+    r, g, b        byte // Color of the rectangle
+}
+
+
+
+func reduceDrawRectsNew(oldRects []rect, buffer []byte, x0, y0, width, height int) (ret, oldok []rect) {
+    done := make([][]bool, height)
+    for i := range done {
+        done[i] = make([]bool, width)
+    }
 outer:
-	for i := 0; i < len(widget.buffer); i += BUFFER_BYTES {
-		now := i / BUFFER_BYTES
-		var r = widget.buffer[i+2]
-		var g = widget.buffer[i+1]
-		var b = widget.buffer[i]
+    for _, oldRect := range oldRects {
+    	//continue
+        for y := oldRect.y0; y <= oldRect.y1 && y < height; y++ {
+            for x := oldRect.x0; x <= oldRect.x1 && x < width; x++ {
+         	 r, g, b := getColor(buffer, x, y, width)
+         	 if r != oldRect.r || g != oldRect.g || b != oldRect.b {
+         	 	continue outer
+         	 }
+            }
+        }
+        for y := oldRect.y0; y <= oldRect.y1 && y < height; y++ {
+            for x := oldRect.x0; x <= oldRect.x1 && x < width; x++ {
+		 done[y][x] = true
+            }
+        }
+        oldok = append(oldok, oldRect)
+    }
+    
+    
+        for y := y0; y < y0 + patch_dim_y && y < height; y++ {
+            for x := x0; x < x0 + patch_dim_x && x < width; x++ {
+                if done[y][x] {continue;}
+         	 r, g, b := getColor(buffer, x, y, width)
+          	rect, _ := findMaxRectNew(buffer, done, x0, y0, x, y, r, g, b, width, height)
+          	ret = append(ret, rect)
+          	
+          	
+		// Step 2: Mark pixels of the largest rectangle as done
+		for y := rect.y0; y <= rect.y1; y++ {
+		    for x := rect.x0; x <= rect.x1; x++ {
+		        done[y][x] = true
+		    }
+		}
+            
+        }}
+        return
 
-		for j := i + BUFFER_BYTES; j <= len(widget.buffer); j += BUFFER_BYTES {
-			now2 := (j - BUFFER_BYTES) / BUFFER_BYTES
-			next2 := j / BUFFER_BYTES
-			var same bool
-			if j < len(widget.buffer) {
-				var rNext = widget.buffer[j+2]
-				var gNext = widget.buffer[j+1]
-				var bNext = widget.buffer[j]
-				same = r == rNext && g == gNext && b == bNext
-			} else {
-				same = false
+}
+
+// IterateCoordinates iterates over coordinates and applies the callback function
+func iterateCoordinates(n int, callback func(x, y int) bool) {
+
+	for i := 1; i < 2*n; i++ {
+		for row := 0; row <= i>>1; row++ {
+		
+			if !callback(row, i>>1) {
+				return
 			}
-			if !same || (now/widget.allocation_width != next2/widget.allocation_width) {
-				var cleared bool
-				for clearer := now + 1; clearer < now2; clearer++ {
-					if _, ok := widget.drawn[clearer]; ok {
-						delete(widget.drawn, clearer)
-						cleared = true
-					}
-					if _, ok := widget.drawn2[clearer]; ok {
-						delete(widget.drawn2, clearer)
-						cleared = true
-					}
+		}
+		i++
+		for col := 0; col < i>>1; col++ {
 
-				}
-
-				if cleared || (widget.drawn[now] != [4]byte{r, g, b, 1} || widget.drawn2[now2] != [4]byte{r, g, b, 1}) {
-
-					widget.drawn[now] = [4]byte{r, g, b, 1}
-					widget.drawn2[now2] = [4]byte{r, g, b, 1}
-
-					// Draw a rectangle
-					rect := winc.NewRect(
-						now%widget.allocation_width+0,
-						now/widget.allocation_width+0,
-						now2%widget.allocation_width+1,
-						now/widget.allocation_width+1)
-
-					brush := winc.NewSolidColorBrush(winc.RGB(r, g, b))
-					canvas.FillRect(rect, brush)
-					brush.Dispose()
-					i = j - BUFFER_BYTES
-					continue outer
-				} else {
-					i = j - BUFFER_BYTES
-					continue outer
-				}
+			if !callback(i>>1, col) {
+				return
 			}
 		}
 	}
 }
+// Function to find the largest rectangle or run for a given color starting from (x0, y0)
+func findMaxRectNew(buffer []byte, done [][]bool, x0x, y0y, x0, y0 int, r, g, b byte, width, height int) (rect, int) {
+    largestRect := rect{}
+    largestArea := 0
+    largestAffected := 0
+
+    // Step 1: Find the longest horizontal run
+    maxX := x0
+    horizontalAffected := 0
+    for maxX < x0x + patch_dim_x && maxX < width && (!done[y0][maxX] && (sameColor(buffer, maxX, y0, r, g, b, width))) {
+        if !done[y0][maxX] {
+            horizontalAffected++
+        }
+        maxX++
+    }
+    maxX--
+
+    horizontalRect := rect{x0, y0, maxX, y0, r, g, b}
+
+    // Update largest rect based on horizontal run
+    if horizontalAffected > largestArea {
+        largestRect = horizontalRect
+        largestArea = horizontalAffected
+        largestAffected = horizontalAffected
+    }
+
+    // Step 2: Find the longest vertical run
+    maxY := y0
+    verticalAffected := 0
+    for maxY < y0y + patch_dim_y && maxY < height && (!done[maxY][x0] && (sameColor(buffer, x0, maxY, r, g, b, width))) {
+        if !done[maxY][x0] {
+            verticalAffected++
+        }
+        maxY++
+    }
+    maxY--
+
+    verticalRect := rect{x0, y0, x0, maxY, r, g, b}
+
+    // Update largest rect based on vertical run
+    if verticalAffected > largestArea {
+        largestRect = verticalRect
+        largestArea = verticalAffected
+        largestAffected = verticalAffected
+    }
+
+    // Step 3: Try larger rectangle (covering horizontal and vertical area)
+    var left, right, up, down int = width-1, x0, height-1, y0
+    accumAffected := 0
+    accumAdding := 0
+
+    iterateCoordinates(patch_dim_y, func(xd, yd int) bool {
+        x := x0 + xd
+        y := y0 + yd
+        corner := xd == yd || xd == yd + 1
+
+        if x >= width || y >= height {
+            return false
+        }
+        if x >= x0x + patch_dim_x || y >= y0y + patch_dim_y {
+            return false
+        }
+        
+        if done[y][x] || !sameColor(buffer, x, y, r, g, b, width) {
+            return false
+        }
+        
+
+        // If the pixel is part of the rectangle, include it in affected count
+        {
+            if left > x {
+	    		left = x
+	    		}
+	    if up > y {
+	    		up = y
+	    	}
+            accumAdding++
+        }
+        
+
+        if corner {
+	    	accumAffected += accumAdding
+	    	accumAdding = 0
+            	// Update the bounds for the rectangle
+            	right = x
+            	down = y
+        }
+
+        return true
+    })
+
+    // Only return the larger rectangle if it expands beyond the initial rect
+    if accumAffected > 0 && right > left && down > up {
+        return rect{left, up, right, down, r, g, b}, accumAffected
+    }
+
+    return largestRect, largestAffected
+}
+
+
+// Helper function to compare pixel color at two locations
+func sameColor(buffer []byte, x1, y1 int, r, g, b byte, width int) bool {
+    r1, g1, b1 := getColor(buffer, x1, y1, width)
+    return r == r1 && g == g1 && b == b1
+}
+
+// Function to get pixel color at (x, y)
+func getColor(buffer []byte, x, y, width int) (byte, byte, byte) {
+    index := (y*width + x) * BUFFER_BYTES // Assuming 3 bytes per pixel (RGB)
+    return buffer[index], buffer[index+1], buffer[index+2]
+}
+
+
+
+//func timeTrack(start time.Time, name string) {
+//    elapsed := time.Since(start)
+//    println(name, "took", elapsed.String())
+//}
+
+var mut sync.RWMutex
+func redrawer(widget *Widget, canvas *winc.Canvas) {
+	//defer timeTrack(time.Now(), "redrawer")
+
+	buf, w, h, hash := widget.getBufferAndAllocAndHash()
+	if hash == widget.drawnHash || w <= 0 || h <= 0 {
+		return
+	}
+	//println(widget.allocation_width * widget.allocation_height * BUFFER_BYTES, len(widget.buffer))
+	wg := sync.WaitGroup{}
+	var drawn = make(map[int]uint64)
+	var oks = make(map[[2]int][]rect)
+
+	for y := 0; y < h; y += patch_dim_y {
+		end := y + patch_dim_y
+		if end > h {
+			end = h
+		}
+		hash := hashBuffer(buf, y, end, w)
+		mut.RLock()
+		if val, ok := widget.drawnHashes[y]; ok && val == hash {
+			mut.RUnlock()
+			continue
+		}
+		mut.RUnlock()
+		drawn[y] = hash
+
+	for x := 0; x < w; x += patch_dim_x {
+		wg.Add(1)
+		go func(x, y int) {
+			mut.RLock()
+			oldRects := widget.drawnRects[[2]int{x, y}]
+			_ = oldRects
+			//if len(oldRects) > 1024 {
+			//	delete(widget.drawnRects, [2]int{x, y})
+			//}
+			mut.RUnlock()
+
+			
+			rects, oldOks := reduceDrawRectsNew(oldRects, buf, x, y, w, h)
+
+			if len(rects) > 0 {
+
+				var lastR, lastG, lastB byte = rects[0].r, rects[0].g, rects[0].b //first color
+
+				brush := winc.NewSolidColorBrush(winc.RGB(lastB, lastG, lastR))
+				//pen := winc.NewPen(1, 1, brush)
+				
+				for _, rectangle := range rects {
+					
+				
+					if rectangle.r != lastR || rectangle.g != lastG || rectangle.b != lastB {
+						brush.Dispose()
+						//pen.Dispose()
+						lastR = rectangle.r
+						lastG = rectangle.g
+						lastB = rectangle.b
+						brush = winc.NewSolidColorBrush(winc.RGB(lastB, lastG, lastR))
+						//pen = winc.NewPen(1, 1, brush)
+					}
+
+						// Draw a rectangle
+					rect := winc.NewRect(
+						rectangle.x0,
+						rectangle.y0,
+						rectangle.x1+1,
+						rectangle.y1+1)
+					mut.Lock()
+					canvas.FillRect(rect, brush)
+					mut.Unlock()
+						
+				}
+				brush.Dispose()
+			}
+
+			for _, r := range rects {
+				if r.x0 != r.x1 || r.y0 != r.y1 {
+					oldOks = append(oldOks, r)
+				}
+			}
+			mut.Lock()
+			oks[[2]int{x, y}] = oldOks
+			mut.Unlock()
+			wg.Done()
+		}(x, y)
+	}}
+	
+	wg.Wait()
+	
+	widget.setHashHashesRects(hash, drawn, oks)
+
+	
+}
 
 func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 	widget = &Widget{
-		drawn:         make(map[int][4]byte),
-		drawn2:        make(map[int][4]byte),
 		parent_window: w,
 		handler:       t,
 	}
@@ -170,21 +411,25 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 	}
 	w.widgets[widget] = struct{}{}
 
-	canvasRedrawer := func(canvas *winc.Canvas) {
-		redrawer(widget, canvas)
-	}
+	//canvasRedrawer := func(canvas *winc.Canvas) {
+		//t.Redraw(widget)
+		//redrawer(widget, canvas)
+		//widget.ScheduleRedraw()
+	//}
 
-	allRedrawer := func() {
-		if !w.inhibited {
-			t.Redraw(widget)
-			redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
-		}
-	}
+	//allRedrawer := func() {
+	//	if !w.inhibited {
+			//t.Redraw(widget)
+			//redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
+			//widget.ScheduleRedraw()
+		//}
+	//}
 	w.form.OnPaint().Bind(func(arg *winc.Event) {
 
 		if !w.inhibited && !widget.destroyed {
-			t.Redraw(widget)
-			canvasRedrawer(arg.Data.(*winc.PaintEventData).Canvas)
+			//t.Redraw(widget)
+			//canvasRedrawer(arg.Data.(*winc.PaintEventData).Canvas)
+			//widget.ScheduleRedraw()
 		}
 
 	})
@@ -197,39 +442,44 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 		for widget := range w.widgets {
 			widget.SetAllocation(0, 0, int32(xy.X), int32(xy.Y))
 		}
-
+		widget.drawnHash = 0
+		widget.drawnHashes = nil
+		widget.drawnRects = nil
 		t.Resize(widget, int32(xy.X), int32(xy.Y), int32(xy.X), int32(xy.Y))
+		widget.ScheduleRedraw()
+		//allRedrawer()
+		//widget.ScheduleRedraw()
 	})
 
 	w.form.OnMouseMove().Bind(func(arg *winc.Event) {
 		xy := arg.Data.(*winc.MouseEventData)
 		t.Motion(widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
-		allRedrawer()
+		//allRedrawer()
 	})
 	w.form.OnMouseHover().Bind(func(arg *winc.Event) {
 		xy := arg.Data.(*winc.MouseEventData)
 
 		t.Motion(widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
-		allRedrawer()
+		//allRedrawer()
 	})
 
 	w.form.OnLBDown().Bind(func(arg *winc.Event) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 272, wl.PointerButtonStatePressed, t)
-		allRedrawer()
+		//allRedrawer()
 	})
 	w.form.OnLBUp().Bind(func(arg *winc.Event) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 272, wl.PointerButtonStateReleased, t)
-		allRedrawer()
+		//allRedrawer()
 	})
 	w.form.OnRBDown().Bind(func(arg *winc.Event) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 273, wl.PointerButtonStatePressed, t)
-		allRedrawer()
+		//allRedrawer()
 	})
 	w.form.OnRBUp().Bind(func(arg *winc.Event) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 273, wl.PointerButtonStateReleased, t)
-		allRedrawer()
+		//allRedrawer()
 	})
-
+	
 	return
 }
 
@@ -273,35 +523,28 @@ func (w *Window) InhibitRedraw() {
 
 func (w *Window) ScheduleResize(width int32, height int32) {
 
-	for widget := range w.widgets {
-		w.parent_display.mustResize = append(w.parent_display.mustResize, &mustResize{
-			widget,
-			width, height,
-		})
-	}
-
 }
 
 func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 	p.widget.handler = handler
 
 	canvasRedrawer := func(canvas *winc.Canvas) {
-		redrawer(&p.widget, canvas)
+		p.widget.ScheduleRedraw()
 	}
 	allRedrawer := func() {
 		if !w.inhibited {
 			if p.form != nil {
-				if p.Popuper != nil {
-					p.Popuper.Render(&p.widget, 0)
+				if p.popuper != nil {
+					p.popuper.Render(&p.widget, 0)
 				}
-				redrawer(&p.widget, winc.NewCanvasFromHwnd(p.form.Handle()))
+				p.widget.ScheduleRedraw()
 			}
 		}
 	}
 	p.form.OnPaint().Bind(func(arg *winc.Event) {
 
 		if !p.inhibited && !p.widget.destroyed {
-			p.Popuper.Render(&p.widget, 0)
+			p.popuper.Render(&p.widget, 0)
 			canvasRedrawer(arg.Data.(*winc.PaintEventData).Canvas)
 		}
 
@@ -313,7 +556,7 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 
 		p.widget.SetAllocation(0, 0, int32(xy.X), int32(xy.Y))
 
-		p.Popuper.Configure()
+		p.popuper.Configure()
 	})
 
 	hover := func(arg *winc.Event) {
@@ -362,8 +605,13 @@ func (w *Window) CreatePopup(_ *wl.Seat, _, width, height, x, y uint32) (popup *
 		form: form,
 	}
 
-	popup.widget.SetAllocation(int(x), int(y), int32(width), int32(height))
+	popup.widget.SetAllocation(int32(x), int32(y), int32(width), int32(height))
 	return
+}
+
+func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
+}
+func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
 
 type Popuper interface {
@@ -373,11 +621,15 @@ type Popuper interface {
 }
 
 type Popup struct {
+	Popup *xdg.Popup
+	
+	Display *Display
+
 	form *winc.Form
 
 	widget Widget
 
-	Popuper Popuper
+	popuper Popuper
 
 	inhibited, configured bool
 }
@@ -389,17 +641,24 @@ func (p *Popup) Destroy() {
 		form.Close()
 	}
 	p.widget.destroyed = true
-	p.Popuper = nil
+	p.popuper = nil
 	p.inhibited = true
 	p.configured = true
+}
+
+func (p *Popup) SetPopupHandler(ph Popuper) {
+	p.popuper = ph
 }
 
 func (p *Popup) PopupGetSurface() cairo.Surface {
 
 	if !p.configured {
-		p.Popuper.Configure()
+		p.popuper.Configure()
 		p.configured = true
 	}
 
 	return &p.widget
+}
+
+func (p *Popup) BufferRelease(*wl.Buffer) {
 }

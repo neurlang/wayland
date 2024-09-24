@@ -2,7 +2,7 @@ package mustard
 
 import (
 	gg "github.com/danfragoso/thdwb/gg"
-	"github.com/neurlang/wayland/window"
+		window "github.com/neurlang/wayland/windowtrace"
 	"github.com/neurlang/wayland/wl"
 	"image"
 )
@@ -133,7 +133,7 @@ func (w *Window) AddOverlay(content *Overlay) {
 		uint32(content.position.X), uint32(content.position.Y))
 
 	content.popup = popup
-	popup.Popuper = w.contextMenu
+	popup.SetPopupHandler(w.contextMenu)
 
 	w.hasActiveOverlay = true
 	content.window = w

@@ -11,6 +11,8 @@ const KeyReturn = 13
 const KeyBackspace = 8
 const KeyDelete = 46
 const KeyControl = 0x1d
+const KeyControlL uint32 = 17 /* Left control */
+const KeyControlR uint32 = 17 /* Right control */
 
 const KeyQ = 81
 const KEYq = 81

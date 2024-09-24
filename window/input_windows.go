@@ -88,6 +88,6 @@ func (i *Input) ReceiveSelectionData(s string, p io.WriteCloser) error {
 	return nil
 }
 
-func (i *Input) GetUtf8() string {
-	return i.last
+func (i *Input) GetUtf8() []byte {
+	return []byte(i.last)
 }

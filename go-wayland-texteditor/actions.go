@@ -1,7 +1,7 @@
 package main
 
 import "fmt"
-import window "github.com/neurlang/wayland/window"
+import window "github.com/neurlang/wayland/windowtrace"
 import "os"
 import "bufio"
 

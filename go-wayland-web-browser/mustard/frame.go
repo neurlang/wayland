@@ -1,6 +1,6 @@
 package mustard
 
-import window "github.com/neurlang/wayland/window"
+import 	window "github.com/neurlang/wayland/windowtrace"
 import wl "github.com/neurlang/wayland/wl"
 import "github.com/neurlang/wayland/external/swizzle"
 

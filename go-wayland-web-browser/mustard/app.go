@@ -1,7 +1,7 @@
 package mustard
 
 import (
-	"github.com/neurlang/wayland/window"
+	window "github.com/neurlang/wayland/windowtrace"
 )
 
 func CreateNewApp(name string) *App {

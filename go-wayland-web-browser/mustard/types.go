@@ -8,7 +8,7 @@ import (
 	"github.com/goki/freetype/truetype"
 )
 
-import window "github.com/neurlang/wayland/window"
+import 	window "github.com/neurlang/wayland/windowtrace"
 import cairo "github.com/neurlang/wayland/cairoshim"
 
 type Overlay struct {

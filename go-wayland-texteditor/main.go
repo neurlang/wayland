@@ -27,7 +27,7 @@ import "math/rand"
 import cairo "github.com/neurlang/wayland/cairoshim"
 import wl "github.com/neurlang/wayland/wl"
 import xkb "github.com/neurlang/wayland/xkbcommon"
-import window "github.com/neurlang/wayland/window"
+import window "github.com/neurlang/wayland/windowtrace"
 import "fmt"
 import "sync"
 import "os/exec"
@@ -912,7 +912,7 @@ func main() {
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 
-	textarea.widget.Userdata = &textarea
+	textarea.widget.SetUserDataWidgetHandler(&textarea)
 
 	textarea.widget.ScheduleResize(textarea.width, textarea.height)
 
