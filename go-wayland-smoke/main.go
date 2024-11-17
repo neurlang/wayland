@@ -534,7 +534,7 @@ func main() {
 
 	//smoke.bb[0].uv <- [2][]float32{make([]float32, size), make([]float32, size)}
 
-	smoke.widget.Userdata = &smoke
+	smoke.widget.SetUserDataWidgetHandler(&smoke)
 
 	smoke.widget.ScheduleResize(smoke.width, smoke.height)
 
