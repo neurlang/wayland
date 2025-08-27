@@ -551,6 +551,9 @@ const KeyboardKeyStateReleased = 0
 // KeyboardKeyStatePressed means key is pressed
 const KeyboardKeyStatePressed = 1
 
+// KeyboardKeyStateRepeated means key was repeated
+const KeyboardKeyStateRepeated = 2
+
 // OutputSubpixelUnknown means unknown geometry
 const OutputSubpixelUnknown = 0
 
@@ -3277,7 +3280,7 @@ type KeyboardEnterEvent struct {
 	Serial uint32
 	// Surface is the surface gaining keyboard focus
 	Surface *Surface
-	// Keys is the the currently pressed keys
+	// Keys is the the keys currently logically down
 	Keys []int32
 }
 
@@ -3969,7 +3972,7 @@ type OutputGeometryEvent struct {
 	Make string
 	// Model is the textual description of the model
 	Model string
-	// Transform is the transform that maps framebuffer to output
+	// Transform is the additional transformation applied to buffer contents during presentation
 	Transform int32
 }
 
@@ -4287,6 +4290,37 @@ func (p *Subsurface) SetDesync() error {
 
 // Dispatch dispatches event for object Subsurface
 func (p *Subsurface) Dispatch(event *Event) {
+	switch event.Opcode {
+
+	}
+}
+
+// Fixes wayland protocol fixes
+type Fixes struct {
+	BaseProxy
+}
+
+// NewFixes is a constructor for the Fixes object
+func NewFixes(ctx *Context) *Fixes {
+	ret := new(Fixes)
+	ctx.Register(ret)
+	return ret
+}
+
+// Destroy destroys this object
+func (p *Fixes) Destroy() error {
+
+	return p.Context().SendRequest(p, 0)
+}
+
+// DestroyRegistry destroy a wl_registry
+func (p *Fixes) DestroyRegistry(Registry *Registry) error {
+
+	return p.Context().SendRequest(p, 1, Registry)
+}
+
+// Dispatch dispatches event for object Fixes
+func (p *Fixes) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
