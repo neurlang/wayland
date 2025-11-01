@@ -59,6 +59,13 @@ func handle(err error) {
 	}
 }
 
+func (d *display) HandleSeatCapabilities(wl.SeatCapabilitiesEvent) {
+
+}
+
+func (d *display) HandleSeatName(wl.SeatNameEvent) {
+
+}
 func (mybuf *buffer) HandleBufferRelease(wl.BufferReleaseEvent) {
 	mybuf.busy = false
 }
@@ -144,6 +151,7 @@ func (d *display) RegistryGlobal(_ *wl.Registry, goid uint32, face string,
 
 	switch goFace {
 	case "wl_compositor":
+
 		d.compositor = wlclient.RegistryBindCompositorInterface(d.registry, goid, 1)
 
 	case "xdg_wm_base":
@@ -152,6 +160,9 @@ func (d *display) RegistryGlobal(_ *wl.Registry, goid uint32, face string,
 		zxdg.WmBaseAddListener(d.shell, d)
 
 	case "zwp_fullscreen_shell_v1":
+	case "wl_seat":
+
+		wlclient.SeatAddListener(wlclient.RegistryBindSeatInterface(d.registry, goid, 1), d)
 
 	case "wl_shm":
 		d.shm = wlclient.RegistryBindShmInterface(d.registry, goid, 1)
@@ -187,13 +198,19 @@ func createDisplay() *display {
 	disp.registry = reg
 
 	wlclient.RegistryAddListener(disp.registry, disp)
+
 	handle(wlclient.DisplayRoundtrip(disp.display))
+
+
 
 	if disp.shm == nil {
 		log.Fatal("No wl_shm global\n")
 	}
 
 	handle(wlclient.DisplayRoundtrip(disp.display))
+
+
+
 
 	if !disp.hasXrgb {
 		log.Fatal("WL_SHM_FORMAT_XRGB32 not available\n")
@@ -365,8 +382,9 @@ func main() {
 	if !window.waitForConfigure {
 		redraw(window, nil, 0)
 	}
-
-	for wlclient.DisplayDispatch(display.display) == nil {
+	var err = wlclient.DisplayDispatch(display.display)
+	for err == nil || err == wl.ErrContextRunProxyNil {
+		err = wlclient.DisplayDispatch(display.display)
 	}
 
 	print("go-wayland-simpleshm exiting\n")
