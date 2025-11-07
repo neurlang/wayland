@@ -3,7 +3,6 @@ package wl
 import (
 	"errors"
 	"io"
-	"log"
 	"net"
 	"os"
 	"sync"
@@ -12,10 +11,6 @@ import (
 	sys "github.com/neurlang/wayland/os"
 	//"reflect"
 )
-
-func init() {
-	log.SetFlags(0)
-}
 
 // Context wraps the wayland connection together with the map of all Context objects (proxies)
 type Context struct {
