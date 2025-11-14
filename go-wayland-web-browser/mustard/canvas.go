@@ -86,7 +86,3 @@ func (ctx *CanvasWidget) render(s Surface, time uint32) {
 	ctx.context.DrawImage(ctx.drawingContext.Image(), int(left), ctx.offset)
 	context.DrawImage(ctx.context.Image(), int(left), int(top))
 }
-
-func createCtxScrollBar(ctx *CanvasWidget) {
-	// TODO: unused
-}

@@ -1,10 +1,12 @@
 package window
 
-import cairo "github.com/neurlang/wayland/cairoshim"
-import "github.com/neurlang/winc"
-import "sync"
-import "time"
-import "github.com/spaolacci/murmur3"
+import (
+	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/winc"
+	"github.com/spaolacci/murmur3"
+	"sync"
+	"time"
+)
 type Widget struct {
 	userdata interface{}
 	//canvas                     *winc.Canvas
@@ -139,19 +141,13 @@ func (w *Widget) ScheduleRedraw() {
 	go func() {
 		w.draw_mut.Lock()
 		is_sch := w.scheduled
-		is_destroyed := w.destroyed
 		w.draw_mut.Unlock()
-		
-		if is_destroyed {
-			return
-		}
-		
 		if !is_sch {
 			w.draw_mut.Lock()
 			w.scheduled = true
-			w.draw_mut.Unlock()
 			
 			w.handler.Redraw(w)
+			w.draw_mut.Unlock()
 			
 			w.parent_window.form.Invalidate(false)
 			redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
@@ -162,15 +158,7 @@ func (w *Widget) ScheduleRedraw() {
 			w.draw_mut.Unlock()
 			
 			time.Sleep(8 * time.Millisecond)
-			
-			// Check again before recursing
-			w.draw_mut.Lock()
-			is_destroyed = w.destroyed
-			w.draw_mut.Unlock()
-			
-			if !is_destroyed {
-				w.ScheduleRedraw()
-			}
+			w.ScheduleRedraw()
 		}
 	}()
 }
@@ -181,10 +169,16 @@ type Rectangle struct {
 	Width  int32
 	Height int32
 }
-// FIXME: unimplemented
+
 func (w *Widget) GetAllocation() Rectangle {
-	// TODO: implement this
-	return Rectangle{}
+	w.draw_mut.Lock()
+	defer w.draw_mut.Unlock()
+	return Rectangle{
+		X:      int32(w.allocation_x),
+		Y:      int32(w.allocation_y),
+		Width:  int32(w.allocation_width),
+		Height: int32(w.allocation_height),
+	}
 }
 
 // FIXME: unimplemented

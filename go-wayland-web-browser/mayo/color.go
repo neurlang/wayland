@@ -18,7 +18,7 @@ func hexToFloatInRange(hex string) float64 {
 }
 
 // RGBAToColor - Transforms RGBA color string to *hotdog.ColorRGBA
-// TODO - Fix this spaghetti and parse alpha values
+// Supports rgb() and rgba() formats with values as integers (0-255), percentages, or floats (0-1)
 func RGBAToColor(colorString string) *hotdog.ColorRGBA {
 	var color *hotdog.ColorRGBA
 
@@ -69,6 +69,18 @@ func RGBAToColor(colorString string) *hotdog.ColorRGBA {
 			}
 
 			alpha = 1
+			if paramsLen >= 4 {
+				if strings.HasSuffix(params[3], "%") {
+					value, _ := strconv.ParseInt(strings.Trim(strings.TrimSpace(params[3]), "%"), 10, 0)
+					alpha = float64(value) / 100
+				} else if strings.Index(params[3], ".") != -1 {
+					value, _ := strconv.ParseFloat(strings.TrimSpace(params[3]), 64)
+					alpha = value
+				} else {
+					value, _ := strconv.Atoi(strings.TrimSpace(params[3]))
+					alpha = float64(value) / 255
+				}
+			}
 
 			return &hotdog.ColorRGBA{
 				R: red,
