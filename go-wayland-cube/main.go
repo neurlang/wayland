@@ -583,7 +583,7 @@ func destroy_swapchain(vc *VkCube) {
 func init_vk(vc *VkCube) {
 	const extension = "VK_KHR_wayland_surface\000"
 
-	// OR without using a windowing library (Linux only, recommended for compute-only tasks)
+	// Initialize Vulkan instance
 	if err := vk.SetDefaultGetInstanceProcAddr(); err != nil {
 		panic(err)
 	}
