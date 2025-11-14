@@ -64,8 +64,8 @@ func (canvas *CanvasWidget) SetContext(ctx *gg.Context) {
 	canvas.drawingContext = ctx
 }
 
-func (cavas *CanvasWidget) SetDrawingRepaint(repaint bool) {
-	cavas.drawingRepaint = repaint
+func (canvas *CanvasWidget) SetDrawingRepaint(repaint bool) {
+	canvas.drawingRepaint = repaint
 }
 
 func (ctx *CanvasWidget) render(s Surface, time uint32) {
