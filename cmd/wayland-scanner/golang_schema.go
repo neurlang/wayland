@@ -413,7 +413,7 @@ type ` + s.Name + h.Name + `Handler interface {
 	Handle` + s.Name + h.Name + `(` + s.Name + h.Name + `Event)
 }
 
-// Add` + h.Name + `Handler removes the ` + h.Name + ` handler
+// Add` + h.Name + `Handler adds the ` + h.Name + ` handler
 func (p *` + s.Name + `) Add` + h.Name + `Handler(h ` + s.Name + h.Name + `Handler) {
 	if h != nil {
 		p.mu.Lock()
@@ -422,7 +422,7 @@ func (p *` + s.Name + `) Add` + h.Name + `Handler(h ` + s.Name + h.Name + `Handl
 	}
 }
 
-// Remove` + h.Name + `Handler adds the ` + h.Name + ` handler
+// Remove` + h.Name + `Handler removes the ` + h.Name + ` handler
 func (p *` + s.Name + `) Remove` + h.Name + `Handler(h ` + s.Name + h.Name + `Handler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
