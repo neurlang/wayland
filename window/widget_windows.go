@@ -137,26 +137,41 @@ func (w *Widget) WidgetGetLastTime() uint32 {
 
 func (w *Widget) ScheduleRedraw() {
 	go func() {
-	//println("ScheduleRedraw")
-	w.draw_mut.Lock()
-	is_sch := w.scheduled
-	w.draw_mut.Unlock()
-	if !is_sch {
 		w.draw_mut.Lock()
-		w.scheduled = true
+		is_sch := w.scheduled
+		is_destroyed := w.destroyed
+		w.draw_mut.Unlock()
 		
-		w.handler.Redraw(w)
-		w.draw_mut.Unlock()
-		//
-		w.parent_window.form.Invalidate(false)
-		redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
-		w.parent_window.form.Invalidate(false)
-		w.draw_mut.Lock()
-		w.scheduled = false
-		w.draw_mut.Unlock()
-		time.Sleep(8*time.Millisecond)
-		w.ScheduleRedraw()
-	}
+		if is_destroyed {
+			return
+		}
+		
+		if !is_sch {
+			w.draw_mut.Lock()
+			w.scheduled = true
+			w.draw_mut.Unlock()
+			
+			w.handler.Redraw(w)
+			
+			w.parent_window.form.Invalidate(false)
+			redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
+			w.parent_window.form.Invalidate(false)
+			
+			w.draw_mut.Lock()
+			w.scheduled = false
+			w.draw_mut.Unlock()
+			
+			time.Sleep(8 * time.Millisecond)
+			
+			// Check again before recursing
+			w.draw_mut.Lock()
+			is_destroyed = w.destroyed
+			w.draw_mut.Unlock()
+			
+			if !is_destroyed {
+				w.ScheduleRedraw()
+			}
+		}
 	}()
 }
 
