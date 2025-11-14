@@ -8,6 +8,8 @@ import (
 	"github.com/neurlang/winc/w32"
 	"time"
 	"sync"
+	"syscall"
+	"unsafe"
 )
 
 type Window struct {
@@ -114,291 +116,84 @@ func (w Window) SetBufferType(shm interface{}) {
 
 }
 
-const patch_dim_x = 512
-const patch_dim_y = 512
 
-type rect struct {
-    x0, y0, x1, y1 int  // Coordinates of the rectangle
-    r, g, b        byte // Color of the rectangle
+
+
+
+var (
+	gdi32                = syscall.NewLazyDLL("gdi32.dll")
+	procStretchDIBits    = gdi32.NewProc("StretchDIBits")
+)
+
+const (
+	BI_RGB       = 0
+	DIB_RGB_COLORS = 0
+	SRCCOPY      = 0x00CC0020
+)
+
+type BITMAPINFOHEADER struct {
+	BiSize          uint32
+	BiWidth         int32
+	BiHeight        int32
+	BiPlanes        uint16
+	BiBitCount      uint16
+	BiCompression   uint32
+	BiSizeImage     uint32
+	BiXPelsPerMeter int32
+	BiYPelsPerMeter int32
+	BiClrUsed       uint32
+	BiClrImportant  uint32
 }
 
-
-
-func reduceDrawRectsNew(oldRects []rect, buffer []byte, x0, y0, width, height int) (ret, oldok []rect) {
-    done := make([][]bool, height)
-    for i := range done {
-        done[i] = make([]bool, width)
-    }
-outer:
-    for _, oldRect := range oldRects {
-    	//continue
-        for y := oldRect.y0; y <= oldRect.y1 && y < height; y++ {
-            for x := oldRect.x0; x <= oldRect.x1 && x < width; x++ {
-         	 r, g, b := getColor(buffer, x, y, width)
-         	 if r != oldRect.r || g != oldRect.g || b != oldRect.b {
-         	 	continue outer
-         	 }
-            }
-        }
-        for y := oldRect.y0; y <= oldRect.y1 && y < height; y++ {
-            for x := oldRect.x0; x <= oldRect.x1 && x < width; x++ {
-		 done[y][x] = true
-            }
-        }
-        oldok = append(oldok, oldRect)
-    }
-    
-    
-        for y := y0; y < y0 + patch_dim_y && y < height; y++ {
-            for x := x0; x < x0 + patch_dim_x && x < width; x++ {
-                if done[y][x] {continue;}
-         	 r, g, b := getColor(buffer, x, y, width)
-          	rect, _ := findMaxRectNew(buffer, done, x0, y0, x, y, r, g, b, width, height)
-          	ret = append(ret, rect)
-          	
-          	
-		// Step 2: Mark pixels of the largest rectangle as done
-		for y := rect.y0; y <= rect.y1; y++ {
-		    for x := rect.x0; x <= rect.x1; x++ {
-		        done[y][x] = true
-		    }
-		}
-            
-        }}
-        return
-
+type BITMAPINFO struct {
+	BmiHeader BITMAPINFOHEADER
+	BmiColors [1]uint32
 }
-
-// IterateCoordinates iterates over coordinates and applies the callback function
-func iterateCoordinates(n int, callback func(x, y int) bool) {
-
-	for i := 1; i < 2*n; i++ {
-		for row := 0; row <= i>>1; row++ {
-		
-			if !callback(row, i>>1) {
-				return
-			}
-		}
-		i++
-		for col := 0; col < i>>1; col++ {
-
-			if !callback(i>>1, col) {
-				return
-			}
-		}
-	}
-}
-// Function to find the largest rectangle or run for a given color starting from (x0, y0)
-func findMaxRectNew(buffer []byte, done [][]bool, x0x, y0y, x0, y0 int, r, g, b byte, width, height int) (rect, int) {
-    largestRect := rect{}
-    largestArea := 0
-    largestAffected := 0
-
-    // Step 1: Find the longest horizontal run
-    maxX := x0
-    horizontalAffected := 0
-    for maxX < x0x + patch_dim_x && maxX < width && (!done[y0][maxX] && (sameColor(buffer, maxX, y0, r, g, b, width))) {
-        if !done[y0][maxX] {
-            horizontalAffected++
-        }
-        maxX++
-    }
-    maxX--
-
-    horizontalRect := rect{x0, y0, maxX, y0, r, g, b}
-
-    // Update largest rect based on horizontal run
-    if horizontalAffected > largestArea {
-        largestRect = horizontalRect
-        largestArea = horizontalAffected
-        largestAffected = horizontalAffected
-    }
-
-    // Step 2: Find the longest vertical run
-    maxY := y0
-    verticalAffected := 0
-    for maxY < y0y + patch_dim_y && maxY < height && (!done[maxY][x0] && (sameColor(buffer, x0, maxY, r, g, b, width))) {
-        if !done[maxY][x0] {
-            verticalAffected++
-        }
-        maxY++
-    }
-    maxY--
-
-    verticalRect := rect{x0, y0, x0, maxY, r, g, b}
-
-    // Update largest rect based on vertical run
-    if verticalAffected > largestArea {
-        largestRect = verticalRect
-        largestArea = verticalAffected
-        largestAffected = verticalAffected
-    }
-
-    // Step 3: Try larger rectangle (covering horizontal and vertical area)
-    var left, right, up, down int = width-1, x0, height-1, y0
-    accumAffected := 0
-    accumAdding := 0
-
-    iterateCoordinates(patch_dim_y, func(xd, yd int) bool {
-        x := x0 + xd
-        y := y0 + yd
-        corner := xd == yd || xd == yd + 1
-
-        if x >= width || y >= height {
-            return false
-        }
-        if x >= x0x + patch_dim_x || y >= y0y + patch_dim_y {
-            return false
-        }
-        
-        if done[y][x] || !sameColor(buffer, x, y, r, g, b, width) {
-            return false
-        }
-        
-
-        // If the pixel is part of the rectangle, include it in affected count
-        {
-            if left > x {
-	    		left = x
-	    		}
-	    if up > y {
-	    		up = y
-	    	}
-            accumAdding++
-        }
-        
-
-        if corner {
-	    	accumAffected += accumAdding
-	    	accumAdding = 0
-            	// Update the bounds for the rectangle
-            	right = x
-            	down = y
-        }
-
-        return true
-    })
-
-    // Only return the larger rectangle if it expands beyond the initial rect
-    if accumAffected > 0 && right > left && down > up {
-        return rect{left, up, right, down, r, g, b}, accumAffected
-    }
-
-    return largestRect, largestAffected
-}
-
-
-// Helper function to compare pixel color at two locations
-func sameColor(buffer []byte, x1, y1 int, r, g, b byte, width int) bool {
-    r1, g1, b1 := getColor(buffer, x1, y1, width)
-    return r == r1 && g == g1 && b == b1
-}
-
-// Function to get pixel color at (x, y)
-func getColor(buffer []byte, x, y, width int) (byte, byte, byte) {
-    index := (y*width + x) * BUFFER_BYTES // Assuming 3 bytes per pixel (RGB)
-    return buffer[index], buffer[index+1], buffer[index+2]
-}
-
-
-
-//func timeTrack(start time.Time, name string) {
-//    elapsed := time.Since(start)
-//    println(name, "took", elapsed.String())
-//}
 
 var mut sync.RWMutex
-func redrawer(widget *Widget, canvas *winc.Canvas) {
-	//defer timeTrack(time.Now(), "redrawer")
 
+func redrawer(widget *Widget, canvas *winc.Canvas) {
 	buf, w, h, hash := widget.getBufferAndAllocAndHash()
 	if hash == widget.drawnHash || w <= 0 || h <= 0 {
 		return
 	}
-	//println(widget.allocation_width * widget.allocation_height * BUFFER_BYTES, len(widget.buffer))
-	wg := sync.WaitGroup{}
-	var drawn = make(map[int]uint64)
-	var oks = make(map[[2]int][]rect)
 
-	for y := 0; y < h; y += patch_dim_y {
-		end := y + patch_dim_y
-		if end > h {
-			end = h
-		}
-		hash := hashBuffer(buf, y, end, w)
-		mut.RLock()
-		if val, ok := widget.drawnHashes[y]; ok && val == hash {
-			mut.RUnlock()
-			continue
-		}
-		mut.RUnlock()
-		drawn[y] = hash
+	// Get the device context handle from the window
+	hwnd := widget.parent_window.form.Handle()
+	hdc := w32.GetDC(hwnd)
+	if hdc == 0 {
+		return
+	}
+	defer w32.ReleaseDC(hwnd, hdc)
 
-	for x := 0; x < w; x += patch_dim_x {
-		wg.Add(1)
-		go func(x, y int) {
-			mut.RLock()
-			oldRects := widget.drawnRects[[2]int{x, y}]
-			_ = oldRects
-			//if len(oldRects) > 1024 {
-			//	delete(widget.drawnRects, [2]int{x, y})
-			//}
-			mut.RUnlock()
+	// Setup bitmap info for DIB (Device Independent Bitmap)
+	var bi BITMAPINFO
+	bi.BmiHeader.BiSize = uint32(unsafe.Sizeof(bi.BmiHeader))
+	bi.BmiHeader.BiWidth = int32(w)
+	bi.BmiHeader.BiHeight = -int32(h) // Negative height for top-down bitmap
+	bi.BmiHeader.BiPlanes = 1
+	bi.BmiHeader.BiBitCount = 32 // 32 bits per pixel (RGBA)
+	bi.BmiHeader.BiCompression = BI_RGB
+	bi.BmiHeader.BiSizeImage = 0
 
-			
-			rects, oldOks := reduceDrawRectsNew(oldRects, buf, x, y, w, h)
+	// Call StretchDIBits to draw the entire bitmap in one call
+	procStretchDIBits.Call(
+		uintptr(hdc),
+		0,                        // destination x
+		0,                        // destination y
+		uintptr(w),              // destination width
+		uintptr(h),              // destination height
+		0,                        // source x
+		0,                        // source y
+		uintptr(w),              // source width
+		uintptr(h),              // source height
+		uintptr(unsafe.Pointer(&buf[0])), // pointer to bitmap bits
+		uintptr(unsafe.Pointer(&bi)),     // pointer to BITMAPINFO
+		DIB_RGB_COLORS,          // color usage
+		SRCCOPY,                 // raster operation
+	)
 
-			if len(rects) > 0 {
-
-				var lastR, lastG, lastB byte = rects[0].r, rects[0].g, rects[0].b //first color
-
-				brush := winc.NewSolidColorBrush(winc.RGB(lastB, lastG, lastR))
-				//pen := winc.NewPen(1, 1, brush)
-				
-				for _, rectangle := range rects {
-					
-				
-					if rectangle.r != lastR || rectangle.g != lastG || rectangle.b != lastB {
-						brush.Dispose()
-						//pen.Dispose()
-						lastR = rectangle.r
-						lastG = rectangle.g
-						lastB = rectangle.b
-						brush = winc.NewSolidColorBrush(winc.RGB(lastB, lastG, lastR))
-						//pen = winc.NewPen(1, 1, brush)
-					}
-
-						// Draw a rectangle
-					rect := winc.NewRect(
-						rectangle.x0,
-						rectangle.y0,
-						rectangle.x1+1,
-						rectangle.y1+1)
-					mut.Lock()
-					canvas.FillRect(rect, brush)
-					mut.Unlock()
-						
-				}
-				brush.Dispose()
-			}
-
-			for _, r := range rects {
-				if r.x0 != r.x1 || r.y0 != r.y1 {
-					oldOks = append(oldOks, r)
-				}
-			}
-			mut.Lock()
-			oks[[2]int{x, y}] = oldOks
-			mut.Unlock()
-			wg.Done()
-		}(x, y)
-	}}
-	
-	wg.Wait()
-	
-	widget.setHashHashesRects(hash, drawn, oks)
-
-	
+	widget.setHashHashesRects(hash, nil, nil)
 }
 
 func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
@@ -444,7 +239,6 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 		}
 		widget.drawnHash = 0
 		widget.drawnHashes = nil
-		widget.drawnRects = nil
 		t.Resize(widget, int32(xy.X), int32(xy.Y), int32(xy.X), int32(xy.Y))
 		widget.ScheduleRedraw()
 		//allRedrawer()

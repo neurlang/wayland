@@ -12,7 +12,6 @@ type Widget struct {
 	swapbuffer []byte
 	drawnHash  uint64
 	drawnHashes map[int]uint64
-	drawnRects  map[[2]int][]rect
 
 	allocation_x, allocation_y int
 
@@ -88,7 +87,6 @@ func (w *Widget) ScheduleResize(width int32, height int32) {
 	w.draw_mut.Lock()
 	w.drawnHash = 0
 	w.drawnHashes = nil
-	w.drawnRects = nil
 	w.draw_mut.Unlock()
 	w.handler.Resize(w, int32(width), int32(height), int32(width), int32(height))
 }
@@ -106,7 +104,6 @@ func (w *Widget) SetAllocation(x int32, y int32, pwidth int32, pheight int32) {
 		w.swapbuffer = nil
 		w.drawnHash = 0
 		w.drawnHashes = nil
-		w.drawnRects = nil
 		w.allocation_x = int(x)
 		w.allocation_y = int(y)
 		w.allocation_width = 0
@@ -121,10 +118,9 @@ func (w *Widget) SetAllocation(x int32, y int32, pwidth int32, pheight int32) {
 	w.swapbuffer = nil
 	w.drawnHash = 0
 	w.drawnHashes = nil
-	w.drawnRects = nil
 }
 
-func (w *Widget) setHashHashesRects(hash uint64, hashes map[int]uint64, rects map[[2]int][]rect) {
+func (w *Widget) setHashHashesRects(hash uint64, hashes map[int]uint64, rects interface{}) {
 	w.draw_mut.Lock()
 	defer w.draw_mut.Unlock()
 	if w.swapbuffer == nil {
@@ -132,7 +128,6 @@ func (w *Widget) setHashHashesRects(hash uint64, hashes map[int]uint64, rects ma
 	}
 	w.drawnHash = hash
 	w.drawnHashes = hashes
-	w.drawnRects = rects
 	w.swapbuffer = nil
 }
 
