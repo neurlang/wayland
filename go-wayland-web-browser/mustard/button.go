@@ -55,7 +55,7 @@ func (button *ButtonWidget) SetFontSize(fontSize float64) {
 	button.needsRepaint = true
 }
 
-// SetFontSize - Sets the button font size
+// SetPadding - Sets the button padding
 func (button *ButtonWidget) SetPadding(padding float64) {
 	button.padding = padding
 	button.needsRepaint = true
@@ -95,7 +95,6 @@ func (button *ButtonWidget) SetBackgroundColor(backgroundColor string) {
 func (button *ButtonWidget) render(s Surface, time uint32) {
 	context := makeContextFromCairo(s)
 	top, left, width, height := button.computedBox.GetCoords()
-	_, _ = width, height
 
 	if button.selected {
 		context.SetHexColor("#ccc")
