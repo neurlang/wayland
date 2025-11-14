@@ -17,7 +17,9 @@ func removePrefixAndCamelCase(input, clear string) string {
 
 	// Capitalize the first letter of each word (including the first word)
 	for i := 0; i < len(words); i++ {
-		words[i] = strings.Title(words[i])
+		if len(words[i]) > 0 {
+			words[i] = strings.ToUpper(words[i][:1]) + words[i][1:]
+		}
 	}
 
 	// Join the words to form the camel case string
