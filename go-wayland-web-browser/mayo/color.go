@@ -21,7 +21,7 @@ func hexToFloatInRange(hex string) float64 {
 // Supports: integers (0-255), percentages (0-100%), or floats (0-1)
 func parseColorValue(param string) float64 {
 	param = strings.TrimSpace(param)
-	
+
 	if strings.HasSuffix(param, "%") {
 		value, _ := strconv.ParseInt(strings.Trim(param, "%"), 10, 0)
 		return float64(value) / 100
@@ -52,7 +52,7 @@ func RGBAToColor(colorString string) *hotdog.ColorRGBA {
 	red := parseColorValue(params[0])
 	green := parseColorValue(params[1])
 	blue := parseColorValue(params[2])
-	
+
 	alpha := 1.0
 	if len(params) >= 4 {
 		alpha = parseColorValue(params[3])

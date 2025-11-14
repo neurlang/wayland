@@ -6,9 +6,9 @@ import (
 	"github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/winc"
 	"github.com/neurlang/winc/w32"
-	"time"
 	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -32,7 +32,6 @@ func Create(d *Display) *Window {
 	form.Center()
 
 	form.Show()
-
 
 	w := &Window{form: form, parent_display: d}
 	form.OnClose().Bind(func(arg *winc.Event) {
@@ -116,19 +115,15 @@ func (w Window) SetBufferType(shm interface{}) {
 
 }
 
-
-
-
-
 var (
-	gdi32                = syscall.NewLazyDLL("gdi32.dll")
-	procStretchDIBits    = gdi32.NewProc("StretchDIBits")
+	gdi32             = syscall.NewLazyDLL("gdi32.dll")
+	procStretchDIBits = gdi32.NewProc("StretchDIBits")
 )
 
 const (
-	BI_RGB       = 0
+	BI_RGB         = 0
 	DIB_RGB_COLORS = 0
-	SRCCOPY      = 0x00CC0020
+	SRCCOPY        = 0x00CC0020
 )
 
 type BITMAPINFOHEADER struct {
@@ -179,18 +174,18 @@ func redrawer(widget *Widget, canvas *winc.Canvas) {
 	// Call StretchDIBits to draw the entire bitmap in one call
 	procStretchDIBits.Call(
 		uintptr(hdc),
-		0,                        // destination x
-		0,                        // destination y
-		uintptr(w),              // destination width
-		uintptr(h),              // destination height
-		0,                        // source x
-		0,                        // source y
-		uintptr(w),              // source width
-		uintptr(h),              // source height
+		0,                                // destination x
+		0,                                // destination y
+		uintptr(w),                       // destination width
+		uintptr(h),                       // destination height
+		0,                                // source x
+		0,                                // source y
+		uintptr(w),                       // source width
+		uintptr(h),                       // source height
 		uintptr(unsafe.Pointer(&buf[0])), // pointer to bitmap bits
 		uintptr(unsafe.Pointer(&bi)),     // pointer to BITMAPINFO
-		DIB_RGB_COLORS,          // color usage
-		SRCCOPY,                 // raster operation
+		DIB_RGB_COLORS,                   // color usage
+		SRCCOPY,                          // raster operation
 	)
 
 	widget.setHashHashesRects(hash, nil, nil)
@@ -207,17 +202,17 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 	w.widgets[widget] = struct{}{}
 
 	//canvasRedrawer := func(canvas *winc.Canvas) {
-		//t.Redraw(widget)
-		//redrawer(widget, canvas)
-		//widget.ScheduleRedraw()
+	//t.Redraw(widget)
+	//redrawer(widget, canvas)
+	//widget.ScheduleRedraw()
 	//}
 
 	//allRedrawer := func() {
 	//	if !w.inhibited {
-			//t.Redraw(widget)
-			//redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
-			//widget.ScheduleRedraw()
-		//}
+	//t.Redraw(widget)
+	//redrawer(widget, winc.NewCanvasFromHwnd(w.form.Handle()))
+	//widget.ScheduleRedraw()
+	//}
 	//}
 	w.form.OnPaint().Bind(func(arg *winc.Event) {
 
@@ -273,7 +268,7 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 		t.Button(widget, w.input, uint32(time.Now().UnixNano()/1000000), 273, wl.PointerButtonStateReleased, t)
 		//allRedrawer()
 	})
-	
+
 	return
 }
 
@@ -416,7 +411,7 @@ type Popuper interface {
 
 type Popup struct {
 	Popup *xdg.Popup
-	
+
 	Display *Display
 
 	form *winc.Form

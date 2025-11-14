@@ -1,9 +1,9 @@
 package mustard
 
 import (
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	gg "github.com/danfragoso/thdwb/gg"
 	"github.com/goki/freetype/truetype"
+	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 )
 
 // CreateButtonWidget - Creates and returns a new Button Widget

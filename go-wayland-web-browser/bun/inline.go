@@ -3,8 +3,8 @@ package bun
 import (
 	"bytes"
 	"fmt"
-	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	gg "github.com/danfragoso/thdwb/gg"
+	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	"github.com/neurlang/wayland/go-wayland-web-browser/sauce"
 	"image"

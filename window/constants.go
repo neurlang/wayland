@@ -23,7 +23,5 @@ const SurfaceHintRgb565 = 0x100
 const PreferredFormatNone = 0
 const PreferredFormatRgb565 = 1
 
-
-
 const ZwpRelativePointerManagerV1Version = 1
 const ZwpPointerConstraintsV1Version = 1

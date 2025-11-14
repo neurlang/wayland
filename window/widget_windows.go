@@ -7,12 +7,13 @@ import (
 	"sync"
 	"time"
 )
+
 type Widget struct {
 	userdata interface{}
 	//canvas                     *winc.Canvas
-	buffer []byte
-	swapbuffer []byte
-	drawnHash  uint64
+	buffer      []byte
+	swapbuffer  []byte
+	drawnHash   uint64
 	drawnHashes map[int]uint64
 
 	allocation_x, allocation_y int
@@ -24,7 +25,7 @@ type Widget struct {
 	allocation_height int
 	destroyed         bool
 	scheduled         bool
-	draw_mut sync.Mutex
+	draw_mut          sync.Mutex
 }
 
 const BUFFER_BYTES = 4
@@ -47,9 +48,7 @@ func (w *Widget) ImageSurfaceGetHeight() int {
 
 func hashBuffer(buf []byte, y, end, w int) uint64 {
 	hash := murmur3.Sum64WithSeed(
-		buf[
-			BUFFER_BYTES*y*w:
-			BUFFER_BYTES*end*w], uint32(y))
+		buf[BUFFER_BYTES*y*w:BUFFER_BYTES*end*w], uint32(y))
 	return hash
 }
 
@@ -77,7 +76,6 @@ func (w *Widget) SetUserDataWidgetHandler(wh WidgetHandler) {
 	w.userdata = wh
 }
 
-
 func (w *Widget) ScheduleResize(width int32, height int32) {
 	println("ScheduleResize", width, height)
 
@@ -100,7 +98,7 @@ func (w *Widget) Destroy() {
 func (w *Widget) SetAllocation(x int32, y int32, pwidth int32, pheight int32) {
 	w.draw_mut.Lock()
 	defer w.draw_mut.Unlock()
-	
+
 	if pwidth <= 0 || pheight <= 0 {
 		w.buffer = nil
 		w.swapbuffer = nil
@@ -111,7 +109,7 @@ func (w *Widget) SetAllocation(x int32, y int32, pwidth int32, pheight int32) {
 		w.allocation_width = 0
 		w.allocation_height = 0
 	}
-	
+
 	w.allocation_x = int(x)
 	w.allocation_y = int(y)
 	w.allocation_width = int(pwidth)
@@ -145,18 +143,18 @@ func (w *Widget) ScheduleRedraw() {
 		if !is_sch {
 			w.draw_mut.Lock()
 			w.scheduled = true
-			
+
 			w.handler.Redraw(w)
 			w.draw_mut.Unlock()
-			
+
 			w.parent_window.form.Invalidate(false)
 			redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
 			w.parent_window.form.Invalidate(false)
-			
+
 			w.draw_mut.Lock()
 			w.scheduled = false
 			w.draw_mut.Unlock()
-			
+
 			time.Sleep(8 * time.Millisecond)
 			w.ScheduleRedraw()
 		}

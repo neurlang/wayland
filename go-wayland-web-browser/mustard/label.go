@@ -1,8 +1,8 @@
 package mustard
 
 import (
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	"github.com/goki/freetype/truetype"
+	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 )
 
 // CreateLabelWidget - Creates and returns a new Label Widget

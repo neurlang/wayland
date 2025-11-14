@@ -26,8 +26,7 @@ func (d *Display) Exit() {
 }
 
 func DisplayCreate(args []string) (*Display, error) {
-	return &Display{
-	}, nil
+	return &Display{}, nil
 
 }
 
@@ -38,39 +37,36 @@ func DisplayRun(d *Display) {
 func (d *Display) SetSeatHandler(_ interface{}) {
 }
 
-
-
 // HandleRegistryGlobal is a dummy method for Display.
 func (d *Display) HandleRegistryGlobal(_ wl.RegistryGlobalEvent) {
-    // Dummy implementation
-    // Add functionality here if needed
+	// Dummy implementation
+	// Add functionality here if needed
 }
 
 // HandleRegistryGlobalRemove is a dummy method for Display.
 func (d *Display) HandleRegistryGlobalRemove(_ wl.RegistryGlobalRemoveEvent) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // HandleShmFormat is a dummy method for Display.
 func (d *Display) HandleShmFormat(_ wl.ShmFormatEvent) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // HandleWmBasePing is a dummy method for Display.
 func (d *Display) HandleWmBasePing(_ xdg.WmBasePingEvent) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // RegistryGlobal is a dummy method for Display.
 func (d *Display) RegistryGlobal(_ *wl.Registry, _ uint32, _ string, _ uint32) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // RegistryGlobalRemove is a dummy method for Display.
 func (d *Display) RegistryGlobalRemove(_ *wl.Registry, _ uint32) {
-    // Dummy implementation
+	// Dummy implementation
 }
-
 
 type GlobalHandler interface {
 	HandleGlobal(d *Display, id uint32, iface string, version uint32, data interface{})
@@ -78,20 +74,20 @@ type GlobalHandler interface {
 
 // SetGlobalHandler is a dummy method for Display.
 func (d *Display) SetGlobalHandler(_ GlobalHandler) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // SetUserData is a dummy method for Display.
 func (d *Display) SetUserData(_ interface{}) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // ShellPing is a dummy method for Display.
 func (d *Display) ShellPing(*xdg.WmBase, uint32) {
-    // Dummy implementation
+	// Dummy implementation
 }
 
 // ShmFormat is a dummy method for Display.
 func (d *Display) ShmFormat(*wl.Shm, uint32) {
-    // Dummy implementation
+	// Dummy implementation
 }

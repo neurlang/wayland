@@ -42,7 +42,6 @@ func (context *Context) ComposeTableNewFromLocale(locale string, flags uint32) (
 	return
 }
 
-
 // ComposeStateNew Creates a new compose state object.
 //
 // Parameter table
@@ -83,6 +82,7 @@ func composeStateUnref(state *ComposeState) {
 	}
 	xkb_compose_state_unref(state.cs)
 }
+
 // GetStatus Gets the current status of the compose state machine.
 //
 // See ComposeStatus
@@ -301,7 +301,6 @@ func contextUnref(context *Context) {
 	xkb_context_unref(context.cx)
 }
 
-
 // KeysymToUtf32 Gets the Unicode/UTF-32 representation of a keysym.
 //
 // It returns The Unicode/UTF-32 representation of keysym, which is also
@@ -406,4 +405,3 @@ func (state *State) UpdateMask(depressedMods, latchedMods, lockedMods,
 func (state *State) SerializeMods(mods StateComponent) uint32 {
 	return uint32(xkb_state_serialize_mods(state.st, uint32(mods)))
 }
-

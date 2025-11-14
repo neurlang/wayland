@@ -60,12 +60,11 @@ func DisplayRun(d *Display) {
 func Create(d *Display) *Window {
 	println("func Create")
 	w := &Window{
-		Window: (window.Create((*window.Display)(d))),
+		Window:  (window.Create((*window.Display)(d))),
 		Display: d,
 	}
 	return w
 }
-
 
 func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 	println("func SurfaceEnter")
@@ -81,14 +80,10 @@ func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
 
 type DataSource window.DataSource
 
-
-
 func (d *Display) SetSeatHandler(h SeatHandler) {
 	println("func SetSeatHandler")
 	((*window.Display)(d)).SetSeatHandler(seatHandler{h})
 }
-
-
 
 type GlobalHandler interface {
 	HandleGlobal(d *Display, id uint32, iface string, version uint32, data interface{})
@@ -105,35 +100,34 @@ func (g globalHandler) HandleGlobal(d *window.Display, id uint32, iface string, 
 
 type Input window.Input
 
-
 // Define other methods similarly...
 
 type keyboardHandler struct {
-    KeyboardHandler
+	KeyboardHandler
 }
 
 type KeyboardHandler interface {
-    Key(
-        window *Window,
-        input *Input,
-        time uint32,
-        key uint32,
-        notUnicode uint32,
-        state wl.KeyboardKeyState,
-        data WidgetHandler,
-    )
-    Focus(window *Window, input *Input)
+	Key(
+		window *Window,
+		input *Input,
+		time uint32,
+		key uint32,
+		notUnicode uint32,
+		state wl.KeyboardKeyState,
+		data WidgetHandler,
+	)
+	Focus(window *Window, input *Input)
 }
 
 // Implementation of the wrapper methods
 func (k keyboardHandler) Key(
-    window *window.Window,
-    input *window.Input,
-    time uint32,
-    key uint32,
-    notUnicode uint32,
-    state wl.KeyboardKeyState,
-    data window.WidgetHandler,
+	window *window.Window,
+	input *window.Input,
+	time uint32,
+	key uint32,
+	notUnicode uint32,
+	state wl.KeyboardKeyState,
+	data window.WidgetHandler,
 ) {
 	println("func Key")
 	var wh2 WidgetHandler
@@ -157,13 +151,11 @@ func (k keyboardHandler) Focus(window *window.Window, input *window.Input) {
 	k.KeyboardHandler.Focus(&Window{Window: window, Display: (*Display)(window.Display)}, (*Input)(input))
 }
 
-
-type Popup struct{
-	Popup    *xdg.Popup
-	Display  *Display
-	nested   *window.Popup
+type Popup struct {
+	Popup   *xdg.Popup
+	Display *Display
+	nested  *window.Popup
 }
-
 
 func (p *Popup) SetPopupHandler(ph Popuper) {
 	println("func SetPopupHandler")
@@ -171,8 +163,6 @@ func (p *Popup) SetPopupHandler(ph Popuper) {
 }
 
 // Define other Popup methods similarly...
-
-
 
 type Popuper interface {
 	Render(cairo.Surface, uint32)
@@ -183,6 +173,7 @@ type Popuper interface {
 type popuper struct {
 	Popuper
 }
+
 func (p popuper) Render(s cairo.Surface, n uint32) {
 	println("func Render")
 	p.Popuper.Render(s, n)
@@ -195,7 +186,6 @@ func (p popuper) Configure() *window.Widget {
 	println("func Configure")
 	return (*window.Widget)(p.Popuper.Configure())
 }
-
 
 // Rectangle Struct
 type Rectangle = window.Rectangle
@@ -210,6 +200,7 @@ type SeatHandler interface {
 	Capabilities(i *Input, seat *wl.Seat, caps uint32)
 	Name(i *Input, seat *wl.Seat, name string)
 }
+
 func (s seatHandler) Capabilities(i *window.Input, seat *wl.Seat, caps uint32) {
 	println("func Capabilities")
 	s.SeatHandler.Capabilities((*Input)(i), seat, caps)
@@ -224,119 +215,117 @@ func (s seatHandler) Name(i *window.Input, seat *wl.Seat, name string) {
 
 type Widget window.Widget
 
-
 // Define other Widget methods similarly...
 type widgetHandler struct {
-    WidgetHandler
+	WidgetHandler
 }
 
 type WidgetHandler interface {
-    Resize(widget *Widget, width int32, height int32, pwidth int32, pheight int32)
-    Redraw(widget *Widget)
-    Enter(widget *Widget, input *Input, x float32, y float32)
-    Leave(widget *Widget, input *Input)
-    Motion(widget *Widget, input *Input, time uint32, x float32, y float32) int
-    Button(
-        widget *Widget,
-        input *Input,
-        time uint32,
-        button uint32,
-        state wl.PointerButtonState,
-        data WidgetHandler,
-    )
-    TouchUp(widget *Widget, input *Input, serial uint32, time uint32, id int32)
-    TouchDown(widget *Widget, input *Input, serial uint32, time uint32, id int32, x float32, y float32)
-    TouchMotion(widget *Widget, input *Input, time uint32, id int32, x float32, y float32)
-    TouchFrame(widget *Widget, input *Input)
-    TouchCancel(widget *Widget, width int32, height int32)
-    Axis(widget *Widget, input *Input, time uint32, axis uint32, value float32)
-    AxisSource(widget *Widget, input *Input, source uint32)
-    AxisStop(widget *Widget, input *Input, time uint32, axis uint32)
-    AxisDiscrete(widget *Widget, input *Input, axis uint32, discrete int32)
-    PointerFrame(widget *Widget, input *Input)
+	Resize(widget *Widget, width int32, height int32, pwidth int32, pheight int32)
+	Redraw(widget *Widget)
+	Enter(widget *Widget, input *Input, x float32, y float32)
+	Leave(widget *Widget, input *Input)
+	Motion(widget *Widget, input *Input, time uint32, x float32, y float32) int
+	Button(
+		widget *Widget,
+		input *Input,
+		time uint32,
+		button uint32,
+		state wl.PointerButtonState,
+		data WidgetHandler,
+	)
+	TouchUp(widget *Widget, input *Input, serial uint32, time uint32, id int32)
+	TouchDown(widget *Widget, input *Input, serial uint32, time uint32, id int32, x float32, y float32)
+	TouchMotion(widget *Widget, input *Input, time uint32, id int32, x float32, y float32)
+	TouchFrame(widget *Widget, input *Input)
+	TouchCancel(widget *Widget, width int32, height int32)
+	Axis(widget *Widget, input *Input, time uint32, axis uint32, value float32)
+	AxisSource(widget *Widget, input *Input, source uint32)
+	AxisStop(widget *Widget, input *Input, time uint32, axis uint32)
+	AxisDiscrete(widget *Widget, input *Input, axis uint32, discrete int32)
+	PointerFrame(widget *Widget, input *Input)
 }
 
 // Implementation of the wrapper methods
 func (w widgetHandler) Resize(widget *window.Widget, width int32, height int32, pwidth int32, pheight int32) {
 	println("func Resize")
-    w.WidgetHandler.Resize((*Widget)(widget), width, height, pwidth, pheight)
+	w.WidgetHandler.Resize((*Widget)(widget), width, height, pwidth, pheight)
 }
 
 func (w widgetHandler) Redraw(widget *window.Widget) {
 	println("func Redraw")
-    w.WidgetHandler.Redraw((*Widget)(widget))
+	w.WidgetHandler.Redraw((*Widget)(widget))
 }
 
 func (w widgetHandler) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {
 	println("func Enter")
-    w.WidgetHandler.Enter((*Widget)(widget), (*Input)(input), x, y)
+	w.WidgetHandler.Enter((*Widget)(widget), (*Input)(input), x, y)
 }
 
 func (w widgetHandler) Leave(widget *window.Widget, input *window.Input) {
 	println("func Leave")
-    w.WidgetHandler.Leave((*Widget)(widget), (*Input)(input))
+	w.WidgetHandler.Leave((*Widget)(widget), (*Input)(input))
 }
 
 func (w widgetHandler) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
 	println("func Motion")
-    return w.WidgetHandler.Motion((*Widget)(widget), (*Input)(input), time, x, y)
+	return w.WidgetHandler.Motion((*Widget)(widget), (*Input)(input), time, x, y)
 }
 
 func (w widgetHandler) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
 	println("func Button")
-    w.WidgetHandler.Button((*Widget)(widget), (*Input)(input), time, button, state, w.WidgetHandler)
+	w.WidgetHandler.Button((*Widget)(widget), (*Input)(input), time, button, state, w.WidgetHandler)
 }
 
 func (w widgetHandler) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
 	println("func TouchUp")
-    w.WidgetHandler.TouchUp((*Widget)(widget), (*Input)(input), serial, time, id)
+	w.WidgetHandler.TouchUp((*Widget)(widget), (*Input)(input), serial, time, id)
 }
 
 func (w widgetHandler) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
 	println("func TouchDown")
-    w.WidgetHandler.TouchDown((*Widget)(widget), (*Input)(input), serial, time, id, x, y)
+	w.WidgetHandler.TouchDown((*Widget)(widget), (*Input)(input), serial, time, id, x, y)
 }
 
 func (w widgetHandler) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
 	println("func TouchMotion")
-    w.WidgetHandler.TouchMotion((*Widget)(widget), (*Input)(input), time, id, x, y)
+	w.WidgetHandler.TouchMotion((*Widget)(widget), (*Input)(input), time, id, x, y)
 }
 
 func (w widgetHandler) TouchFrame(widget *window.Widget, input *window.Input) {
 	println("func TouchFrame")
-    w.WidgetHandler.TouchFrame((*Widget)(widget), (*Input)(input))
+	w.WidgetHandler.TouchFrame((*Widget)(widget), (*Input)(input))
 }
 
 func (w widgetHandler) TouchCancel(widget *window.Widget, width int32, height int32) {
 	println("func TouchCancel")
-    w.WidgetHandler.TouchCancel((*Widget)(widget), width, height)
+	w.WidgetHandler.TouchCancel((*Widget)(widget), width, height)
 }
 
 func (w widgetHandler) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
 	println("func Axis")
-    w.WidgetHandler.Axis((*Widget)(widget), (*Input)(input), time, axis, value)
+	w.WidgetHandler.Axis((*Widget)(widget), (*Input)(input), time, axis, value)
 }
 
 func (w widgetHandler) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
 	println("func AxisSource")
-    w.WidgetHandler.AxisSource((*Widget)(widget), (*Input)(input), source)
+	w.WidgetHandler.AxisSource((*Widget)(widget), (*Input)(input), source)
 }
 
 func (w widgetHandler) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
 	println("func AxisStop")
-    w.WidgetHandler.AxisStop((*Widget)(widget), (*Input)(input), time, axis)
+	w.WidgetHandler.AxisStop((*Widget)(widget), (*Input)(input), time, axis)
 }
 
 func (w widgetHandler) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
 	println("func AxisDiscrete")
-    w.WidgetHandler.AxisDiscrete((*Widget)(widget), (*Input)(input), axis, discrete)
+	w.WidgetHandler.AxisDiscrete((*Widget)(widget), (*Input)(input), axis, discrete)
 }
 
 func (w widgetHandler) PointerFrame(widget *window.Widget, input *window.Input) {
 	println("func PointerFrame")
-    w.WidgetHandler.PointerFrame((*Widget)(widget), (*Input)(input))
+	w.WidgetHandler.PointerFrame((*Widget)(widget), (*Input)(input))
 }
-
 
 // SetTitle sets the window title.
 func (w *Window) SetTitle(title string) {
@@ -366,25 +355,21 @@ func (w *Window) SetKeyboardHandler(handler KeyboardHandler) {
 func (w *Window) ScheduleResize(width int32, height int32) {
 	println("func ScheduleResize")
 	(w.Window).ScheduleResize(width, height)
-    
+
 }
 
 // Destroy destroys the window.
 func (w *Window) Destroy() {
 	println("func Destroy")
 	(w.Window).Destroy()
-    
+
 }
-
-
 
 // AddPopupWidget adds a popup widget to the window.
 func (w *Window) AddPopupWidget(p *Popup, data WidgetHandler) *Widget {
 	println("func AddPopupWidget")
 	return (*Widget)((w.Window).AddPopupWidget((*window.Popup)(p.nested), widgetHandler{data}))
 }
-
-
 
 // ScheduleResize schedules a resize for the widget.
 func (parent *Widget) ScheduleResize(width int32, height int32) {
@@ -494,7 +479,6 @@ func (parent *Widget) AddWidget(data WidgetHandler) *Widget {
 	return (*Widget)((*window.Widget)(parent).AddWidget(widgetHandler{data}))
 }
 
-
 func (parent *Widget) Destroy() {
 	println("func Destroy")
 	((*window.Widget)(parent)).Destroy()
@@ -532,8 +516,8 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 	println("func CreatePopup")
 	p := ((*window.Window)(w.Window)).CreatePopup(seat, clickSerial, width, height, x, y)
 	return &Popup{
-		nested: p,
-		Popup: p.Popup,
+		nested:  p,
+		Popup:   p.Popup,
 		Display: (*Display)(p.Display),
 	}
 }
@@ -570,6 +554,7 @@ func (w *Window) SetFullscreenHandler(handler FullscreenHandler) {
 	((*window.Window)(w.Window)).SetFullscreenHandler(fullscreenHandler{handler})
 
 }
+
 type FullscreenHandler interface {
 	Fullscreen(*Window, WidgetHandler)
 }
@@ -587,4 +572,3 @@ func (f fullscreenHandler) Fullscreen(w *window.Window, h window.WidgetHandler) 
 	println("func Fullscreen")
 	f.FullscreenHandler.Fullscreen(&Window{Window: w, Display: (*Display)(w.Display)}, whan)
 }
-

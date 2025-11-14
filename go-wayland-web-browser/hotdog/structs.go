@@ -10,25 +10,25 @@ type WebBrowser struct {
 	ActiveDocument *Document
 	Documents      []*Document
 
-	Viewport    interface{
+	Viewport interface {
 		GetOffset() int
 		GetTop() float64
 		SetDrawingRepaint(bool)
 	}
-	StatusLabel interface{
+	StatusLabel interface {
 		SetContent(string)
 		RequestRepaint()
 	}
-	History     *History
-	Window      interface{
+	History *History
+	Window  interface {
 		SetTitle(string)
 		SetCursor(int)
 		RemoveStaticOverlay(string)
 		AddStaticOverlay(string)
 	}
-	Profiler    *profiler.Profiler
-	BuildInfo   *BuildInfo
-	Settings    *Settings
+	Profiler  *profiler.Profiler
+	BuildInfo *BuildInfo
+	Settings  *Settings
 }
 
 type Document struct {
@@ -39,13 +39,13 @@ type Document struct {
 	RawDocument string
 	DOM         *NodeDOM
 
-	DebugFlag       bool
-	DebugWindow     interface{
+	DebugFlag   bool
+	DebugWindow interface {
 		RegisterTree(interface{})
 		SetRootFrame(interface{})
 		Show()
 	}
-	DebugTree       interface{
+	DebugTree interface {
 		SelectNodeByValue(string)
 		RequestRepaint()
 	}
@@ -131,7 +131,7 @@ func (e NoSuchElementError) Error() string {
 	return fmt.Sprintf("no such element: %q", string(e))
 }
 
-//Resource "HTTP resource struct definition"
+// Resource "HTTP resource struct definition"
 type Resource struct {
 	Body        string
 	ContentType string
@@ -140,13 +140,13 @@ type Resource struct {
 	Key         string
 }
 
-//Attribute "Generic key:value attribute definition"
+// Attribute "Generic key:value attribute definition"
 type Attribute struct {
 	Name  string
 	Value string
 }
 
-//Stylesheet "Stylesheet definition for DOM Nodes"
+// Stylesheet "Stylesheet definition for DOM Nodes"
 type Stylesheet struct {
 	Color           *ColorRGBA
 	BackgroundColor *ColorRGBA
@@ -163,13 +163,13 @@ type Stylesheet struct {
 	Left   float64
 }
 
-//StyleElement "hmtl <style> element"
+// StyleElement "hmtl <style> element"
 type StyleElement struct {
 	Selector string
 	Style    *Stylesheet
 }
 
-//ColorRGBA "RGBA color model"
+// ColorRGBA "RGBA color model"
 type ColorRGBA struct {
 	R float64
 	G float64

@@ -13,7 +13,6 @@ func HomePage() []byte {
 //go:embed pages/defaultPage.html
 var defaultPage []byte
 
-
 /*
 var DefaultPage = func() []byte {
 	return defaultPage
@@ -21,7 +20,6 @@ var DefaultPage = func() []byte {
 */
 //go:embed pages/homePage.html
 var homePage []byte
-
 
 /*
 var HomePage = func() []byte {

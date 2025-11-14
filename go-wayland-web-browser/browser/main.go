@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 
-	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 	gg "github.com/danfragoso/thdwb/gg"
+	profiler "github.com/danfragoso/thdwb/profiler"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	mustard "github.com/neurlang/wayland/go-wayland-web-browser/mustard"
-	profiler "github.com/danfragoso/thdwb/profiler"
-
 )
 
 func main() {

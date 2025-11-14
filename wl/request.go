@@ -111,7 +111,7 @@ func (r *Request) PutFloat32(f float32) {
 // PutString (Request PutString) writes a string argument to the compositor
 func (r *Request) PutString(s string) {
 	tail := 4 - ((len(s)) & 0x3)
-	r.PutUint32(uint32(len(s)+1))
+	r.PutUint32(uint32(len(s) + 1))
 	r.data = append(r.data, []byte(s)...)
 	// if padding required
 	padding := make([]byte, tail)

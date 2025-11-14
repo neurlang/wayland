@@ -41,10 +41,7 @@ type runner interface {
 	Run(uint32)
 }
 
-
 const BufferTypeShm = 1
-
-
 
 const CursorBottomLeft = 0
 const CursorBottomRight = 1

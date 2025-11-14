@@ -99,11 +99,11 @@ func ParsePlainText(document string) *hotdog.Document {
 
 	textDocument.DOM.Document = textDocument
 	textDocument.DOM.Children = []*hotdog.NodeDOM{
-		&hotdog.NodeDOM{Element: "head", Document: textDocument,
+		{Element: "head", Document: textDocument,
 			Style:     mayo.GetElementStylesheet("head", []*hotdog.Attribute{}),
 			RenderBox: &hotdog.RenderBox{}, Parent: textDocument.DOM,
 		},
-		&hotdog.NodeDOM{
+		{
 			Element: "body", NeedsReflow: true, NeedsRepaint: true,
 			Style:     mayo.GetElementStylesheet("body", []*hotdog.Attribute{}),
 			RenderBox: &hotdog.RenderBox{}, Document: textDocument,

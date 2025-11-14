@@ -131,7 +131,7 @@ type VkCube struct {
 	libdecorContext *decor.Libdecor
 	libdecorFrame   *decor.LibdecorFrame
 	initialized     bool
-	frameIface interface{}
+	frameIface      interface{}
 
 	swapchainResize func()
 }

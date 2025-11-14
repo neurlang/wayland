@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//NodeDOM "DOM Node Struct definition"
+// NodeDOM "DOM Node Struct definition"
 type NodeDOM struct {
 	Element string `json:"element"`
 	Content string `json:"content"`

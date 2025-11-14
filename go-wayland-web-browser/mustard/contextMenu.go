@@ -1,12 +1,12 @@
 package mustard
 
 import (
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	gg "github.com/danfragoso/thdwb/gg"
 	"github.com/goki/freetype/truetype"
+	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	"image"
 )
-import 	window "github.com/neurlang/wayland/windowtrace"
+import window "github.com/neurlang/wayland/windowtrace"
 import wl "github.com/neurlang/wayland/wl"
 
 func (window *Window) EnableContextMenus() {

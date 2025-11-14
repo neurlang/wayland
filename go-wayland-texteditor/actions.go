@@ -87,14 +87,12 @@ func (textarea *textarea) copyOperation(input *window.Input, isX bool) {
 	input.DeviceSetSelection(textarea.src, textarea.display.GetSerial())
 }
 
-
 func (textarea *textarea) saveToFileOperation(filename string) {
 	var endX = textarea.StringGrid.EndLineLen
 	var endY = textarea.StringGrid.LineCount - 1
 	if endY < 0 {
 		endY = 0
 	}
-
 
 	content, err := load_content(ContentRequest{
 		Xpos:   textarea.StringGrid.FilePosition.X,
@@ -103,8 +101,8 @@ func (textarea *textarea) saveToFileOperation(filename string) {
 		Height: textarea.StringGrid.YCells,
 		Erase:  nil,
 		Copy: &CopyRequest{
-			X0: 0,     /*+ textarea.StringGrid.FilePosition.X*/
-			Y0: 0,     /*+ textarea.StringGrid.FilePosition.Y*/
+			X0: 0,    /*+ textarea.StringGrid.FilePosition.X*/
+			Y0: 0,    /*+ textarea.StringGrid.FilePosition.Y*/
 			X1: endX, /*+ textarea.StringGrid.FilePosition.X*/
 			Y1: endY, /*+ textarea.StringGrid.FilePosition.Y*/
 		}})
@@ -126,7 +124,7 @@ func (textarea *textarea) saveToFileOperation(filename string) {
 
 	// Write each byte array to the file followed by a newline
 	for i, line := range content.Copy.Buffer {
-	
+
 		if i > 0 {
 			_, err := writer.WriteString("\n")
 			if err != nil {

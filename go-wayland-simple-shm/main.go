@@ -201,16 +201,11 @@ func createDisplay() *display {
 
 	handle(wlclient.DisplayRoundtrip(disp.display))
 
-
-
 	if disp.shm == nil {
 		log.Fatal("No wl_shm global\n")
 	}
 
 	handle(wlclient.DisplayRoundtrip(disp.display))
-
-
-
 
 	if !disp.hasXrgb {
 		log.Fatal("WL_SHM_FORMAT_XRGB32 not available\n")
