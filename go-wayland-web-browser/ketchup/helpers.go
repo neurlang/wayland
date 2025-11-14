@@ -28,7 +28,6 @@ func buildKetchupNode(node *html.Node, document *hotdog.Document) *hotdog.NodeDO
 	case html.TextNode:
 		element = "html:text"
 		content = node.Data
-		break
 
 	case html.ElementNode:
 		element = node.Data
