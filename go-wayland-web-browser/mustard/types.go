@@ -4,12 +4,10 @@ import (
 	"image"
 
 	gg "github.com/danfragoso/thdwb/gg"
-
 	"github.com/goki/freetype/truetype"
+	cairo "github.com/neurlang/wayland/cairoshim"
+	window "github.com/neurlang/wayland/windowtrace"
 )
-
-import window "github.com/neurlang/wayland/windowtrace"
-import cairo "github.com/neurlang/wayland/cairoshim"
 
 type Overlay struct {
 	ref string
@@ -226,17 +224,13 @@ type TreeWidgetNode struct {
 }
 
 func (node *TreeWidgetNode) Toggle() {
-	if node.isOpen {
-		node.isOpen = false
-	} else {
-		node.isOpen = true
-	}
+	node.isOpen = !node.isOpen
 }
 
 func (node *TreeWidgetNode) Close() {
 	node.isOpen = false
-
 }
+
 func (node *TreeWidgetNode) Open() {
 	node.isOpen = true
 }
