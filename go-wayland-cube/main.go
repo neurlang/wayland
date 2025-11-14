@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run shaders/generate.go
+
 import (
 	"fmt"
 	"os"
