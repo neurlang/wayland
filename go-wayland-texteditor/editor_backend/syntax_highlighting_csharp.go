@@ -181,7 +181,7 @@ func reprocess_syntax_highlighting_end_csharp(loaded uint64, length, x, y int, d
 	switch loaded {
 	case hashstr("if"), hashstr("return"), hashstr("case"), hashstr("for"), hashstr("const"), hashstr("protected"),
 		hashstr("switch"), hashstr("while"), hashstr("foreach"), hashstr("else"), hashstr("enum"),
-		hashstr("namespace"), hashstr("else"), hashstr("using"), hashstr("var"), hashstr("class"), hashstr("struct"),
+		hashstr("namespace"), hashstr("using"), hashstr("var"), hashstr("class"), hashstr("struct"),
 		hashstr("public"), hashstr("private"), hashstr("break"), hashstr("continue"), hashstr("async"),
 		hashstr("await"), hashstr("readonly"), hashstr("interface"), hashstr("override"), hashstr("object"),
 		hashstr("try"), hashstr("catch"), hashstr("finally"), hashstr("new"), hashstr("throw"), hashstr("null"),
