@@ -17,81 +17,53 @@ func hexToFloatInRange(hex string) float64 {
 	return float64(number / 255)
 }
 
+// parseColorValue parses a single color component value from a string
+// Supports: integers (0-255), percentages (0-100%), or floats (0-1)
+func parseColorValue(param string) float64 {
+	param = strings.TrimSpace(param)
+	
+	if strings.HasSuffix(param, "%") {
+		value, _ := strconv.ParseInt(strings.Trim(param, "%"), 10, 0)
+		return float64(value) / 100
+	} else if strings.Contains(param, ".") {
+		value, _ := strconv.ParseFloat(param, 64)
+		return value
+	} else {
+		value, _ := strconv.Atoi(param)
+		return float64(value) / 255
+	}
+}
+
 // RGBAToColor - Transforms RGBA color string to *hotdog.ColorRGBA
 // Supports rgb() and rgba() formats with values as integers (0-255), percentages, or floats (0-1)
 func RGBAToColor(colorString string) *hotdog.ColorRGBA {
-	var color *hotdog.ColorRGBA
-
-	if rgbaParams.MatchString(colorString) {
-		paramString := rgbaParams.FindString(colorString)
-		paramString = strings.Trim(paramString, "()")
-
-		params := strings.Split(paramString, ",")
-		paramsLen := len(params)
-
-		if paramsLen >= 3 {
-			var red float64
-			var green float64
-			var blue float64
-			var alpha float64
-
-			if strings.HasSuffix(params[0], "%") {
-				value, _ := strconv.ParseInt(strings.Trim(strings.TrimSpace(params[0]), "%"), 10, 0)
-				red = float64(value / 100)
-			} else if strings.Index(params[0], ".") != -1 {
-				value, _ := strconv.ParseFloat(strings.TrimSpace(params[0]), 64)
-				red = value
-			} else {
-				value, _ := strconv.Atoi(strings.TrimSpace(params[0]))
-				red = float64(value / 255)
-			}
-
-			if strings.HasSuffix(params[1], "%") {
-				value, _ := strconv.ParseInt(strings.Trim(strings.TrimSpace(params[1]), "%"), 10, 0)
-				green = float64(value / 100)
-			} else if strings.Index(params[1], ".") != -1 {
-				value, _ := strconv.ParseFloat(strings.TrimSpace(params[1]), 64)
-				green = value
-			} else {
-				value, _ := strconv.Atoi(strings.TrimSpace(params[1]))
-				green = float64(value / 255)
-			}
-
-			if strings.HasSuffix(params[2], "%") {
-				value, _ := strconv.ParseInt(strings.Trim(strings.TrimSpace(params[2]), "%"), 10, 0)
-				blue = float64(value / 100)
-			} else if strings.Index(params[2], ".") != -1 {
-				value, _ := strconv.ParseFloat(strings.TrimSpace(params[2]), 64)
-				blue = value
-			} else {
-				value, _ := strconv.Atoi(strings.TrimSpace(params[2]))
-				blue = float64(value / 255)
-			}
-
-			alpha = 1
-			if paramsLen >= 4 {
-				if strings.HasSuffix(params[3], "%") {
-					value, _ := strconv.ParseInt(strings.Trim(strings.TrimSpace(params[3]), "%"), 10, 0)
-					alpha = float64(value) / 100
-				} else if strings.Index(params[3], ".") != -1 {
-					value, _ := strconv.ParseFloat(strings.TrimSpace(params[3]), 64)
-					alpha = value
-				} else {
-					value, _ := strconv.Atoi(strings.TrimSpace(params[3]))
-					alpha = float64(value) / 255
-				}
-			}
-
-			return &hotdog.ColorRGBA{
-				R: red,
-				G: green,
-				B: blue,
-				A: alpha,
-			}
-		}
+	if !rgbaParams.MatchString(colorString) {
+		return nil
 	}
 
-	return color
+	paramString := rgbaParams.FindString(colorString)
+	paramString = strings.Trim(paramString, "()")
+
+	params := strings.Split(paramString, ",")
+	if len(params) < 3 {
+		return nil
+	}
+
+	red := parseColorValue(params[0])
+	green := parseColorValue(params[1])
+	blue := parseColorValue(params[2])
+	
+	alpha := 1.0
+	if len(params) >= 4 {
+		alpha = parseColorValue(params[3])
+	}
+
+	return &hotdog.ColorRGBA{
+		R: red,
+		G: green,
+		B: blue,
+		A: alpha,
+	}
 }
 
 // HexStringToColor - Transforms hex color string to *hotdog.ColorRGBA
