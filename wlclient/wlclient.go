@@ -179,7 +179,7 @@ func ShmAddListener(p *wl.Shm, data wl.ShmFormatHandler) {
 }
 func RegionDestroy(p *wl.Region) {
 	wl.DeleteUserData(p)
-	p.Destroy()
+	_ = p.Destroy() // Ignore error during cleanup
 	p.Unregister()
 }
 func CallbackDestroy(p *wl.Callback) {
@@ -189,7 +189,7 @@ func CallbackDestroy(p *wl.Callback) {
 }
 func SubsurfaceDestroy(p *wl.Subsurface) {
 	wl.DeleteUserData(p)
-	p.Destroy()
+	_ = p.Destroy() // Ignore error during cleanup
 	p.Unregister()
 }
 func DataDeviceDestroy(p *wl.DataDevice) {

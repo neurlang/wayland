@@ -22,9 +22,8 @@ type Proxy interface {
 
 // BaseProxy (Base Proxy) is a struct that stores Context and ProxyId explicitly
 type BaseProxy struct {
-	id   ProxyId
-	ctx  *Context
-	name uint32
+	id  ProxyId
+	ctx *Context
 }
 
 // Id BaseProxy implements Id to get ProxyId

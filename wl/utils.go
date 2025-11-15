@@ -33,7 +33,7 @@ func (bp *BytePool) Take(n int) []byte {
 
 // Give (BytePool Give) returns a specific number of bytes to the pool
 func (bp *BytePool) Give(b []byte) {
-	bp.Put(b)
+	bp.Put(b) //nolint:staticcheck // SA6002: slices are already reference types
 }
 
 func float64frombits(b uint64) float64 { return math.Float64frombits(b) }

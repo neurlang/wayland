@@ -100,7 +100,9 @@ func createShmBuffer(w *window, buffer *buffer, width int, height int, format ui
 	buffer.buffer = buf
 	// add buffer releaser here
 	wlclient.BufferAddListener(buffer.buffer, buffer)
-	pool.Destroy()
+	if err := pool.Destroy(); err != nil {
+		return err
+	}
 
 	buffer.shmData = data
 
@@ -137,7 +139,9 @@ func (d *display) HandleShmFormat(ev wl.ShmFormatEvent) {
 }
 
 func (d *display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
-	d.shell.Pong(ev.Serial)
+	if err := d.shell.Pong(ev.Serial); err != nil {
+		log.Printf("failed to pong: %v", err)
+	}
 }
 
 func (d *display) HandleRegistryGlobal(ev wl.RegistryGlobalEvent) {
