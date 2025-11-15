@@ -101,8 +101,6 @@ func (frame *Frame) Key(
 				window.activeInput = nil
 			}
 		}
-
-		break
 	case 103:
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("up")

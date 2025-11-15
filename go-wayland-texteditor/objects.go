@@ -380,10 +380,7 @@ func (sg *StringGrid) IsSelectionStrict() bool {
 	return sg.SelectionCursor != sg.IbeamCursor
 }
 func (sg *StringGrid) IsSelection() bool {
-	if !(sg.Selecting || sg.IsSelected) {
-		return false
-	}
-	return true
+	return sg.Selecting || sg.IsSelected
 }
 func (sg *StringGrid) Highlighted(x, y int) bool {
 	if sg.Selecting && !sg.control &&

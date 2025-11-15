@@ -156,7 +156,6 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 					escape = false
 				}
 			}
-			break
 		case "\"":
 			if !comment {
 				if dblquote && !escape {
@@ -171,7 +170,6 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 					escape = false
 				}
 			}
-			break
 		case "`":
 			if !comment {
 				if backquote && !dblquote && !sglquote {

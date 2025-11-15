@@ -237,8 +237,7 @@ func (smoke *smoke) pipeline(width int32, height int32) {
 	const lastTime = 600000
 	go func() {
 		for {
-			var u0 []float32
-			u0 = <-smoke.bb[0].uu
+			u0 := <-smoke.bb[0].uu
 			if u0 == nil {
 				smoke.bb[1].uu <- nil
 				return
@@ -250,8 +249,7 @@ func (smoke *smoke) pipeline(width int32, height int32) {
 	}()
 	go func() {
 		for {
-			var v0 []float32
-			v0 = <-smoke.bb[0].vv
+			v0 := <-smoke.bb[0].vv
 			if v0 == nil {
 				smoke.bb[1].vv <- nil
 				return
