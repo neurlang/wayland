@@ -44,7 +44,7 @@ func (frame *Frame) SetHeight(height float64) {
 	frame.RequestReflow()
 }
 
-// SetHeight - Sets the frame height
+// GetHeight - Gets the frame height
 func (frame *Frame) GetHeight() float64 {
 	return frame.box.height
 }
@@ -72,16 +72,18 @@ func (frame *Frame) Key(
 	const Press = 1
 
 	switch key {
-	case 14:
+	case 14: // Backspace
 		if action == Repeat || action == Release {
 			if window.activeInput != nil && len(window.activeInput.value) > 0 {
 				if window.activeInput.cursorPosition == 0 {
+					// Cursor at end, remove last character
 					window.activeInput.value = window.activeInput.value[:len(window.activeInput.value)-1]
 				} else {
 					inputVal, cursorPos := window.activeInput.value, window.activeInput.cursorPosition
-
-					if cursorPos+len(inputVal) > 0 {
-						window.activeInput.value = inputVal[:len(inputVal)+cursorPos-1] + inputVal[len(inputVal)+cursorPos:]
+					// cursorPos is negative offset from end
+					absPos := len(inputVal) + cursorPos
+					if absPos > 0 && absPos <= len(inputVal) {
+						window.activeInput.value = inputVal[:absPos-1] + inputVal[absPos:]
 					}
 				}
 				window.activeInput.needsRepaint = true
