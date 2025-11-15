@@ -300,7 +300,7 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 					go func(cmd *exec.Cmd) {
 						s.mutex.Lock()
 						if lastCommand != nil {
-							lastCommand.Process.Kill()
+							_ = lastCommand.Process.Kill() // Ignore error, process may already be dead
 						}
 						lastCommand = cmd
 						s.mutex.Unlock()
@@ -338,12 +338,12 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 				case 9, 10, 11, 12:
 					println("new file")
 				case 13, 14, 15, 16:
-					s.window.SetMinimized()
+					_ = s.window.SetMinimized()
 				case 17, 18, 19, 20:
-					s.window.ToggleMaximized()
+					_ = s.window.ToggleMaximized()
 				case 21, 22, 23, 24:
 					if lastCommand != nil {
-						lastCommand.Process.Kill()
+						_ = lastCommand.Process.Kill() // Ignore error, process may already be dead
 					}
 					s.display.Exit()
 				}

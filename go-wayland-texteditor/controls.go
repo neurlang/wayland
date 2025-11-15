@@ -9,7 +9,7 @@ var controls2Descriptor = "" +
 var ControlFont Font
 
 func init() {
-	(&ControlFont).Load("controls.png", controls1Descriptor, "")
-	(&ControlFont).Load("controls2.png", controls2Descriptor, "")
-	(&ControlFont).Alias("", " ")
+	_ = (&ControlFont).Load("controls.png", controls1Descriptor, "")
+	_ = (&ControlFont).Load("controls2.png", controls2Descriptor, "")
+	_ = (&ControlFont).Alias("", " ")
 }

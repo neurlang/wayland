@@ -292,18 +292,32 @@ func (w *Window) UninhibitRedraw() {
 
 }
 
-func (w *Window) SetMinimized() {
-	w.form.Minimise()
+func (w *Window) SeMaximized(maximized bool) error {
+	if w.maximized != maximized {
+		if w.maximized {
+			w.form.Restore()
+		} else {
+			w.form.Maximise()
+		}
+		w.maximized = maximized
+	}
+	return nil
 }
 
-func (w *Window) ToggleMaximized() {
+
+func (w *Window) SetMinimized() error {
+	w.form.Minimise()
+	return nil
+}
+
+func (w *Window) ToggleMaximized() error {
 	if w.maximized {
 		w.form.Restore()
 	} else {
 		w.form.Maximise()
 	}
 	w.maximized = !w.maximized
-
+	return nil
 }
 
 func (w *Window) InhibitRedraw() {
