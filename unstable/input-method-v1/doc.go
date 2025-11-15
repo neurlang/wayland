@@ -1,3 +1,3 @@
-package inputmethod
+package input
 
-//go:generate ../../../../../../bin/wl-scanner -pkg input_method -source input-method-unstable-v1.xml -output input_method.go
+//go:generate go run ../../cmd/wayland-scanner -i input-method-unstable-v1.xml
