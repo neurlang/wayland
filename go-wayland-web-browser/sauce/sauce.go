@@ -27,7 +27,6 @@ func GetResource(URL *url.URL, browser *hotdog.WebBrowser) *hotdog.Resource {
 		return &hotdog.Resource{Body: pages.RenderFileBrowser(URL.Path), URL: URL}
 	case "":
 		URL.Scheme = "http"
-		break
 	}
 
 	return fetchExternalPage(URL)
@@ -83,7 +82,7 @@ func fetchExternalPage(URL *url.URL) *hotdog.Resource {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body) // Error ignored, body will be empty on error
 
 	resource.ContentType = resp.Header.Get("Content-Type")
 	resource.URL = resp.Request.URL

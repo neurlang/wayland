@@ -5,8 +5,7 @@ import (
 )
 
 func RenderAboutPage(buildInfo *hotdog.BuildInfo) string {
-	var template string
-	template = `
+	template := `
 	<html lang="en">
 	<head>
 		<meta charset="UTF-8">

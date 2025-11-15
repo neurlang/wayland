@@ -249,7 +249,7 @@ func (frame *Frame) Redraw(widget *window.Widget) {
 	if surface != nil {
 
 		frame.render(surface, time)
-		swizzle.BGRA(surface.ImageSurfaceGetData())
+		_ = swizzle.BGRA(surface.ImageSurfaceGetData()) // Ignore error, surface will be destroyed anyway
 		surface.Destroy()
 	}
 

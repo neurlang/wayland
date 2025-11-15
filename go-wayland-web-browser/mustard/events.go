@@ -47,7 +47,7 @@ func (window *Window) ProcessScroll(x, y float64) {
 }
 
 func (window *Window) ProcessReturnKey() {
-	if window.activeInput != nil && window.activeInput.active == true {
+	if window.activeInput != nil && window.activeInput.active {
 		window.activeInput.active = false
 
 		window.activeInput.needsRepaint = true
@@ -57,7 +57,7 @@ func (window *Window) ProcessReturnKey() {
 }
 
 func (window *Window) ProcessArrowKeys(arrowKey string) {
-	if window.activeInput != nil && window.activeInput.active == true {
+	if window.activeInput != nil && window.activeInput.active {
 		if arrowKey == "left" && (window.activeInput.cursorPosition+len(window.activeInput.value)) > 0 {
 			window.activeInput.cursorPosition--
 			window.activeInput.cursorDirection = true
@@ -129,7 +129,7 @@ func (window *Window) ProcessInputs() {
 
 func (window *Window) ProcessInputActivation() {
 	for _, input := range window.registeredInputs {
-		if input.selected == true {
+		if input.selected {
 			window.activeInput = input
 			input.active = true
 			input.needsRepaint = true
@@ -146,7 +146,7 @@ func (window *Window) ProcessInputActivation() {
 
 func (window *Window) ProcessButtonClick() {
 	for _, button := range window.registeredButtons {
-		if button.selected == true {
+		if button.selected {
 			button.onClick()
 			button.needsRepaint = true
 			return
@@ -156,7 +156,7 @@ func (window *Window) ProcessButtonClick() {
 
 func (window *Window) ProcessTreeClick() {
 	for _, tree := range window.registeredTrees {
-		if tree.selected == true {
+		if tree.selected {
 			tree.Click()
 			tree.needsRepaint = true
 			return
