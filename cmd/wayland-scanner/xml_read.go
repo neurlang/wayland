@@ -11,7 +11,7 @@ func xmlProcess(inputFile, outputFile string) {
 		log.Fatalln("Cannot read input file:", err)
 	}
 
-	xml, err := UnmarshalXml(data)
+	xml, err := UnmarshalXML(data)
 	if err != nil {
 		log.Fatalln("Cannot parse input file:", err)
 	}
@@ -27,7 +27,9 @@ func xmlProcess(inputFile, outputFile string) {
 		var s GoStruct
 		s.Name = removePrefixAndCamelCase(iface.Name, f.PkgName)
 
-		s.Comment = sanitizeSingleLineComment(iface.Description.Summary)
+		if iface.Description != nil {
+			s.Comment = sanitizeSingleLineComment(iface.Description.Summary)
+		}
 
 		f.AddStruct(&s)
 
@@ -35,7 +37,9 @@ func xmlProcess(inputFile, outputFile string) {
 			var m GoMethod
 			m.Name = removePrefixAndCamelCase(req.Name, f.PkgName)
 
-			m.Comment = sanitizeSingleLineComment(req.Description.Summary)
+			if req.Description != nil {
+				m.Comment = sanitizeSingleLineComment(req.Description.Summary)
+			}
 
 			s.AddMethod(&m)
 
@@ -93,7 +97,9 @@ func xmlProcess(inputFile, outputFile string) {
 			var e GoEvent
 			e.Name = removePrefixAndCamelCase(iface.Name+"_"+event.Name, f.PkgName)
 
-			e.Comment = sanitizeSingleLineComment(event.Description.Summary)
+			if event.Description != nil {
+				e.Comment = sanitizeSingleLineComment(event.Description.Summary)
+			}
 
 			var isMagicalCalbackDoneEvent = iface.Name == "wl_callback" && event.Name == "done"
 
