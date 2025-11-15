@@ -60,10 +60,8 @@ func main() {
 	fileName := os.Args[1]
 
 	app := &appState{
-		// Set the title to `cat.jpg - imageview`
-		title: fileName + " - imageviewer",
-		appID: "imageviewer",
-		// Keep proxy image in cache, for use in resizing
+		title:   fileName + " - imageviewer",
+		appID:   "imageviewer",
 		cursors: make(map[string]*cursorData),
 	}
 
@@ -145,10 +143,12 @@ func (app *appState) SetImage(to *image.RGBA) {
 }
 
 func (app *appState) loadImage(fileName string) {
-
 	const (
+		// Maximum dimensions for proxy image to improve performance
 		clampedWidth  = 1920
 		clampedHeight = 1080
+		// Initial window height
+		initialHeight = 480
 	)
 
 	// Read the image file to *image.RGBA
@@ -159,14 +159,14 @@ func (app *appState) loadImage(fileName string) {
 	// Create a proxy image for large images, makes resizing a little better
 	if pImage.Rect.Dy() > pImage.Rect.Dx() && pImage.Rect.Dy() > clampedHeight {
 		pImage = resize.Resize(0, clampedHeight, pImage, resize.Bilinear).(*image.RGBA)
-		log.Print("creating proxy image, resizing by height clamped to", clampedHeight)
+		log.Printf("creating proxy image, resizing by height clamped to %d", clampedHeight)
 	} else if pImage.Rect.Dx() > pImage.Rect.Dy() && pImage.Rect.Dx() > clampedWidth {
 		pImage = resize.Resize(clampedWidth, 0, pImage, resize.Bilinear).(*image.RGBA)
-		log.Print("creating proxy image, resizing by width clamped to", clampedWidth)
+		log.Printf("creating proxy image, resizing by width clamped to %d", clampedWidth)
 	}
 
 	// Resize again, for first frame
-	frameImage := resize.Resize(0, 480, pImage, resize.Bilinear).(*image.RGBA)
+	frameImage := resize.Resize(0, initialHeight, pImage, resize.Bilinear).(*image.RGBA)
 	frameRect := frameImage.Bounds()
 
 	app.frame = frameImage
@@ -184,11 +184,19 @@ func (app *appState) loadImage(fileName string) {
 }
 
 func (app *appState) spawnDecoration(fileName string) {
+	const (
+		titlebarHeight = 20
+		buttonWidth    = 40
+	)
 	app.decoration = new(Decoration)
 	app.decoration.Title = fileName
-	app.decoration.Titlebar = 20
-	app.decoration.LeftButtons = []DecorationButton{{"#", 40, false}}
-	app.decoration.RightButtons = []DecorationButton{{"×", 40, false}, {"▫", 40, false}, {"_", 40, false}}
+	app.decoration.Titlebar = titlebarHeight
+	app.decoration.LeftButtons = []DecorationButton{{"#", buttonWidth, false}}
+	app.decoration.RightButtons = []DecorationButton{
+		{"×", buttonWidth, false}, // Close
+		{"▫", buttonWidth, false}, // Maximize
+		{"_", buttonWidth, false}, // Minimize
+	}
 	app.decoration.clientSideDecoration(app, false, false)
 }
 
@@ -237,14 +245,16 @@ func run(app *appState) {
 	app.xdgTopLevel = xdgTopLevel
 	log.Print("got xdg_toplevel")
 
-	// TODO: Use decorationManager.GetToplevelDecoration(xdgTopLevel)
+	// TODO: Implement server-side decoration support
+	// if app.decorationManager != nil {
+	//     tld, err := app.decorationManager.GetToplevelDecoration(xdgTopLevel)
+	//     if err == nil {
+	//         app.toplevelDecoration = tld
+	//         _ = tld.SetMode(zxdgDecoration.ZxdgToplevelDecorationV1ModeServerSide)
+	//         tld.AddConfigureHandler(app)
+	//     }
+	// }
 	_ = app.decorationManager
-
-		//println(tld)
-
-		//app.toplevelDecoration = tld
-		//tld.SetMode(zxdgDecoration.ZxdgToplevelDecorationV1ModeServerSide)
-		//tld.AddConfigureHandler(app)
 
 	// Add xdg_toplevel configure handler for window resizing
 	xdgTopLevel.AddConfigureHandler(app)
@@ -320,11 +330,13 @@ func (app *appState) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 		seat.AddCapabilitiesHandler(app)
 		seat.AddNameHandler(app)
 	case "zxdg_decoration_manager_v1":
-		//_ = unstable.GetNewFunc
-		//app.haveDecorationManager = true
-		//if app.haveDecorationManager {
-		//	app.decorationManager = unstable.GetNewFunc("zxdg_decoration_manager_v1")(app.Context()).(*zxdgDecoration.ZxdgDecorationManagerV1)
-		//}
+		// TODO: Implement decoration manager binding
+		// decorationManager := zxdgDecoration.NewZxdgDecorationManagerV1(app.Context())
+		// err := app.registry.Bind(e.Name, e.Interface, e.Version, decorationManager)
+		// if err == nil {
+		//     app.decorationManager = decorationManager
+		//     app.haveDecorationManager = true
+		// }
 	}
 }
 
@@ -364,8 +376,8 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 		return
 	}
 
+	// Adjust for client-side decorations if present
 	if app.decoration != nil {
-
 		height -= 2*Border + int32(app.decoration.Titlebar)
 
 		if width <= 2*Border {
@@ -403,14 +415,16 @@ func (app *appState) HandleToplevelConfigure(e xdg.ToplevelConfigureEvent) {
 }
 
 func (app *appState) loadCursors() {
+	const cursorSize = 24 // Cursor size in pixels
+
 	// Load default cursor theme
-	theme, err := wlcursor.LoadTheme(24, app.shm)
+	theme, err := wlcursor.LoadTheme(cursorSize, app.shm)
 	if err != nil {
 		log.Fatalf("unable to load cursor theme: %v", err)
 	}
 	app.cursorTheme = theme
 
-	// Create
+	// Load required cursor shapes
 	for _, name := range []string{
 		wlcursor.BottomLeftCorner,
 		wlcursor.BottomRightCorner,
@@ -469,23 +483,31 @@ func (app *appState) drawFrame() *wl.Buffer {
 
 	data, err := sys.Mmap(int(file.Fd()), 0, int(size), sys.ProtRead|sys.ProtWrite, sys.MapShared)
 	if err != nil {
+		_ = file.Close()
 		log.Fatalf("unable to create mapping: %v", err)
 	}
 
 	pool, err := app.shm.CreatePool(file.Fd(), size)
 	if err != nil {
+		_ = sys.Munmap(data)
+		_ = file.Close()
 		log.Fatalf("unable to create shm pool: %v", err)
 	}
 
 	buf, err := pool.CreateBuffer(0, app.width, app.height, stride, wl.ShmFormatArgb8888)
 	if err != nil {
+		_ = pool.Destroy()
+		_ = sys.Munmap(data)
+		_ = file.Close()
 		log.Fatalf("unable to create wlclient.Buffer from shm pool: %v", err)
 	}
+
+	// Clean up pool and file - we don't need them after buffer creation
 	if err := pool.Destroy(); err != nil {
 		log.Printf("unable to destroy shm pool: %v", err)
 	}
 	pool.Unregister()
-	pool = nil
+
 	if err := file.Close(); err != nil {
 		log.Printf("unable to close file: %v", err)
 	}
@@ -496,8 +518,9 @@ func (app *appState) drawFrame() *wl.Buffer {
 		log.Printf("unable to convert RGBA to BGRA: %v", err)
 	}
 
+	// Unmap memory
 	if err := sys.Munmap(data); err != nil {
-		log.Printf("unable to delete mapping: %v", err)
+		log.Printf("unable to unmap memory: %v", err)
 	}
 	buf.AddReleaseHandler(bufferReleaser{buf: buf})
 
