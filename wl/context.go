@@ -33,11 +33,18 @@ func (ctx *Context) RegisterMapped(proxy Proxy, num uint32) {
 // Register registers a proxy in the map of all Context objects (proxies)
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
+	
 	// avoid colliding with server side mapped proxy id?
+	startId := ctx.currentId
 	for {
 		ctx.currentId += 1
-		if _, ok := ctx.objects[(ctx.currentId)]; !ok {
+		if _, ok := ctx.objects[ctx.currentId]; !ok {
 			break
+		}
+		// Prevent infinite loop if all IDs are exhausted
+		if ctx.currentId == startId {
+			panic("proxy ID space exhausted")
 		}
 	}
 	proxy.SetId(ctx.currentId)
@@ -46,7 +53,6 @@ func (ctx *Context) Register(proxy Proxy) {
 		SetUserData(c, &ctx)
 	}
 	ctx.objects[ctx.currentId] = proxy
-	ctx.mu.Unlock()
 }
 
 // Unregister unregisters a proxy in the map of all Context objects (proxies)
