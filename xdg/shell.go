@@ -20,6 +20,7 @@ type Output = wl.Output
 
 func NewShell(ctx *Context) *WmBase {
 	ret := new(WmBase)
+	ret.privateWmBasePings = make(map[WmBasePingHandler]struct{})
 	ctx.Register(ret)
 	return ret
 }

@@ -119,13 +119,32 @@ type ` + s.Name + ` struct {
 type GoConstructor struct{}
 
 func (c *GoConstructor) Serialize(s *GoStruct) string {
-	return `// New` + s.Name + ` is a constructor for the ` + s.Name + ` object
+	var b strings.Builder
+	
+	// Generate init method if there are handlers
+	if len(s.Handlers) > 0 {
+		b.WriteString(`// init` + s.Name + ` initializes the ` + s.Name + ` object's handler maps
+func (ret *` + s.Name + `) init` + s.Name + `() {
+`)
+		for _, h := range s.Handlers {
+			b.WriteString("\tret.private" + s.Name + h.Name + "s = make(map[" + s.Name + h.Name + "Handler]struct{})\n")
+		}
+		b.WriteString("}\n")
+	}
+	
+	b.WriteString(`// New` + s.Name + ` is a constructor for the ` + s.Name + ` object
 func New` + s.Name + `(ctx *Context) *` + s.Name + ` {
 	ret := new(` + s.Name + `)
-	ctx.Register(ret)
+`)
+	// Initialize handler maps
+	if len(s.Handlers) > 0 {
+		b.WriteString("\tret.init" + s.Name + "()\n")
+	}
+	b.WriteString(`	ctx.Register(ret)
 	return ret
 }
-`
+`)
+	return b.String()
 }
 
 type GoMethod struct {
@@ -264,7 +283,7 @@ func (m *GoEvent) SerializeCase(num int) string {
 		b.WriteString(a.SerializeCall())
 	}
 	b.WriteString(`			p.mu.RLock()
-			for _, h := range p.private` + m.Name + `s {
+			for h := range p.private` + m.Name + `s {
 				h.Handle` + m.Name + `(ev)
 			}
 			p.mu.RUnlock()
@@ -382,7 +401,7 @@ func (a *GoType) SerializeCall(eventDot string) string {
 	case "array":
 		return eventDot + "Array()"
 	case "new_id":
-		return eventDot + "NewId(new(" + a.Interface + "), p.Context()).(*" + a.Interface + ")"
+		return "func() *" + a.Interface + " { ret := new(" + a.Interface + "); ret.init" + a.Interface + "(); return " + eventDot + "NewId(ret, p.Context()).(*" + a.Interface + ") }()"
 	case "error":
 		return ""
 	default:
@@ -417,7 +436,7 @@ type ` + s.Name + h.Name + `Handler interface {
 func (p *` + s.Name + `) Add` + h.Name + `Handler(h ` + s.Name + h.Name + `Handler) {
 	if h != nil {
 		p.mu.Lock()
-		p.private` + s.Name + h.Name + `s = append(p.private` + s.Name + h.Name + `s, h)
+		p.private` + s.Name + h.Name + `s[h] = struct{}{}
 		p.mu.Unlock()
 	}
 }
@@ -427,15 +446,10 @@ func (p *` + s.Name + `) Remove` + h.Name + `Handler(h ` + s.Name + h.Name + `Ha
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	for i, e := range p.private` + s.Name + h.Name + `s {
-		if e == h {
-			p.private` + s.Name + h.Name + `s = append(p.private` + s.Name + h.Name + `s[:i], p.private` + s.Name + h.Name + `s[i+1:]...)
-			break
-		}
-	}
+	delete (p.private` + s.Name + h.Name + `s, h)
 }
 `
 }
 func (h *GoHandler) SerializeAttr(s *GoStruct) string {
-	return "\t" + `private` + s.Name + h.Name + `s []` + s.Name + h.Name + `Handler` + "\n"
+	return "\t" + `private` + s.Name + h.Name + `s map[` + s.Name + h.Name + `Handler]struct{}` + "\n"
 }

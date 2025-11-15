@@ -139,7 +139,7 @@
     </request>
 
     <request name="modifiers_map">
-      <arg name="map_" type="array"/>
+      <arg name="map" type="array"/>
     </request>
 
     <request name="keysym">
