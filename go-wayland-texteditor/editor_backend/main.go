@@ -433,7 +433,9 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(bytes)
+	if _, err := w.Write(bytes); err != nil {
+		log.Printf("failed to write response: %v", err)
+	}
 }
 func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
 
@@ -456,7 +458,9 @@ func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	w.Write(body)
+	if _, err := w.Write(body); err != nil {
+		log.Printf("failed to write response: %v", err)
+	}
 }
 func main() {
 	http.HandleFunc("/content", handlerContent)

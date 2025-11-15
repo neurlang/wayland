@@ -67,7 +67,9 @@ func parseImg(b []byte) (*Image, error) {
 
 	pixBGRA := make([]uint8, imageLength)
 	copy(pixBGRA, pixRGBA)
-	swizzle.BGRA(pixBGRA)
+	if err := swizzle.BGRA(pixBGRA); err != nil {
+		return nil, err
+	}
 
 	return &Image{
 		Size:     size,

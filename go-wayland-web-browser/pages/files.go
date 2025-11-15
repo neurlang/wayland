@@ -38,8 +38,13 @@ func RenderFileBrowser(path string) string {
 		}
 	}
 
-	t, _ := template.New("fileBrowser").Parse(fileBrowserTemplate())
-	t.ExecuteTemplate(renderedTemplate, "fileBrowser", fileBrowser)
+	t, err := template.New("fileBrowser").Parse(fileBrowserTemplate())
+	if err != nil {
+		return ""
+	}
+	if err := t.ExecuteTemplate(renderedTemplate, "fileBrowser", fileBrowser); err != nil {
+		return ""
+	}
 
 	return renderedTemplate.String()
 }

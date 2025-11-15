@@ -496,7 +496,9 @@ func (app *appState) drawFrame() *wl.Buffer {
 
 	// Convert RGBA to BGRA
 	copy(data, app.frame.Pix)
-	swizzle.BGRA(data)
+	if err := swizzle.BGRA(data); err != nil {
+		log.Printf("unable to convert RGBA to BGRA: %v", err)
+	}
 
 	if err := sys.Munmap(data); err != nil {
 		log.Printf("unable to delete mapping: %v", err)
