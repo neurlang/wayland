@@ -1,13 +1,14 @@
 package mustard
 
 import (
+	"image"
+
 	gg "github.com/danfragoso/thdwb/gg"
 	"github.com/goki/freetype/truetype"
 	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
-	"image"
+	window "github.com/neurlang/wayland/windowtrace"
+	wl "github.com/neurlang/wayland/wl"
 )
-import window "github.com/neurlang/wayland/windowtrace"
-import wl "github.com/neurlang/wayland/wl"
 
 func (window *Window) EnableContextMenus() {
 	window.contextMenu = &contextMenu{
@@ -147,7 +148,7 @@ func (cm *contextMenu) Render(s Surface, time uint32) {
 	}
 }
 
-func extractOverlay(width, height float64, postion image.Point) *Overlay {
+func extractOverlay(width, height float64, position image.Point) *Overlay {
 	return &Overlay{
 		ref:    "contextMenu",
 		active: true,
@@ -158,7 +159,7 @@ func extractOverlay(width, height float64, postion image.Point) *Overlay {
 		width:  width,
 		height: height,
 
-		position: postion,
+		position: position,
 	}
 }
 
@@ -202,7 +203,6 @@ func (overlay *Overlay) Axis(widget *window.Widget, input *window.Input, time ui
 func (overlay *Overlay) AxisSource(widget *window.Widget, input *window.Input, source uint32) {
 }
 func (overlay *Overlay) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
-	println("axis stop", axis)
 }
 func (overlay *Overlay) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
 	if axis == 0 {
@@ -251,7 +251,6 @@ func (overlay *Overlay) Enter(widget *window.Widget, input *window.Input, x floa
 
 }
 func (overlay *Overlay) Leave(widget *window.Widget, input *window.Input) {
-	println("leave")
 }
 func (overlay *Overlay) Redraw(widget *window.Widget) {
 }
@@ -261,10 +260,8 @@ func (overlay *Overlay) Resize(widget *window.Widget, width int32, height int32,
 func (overlay *Overlay) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
 }
 func (overlay *Overlay) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
-	println(x, y)
 }
 func (overlay *Overlay) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
-	println(x, y)
 }
 func (overlay *Overlay) TouchFrame(widget *window.Widget, input *window.Input) {
 }
