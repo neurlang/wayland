@@ -16,16 +16,16 @@ func removePrefixAndCamelCase(input, clear string) string {
 	words := strings.Split(input, "_")
 
 	// Capitalize the first letter of each word (including the first word)
+	// Filter out empty strings from consecutive underscores
+	var result strings.Builder
 	for i := 0; i < len(words); i++ {
 		if len(words[i]) > 0 {
-			words[i] = strings.ToUpper(words[i][:1]) + words[i][1:]
+			result.WriteString(strings.ToUpper(words[i][:1]))
+			result.WriteString(words[i][1:])
 		}
 	}
 
-	// Join the words to form the camel case string
-	result := strings.Join(words, "")
-
-	return result
+	return result.String()
 }
 
 func before_wl(input string) string {
@@ -37,9 +37,17 @@ func before_wl(input string) string {
 }
 
 func sanitizeSingleLineComment(input string) string {
-	input = strings.Replace(input, "\n", "", -1)
-	input = strings.Replace(input, "\r", "", -1)
-	input = strings.Replace(input, "\t", " ", -1)
-	input = strings.Replace(input, "  ", " ", -1)
+	replacer := strings.NewReplacer(
+		"\n", "",
+		"\r", "",
+		"\t", " ",
+	)
+	input = replacer.Replace(input)
+	
+	// Normalize multiple spaces to single space
+	for strings.Contains(input, "  ") {
+		input = strings.Replace(input, "  ", " ", -1)
+	}
+	
 	return input
 }

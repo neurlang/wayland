@@ -125,7 +125,7 @@ const SurfaceErrorInvalidSize = 5
 // SurfaceErrorDefunctRoleObject means Surface was destroyed before its role object
 const SurfaceErrorDefunctRoleObject = 6
 
-// ToplevelErrorInvalidResizeEdge means provided value is    not a valid variant of the resize_edge enum
+// ToplevelErrorInvalidResizeEdge means provided value is not a valid variant of the resize_edge enum
 const ToplevelErrorInvalidResizeEdge = 0
 
 // ToplevelErrorInvalidParent means invalid parent toplevel

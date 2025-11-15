@@ -269,16 +269,16 @@ const ShmFormatXvyu1216161616 = 0x36335658
 // ShmFormatXvyu16161616 means [63:0] X:Cr:Y:Cb 16:16:16:16 little endian
 const ShmFormatXvyu16161616 = 0x38345658
 
-// ShmFormatY0l0 means [63:0]  A3:A2:Y3:0:Cr0:0:Y2:0:A1:A0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian
+// ShmFormatY0l0 means [63:0] A3:A2:Y3:0:Cr0:0:Y2:0:A1:A0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian
 const ShmFormatY0l0 = 0x304c3059
 
-// ShmFormatX0l0 means [63:0]  X3:X2:Y3:0:Cr0:0:Y2:0:X1:X0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian
+// ShmFormatX0l0 means [63:0] X3:X2:Y3:0:Cr0:0:Y2:0:X1:X0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian
 const ShmFormatX0l0 = 0x304c3058
 
-// ShmFormatY0l2 means [63:0]  A3:A2:Y3:Cr0:Y2:A1:A0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian
+// ShmFormatY0l2 means [63:0] A3:A2:Y3:Cr0:Y2:A1:A0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian
 const ShmFormatY0l2 = 0x324c3059
 
-// ShmFormatX0l2 means [63:0]  X3:X2:Y3:Cr0:Y2:X1:X0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian
+// ShmFormatX0l2 means [63:0] X3:X2:Y3:Cr0:Y2:X1:X0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian
 const ShmFormatX0l2 = 0x324c3058
 
 // ShmFormatYuv4208bit
