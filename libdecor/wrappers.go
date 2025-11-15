@@ -41,6 +41,9 @@ func LibdecorFrameUnref(f **LibdecorFrame) {
 
 // SetTitle sets the title for the libdecor frame.
 func (f *LibdecorFrame) SetTitle(title string) {
+	if f == nil || f.ptr == nil {
+		return
+	}
 	if len(title) == 0 || title[len(title)-1] != 0 {
 		title += "\x00"
 	}
@@ -71,11 +74,17 @@ func libdecorFrameUnref(frame *LibdecorFrame) {
 
 // Map maps the libdecor frame.
 func (f *LibdecorFrame) Map() {
+	if f == nil || f.ptr == nil {
+		return
+	}
 	libdecorFrameMap(uintptr(f.ptr))
 }
 
 // SetAppID sets the application ID for the libdecor frame.
 func (f *LibdecorFrame) SetAppID(appID string) {
+	if f == nil || f.ptr == nil {
+		return
+	}
 	if len(appID) == 0 || appID[len(appID)-1] != 0 {
 		appID += "\x00"
 	}
@@ -101,8 +110,8 @@ func LibdecorStateFree(s **LibdecorState) {
 
 // Commit a libdecor frame.
 func (f *LibdecorFrame) Commit(state *LibdecorState, configuration uintptr) {
-	if f != nil && f.ptr != nil {
-		libdecorFrameCommit(uintptr(f.ptr), uintptr(unsafe.Pointer(state.ptr)), configuration)
+	if f != nil && f.ptr != nil && state != nil && state.ptr != nil {
+		libdecorFrameCommit(uintptr(f.ptr), uintptr(state.ptr), configuration)
 	}
 }
 
