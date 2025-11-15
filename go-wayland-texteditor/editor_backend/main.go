@@ -147,7 +147,6 @@ func handlerPaste(tab string, p *PasteRequest) *struct{} {
 		if len(subarray) == 0 && i+1 == len(temp) {
 			break
 		}
-		array := []rune(string(subarray))
 		if p.Y >= len(file) {
 			file = append(file, []string{})
 
@@ -164,7 +163,7 @@ func handlerPaste(tab string, p *PasteRequest) *struct{} {
 
 		var isCombinAble = false
 
-		for _, c := range array {
+		for _, c := range []rune(string(subarray)) {
 			var char = string(c)
 			if char == "\t" {
 				for len(row)&(tabSize-1) != (tabSize - 1) {

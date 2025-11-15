@@ -10,7 +10,6 @@ import (
 
 var xmlTag = regexp.MustCompile(`(\<.+?\>)|(\<//?\w+\>\\?)`)
 var clTag = regexp.MustCompile(`\<\/\w+\>`)
-var selfClosingTag = regexp.MustCompile(`\<.+\/\>`)
 var tagContent = regexp.MustCompile(`(.+?)\<\/`)
 var tagName = regexp.MustCompile(`(\<\w+)`)
 var attr = regexp.MustCompile(`\w+=".+?"`)

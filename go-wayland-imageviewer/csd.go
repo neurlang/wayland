@@ -29,9 +29,7 @@ type DecoratedRgbaWindow interface {
 }
 
 const Border = 8
-const bm1 = Border - 1
 const hb = Border / 2
-const db = Border * 2
 
 var decorationFonts = []string{
 	"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf", // fedora
