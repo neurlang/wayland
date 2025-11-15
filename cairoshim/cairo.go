@@ -51,8 +51,6 @@ type simulatedSurface struct {
 	width  int
 	height int
 	stride int
-
-	destructor func()
 }
 
 type simulatedSurfaceRef struct {
@@ -62,7 +60,6 @@ type simulatedSurfaceRef struct {
 // Destroy destroys a simulatedSurfaceRef
 func (s simulatedSurfaceRef) Destroy() {
 	s.surf.Destroy()
-	s.surf = nil
 }
 
 // References a simulatedSurfaceRef

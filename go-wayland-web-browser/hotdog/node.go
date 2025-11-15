@@ -123,7 +123,7 @@ func (node *NodeDOM) CalcPointIntersection(x, y float64) *NodeDOM {
 	return intersectedNode
 }
 
-func (node NodeDOM) RequestRepaint() {
+func (node *NodeDOM) RequestRepaint() {
 	node.NeedsRepaint = true
 
 	for _, childNode := range node.Children {
@@ -131,7 +131,7 @@ func (node NodeDOM) RequestRepaint() {
 	}
 }
 
-func (node NodeDOM) RequestReflow() {
+func (node *NodeDOM) RequestReflow() {
 	node.NeedsReflow = true
 
 	for _, childNode := range node.Children {

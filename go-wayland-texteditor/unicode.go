@@ -271,9 +271,9 @@ var spacingmodDescriptor = "" +
 var UnicodeFont Font
 
 func init() {
-	(&UnicodeFont).Load("ascii.png", asciiDescriptor, "")
-	(&UnicodeFont).Load("extendeda.png", extendedaDescriptor, "")
-	(&UnicodeFont).Load("extendedb.png", extendedbDescriptor, "")
+	_ = (&UnicodeFont).Load("ascii.png", asciiDescriptor, "")
+	_ = (&UnicodeFont).Load("extendeda.png", extendedaDescriptor, "")
+	_ = (&UnicodeFont).Load("extendedb.png", extendedbDescriptor, "")
 	(&UnicodeFont).Load("supplement.png", supplementDescriptor, "")
 	(&UnicodeFont).Load("spacingmod.png", spacingmodDescriptor, "")
 	(&UnicodeFont).Load("ipa.png", ipaDescriptor, "")
@@ -283,7 +283,7 @@ func init() {
 	(&UnicodeFont).Load("hangul0.png", hangul0Descriptor, "")
 	(&UnicodeFont).Load("hangul1.png", hangul0Descriptor, "1")
 	(&UnicodeFont).Load("hangul9.png", hangul9Descriptor, "")
-	(&UnicodeFont).Multiply(hangul0Descriptor, "x", "1", hangul9Descriptor)
+	_ = (&UnicodeFont).Multiply(hangul0Descriptor, "x", "1", hangul9Descriptor)
 	Each(hangul0Descriptor, func(v string) error {
 		const buf = "	\u11a8\u11a9\u11aa\u11ab\u11ac\u11ad\u11ae\u11af\u11b0\u11b1\u11b2" +
 			"\u11b3\u11b4\u11b5\u11b6\u11b7\u11b8\u11b9\u11ba\u11bb\u11bc" +
@@ -294,7 +294,7 @@ func init() {
 			var bottom = string([]rune(buf)[i])
 
 			//println(v, "|",  bottom + "x" + v)
-			(&UnicodeFont).Alias(target, bottom+"x"+v)
+			_ = (&UnicodeFont).Alias(target, bottom+"x"+v)
 		}
 
 		return nil
@@ -303,7 +303,7 @@ func init() {
 	if err != nil {
 		println(err.Error())
 	}
-	(&UnicodeFont).Multiply(combiningDescriptor, "", "", cyrillicDescriptor)
+	_ = (&UnicodeFont).Multiply(combiningDescriptor, "", "", cyrillicDescriptor)
 	(&UnicodeFont).Load("armenian.png", armenianDescriptor, "")
 
 	(&UnicodeFont).Load("chinese1.jpg", chinese1Descriptor, "")
@@ -311,9 +311,9 @@ func init() {
 	(&UnicodeFont).Load("devanagari1.png", devanagari1Descriptor, "")
 	(&UnicodeFont).Load("devanagari2.png", devanagari2Descriptor, "")
 	(&UnicodeFont).Load("devanagari3.png", devanagari3Descriptor, "")
-	(&UnicodeFont).Combine("ः", devanagari1Descriptor, "")
-	(&UnicodeFont).Combine("ं", devanagari1Descriptor, "")
-	(&UnicodeFont).Combine("ा", devanagari1Descriptor, "")
+	_ = (&UnicodeFont).Combine("ः", devanagari1Descriptor, "")
+	_ = (&UnicodeFont).Combine("ं", devanagari1Descriptor, "")
+	_ = (&UnicodeFont).Combine("ा", devanagari1Descriptor, "")
 	(&UnicodeFont).Combine("ऻ", devanagari1Descriptor, "")
 	(&UnicodeFont).Combine("ि", devanagari1Descriptor, "")
 	(&UnicodeFont).Combine("ी", devanagari1Descriptor, "")

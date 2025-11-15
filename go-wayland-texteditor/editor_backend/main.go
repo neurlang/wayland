@@ -163,7 +163,7 @@ func handlerPaste(tab string, p *PasteRequest) *struct{} {
 
 		var isCombinAble = false
 
-		for _, c := range []rune(string(subarray)) {
+		for _, c := range []rune(string(subarray)) { //nolint:gosimple // subarray is []byte, need runes for isCombiner()
 			var char = string(c)
 			if char == "\t" {
 				for len(row)&(tabSize-1) != (tabSize - 1) {

@@ -152,14 +152,14 @@ func Each(descriptor string, function func(string) error) error {
 }
 
 func (f *Font) Multiply(descriptor1, suffix, separator, descriptor2 string) error {
-	Each(descriptor1, func(v string) error {
+	err := Each(descriptor1, func(v string) error {
 		err := f.Combine(suffix+v, descriptor2, v+separator)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-	return nil
+	return err
 }
 
 func (f *Font) Combine(combiner, descriptor, textureName string) error {

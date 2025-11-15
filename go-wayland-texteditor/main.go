@@ -810,7 +810,7 @@ func (textarea *textarea) HandleDataSourceSend(ev wl.DataSourceSendEvent) {
 
 	c.Textarea = textarea
 
-	c.Receive(ev.Fd, ev.MimeType)
+	_ = c.Receive(ev.Fd, ev.MimeType)
 
 }
 func (textarea *textarea) HandleDataSourceAction(_ wl.DataSourceActionEvent) {
@@ -836,7 +836,7 @@ func (textarea *textarea) HandleDataSourceDndFinished(_ wl.DataSourceDndFinished
 func (textarea *textarea) Fullscreen(w *window.Window, _ window.WidgetHandler) {
 
 	textarea.fullscreen = !textarea.fullscreen
-	w.SetFullscreen(textarea.fullscreen)
+	_ = w.SetFullscreen(textarea.fullscreen)
 
 }
 

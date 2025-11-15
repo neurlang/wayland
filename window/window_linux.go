@@ -68,46 +68,46 @@ type global struct {
 }
 
 type Display struct {
-	Display            *wl.Display
-	registry           *wl.Registry
-	compositor         *wl.Compositor
-	subcompositor      *wl.Subcompositor
-	shm                *wl.Shm
-	dataDeviceManager  *wl.DataDeviceManager
-	dataDeviceVersion  int
-	textCursorPosition *struct{}
-	xdgShell           *zxdg.WmBase
-	serial             uint32
+	Display               *wl.Display
+	registry              *wl.Registry
+	compositor            *wl.Compositor
+	subcompositor         *wl.Subcompositor         //nolint:unused // Reserved for future use
+	shm                   *wl.Shm
+	dataDeviceManager     *wl.DataDeviceManager
+	dataDeviceVersion     int                       //nolint:unused // Reserved for future use
+	textCursorPosition    *struct{}                 //nolint:unused // Reserved for future use
+	xdgShell              *zxdg.WmBase
+	serial                uint32
 
 	//display_fd        int32
-	displayFdEvents uint32
+	displayFdEvents       uint32                    //nolint:unused // Reserved for future use
 
 	//display_task task
 	//	pad4		uint64
 	//	pad5		uint64
 	//	pad6		uint64
 
-	deferredList [2]uintptr
+	deferredList          [2]uintptr                //nolint:unused // Reserved for future use
 	//	pad7		uint64
 	//	pad8		uint64
 
-	running bool
+	running               bool
 
-	globalList []*global
+	globalList            []*global
 	//	pad9		uint64
 	//	pada		uint64
-	windowList [2]*Window
+	windowList            [2]*Window                //nolint:unused // Reserved for future use
 	//	padb		uint64
 	//	padc		uint64
-	inputList []*Input
+	inputList             []*Input
 	//	padd		uint64
 	//	pade		uint64
-	outputList [2]*output
+	outputList            [2]*output                //nolint:unused // Reserved for future use
 	//	padf		uint64
 	//	padg		uint64
 
-	theme       *theme
-	cursorTheme *wlcursor.Theme
+	theme                 *theme
+	cursorTheme           *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor
 
 	xkbContext *xkb.Context
@@ -151,8 +151,8 @@ type surface struct {
 
 	surface_            *wl.Surface
 	subsurface          *wl.Subsurface
-	synchronized        int32
-	synchronizedDefault int32
+	synchronized        int32 //nolint:unused // Reserved for future use
+	synchronizedDefault int32 //nolint:unused // Reserved for future use
 	toysurface          *toysurface
 	Widget              *Widget
 	redrawNeeded        int32
@@ -219,7 +219,7 @@ type Popup struct {
 	Display  *Display
 	rect     Rectangle
 	surf     *wl.Surface
-	callback *wl.Callback
+	callback *wl.Callback //nolint:unused // Reserved for future use
 
 	popuper Popuper
 
@@ -227,9 +227,9 @@ type Popup struct {
 }
 
 func (w *Popup) Destroy() {
-	w.Popup.Destroy()
-	w.xdgsurf.Destroy()
-	w.surf.Destroy()
+	_ = w.Popup.Destroy()
+	_ = w.xdgsurf.Destroy()
+	_ = w.surf.Destroy()
 
 	for _, input := range w.Display.inputList {
 		input.grab = nil
@@ -307,7 +307,7 @@ func (w *Popup) SurfaceConfigure(serial uint32) {
 	//xdgsurf := (*xdg.Surface)(unsafe.Pointer(wind.xdgSurface))
 
 	println("surface configure", serial)
-	w.xdgsurf.AckConfigure(serial)
+	_ = w.xdgsurf.AckConfigure(serial)
 
 	w.mainSurface = &surface{}
 
@@ -374,9 +374,9 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 		panic(err.Error())
 	}
 
-	positioner.SetOffset(int32(x), int32(y))
-	positioner.SetSize(int32(width), int32(height))
-	positioner.SetAnchor(zxdg.PositionerAnchorTopLeft)
+	_ = positioner.SetOffset(int32(x), int32(y))
+	_ = positioner.SetSize(int32(width), int32(height))
+	_ = positioner.SetAnchor(zxdg.PositionerAnchorTopLeft)
 
 	// Set up the xdg_surface
 	xdgSurface, err := shell.GetSurface(surface.surface_)
@@ -396,14 +396,14 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 
 	}
 
-	positioner.Destroy()
+	_ = positioner.Destroy()
 
 	popup.AddConfigureHandler(p)
 	popup.AddPopupDoneHandler(p)
 
-	popup.Grab(seat, clickSerial)
+	_ = popup.Grab(seat, clickSerial)
 
-	surface.surface_.Commit()
+	_ = surface.surface_.Commit()
 
 	p.Popup = popup
 	p.Display = disp
@@ -416,7 +416,7 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 
 type Window struct {
 	Display          *Display
-	windowOutputList [2]uintptr
+	windowOutputList [2]uintptr //nolint:unused // Reserved for future use
 
 	title string
 
@@ -427,7 +427,7 @@ type Window struct {
 	pendingAllocation Rectangle
 	lastGeometry      Rectangle
 
-	x, y int32
+	x, y int32 //nolint:unused // Reserved for future use
 
 	redrawInhibited     int32
 	redrawNeeded        int32
@@ -454,17 +454,17 @@ type Window struct {
 	xdgToplevel *zxdg.Toplevel
 	xdgPopup    *zxdg.Popup
 
-	parent     *Window
-	lastParent *Window
+	parent     *Window     //nolint:unused // Reserved for future use
+	lastParent *Window     //nolint:unused // Reserved for future use
 
 	/* struct surface::link, contains also mainSurface */
-	subsurfaceList [2]*surface
+	subsurfaceList [2]*surface //nolint:unused // Reserved for future use
 
-	pointerLocked bool
+	pointerLocked bool //nolint:unused // Reserved for future use
 
-	confined bool
+	confined bool //nolint:unused // Reserved for future use
 
-	link [2]*Window
+	link [2]*Window //nolint:unused // Reserved for future use
 
 	Userdata WidgetHandler
 
@@ -480,7 +480,7 @@ type Window struct {
 	closeHandler      CloseHandler
 	dataHandler       DataHandler
 
-	fullscreenMethod uint32
+	fullscreenMethod uint32 //nolint:unused // Reserved for future use
 
 	resizor ResizeHandler
 }
@@ -674,17 +674,17 @@ type Input struct {
 	pointer            *wl.Pointer
 	keyboard           *wl.Keyboard
 	touch              *wl.Touch
-	touchPointList     [2]uintptr
+	touchPointList     [2]uintptr //nolint:unused // Reserved for future use
 	pointerFocus       *Window
 	keyboardFocus      *Window
 	touchFocus         int32
 	currentCursor      int32
 	cursorAnimStart    uint32
 	cursorFrameCb      *wl.Callback
-	cursorTimerStart   uint32
+	cursorTimerStart   uint32      //nolint:unused // Reserved for future use
 	cursorAnimCurrent  uint32
-	cursorDelayFd      int32
-	cursorTimerRunning bool
+	cursorDelayFd      int32       //nolint:unused // Reserved for future use
+	cursorTimerRunning bool        //nolint:unused // Reserved for future use
 	//cursor_task          task
 	pointerSurface     *wl.Surface
 	modifiers          ModType
@@ -698,12 +698,12 @@ type Input struct {
 	grabButton  uint32
 
 	dataDevice      *wl.DataDevice
-	touchGrab       uint32
-	touchGrabId     int32
-	dragX           float32
-	dragY           float32
-	dragFocus       *Window
-	dragEnterSerial uint32
+	touchGrab       uint32  //nolint:unused // Reserved for future use
+	touchGrabId     int32   //nolint:unused // Reserved for future use
+	dragX           float32 //nolint:unused // Reserved for future use
+	dragY           float32 //nolint:unused // Reserved for future use
+	dragFocus       *Window //nolint:unused // Reserved for future use
+	dragEnterSerial uint32  //nolint:unused // Reserved for future use
 
 	xkb struct {
 		keymap       *xkb.Keymap
@@ -716,15 +716,15 @@ type Input struct {
 		shiftMask   uint32
 	}
 
-	repeatRateSec   int32
-	repeatRateNsec  int32
-	repeatDelaySec  int32
-	repeatDelayNsec int32
+	repeatRateSec   int32 //nolint:unused // Reserved for future use
+	repeatRateNsec  int32 //nolint:unused // Reserved for future use
+	repeatDelaySec  int32 //nolint:unused // Reserved for future use
+	repeatDelayNsec int32 //nolint:unused // Reserved for future use
 
 	//repeat_task     task
-	repeatSym      uint32
+	repeatSym      uint32 //nolint:unused // Reserved for future use
 	repeatKey      uint32
-	repeatTime     uint32
+	repeatTime     uint32 //nolint:unused // Reserved for future use
 	seatVersion    int32
 	selectionOffer *dataOffer
 	dragOffer      *dataOffer
@@ -812,7 +812,7 @@ func (input *Input) HandleDataDeviceLeave(ev wl.DataDeviceLeaveEvent) {
 	println("HandleDataDeviceLeave")
 
 	if input.dragOffer != nil {
-		input.dragOffer.offer.Destroy()
+		_ = input.dragOffer.offer.Destroy()
 		input.dragOffer.offer.Unregister()
 	}
 
@@ -836,7 +836,7 @@ func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
 	if input.selectionOffer != nil {
 		if input.selectionOffer.offer != nil {
 			println("deleting")
-			input.selectionOffer.offer.Destroy()
+			_ = input.selectionOffer.offer.Destroy()
 			input.selectionOffer.offer.Unregister()
 			input.selectionOffer.offer = nil
 		}
@@ -862,7 +862,7 @@ func (input *Input) HandleDataDeviceSelection(ev wl.DataDeviceSelectionEvent) {
 
 func (input *Input) DeviceSetSelection(src *DataSource, serial uint32) {
 	if input.dataDevice != nil {
-		input.dataDevice.SetSelection(src.src, serial)
+		_ = input.dataDevice.SetSelection(src.src, serial)
 	}
 }
 
@@ -881,7 +881,7 @@ func (input *Input) Destroy() {
 
 	if input.dataDevice != nil {
 		if input.Display.dataDeviceManagerVersion >= 2 {
-			input.dataDevice.Release()
+			_ = input.dataDevice.Release()
 		} else {
 			wlclient.DataDeviceDestroy(input.dataDevice)
 		}
@@ -890,13 +890,13 @@ func (input *Input) Destroy() {
 
 	if input.seatVersion >= wl.PointerReleaseSinceVersion {
 		if input.touch != nil {
-			input.touch.Release()
+			_ = input.touch.Release()
 		}
 		if input.pointer != nil {
-			input.pointer.Release()
+			_ = input.pointer.Release()
 		}
 		if input.keyboard != nil {
-			input.keyboard.Release()
+			_ = input.keyboard.Release()
 		}
 	} else {
 		if input.touch != nil {
@@ -912,7 +912,7 @@ func (input *Input) Destroy() {
 	input.touch = nil
 	input.pointer = nil
 	input.keyboard = nil
-	input.pointerSurface.Destroy()
+	_ = input.pointerSurface.Destroy()
 
 	wlclient.SeatDestroy(input.seat)
 
@@ -949,9 +949,9 @@ type output struct {
 	Display        *Display
 	output         *wl.Output
 	serverOutputId uint32
-	allocation     Rectangle
-	link           [2]*output
-	transform      int32
+	allocation     Rectangle //nolint:unused // Reserved for future use
+	link           [2]*output //nolint:unused // Reserved for future use
+	transform      int32 //nolint:unused // Reserved for future use
 	scale          int32
 	maker          string
 	model          string
@@ -1281,7 +1281,7 @@ func (input *Input) seatCapabilitiesTouch(seat *wl.Seat, caps uint32) {
 		wlclient.TouchAddListener(input.touch, input)
 	} else if 0 == (caps&wl.SeatCapabilityTouch) && input.touch != nil {
 		if input.seatVersion >= wl.TouchReleaseSinceVersion {
-			input.touch.Release()
+			_ = input.touch.Release()
 		} else {
 			wlclient.TouchDestroy(input.touch)
 		}
@@ -1370,7 +1370,7 @@ func (input *Input) keyboardHandleKeyInternal(keyboard *wl.Keyboard,
 	time uint32, key uint32) {
 	if sym == xkb.KeyF5 && input.modifiers == ModAltMask {
 		if state == wl.KeyboardKeyStatePressed {
-			windowSetMaximized(window, !window.maximized)
+			_ = windowSetMaximized(window, !window.maximized)
 		}
 	} else if sym == xkb.KeyF11 &&
 		window.fullscreenHandler != nil &&
@@ -1414,13 +1414,11 @@ func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 
 	input.keyboardHandleKeyInternal(keyboard, window, sym, state, time, key)
 
-	if state == wl.KeyboardKeyStateReleased &&
-		key == input.repeatKey {
-		// FIXME: Disarm repeat timer
-	} else if state == wl.KeyboardKeyStatePressed &&
-		input.xkb.keymap.KeyRepeats(code) {
-		// FIXME: Arm repeat timer
-	}
+	// FIXME: Disarm repeat timer when state == wl.KeyboardKeyStateReleased && key == input.repeatKey
+	// FIXME: Arm repeat timer when state == wl.KeyboardKeyStatePressed && input.xkb.keymap.KeyRepeats(code)
+	_ = state
+	_ = key
+	_ = code
 }
 
 func (input *Input) HandleKeyboardKey(e wl.KeyboardKeyEvent) {
@@ -1465,7 +1463,7 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	keymap = input.Display.xkbContext.KeymapNewFromString(mapStr,
 		xkb.KeymapFormatTextV1,
 		0)
-	sys.Munmap(mapStr)
+	_ = sys.Munmap(mapStr)
 	sys.Close(int(fd))
 
 	if keymap == nil {
@@ -1618,7 +1616,7 @@ type shmSurfaceData struct {
 
 //line 734
 func shmSurfaceDataDestroy(data *shmSurfaceData) {
-	data.buffer.Destroy()
+	_ = data.buffer.Destroy()
 	if data.pool != nil {
 		shmPoolDestroy(data.pool)
 	}
@@ -1693,7 +1691,7 @@ func shmPoolDestroy(pool *shmPool) {
 		println(err)
 	}
 	if pool.pool != nil {
-		pool.pool.Destroy()
+		_ = pool.pool.Destroy()
 	}
 	pool.data = nil
 	pool.pool = nil
@@ -1892,7 +1890,7 @@ func (s *shmSurface) HandleBufferRelease(ev wl.BufferReleaseEvent) {
 }
 
 func (s *shmSurface) BufferRelease(buf *wl.Buffer) {
-	shmSurfaceBufferRelease(s, buf)
+	_ = shmSurfaceBufferRelease(s, buf)
 
 }
 
@@ -2095,7 +2093,7 @@ func createCursors(Display *Display) (err error) {
 
 //line 1386
 func destroyCursors(Display *Display) {
-	Display.cursorTheme.Destroy()
+	_ = Display.cursorTheme.Destroy()
 	Display.cursorTheme = nil
 }
 
@@ -2107,13 +2105,13 @@ func surfaceFlush(surface *surface) {
 
 	if surface.opaqueRegion != nil {
 		_ = surface.surface_.SetOpaqueRegion(surface.opaqueRegion)
-		surface.opaqueRegion.Destroy()
+		_ = surface.opaqueRegion.Destroy()
 		surface.opaqueRegion = nil
 	}
 
 	if surface.inputRegion != nil {
 		_ = surface.surface_.SetInputRegion(surface.inputRegion)
-		surface.inputRegion.Destroy()
+		_ = surface.inputRegion.Destroy()
 		surface.inputRegion = nil
 	}
 
@@ -2185,7 +2183,7 @@ func surfaceDestroy(surface *surface) {
 		wlclient.SubsurfaceDestroy(surface.subsurface)
 	}
 
-	surface.surface_.Destroy()
+	_ = surface.surface_.Destroy()
 
 	if surface.toysurface != nil {
 		(*surface.toysurface).destroy()
@@ -2197,13 +2195,13 @@ func surfaceDestroy(surface *surface) {
 func (Window *Window) Destroy() {
 
 	if Window.xdgToplevel != nil {
-		Window.xdgToplevel.Destroy()
+		_ = Window.xdgToplevel.Destroy()
 	}
 	if Window.xdgPopup != nil {
-		Window.xdgPopup.Destroy()
+		_ = Window.xdgPopup.Destroy()
 	}
 	if Window.xdgSurface != nil {
-		Window.xdgSurface.Destroy()
+		_ = Window.xdgSurface.Destroy()
 	}
 
 	surfaceDestroy(Window.mainSurface)
@@ -2300,7 +2298,7 @@ func (d *Display) HandleWmBasePing(ev zxdg.WmBasePingEvent) {
 }
 
 func (d *Display) ShellPing(shell *zxdg.WmBase, serial uint32) {
-	shell.Pong(serial)
+	_ = shell.Pong(serial)
 }
 
 func minU32(a, b uint32) uint32 {
@@ -2584,7 +2582,7 @@ func (window *Window) SetFullscreen(fullscreen bool) error {
 		return window.xdgToplevel.SetFullscreen(nil)
 	} else {
 		window.typ = TYPE_TOPLEVEL
-		window.xdgToplevel.UnsetFullscreen()
+		_ = window.xdgToplevel.UnsetFullscreen()
 		window.ScheduleResize(window.savedAllocation.Width,
 			window.savedAllocation.Height)
 	}
@@ -2620,7 +2618,7 @@ func inputSetPointerImageIndex(Input *Input, index int) {
 	_ = Input.pointerSurface.Damage(0, 0,
 		int32(image.GetWidth()), int32(image.GetHeight()))
 	_ = Input.pointerSurface.Commit()
-	wlcursor.PointerSetCursor(Input.pointer, Input.pointerEnterSerial, Input.pointerSurface,
+	_ = wlcursor.PointerSetCursor(Input.pointer, Input.pointerEnterSerial, Input.pointerSurface,
 		int32(image.GetHotspotX()), int32(image.GetHotspotY()))
 
 }
@@ -2628,7 +2626,7 @@ func inputSetPointerImageIndex(Input *Input, index int) {
 //line 3789
 func inputSetPointerSpecial(Input *Input) bool {
 	if Input.currentCursor == CursorBlank {
-		wlcursor.PointerSetCursor(Input.pointer,
+		_ = wlcursor.PointerSetCursor(Input.pointer,
 			Input.pointerEnterSerial,
 			nil, 0, 0)
 		return true
@@ -2779,7 +2777,7 @@ func (of *dataOffer) ReceiveData(mimeType string, function io.WriteCloser) error
 		return err
 	}
 
-	of.offer.Receive(mimeType, f2.Fd())
+	_ = of.offer.Receive(mimeType, f2.Fd())
 	f2.Close()
 
 	go func(f *os.File) {
@@ -3080,7 +3078,7 @@ func (Window *Window) ScheduleRedraw() {
 func (Window *Window) ToggleMaximized() error {
 	// extra feature: un-fullscreen using toggle maximized button if fullscreen
 	if (Window.typ == TYPE_FULLSCREEN) && Window.fullscreen {
-		Window.SetFullscreen(false)
+		_ = Window.SetFullscreen(false)
 		return nil
 	}
 	return windowSetMaximized(Window, !Window.maximized)
@@ -3134,7 +3132,6 @@ func surfaceCreate(Window *Window) *surface {
 	surf, err := Display.compositor.CreateSurface()
 	if err != nil {
 		panic(err.Error())
-		return nil
 	}
 	surface.surface_ = surf
 
@@ -3386,7 +3383,7 @@ func (d *Display) Destroy() {
 	destroyCursors(d)
 
 	if d.xdgShell != nil {
-		d.xdgShell.Destroy()
+		_ = d.xdgShell.Destroy()
 	}
 
 	if d.shm != nil {

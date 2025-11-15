@@ -27,23 +27,20 @@ func KeyRepeatSubscribe(function KeyReloader, key string, notUnicode, t uint32) 
 func init() {
 	go func() {
 		KeyRepeat := time.NewTicker(75 * time.Millisecond)
-		for {
-			select {
-			case tim := <-KeyRepeat.C:
-				var t = uint64(tim.UnixNano() / 1000000)
-				RepeatedKeyMutex.Lock()
-				function := RepeatedFunc
-				key := RepeatedKey
-				notUnicode := RepeatedKeyNotUnicode
-				minTime := RepeatedKeyTime
-				absTime := RepeatedKeyTimeAbs
-				RepeatedKeyMutex.Unlock()
+		for tim := range KeyRepeat.C {
+			var t = uint64(tim.UnixNano() / 1000000)
+			RepeatedKeyMutex.Lock()
+			function := RepeatedFunc
+			key := RepeatedKey
+			notUnicode := RepeatedKeyNotUnicode
+			minTime := RepeatedKeyTime
+			absTime := RepeatedKeyTimeAbs
+			RepeatedKeyMutex.Unlock()
 
-				if function != nil || key != "" || notUnicode != 0 {
+			if function != nil || key != "" || notUnicode != 0 {
 
-					if t-absTime > 300 {
-						go function.KeyReload(key, notUnicode, uint32(t-minTime))
-					}
+				if t-absTime > 300 {
+					go function.KeyReload(key, notUnicode, uint32(t-minTime))
 				}
 			}
 		}

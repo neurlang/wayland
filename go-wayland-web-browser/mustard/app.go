@@ -35,10 +35,4 @@ func (app *App) DestroyWindow(window *Window) {
 	window.window = nil
 }
 
-func setWidgetWindow(widget Widget, window *Window) {
-	widget.SetWindow(window)
 
-	for _, childWidget := range widget.Widgets() {
-		setWidgetWindow(childWidget, window)
-	}
-}

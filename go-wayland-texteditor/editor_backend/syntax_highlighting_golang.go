@@ -147,13 +147,11 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				if sglquote && !escape {
 					out = append(out, [5]int{x + 1, y, 255, 255, 255})
 					sglquote = false
-					escape = false
 					length = 0
 					loaded = 0
 				} else {
 					out = append(out, [5]int{x, y, 0, 255, 0})
 					sglquote = true
-					escape = false
 				}
 			}
 		case "\"":
@@ -161,13 +159,11 @@ func reprocess_syntax_highlighting_row_golang(row []string, y int, comments, str
 				if dblquote && !escape {
 					out = append(out, [5]int{x + 1, y, 255, 255, 255})
 					dblquote = false
-					escape = false
 					length = 0
 					loaded = 0
 				} else {
 					out = append(out, [5]int{x, y, 0, 255, 0})
 					dblquote = true
-					escape = false
 				}
 			}
 		case "`":

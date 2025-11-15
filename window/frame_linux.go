@@ -40,11 +40,9 @@ func (frame *windowFrame) Resize(Widget *Widget, width int32, height int32, pwid
 		interior.Y = 0
 		interior.Width = width
 		interior.Height = height
-	} else {
-		//frame_resize(frame.frame, width, height);
-		//frame_interior(frame.frame, &interior.x, &interior.y,
-		//	       &interior.width, &interior.height);
 	}
+	// TODO: frame_resize(frame.frame, width, height);
+	// TODO: frame_interior(frame.frame, &interior.x, &interior.y, &interior.width, &interior.height);
 	child.SetAllocation(interior.X, interior.Y,
 		interior.Width, interior.Height)
 
@@ -54,13 +52,9 @@ func (frame *windowFrame) Resize(Widget *Widget, width int32, height int32, pwid
 		if Widget.Window.fullscreen {
 			width = child.allocation.Width
 			height = child.allocation.Height
-		} else {
-			//frameResizeInside(frame.frame,
-			//		    child.allocation.width,
-			//		    child.allocation.height);
-			//width = frame_width(frame.frame);
-			//height = frame_height(frame.frame);
 		}
+		// TODO: frameResizeInside(frame.frame, child.allocation.width, child.allocation.height);
+		// TODO: width = frame_width(frame.frame); height = frame_height(frame.frame);
 	}
 	Widget.SetAllocation(0, 0, width, height)
 
@@ -138,20 +132,19 @@ func (*windowFrame) AxisDiscrete(Widget *Widget, Input *Input, axis uint32, disc
 func (*windowFrame) PointerFrame(Widget *Widget, Input *Input)                                  {}
 
 type frame struct {
-	width, height int32
-	title         string
-	flags         uint32
-	theme         *theme
+	width, height int32 //nolint:unused // Reserved for future use
+	title         string //nolint:unused // Reserved for future use
+	flags         uint32 //nolint:unused // Reserved for future use
+	theme         *theme //nolint:unused // Reserved for future use
 
-	interior struct {
+	interior struct { //nolint:unused // Reserved for future use
 		x, y          int32
 		width, height int32
 	}
-	shadowMargin  int
-	opaqueMargin  int
-	geometryDirty int
-
-	status uint32
+	shadowMargin  int    //nolint:unused // Reserved for future use
+	opaqueMargin  int    //nolint:unused // Reserved for future use
+	geometryDirty int    //nolint:unused // Reserved for future use
+	status        uint32 //nolint:unused // Reserved for future use
 }
 
 type theme struct {
