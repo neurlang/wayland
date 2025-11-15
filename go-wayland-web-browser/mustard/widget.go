@@ -19,7 +19,7 @@ func makeContextFromCairo(s cairo.Surface) *gg.Context {
 	return context
 }
 
-func copyWidgetToBuffer(widget Widget, src image.Image) {
+func copyWidgetToBuffer(widget Widget, src image.Image) { //nolint:unused // Reserved for future use
 }
 
 func getCoreWidgets(widgets []Widget) []*baseWidget {

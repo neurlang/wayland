@@ -45,7 +45,7 @@ type menuEntry struct {
 	height float64
 }
 
-type glBackend struct {
+type glBackend struct { //nolint:unused // Reserved for future use
 	program uint32
 
 	vao uint32
@@ -87,7 +87,7 @@ type Widget interface {
 type baseWidget struct {
 	box            box
 	computedBox    box
-	widgetPosition widgetPosition
+	widgetPosition widgetPosition //nolint:unused // Reserved for future use
 
 	font *truetype.Font
 
@@ -102,10 +102,10 @@ type baseWidget struct {
 	widgetType widgetType
 	cursor     cursorType
 
-	focusable  bool
-	selectable bool
+	focusable  bool //nolint:unused // Reserved for future use
+	selectable bool //nolint:unused // Reserved for future use
 
-	focused  bool
+	focused  bool //nolint:unused // Reserved for future use
 	selected bool
 
 	window *Window
@@ -189,8 +189,8 @@ type TreeWidget struct {
 	fontColor string
 	nodes     []*TreeWidgetNode
 
-	openIcon  image.Image
-	closeIcon image.Image
+	openIcon  image.Image //nolint:unused // Reserved for future use
+	closeIcon image.Image //nolint:unused // Reserved for future use
 
 	selectCallback func(*TreeWidgetNode)
 }
@@ -270,14 +270,14 @@ type TextWidget struct {
 type ImageWidget struct {
 	baseWidget
 
-	path string
+	path string //nolint:unused // Reserved for future use
 	img  image.Image
 }
 
 type CanvasWidget struct {
 	baseWidget
 
-	context        *gg.Context
+	context        *gg.Context //nolint:unused // Reserved for future use
 	drawingContext *gg.Context
 
 	renderer func(*CanvasWidget)
@@ -308,7 +308,6 @@ type InputWidget struct {
 	active          bool
 	padding         float64
 	fontSize        float64
-	context         *gg.Context
 	fontColor       string
 	cursorFloat     bool
 	cursorPosition  int
@@ -320,7 +319,7 @@ type ScrollBarWidget struct {
 	baseWidget
 
 	orientation ScrollBarOrientation
-	selected    bool
+	selected    bool //nolint:unused // Reserved for future use
 	thumbSize   float64
 	thumbColor  string
 

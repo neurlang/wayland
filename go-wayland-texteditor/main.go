@@ -369,9 +369,8 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 			s.handleContent(content, false)
 			return
 		}
-	} else {
-
 	}
+	// TODO: Handle other cases
 }
 func (*textarea) TouchUp(_ *window.Widget, _ *window.Input, serial uint32, time uint32, id int32) {
 }

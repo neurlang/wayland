@@ -723,7 +723,7 @@ type Input struct {
 
 	//repeat_task     task
 	repeatSym      uint32 //nolint:unused // Reserved for future use
-	repeatKey      uint32
+	repeatKey      uint32 //nolint:unused // Reserved for future use
 	repeatTime     uint32 //nolint:unused // Reserved for future use
 	seatVersion    int32
 	selectionOffer *dataOffer

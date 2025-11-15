@@ -69,7 +69,7 @@ func (frame *Frame) Key(
 	var entered = input.GetRune(&notUnicode, key)
 	const Repeat = 2
 	const Release = 0
-	const Press = 1
+	const Press = 1 //nolint:unused // Reserved for future use
 
 	switch key {
 	case 14: // Backspace

@@ -13,7 +13,7 @@ type LibdecorFrame struct {
 }
 
 type LibdecorConfiguration struct {
-	ptr unsafe.Pointer
+	ptr unsafe.Pointer //nolint:unused // C interop field
 }
 
 type LibdecorState struct {

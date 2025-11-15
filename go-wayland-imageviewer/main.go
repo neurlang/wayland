@@ -47,7 +47,7 @@ type appState struct {
 	currentCursor string
 
 	decoration            *Decoration
-	haveDecorationManager bool
+	haveDecorationManager bool //nolint:unused // Reserved for future use
 	decorationManager     *zxdgDecoration.ZxdgDecorationManagerV1
 	toplevelDecoration    *zxdgDecoration.ZxdgToplevelDecorationV1
 }
@@ -237,11 +237,8 @@ func run(app *appState) {
 	app.xdgTopLevel = xdgTopLevel
 	log.Print("got xdg_toplevel")
 
-	if app.decorationManager != nil {
-		//tld, err := app.decorationManager.GetToplevelDecoration(xdgTopLevel)
-		//if err != nil {
-		//	log.Fatalf("unable to get GetToplevelDecoration: %v", err)
-		//}
+	// TODO: Use decorationManager.GetToplevelDecoration(xdgTopLevel)
+	_ = app.decorationManager
 
 		//println(tld)
 
@@ -249,7 +246,6 @@ func run(app *appState) {
 		//tld.SetMode(zxdgDecoration.ZxdgToplevelDecorationV1ModeServerSide)
 		//tld.AddConfigureHandler(app)
 
-	}
 	// Add xdg_toplevel configure handler for window resizing
 	xdgTopLevel.AddConfigureHandler(app)
 	// Add xdg_toplevel close handler

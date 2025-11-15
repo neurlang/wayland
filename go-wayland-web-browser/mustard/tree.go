@@ -87,7 +87,7 @@ func selectNodeByValue(nodes []*TreeWidgetNode, value string) {
 	}
 }
 
-func selectNode(nodes []*TreeWidgetNode, node *TreeWidgetNode) {
+func selectNode(nodes []*TreeWidgetNode, node *TreeWidgetNode) { //nolint:unused // Reserved for future use
 	for _, childNode := range nodes {
 		selectNode(childNode.Children, node)
 

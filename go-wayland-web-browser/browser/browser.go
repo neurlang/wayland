@@ -116,7 +116,7 @@ func processPointerPositionEvent(browser *hotdog.WebBrowser, x, y float64) {
 	}
 }
 
-func printNodeDebug(node *hotdog.NodeDOM) {
+func printNodeDebug(node *hotdog.NodeDOM) { //nolint:unused // Debug function for development
 	rect := fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", node.RenderBox.Top, node.RenderBox.Left, node.RenderBox.Width, node.RenderBox.Height)
 	fmt.Printf("%s [\n %s\n]\n\n", node.Element, rect)
 }

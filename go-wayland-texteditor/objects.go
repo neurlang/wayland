@@ -92,7 +92,7 @@ type StringGrid struct {
 	HoverOld              ObjectPosition
 	Selecting, IsSelected bool
 	ContentFgColor        map[[2]int][3]byte
-	lineLen               []int
+	lineLen               []int //nolint:unused // Reserved for future use
 	BgColor               [3]byte
 	FgColor               [3]byte
 	FlipColor             bool
