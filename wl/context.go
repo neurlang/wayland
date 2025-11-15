@@ -101,6 +101,7 @@ func Connect(addr string) (ret *Display, err error) {
 	}
 	err = c.conn.SetReadDeadline(time.Time{})
 	if err != nil {
+		c.conn.Close()
 		return nil, err
 	}
 	//DON'T dispatch events in separate goroutine
