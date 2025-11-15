@@ -74,9 +74,9 @@ func (frame *windowFrame) Resize(Widget *Widget, width int32, height int32, pwid
 		input = interior
 		//frame_input_rect(frame.frame, &input.x, &input.y,
 		//		 &input.width, &input.height);
-		Widget.surface.inputRegion.Add(input.X, input.Y, input.Width, input.Height)
+		_ = Widget.surface.inputRegion.Add(input.X, input.Y, input.Width, input.Height)
 	} else {
-		Widget.surface.inputRegion.Add(0, 0, width, height)
+		_ = Widget.surface.inputRegion.Add(0, 0, width, height)
 	}
 
 	Widget.SetAllocation(0, 0, width, height)

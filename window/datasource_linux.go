@@ -9,7 +9,7 @@ type DataSource struct {
 }
 
 func (ds *DataSource) Offer(str string) {
-	ds.src.Offer(str)
+	_ = ds.src.Offer(str) // Ignore error during offer
 }
 
 func (ds *DataSource) AddListener(l wlclient.DataSourceListener) {

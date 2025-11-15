@@ -105,12 +105,10 @@ func (frame *Frame) Key(
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("up")
 		}
-		break
 	case 108:
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("down")
 		}
-		break
 	case 105:
 		if action == Release || action == Repeat {
 			window.ProcessArrowKeys("left")
@@ -133,7 +131,6 @@ func (frame *Frame) Key(
 				window.activeInput.needsRepaint = true
 			}
 		}
-		break
 	case 28:
 		if action == Release {
 			window.ProcessReturnKey()
