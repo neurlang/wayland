@@ -10,9 +10,6 @@ type Paste struct {
 }
 
 func (p *Paste) Write(b []byte) (int, error) {
-
-	println("WRITING:", len(b))
-
 	p.buffer = append(p.buffer, b...)
 
 	var wasR bool
@@ -36,6 +33,9 @@ func (p *Paste) Write(b []byte) (int, error) {
 }
 
 func (p *Paste) Close() error {
+	if p.Textarea == nil {
+		return fmt.Errorf("textarea is nil")
+	}
 
 	p.Textarea.mutex.Lock()
 	defer p.Textarea.mutex.Unlock()
@@ -73,8 +73,8 @@ func (p *Paste) Close() error {
 		paste = pasteErase
 	} else {
 		var pasteErase = &PasteRequest{
-			X:      (&p.Textarea.StringGrid).IbeamCursorAbsolute().Lesser(p.Textarea.StringGrid.SelectionCursorAbsolute()).X, /*+ textarea.StringGrid.FilePosition.X*/
-			Y:      (&p.Textarea.StringGrid).IbeamCursorAbsolute().Lesser(p.Textarea.StringGrid.SelectionCursorAbsolute()).Y, /*+ textarea.StringGrid.FilePosition.Y*/
+			X:      p.Textarea.StringGrid.IbeamCursorAbsolute().Lesser(p.Textarea.StringGrid.SelectionCursorAbsolute()).X, /*+ textarea.StringGrid.FilePosition.X*/
+			Y:      p.Textarea.StringGrid.IbeamCursorAbsolute().Lesser(p.Textarea.StringGrid.SelectionCursorAbsolute()).Y, /*+ textarea.StringGrid.FilePosition.Y*/
 			Buffer: append(p.linesBuffer, p.buffer),
 		}
 		paste = pasteErase
@@ -88,7 +88,6 @@ func (p *Paste) Close() error {
 		Paste:  paste,
 	})
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
