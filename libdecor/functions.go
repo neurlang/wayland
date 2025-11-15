@@ -17,7 +17,7 @@ func getSystemLibrary() string {
 	case "linux":
 		return "libdecor-0.so"
 	default:
-		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
+		panic(fmt.Sprintf("GOOS=%s is not supported", runtime.GOOS))
 	}
 }
 
@@ -27,7 +27,7 @@ func getSystemLibraryDotVersion() string {
 	case "linux":
 		return ".0" // Adjust if specific version is required.
 	default:
-		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
+		panic(fmt.Sprintf("GOOS=%s is not supported", runtime.GOOS))
 	}
 }
 
@@ -61,12 +61,19 @@ func init() {
 	if err != nil {
 		libdecorLib, err = purego.Dlopen(getSystemLibrary()+getSystemLibraryDotVersion(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
 		if err != nil {
-			println("failed to load libdecor: " + err.Error())
+			// Library not available, leave available = false
 			return
 		}
 	}
 
-	// Register library functions
+	// Register library functions - if any fail, library is not fully available
+	defer func() {
+		if r := recover(); r != nil {
+			// RegisterLibFunc panicked, library not fully available
+			available = false
+		}
+	}()
+
 	purego.RegisterLibFunc(&libdecorNew, libdecorLib, "libdecor_new")
 	purego.RegisterLibFunc(&libdecorUnrefP, libdecorLib, "libdecor_unref")
 	purego.RegisterLibFunc(&libdecorFrameUnrefP, libdecorLib, "libdecor_frame_unref")
