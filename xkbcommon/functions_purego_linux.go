@@ -35,8 +35,12 @@ import "runtime"
 // It returns A compose table for the given locale, or nil if the
 // compilation failed or a Compose file was not found.
 func (context *Context) ComposeTableNewFromLocale(locale string, flags uint32) (ret *ComposeTable) {
+	ct := xkb_compose_table_new_from_locale(context.cx, locale, flags)
+	if ct == 0 {
+		return nil
+	}
 	ret = &ComposeTable{
-		ct: xkb_compose_table_new_from_locale(context.cx, locale, flags),
+		ct: ct,
 	}
 	runtime.SetFinalizer(ret, composeTableUnref)
 	return
