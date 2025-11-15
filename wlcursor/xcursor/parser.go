@@ -85,20 +85,20 @@ func parseImg(b []byte) (*Image, error) {
 func ParseXcursor(content []byte) (imgs []*Image, err error) {
 	buf := bytes.NewBuffer(content)
 	ntoc := parseHeader(buf)
-	imgs = make([]*Image, ntoc)
+	imgs = make([]*Image, 0, ntoc)
 
 	for i := uint32(0); i < ntoc; i++ {
 		toc := parseToc(buf)
 
-		if toc.toctype == 0xfffd_0002 {
+		if toc.toctype == 0xfffd0002 {
 			index := toc.pos
-			img, err1 := parseImg(content[index:])
-			if err1 != nil {
-				err = err1
+			img, err := parseImg(content[index:])
+			if err != nil {
+				return nil, err
 			}
-			imgs[i] = img
+			imgs = append(imgs, img)
 		}
 	}
 
-	return imgs, err
+	return imgs, nil
 }
