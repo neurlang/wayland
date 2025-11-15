@@ -149,16 +149,16 @@ func ParseHTML(document string) *hotdog.Document {
 					contentString = contentStringMatch[1]
 				}
 
-				if clTag.MatchString(contentString) {
-					lastNode.Content = ""
-				} else {
-					if lastNode != nil {
+				if lastNode != nil {
+					if clTag.MatchString(contentString) {
+						lastNode.Content = ""
+					} else {
 						lastNode.Content = strings.TrimSpace(contentString)
 					}
-				}
 
-				if lastNode.Parent != nil {
-					lastNode = lastNode.Parent
+					if lastNode.Parent != nil {
+						lastNode = lastNode.Parent
+					}
 				}
 			} else {
 				currentTagName := strings.Trim(tagName.FindString(currentTag), "<")
