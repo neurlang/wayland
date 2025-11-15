@@ -440,12 +440,8 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
 
 	path := req.URL.Path[strings.LastIndex(req.URL.Path, "/"):]
-	if strings.HasSuffix(path, ".png") {
-		path = path[:len(path)-4]
-	}
-	if strings.HasPrefix(path, "/") {
-		path = path[1:]
-	}
+	path = strings.TrimSuffix(path, ".png")
+	path = strings.TrimPrefix(path, "/")
 	if path == "live" {
 		path = ""
 	}

@@ -106,7 +106,7 @@ func hasInlineStyle(attributes []*hotdog.Attribute) bool {
 
 func GetElementStylesheet(elementName string, attributes []*hotdog.Attribute) *hotdog.Stylesheet {
 	elementStylesheet := &hotdog.Stylesheet{
-		BackgroundColor: &hotdog.ColorRGBA{1, 1, 1, 0},
+		BackgroundColor: &hotdog.ColorRGBA{R: 1, G: 1, B: 1, A: 0},
 		FontSize:        0,
 		Display:         "",
 		Position:        "Normal",
@@ -131,7 +131,7 @@ func GetElementStylesheet(elementName string, attributes []*hotdog.Attribute) *h
 		if color != nil {
 			elementStylesheet.Color = color
 		} else {
-			elementStylesheet.Color = &hotdog.ColorRGBA{0, 0, 0, 1}
+			elementStylesheet.Color = &hotdog.ColorRGBA{R: 0, G: 0, B: 0, A: 1}
 		}
 	}
 

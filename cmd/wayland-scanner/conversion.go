@@ -3,12 +3,8 @@ package main
 import "strings"
 
 func removePrefixAndCamelCase(input, clear string) string {
-	if strings.HasPrefix(input, "wl_") {
-		input = input[3:]
-	}
-	if strings.HasPrefix(input, clear+"_") {
-		input = input[len(clear)+1:]
-	}
+	input = strings.TrimPrefix(input, "wl_")
+	input = strings.TrimPrefix(input, clear+"_")
 
 	input = strings.Replace(input, "_"+clear+"_", "_", -1)
 

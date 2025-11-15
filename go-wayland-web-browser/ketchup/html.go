@@ -132,7 +132,7 @@ func ParseHTML(document string) *hotdog.Document {
 	parseDocument := xmlTag.MatchString(document)
 	document = strings.ReplaceAll(document, "\n", "")
 
-	for parseDocument == true {
+	for parseDocument {
 		var currentNode *hotdog.NodeDOM
 
 		currentTag := xmlTag.FindString(document)

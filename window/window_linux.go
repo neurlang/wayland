@@ -3436,7 +3436,7 @@ func DisplayRun(Display *Display) {
 
 		}
 
-		if Display.running == false {
+		if !Display.running {
 			break
 		}
 
