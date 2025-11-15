@@ -15,6 +15,6 @@ const (
 	useBGRA4  = false
 )
 
-func bgra32(p []byte) { return }
-func bgra16(p []byte) { return }
-func bgra4(p []byte)  { return }
+func bgra32(p []byte) {}
+func bgra16(p []byte) {}
+func bgra4(p []byte)  {}
