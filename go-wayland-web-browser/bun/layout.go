@@ -6,6 +6,10 @@ import (
 )
 
 func createRenderTree(root *hotdog.NodeDOM) *hotdog.NodeDOM {
+	if root == nil {
+		return nil
+	}
+	
 	if root.Style.Display == "none" {
 		return nil
 	}
