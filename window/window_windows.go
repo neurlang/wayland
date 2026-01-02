@@ -276,8 +276,9 @@ func (w *Window) Destroy() {
 	winc.Exit()
 }
 
-func (w *Window) SetFullscreen(fullscreen bool) {
+func (w *Window) SetFullscreen(fullscreen bool) error {
 	w.form.Fullscreen()
+	return nil
 }
 
 func (w *Window) WindowGetSurface() cairo.Surface {
