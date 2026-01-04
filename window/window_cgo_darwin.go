@@ -1,0 +1,557 @@
+// +build darwin,cgo
+
+package window
+
+/*
+#cgo CFLAGS: -x objective-c
+#cgo LDFLAGS: -framework Cocoa -framework QuartzCore
+
+#import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
+#import <objc/message.h>
+
+// Forward declarations for Go callbacks
+extern void goMouseMotion(void* windowPtr, float x, float y);
+extern void goScheduleRedraw(void* windowPtr);
+
+// Simple window wrapper
+typedef struct {
+    void* nsWindow;
+    void* nsView;
+    void* goWindowPtr;
+    void* redrawTimer;
+    void* eventMonitor; // id<NSObject>
+    CGImageRef currentImage;
+    void* imageLock; // NSLock*
+} DarwinWindow;
+
+// Store image data in DarwinWindow struct instead of view ivars
+// This avoids runtime class issues
+
+// Dummy class creation for compatibility (not actually used)
+static Class createBitmapViewClass() {
+    static Class bitmapViewClass = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        bitmapViewClass = [NSView class]; // Just use plain NSView
+        // No custom methods - using plain NSView
+    });
+    return bitmapViewClass;
+}
+
+// Use plain NSView - no custom mouse tracking class
+static Class createMouseTrackingViewClass() {
+    return [NSView class];
+}
+
+// Helper to run block on main thread
+static void runOnMainThread(void (^block)(void)) {
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+}
+
+// Create a simple window
+static DarwinWindow* darwin_createWindow(int width, int height, const char* title, void* goWindowPtr) {
+    __block DarwinWindow* dw = NULL;
+    __block NSWindow* window = nil;
+    __block NSImageView* imageView = nil;
+    
+    // MUST create window on main thread
+    runOnMainThread(^{
+        @autoreleasepool {
+            NSRect frame = NSMakeRect(100, 100, width, height);
+            window = [[NSWindow alloc]
+                initWithContentRect:frame
+                styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | 
+                          NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
+                backing:NSBackingStoreBuffered
+                defer:NO];
+            
+            [window setTitle:[NSString stringWithUTF8String:title]];
+            [window center];
+            [window setAcceptsMouseMovedEvents:YES];
+            
+            // Use NSImageView for displaying bitmap content
+            imageView = [[NSImageView alloc] initWithFrame:frame];
+            [imageView setImageScaling:NSImageScaleAxesIndependently];
+            [imageView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+            [imageView setImageFrameStyle:NSImageFrameNone];
+            [imageView setEditable:NO];
+            [imageView setAnimates:NO];
+            
+            // Set window background to match
+            [window setBackgroundColor:[NSColor blackColor]];
+            [window setOpaque:YES];
+            
+            [window setContentView:imageView];
+            [window makeKeyAndOrderFront:nil];
+        }
+    });
+    
+    @autoreleasepool {
+        
+        // Create DarwinWindow struct
+        DarwinWindow* dw = malloc(sizeof(DarwinWindow));
+        dw->nsWindow = (void*)CFBridgingRetain(window);
+        dw->nsView = (void*)CFBridgingRetain(imageView);
+        dw->goWindowPtr = goWindowPtr;
+        dw->redrawTimer = NULL;
+        dw->eventMonitor = NULL;
+        dw->currentImage = NULL;
+        dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
+        
+        // Set up mouse tracking for both moved and entered events
+        void* windowPtr = goWindowPtr;
+        NSEventMask eventMask = NSEventMaskMouseMoved | NSEventMaskMouseEntered | NSEventMaskMouseExited;
+        id eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:eventMask
+            handler:^NSEvent*(NSEvent* event) {
+                if ([event window] == window) {
+                    NSPoint locationInWindow = [event locationInWindow];
+                    NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
+                    
+                    // Flip Y coordinate to match Cairo's top-down coordinate system
+                    float y = [imageView bounds].size.height - locationInView.y;
+                    
+                    goMouseMotion(windowPtr, (float)locationInView.x, y);
+                }
+                return event;
+            }];
+        dw->eventMonitor = (void*)CFBridgingRetain(eventMonitor);
+        
+        return dw;
+    }
+}
+
+// Destroy window
+static void darwin_destroyWindow(DarwinWindow* dw) {
+    if (dw) {
+        // Must be on main thread for NSWindow operations
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            @autoreleasepool {
+                if (dw->eventMonitor) {
+                    id monitor = (__bridge_transfer id)dw->eventMonitor;
+                    [NSEvent removeMonitor:monitor];
+                    dw->eventMonitor = NULL;
+                }
+                if (dw->redrawTimer) {
+                    NSTimer* timer = (__bridge_transfer NSTimer*)dw->redrawTimer;
+                    [timer invalidate];
+                    dw->redrawTimer = NULL;
+                }
+                if (dw->imageLock) {
+                    NSLock* lock = (__bridge NSLock*)dw->imageLock;
+                    [lock lock];
+                    if (dw->currentImage) {
+                        CGImageRelease(dw->currentImage);
+                        dw->currentImage = NULL;
+                    }
+                    [lock unlock];
+                    CFBridgingRelease(dw->imageLock);
+                    dw->imageLock = NULL;
+                }
+                if (dw->nsView) {
+                    CFBridgingRelease(dw->nsView);
+                    dw->nsView = NULL;
+                }
+                if (dw->nsWindow) {
+                    NSWindow* window = (__bridge_transfer NSWindow*)dw->nsWindow;
+                    [window close];
+                }
+            }
+        });
+        free(dw);
+    }
+}
+
+// Set window title
+static void darwin_setTitle(DarwinWindow* dw, const char* title) {
+    if (dw && dw->nsWindow) {
+        NSString* titleStr = [NSString stringWithUTF8String:title];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @autoreleasepool {
+                NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+                [window setTitle:titleStr];
+            }
+        });
+    }
+}
+
+// Run main loop
+static void darwin_runMainLoop() {
+    @autoreleasepool {
+        [NSApplication sharedApplication];
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+        [NSApp activateIgnoringOtherApps:YES];
+        [NSApp run];
+    }
+}
+
+// Stop main loop
+static void darwin_stopMainLoop() {
+    @autoreleasepool {
+        [NSApp stop:nil];
+        NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                            location:NSMakePoint(0, 0)
+                                       modifierFlags:0
+                                           timestamp:0
+                                        windowNumber:0
+                                             context:nil
+                                             subtype:0
+                                               data1:0
+                                               data2:0];
+        [NSApp postEvent:event atStart:YES];
+    }
+}
+
+// Get window size
+static void darwin_getWindowSize(DarwinWindow* dw, int* width, int* height) {
+    if (dw && dw->nsWindow) {
+        @autoreleasepool {
+            NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+            NSRect frame = [[window contentView] frame];
+            *width = (int)frame.size.width;
+            *height = (int)frame.size.height;
+        }
+    }
+}
+
+// Set fullscreen
+static void darwin_setFullscreen(DarwinWindow* dw, int fullscreen) {
+    if (dw && dw->nsWindow) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @autoreleasepool {
+                NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+                BOOL isFullscreen = ([window styleMask] & NSWindowStyleMaskFullScreen) != 0;
+                if ((fullscreen && !isFullscreen) || (!fullscreen && isFullscreen)) {
+                    [window toggleFullScreen:nil];
+                }
+            }
+        });
+    }
+}
+
+// Resize window
+static void darwin_resizeWindow(DarwinWindow* dw, int width, int height) {
+    if (dw && dw->nsWindow) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @autoreleasepool {
+                NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+                NSRect frame = [window frame];
+                NSRect contentRect = NSMakeRect(frame.origin.x, frame.origin.y, width, height);
+                NSRect newFrame = [window frameRectForContentRect:contentRect];
+                [window setFrame:newFrame display:YES animate:NO];
+            }
+        });
+    }
+}
+
+// Start redraw timer
+static void darwin_startRedrawTimer(DarwinWindow* dw) {
+    if (dw && dw->goWindowPtr && !dw->redrawTimer) {
+        void* windowPtr = dw->goWindowPtr;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:0.016 // ~60 FPS
+                                            repeats:YES
+                                              block:^(NSTimer * _Nonnull t) {
+                goScheduleRedraw(windowPtr);
+            }];
+            dw->redrawTimer = (void*)CFBridgingRetain(timer);
+        });
+    }
+}
+
+// Enable mouse tracking
+static void darwin_enableMouseTracking(DarwinWindow* dw) {
+    if (dw && dw->nsWindow && dw->goWindowPtr) {
+        @autoreleasepool {
+            NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+            id view = [window contentView];
+            
+            // Get the actual class of the view instance
+            Class viewClass = object_getClass(view);
+            Ivar goWindowPtrIvar = class_getInstanceVariable(viewClass, "goWindowPtr");
+            if (goWindowPtrIvar) {
+                // Set using direct memory access for non-object types
+                ptrdiff_t offset = ivar_getOffset(goWindowPtrIvar);
+                void** ptr = (void**)((char*)(__bridge void*)view + offset);
+                *ptr = dw->goWindowPtr;
+            }
+            
+            // Call updateTrackingAreas using objc_msgSend
+            ((void(*)(id, SEL))objc_msgSend)(view, @selector(updateTrackingAreas));
+        }
+    }
+}
+
+// Get mouse position in window
+static void darwin_getMousePosition(DarwinWindow* dw, float* x, float* y) {
+    if (dw && dw->nsWindow) {
+        @autoreleasepool {
+            NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+            NSPoint mouseLocation = [window mouseLocationOutsideOfEventStream];
+            *x = mouseLocation.x;
+            *y = mouseLocation.y;
+        }
+    }
+}
+
+// Release callback for CGDataProvider
+static void releaseDataCallback(void *info, const void *data, size_t size) {
+    free((void*)data);
+}
+
+// Draw bitmap to window
+static void darwin_drawBitmap(DarwinWindow* dw, void* data, int width, int height) {
+    if (!dw || !dw->nsView || !data || width <= 0 || height <= 0) {
+        return;
+    }
+    
+    @autoreleasepool {
+        NSImageView* imageView = (__bridge NSImageView*)dw->nsView;
+        NSLock* lock = (__bridge NSLock*)dw->imageLock;
+        
+        // Create CGImage from raw BGRA data (Cairo format: BGRA premultiplied)
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+        
+        // Copy the data to ensure it stays valid
+        size_t dataSize = width * height * 4;
+        void* dataCopy = malloc(dataSize);
+        memcpy(dataCopy, data, dataSize);
+        
+        CGDataProviderRef provider = CGDataProviderCreateWithData(
+            NULL,
+            dataCopy,
+            dataSize,
+            releaseDataCallback
+        );
+        
+        CGImageRef cgImage = CGImageCreate(
+            width,
+            height,
+            8,                  // bits per component
+            32,                 // bits per pixel
+            width * 4,          // bytes per row
+            colorSpace,
+            kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little,
+            provider,
+            NULL,
+            false,
+            kCGRenderingIntentDefault
+        );
+        
+        if (!cgImage) {
+            CGDataProviderRelease(provider);
+            CGColorSpaceRelease(colorSpace);
+            return;
+        }
+        
+        // Update the stored image
+        [lock lock];
+        if (dw->currentImage) {
+            CGImageRelease(dw->currentImage);
+        }
+        dw->currentImage = cgImage;
+        CGImageRetain(cgImage);
+        [lock unlock];
+        
+        // Retain cgImage for the block
+        CGImageRetain(cgImage);
+        
+        // Create NSImage and display it in the NSImageView - ALL on main thread
+        // Use dispatch_sync if we're already on main thread, dispatch_async otherwise
+        if ([NSThread isMainThread]) {
+            @autoreleasepool {
+                NSSize imageSize = NSMakeSize(width, height);
+                NSImage* nsImage = [[NSImage alloc] initWithCGImage:cgImage size:imageSize];
+                
+                if (nsImage) {
+                    [imageView setImage:nsImage];
+                    [imageView setNeedsDisplay:YES];
+                }
+                
+                CGImageRelease(cgImage);
+            }
+        } else {
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                @autoreleasepool {
+                    NSSize imageSize = NSMakeSize(width, height);
+                    NSImage* nsImage = [[NSImage alloc] initWithCGImage:cgImage size:imageSize];
+                    
+                    if (nsImage) {
+                        [imageView setImage:nsImage];
+                        [imageView setNeedsDisplay:YES];
+                    }
+                    
+                    CGImageRelease(cgImage);
+                }
+            });
+        }
+        
+        CGImageRelease(cgImage);
+        CGDataProviderRelease(provider);
+        CGColorSpaceRelease(colorSpace);
+    }
+}
+*/
+import "C"
+import (
+	"sync"
+	"time"
+	"unsafe"
+)
+
+type darwinWindowHandle struct {
+	cWindow    *C.DarwinWindow
+	goWindow   *Window
+	windowID   uintptr
+	lastMouseX float32
+	lastMouseY float32
+}
+
+var (
+	windowRegistry = make(map[uintptr]*darwinWindowHandle)
+	windowMutex    sync.RWMutex
+	nextWindowID   uintptr = 1
+)
+
+func darwin_createWindow(width, height int32, title string, goWindow *Window) *darwinWindowHandle {
+	cTitle := C.CString(title)
+	defer C.free(unsafe.Pointer(cTitle))
+	
+	// Allocate a unique ID for this window
+	windowMutex.Lock()
+	windowID := nextWindowID
+	nextWindowID++
+	windowMutex.Unlock()
+	
+	// Pass the ID as a pointer (safe to pass to C)
+	cWindow := C.darwin_createWindow(C.int(width), C.int(height), cTitle, unsafe.Pointer(windowID))
+	
+	handle := &darwinWindowHandle{
+		cWindow:  cWindow,
+		goWindow: goWindow,
+		windowID: windowID,
+	}
+	
+	windowMutex.Lock()
+	windowRegistry[windowID] = handle
+	windowMutex.Unlock()
+	
+	return handle
+}
+
+//export goMouseMotion
+func goMouseMotion(windowPtr unsafe.Pointer, x, y C.float) {
+	windowID := uintptr(windowPtr)
+	
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+		return
+	}
+	
+	window := handle.goWindow
+	
+	// Call motion handler on all widgets
+	for widget := range window.widgets {
+		if widget.handler != nil {
+			timestamp := uint32(time.Now().UnixNano() / 1000000)
+			widget.handler.Motion(widget, window.input, timestamp, float32(x), float32(y))
+		}
+	}
+}
+
+//export goScheduleRedraw
+func goScheduleRedraw(windowPtr unsafe.Pointer) {
+	windowID := uintptr(windowPtr)
+	
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+		return
+	}
+	
+	window := handle.goWindow
+	
+	// Schedule redraw
+	window.ScheduleRedraw()
+	window.Redraw()
+}
+
+func darwin_destroyWindow(handle *darwinWindowHandle) {
+	if handle != nil && handle.cWindow != nil {
+		windowMutex.Lock()
+		delete(windowRegistry, handle.windowID)
+		windowMutex.Unlock()
+		
+		C.darwin_destroyWindow(handle.cWindow)
+		handle.cWindow = nil
+	}
+}
+
+func darwin_setTitle(handle *darwinWindowHandle, title string) {
+	if handle != nil && handle.cWindow != nil {
+		cTitle := C.CString(title)
+		defer C.free(unsafe.Pointer(cTitle))
+		C.darwin_setTitle(handle.cWindow, cTitle)
+	}
+}
+
+func darwin_runMainLoop() {
+	C.darwin_runMainLoop()
+}
+
+func darwin_stopMainLoop() {
+	C.darwin_stopMainLoop()
+}
+
+func darwin_getWindowSize(handle *darwinWindowHandle) (int32, int32) {
+	if handle != nil && handle.cWindow != nil {
+		var width, height C.int
+		C.darwin_getWindowSize(handle.cWindow, &width, &height)
+		return int32(width), int32(height)
+	}
+	return 0, 0
+}
+
+func darwin_setFullscreen(handle *darwinWindowHandle, fullscreen bool) {
+	if handle != nil && handle.cWindow != nil {
+		fs := C.int(0)
+		if fullscreen {
+			fs = 1
+		}
+		C.darwin_setFullscreen(handle.cWindow, fs)
+	}
+}
+
+func darwin_resizeWindow(handle *darwinWindowHandle, width, height int32) {
+	if handle != nil && handle.cWindow != nil {
+		C.darwin_resizeWindow(handle.cWindow, C.int(width), C.int(height))
+	}
+}
+
+func darwin_startRedrawTimer(handle *darwinWindowHandle) {
+	if handle != nil && handle.cWindow != nil {
+		C.darwin_startRedrawTimer(handle.cWindow)
+	}
+}
+
+func darwin_enableMouseTracking(handle *darwinWindowHandle) {
+	if handle != nil && handle.cWindow != nil {
+		C.darwin_enableMouseTracking(handle.cWindow)
+	}
+}
+
+func darwin_drawBitmap(handle *darwinWindowHandle, data []byte, width, height int32) {
+	if handle != nil && handle.cWindow != nil && len(data) > 0 {
+		C.darwin_drawBitmap(handle.cWindow, unsafe.Pointer(&data[0]), C.int(width), C.int(height))
+	}
+}
