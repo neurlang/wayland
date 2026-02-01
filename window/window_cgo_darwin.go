@@ -4,10 +4,11 @@ package window
 
 /*
 #cgo CFLAGS: -x objective-c
-#cgo LDFLAGS: -framework Cocoa -framework QuartzCore
+#cgo LDFLAGS: -framework Cocoa -framework QuartzCore -framework CoreVideo
 
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
+#import <CoreVideo/CoreVideo.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -20,11 +21,30 @@ typedef struct {
     void* nsWindow;
     void* nsView;
     void* goWindowPtr;
-    void* redrawTimer;
+    CVDisplayLinkRef displayLink;
     void* eventMonitor; // id<NSObject>
     CGImageRef currentImage;
     void* imageLock; // NSLock*
+    int needsRedraw; // Atomic flag for redraw requests
 } DarwinWindow;
+
+// CVDisplayLink callback - called on separate thread
+static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
+                                   const CVTimeStamp* now,
+                                   const CVTimeStamp* outputTime,
+                                   CVOptionFlags flagsIn,
+                                   CVOptionFlags* flagsOut,
+                                   void* displayLinkContext) {
+    DarwinWindow* dw = (DarwinWindow*)displayLinkContext;
+    
+    // Always call redraw on every frame - let the Go side decide if rendering is needed
+    void* windowPtr = dw->goWindowPtr;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        goScheduleRedraw(windowPtr);
+    });
+    
+    return kCVReturnSuccess;
+}
 
 // Store image data in DarwinWindow struct instead of view ivars
 // This avoids runtime class issues
@@ -99,10 +119,11 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         dw->nsWindow = (void*)CFBridgingRetain(window);
         dw->nsView = (void*)CFBridgingRetain(imageView);
         dw->goWindowPtr = goWindowPtr;
-        dw->redrawTimer = NULL;
+        dw->displayLink = NULL;
         dw->eventMonitor = NULL;
         dw->currentImage = NULL;
         dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
+        dw->needsRedraw = 1; // Start with redraw needed
         
         // Set up mouse tracking for both moved and entered events
         void* windowPtr = goWindowPtr;
@@ -132,15 +153,15 @@ static void darwin_destroyWindow(DarwinWindow* dw) {
         // Must be on main thread for NSWindow operations
         dispatch_sync(dispatch_get_main_queue(), ^{
             @autoreleasepool {
+                if (dw->displayLink) {
+                    CVDisplayLinkStop(dw->displayLink);
+                    CVDisplayLinkRelease(dw->displayLink);
+                    dw->displayLink = NULL;
+                }
                 if (dw->eventMonitor) {
                     id monitor = (__bridge_transfer id)dw->eventMonitor;
                     [NSEvent removeMonitor:monitor];
                     dw->eventMonitor = NULL;
-                }
-                if (dw->redrawTimer) {
-                    NSTimer* timer = (__bridge_transfer NSTimer*)dw->redrawTimer;
-                    [timer invalidate];
-                    dw->redrawTimer = NULL;
                 }
                 if (dw->imageLock) {
                     NSLock* lock = (__bridge NSLock*)dw->imageLock;
@@ -249,18 +270,33 @@ static void darwin_resizeWindow(DarwinWindow* dw, int width, int height) {
     }
 }
 
-// Start redraw timer
-static void darwin_startRedrawTimer(DarwinWindow* dw) {
-    if (dw && dw->goWindowPtr && !dw->redrawTimer) {
-        void* windowPtr = dw->goWindowPtr;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:0.016 // ~60 FPS
-                                            repeats:YES
-                                              block:^(NSTimer * _Nonnull t) {
-                goScheduleRedraw(windowPtr);
-            }];
-            dw->redrawTimer = (void*)CFBridgingRetain(timer);
-        });
+// Start display link for continuous redraw
+static void darwin_startDisplayLink(DarwinWindow* dw) {
+    if (dw && dw->goWindowPtr && !dw->displayLink) {
+        // Create display link
+        CVDisplayLinkCreateWithActiveCGDisplays(&dw->displayLink);
+        
+        // Set the callback
+        CVDisplayLinkSetOutputCallback(dw->displayLink, &displayLinkCallback, dw);
+        
+        // Get the main display ID
+        NSWindow* window = (__bridge NSWindow*)dw->nsWindow;
+        NSScreen* screen = [window screen];
+        NSDictionary* screenDescription = [screen deviceDescription];
+        NSNumber* screenNumber = [screenDescription objectForKey:@"NSScreenNumber"];
+        CGDirectDisplayID displayID = (CGDirectDisplayID)[screenNumber unsignedIntValue];
+        CVDisplayLinkSetCurrentCGDisplay(dw->displayLink, displayID);
+        
+        // Start the display link
+        CVDisplayLinkStart(dw->displayLink);
+    }
+}
+
+// Request a redraw on next display link callback
+static void darwin_requestRedraw(DarwinWindow* dw) {
+    if (dw) {
+        // Atomic set
+        __sync_fetch_and_or(&dw->needsRedraw, 1);
     }
 }
 
@@ -538,9 +574,15 @@ func darwin_resizeWindow(handle *darwinWindowHandle, width, height int32) {
 	}
 }
 
-func darwin_startRedrawTimer(handle *darwinWindowHandle) {
+func darwin_startDisplayLink(handle *darwinWindowHandle) {
 	if handle != nil && handle.cWindow != nil {
-		C.darwin_startRedrawTimer(handle.cWindow)
+		C.darwin_startDisplayLink(handle.cWindow)
+	}
+}
+
+func darwin_requestRedraw(handle *darwinWindowHandle) {
+	if handle != nil && handle.cWindow != nil {
+		C.darwin_requestRedraw(handle.cWindow)
 	}
 }
 

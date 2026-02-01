@@ -161,8 +161,8 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 	// Create window on first resize call with the correct size
 	if w.darwinHandle == nil {
 		w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w)
-		// Start redraw timer after window is created
-		darwin_startRedrawTimer(w.darwinHandle)
+		// Start display link after window is created
+		darwin_startDisplayLink(w.darwinHandle)
 	} else {
 		// Resize existing window
 		darwin_resizeWindow(w.darwinHandle, width, height)
@@ -177,6 +177,9 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 			widget.handler.Resize(widget, width, height, width, height)
 		}
 	}
+	
+	// Request redraw after resize
+	darwin_requestRedraw(w.darwinHandle)
 }
 
 // AddWidget adds a widget to the window
@@ -185,6 +188,11 @@ func (w *Window) AddWidget(handler WidgetHandler) *Widget {
 		parent_window: w,
 		handler:       handler,
 	}
+	
+	if w.widgets == nil {
+		w.widgets = make(map[*Widget]struct{})
+	}
+	
 	w.widgets[widget] = struct{}{}
 	
 	// Initial size
@@ -196,7 +204,9 @@ func (w *Window) AddWidget(handler WidgetHandler) *Widget {
 // WindowGetSurface returns the cairo surface for the window
 func (w *Window) WindowGetSurface() cairo.Surface {
 	for widget := range w.widgets {
-		return widget
+		// Return a reference, not the widget itself
+		// This allows the caller to Destroy() the surface without destroying the widget
+		return widget.Reference()
 	}
 	return nil
 }
@@ -219,17 +229,25 @@ func (w *Window) SetMinimized() error {
 
 // ScheduleRedraw schedules a redraw for all widgets
 func (w *Window) ScheduleRedraw() {
-	for widget := range w.widgets {
-		if !w.inhibited && !widget.destroyed {
-			widget.ScheduleRedraw()
-		}
+	if w.darwinHandle != nil {
+		darwin_requestRedraw(w.darwinHandle)
 	}
 }
 
 // Redraw performs the actual drawing
 func (w *Window) Redraw() {
+	if w.inhibited {
+		return
+	}
+	
 	for widget := range w.widgets {
-		if !w.inhibited && !widget.destroyed {
+		if !widget.destroyed {
+			// Call handler's redraw method
+			if widget.handler != nil {
+				widget.handler.Redraw(widget)
+			}
+			
+			// Get buffer and check if content changed
 			buf, width, height, hash := widget.getBufferAndAllocAndHash()
 			if hash != widget.drawnHash && width > 0 && height > 0 {
 				darwin_drawBitmap(w.darwinHandle, buf, int32(width), int32(height))

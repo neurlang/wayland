@@ -2,7 +2,6 @@ package window
 
 import (
 	"sync"
-	"time"
 
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/spaolacci/murmur3"
@@ -25,7 +24,7 @@ type Widget struct {
 	handler       WidgetHandler
 
 	destroyed bool
-	scheduled bool
+	refCount  int  // Reference count for cairo surface references
 	draw_mut  sync.Mutex
 }
 
@@ -70,8 +69,11 @@ func (w *Widget) getBufferAndAllocAndHash() ([]byte, int, int, uint64) {
 	return w.swapbuffer, w.allocation_width, w.allocation_height, murmur3.Sum64WithSeed(w.swapbuffer, 0)
 }
 
-// Reference returns the widget as a cairo surface
+// Reference returns the widget as a cairo surface with increased ref count
 func (w *Widget) Reference() cairo.Surface {
+	w.draw_mut.Lock()
+	w.refCount++
+	w.draw_mut.Unlock()
 	return w
 }
 
@@ -110,9 +112,22 @@ func (w *Widget) ScheduleResize(width int32, height int32) {
 	}
 }
 
-// Destroy marks the widget as destroyed
+// Destroy decrements ref count and only destroys when count reaches zero
 func (w *Widget) Destroy() {
+	w.draw_mut.Lock()
+	defer w.draw_mut.Unlock()
+	
+	if w.refCount > 0 {
+		w.refCount--
+		return
+	}
+	
 	w.destroyed = true
+	
+	// Remove from parent window's widgets map
+	if w.parent_window != nil {
+		delete(w.parent_window.widgets, w)
+	}
 }
 
 // SetAllocation sets the widget's position and size
@@ -161,35 +176,11 @@ func (w *Widget) WidgetGetLastTime() uint32 {
 
 // ScheduleRedraw schedules a redraw of the widget
 func (w *Widget) ScheduleRedraw() {
-	go func() {
-		w.draw_mut.Lock()
-		is_sch := w.scheduled
-		w.draw_mut.Unlock()
-		
-		if !is_sch {
-			w.draw_mut.Lock()
-			w.scheduled = true
-			
-			// Call the handler's redraw method
-			if w.handler != nil {
-				w.handler.Redraw(w)
-			}
-			w.draw_mut.Unlock()
-
-			// Trigger window redraw
-			if w.parent_window != nil {
-				w.parent_window.Redraw()
-			}
-
-			w.draw_mut.Lock()
-			w.scheduled = false
-			w.draw_mut.Unlock()
-
-			// Small delay before allowing next redraw
-			time.Sleep(8 * time.Millisecond)
-			w.ScheduleRedraw()
-		}
-	}()
+	// Simply request a redraw from the parent window
+	// The CVDisplayLink will handle the actual redraw timing
+	if w.parent_window != nil {
+		w.parent_window.ScheduleRedraw()
+	}
 }
 
 // Rectangle represents a rectangular area
