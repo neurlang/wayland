@@ -16,6 +16,7 @@ package window
 extern void goMouseMotion(void* windowPtr, float x, float y);
 extern void goScheduleRedraw(void* windowPtr);
 extern void goWindowResize(void* windowPtr, int width, int height);
+extern void goMouseButton(void* windowPtr, int button, int state, float x, float y);
 
 // Simple window wrapper
 typedef struct {
@@ -24,6 +25,7 @@ typedef struct {
     void* goWindowPtr;
     CVDisplayLinkRef displayLink;
     void* eventMonitor; // id<NSObject>
+    void* buttonMonitor; // id<NSObject> for button events
     CGImageRef currentImage;
     void* imageLock; // NSLock*
     int needsRedraw; // Atomic flag for redraw requests
@@ -154,6 +156,7 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         dw->goWindowPtr = goWindowPtr;
         dw->displayLink = NULL;
         dw->eventMonitor = NULL;
+        dw->buttonMonitor = NULL;
         dw->currentImage = NULL;
         dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
         dw->needsRedraw = 1; // Start with redraw needed
@@ -183,6 +186,42 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
             }];
         dw->eventMonitor = (void*)CFBridgingRetain(eventMonitor);
         
+        // Set up mouse button tracking
+        NSEventMask buttonMask = NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | 
+                                 NSEventMaskRightMouseDown | NSEventMaskRightMouseUp;
+        id buttonMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:buttonMask
+            handler:^NSEvent*(NSEvent* event) {
+                if ([event window] == window) {
+                    NSPoint locationInWindow = [event locationInWindow];
+                    NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
+                    
+                    // Flip Y coordinate to match Cairo's top-down coordinate system
+                    float y = [imageView bounds].size.height - locationInView.y;
+                    
+                    int button = 0;
+                    int state = 0;
+                    
+                    NSEventType eventType = [event type];
+                    if (eventType == NSEventTypeLeftMouseDown) {
+                        button = 272; // Left button (BTN_LEFT in Linux)
+                        state = 1;    // Pressed
+                    } else if (eventType == NSEventTypeLeftMouseUp) {
+                        button = 272;
+                        state = 0;    // Released
+                    } else if (eventType == NSEventTypeRightMouseDown) {
+                        button = 273; // Right button (BTN_RIGHT in Linux)
+                        state = 1;
+                    } else if (eventType == NSEventTypeRightMouseUp) {
+                        button = 273;
+                        state = 0;
+                    }
+                    
+                    goMouseButton(windowPtr, button, state, (float)locationInView.x, y);
+                }
+                return event;
+            }];
+        dw->buttonMonitor = (void*)CFBridgingRetain(buttonMonitor);
+        
         return dw;
     }
 }
@@ -202,6 +241,11 @@ static void darwin_destroyWindow(DarwinWindow* dw) {
                     id monitor = (__bridge_transfer id)dw->eventMonitor;
                     [NSEvent removeMonitor:monitor];
                     dw->eventMonitor = NULL;
+                }
+                if (dw->buttonMonitor) {
+                    id monitor = (__bridge_transfer id)dw->buttonMonitor;
+                    [NSEvent removeMonitor:monitor];
+                    dw->buttonMonitor = NULL;
                 }
                 if (dw->imageLock) {
                     NSLock* lock = (__bridge NSLock*)dw->imageLock;
@@ -487,6 +531,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+
+	"github.com/neurlang/wayland/wl"
 )
 
 type darwinWindowHandle struct {
@@ -603,6 +649,36 @@ func goWindowResize(windowPtr unsafe.Pointer, width, height C.int) {
 	
 	// Request redraw after resize
 	window.ScheduleRedraw()
+}
+
+//export goMouseButton
+func goMouseButton(windowPtr unsafe.Pointer, button, state C.int, x, y C.float) {
+	windowID := uintptr(windowPtr)
+	
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+		return
+	}
+	
+	window := handle.goWindow
+	
+	// Call button handler on all widgets
+	for widget := range window.widgets {
+		if widget.handler != nil {
+			timestamp := uint32(time.Now().UnixNano() / 1000000)
+			// Convert state: 1 = pressed, 0 = released
+			var wlState wl.PointerButtonState
+			if state == 1 {
+				wlState = wl.PointerButtonStatePressed
+			} else {
+				wlState = wl.PointerButtonStateReleased
+			}
+			widget.handler.Button(widget, window.input, timestamp, uint32(button), wlState, widget.handler)
+		}
+	}
 }
 
 func darwin_destroyWindow(handle *darwinWindowHandle) {
