@@ -15,6 +15,7 @@ package window
 // Forward declarations for Go callbacks
 extern void goMouseMotion(void* windowPtr, float x, float y);
 extern void goScheduleRedraw(void* windowPtr);
+extern void goWindowResize(void* windowPtr, int width, int height);
 
 // Simple window wrapper
 typedef struct {
@@ -26,6 +27,7 @@ typedef struct {
     CGImageRef currentImage;
     void* imageLock; // NSLock*
     int needsRedraw; // Atomic flag for redraw requests
+    void* windowDelegate; // NSWindowDelegate
 } DarwinWindow;
 
 // CVDisplayLink callback - called on separate thread
@@ -49,22 +51,6 @@ static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink,
 // Store image data in DarwinWindow struct instead of view ivars
 // This avoids runtime class issues
 
-// Dummy class creation for compatibility (not actually used)
-static Class createBitmapViewClass() {
-    static Class bitmapViewClass = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        bitmapViewClass = [NSView class]; // Just use plain NSView
-        // No custom methods - using plain NSView
-    });
-    return bitmapViewClass;
-}
-
-// Use plain NSView - no custom mouse tracking class
-static Class createMouseTrackingViewClass() {
-    return [NSView class];
-}
-
 // Helper to run block on main thread
 static void runOnMainThread(void (^block)(void)) {
     if ([NSThread isMainThread]) {
@@ -72,6 +58,55 @@ static void runOnMainThread(void (^block)(void)) {
     } else {
         dispatch_async(dispatch_get_main_queue(), block);
     }
+}
+
+// Window delegate resize handler
+static void handleWindowResize(void* darwinWindowPtr, NSNotification* notification) {
+    if (!darwinWindowPtr) return;
+    
+    DarwinWindow* dw = (DarwinWindow*)darwinWindowPtr;
+    if (dw->goWindowPtr) {
+        NSWindow* window = [notification object];
+        NSRect contentRect = [[window contentView] frame];
+        int width = (int)contentRect.size.width;
+        int height = (int)contentRect.size.height;
+        
+        void* windowPtr = dw->goWindowPtr;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            goWindowResize(windowPtr, width, height);
+        });
+    }
+}
+
+// Window delegate class - created once per process
+static Class getDarwinWindowDelegateClass() {
+    static Class delegateClass = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Create a new class that inherits from NSObject
+        delegateClass = objc_allocateClassPair([NSObject class], "DarwinWindowDelegate", 0);
+        
+        // Add ivar for darwinWindow pointer
+        class_addIvar(delegateClass, "darwinWindow", sizeof(void*), log2(sizeof(void*)), "^v");
+        
+        // Add windowDidResize: method
+        IMP windowDidResizeImp = imp_implementationWithBlock(^(id self, NSNotification* notification) {
+            void* darwinWindowPtr = NULL;
+            object_getInstanceVariable(self, "darwinWindow", &darwinWindowPtr);
+            handleWindowResize(darwinWindowPtr, notification);
+        });
+        class_addMethod(delegateClass, @selector(windowDidResize:), windowDidResizeImp, "v@:@");
+        
+        // Add windowShouldClose: method
+        IMP windowShouldCloseImp = imp_implementationWithBlock(^BOOL(id self, NSWindow* sender) {
+            return YES;
+        });
+        class_addMethod(delegateClass, @selector(windowShouldClose:), windowShouldCloseImp, "B@:@");
+        
+        // Register the class
+        objc_registerClassPair(delegateClass);
+    });
+    return delegateClass;
 }
 
 // Create a simple window
@@ -123,6 +158,13 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
         dw->needsRedraw = 1; // Start with redraw needed
         
+        // Create and set window delegate for resize events
+        Class delegateClass = getDarwinWindowDelegateClass();
+        id delegate = [[delegateClass alloc] init];
+        object_setInstanceVariable(delegate, "darwinWindow", dw);
+        [window setDelegate:delegate];
+        dw->windowDelegate = (void*)CFBridgingRetain(delegate);
+        
         // Set up mouse tracking for both moved and entered events
         void* windowPtr = goWindowPtr;
         NSEventMask eventMask = NSEventMaskMouseMoved | NSEventMaskMouseEntered | NSEventMaskMouseExited;
@@ -172,12 +214,18 @@ static void darwin_destroyWindow(DarwinWindow* dw) {
                     CFBridgingRelease(dw->imageLock);
                     dw->imageLock = NULL;
                 }
+                if (dw->windowDelegate) {
+                    id delegate = (__bridge_transfer id)dw->windowDelegate;
+                    object_setInstanceVariable(delegate, "darwinWindow", NULL);
+                    dw->windowDelegate = NULL;
+                }
                 if (dw->nsView) {
                     CFBridgingRelease(dw->nsView);
                     dw->nsView = NULL;
                 }
                 if (dw->nsWindow) {
                     NSWindow* window = (__bridge_transfer NSWindow*)dw->nsWindow;
+                    [window setDelegate:nil];
                     [window close];
                 }
             }
@@ -521,6 +569,40 @@ func goScheduleRedraw(windowPtr unsafe.Pointer) {
 	// Schedule redraw
 	window.ScheduleRedraw()
 	window.Redraw()
+}
+
+//export goWindowResize
+func goWindowResize(windowPtr unsafe.Pointer, width, height C.int) {
+	windowID := uintptr(windowPtr)
+	
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+		return
+	}
+	
+	window := handle.goWindow
+	w := int32(width)
+	h := int32(height)
+	
+	// Update window size
+	window.width = w
+	window.height = h
+	
+	// Update all widgets
+	for widget := range window.widgets {
+		widget.SetAllocation(0, 0, w, h)
+		widget.drawnHash = 0
+		widget.drawnHashes = nil
+		if widget.handler != nil {
+			widget.handler.Resize(widget, w, h, w, h)
+		}
+	}
+	
+	// Request redraw after resize
+	window.ScheduleRedraw()
 }
 
 func darwin_destroyWindow(handle *darwinWindowHandle) {
