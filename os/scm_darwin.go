@@ -1,10 +1,12 @@
-//go:build aix || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin
+// +build darwin
 
 package os
 
-import "golang.org/x/sys/unix"
-import "syscall"
+import (
+	"golang.org/x/sys/unix"
+	"syscall"
+)
 
 // SocketControlMessage is a socket control message
 type SocketControlMessage = syscall.SocketControlMessage
@@ -23,8 +25,10 @@ func ParseUnixRights(m *SocketControlMessage) (fds []int, err error) {
 	return syscall.ParseUnixRights(m)
 }
 
+// fallocate is not available on Darwin, use ftruncate instead
 func fallocate(fd int, mode uint32, off int64, size int64) error {
-	return syscall.Fallocate(fd, mode, off, size)
+	// Darwin doesn't have fallocate, use ftruncate to set file size
+	return syscall.Ftruncate(fd, off+size)
 }
 
 // UnixRights calls a system call
