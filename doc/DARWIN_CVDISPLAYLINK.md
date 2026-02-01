@@ -63,7 +63,9 @@ Successfully implemented CVDisplayLink-based continuous redraw loop for macOS, r
    - Hash-based comparison prevents redundant bitmap uploads
    - Only changed content is sent to the display
 
-## Key Fix: Reference Counting
+## Key Fixes
+
+### 1. Reference Counting for Cairo Surfaces
 
 The critical issue was that applications call `surface.Destroy()` on the surface returned by `WindowGetSurface()`. On Linux, this returns a new cairo surface reference, so destroying it doesn't affect the widget. On macOS, we were returning the widget directly, causing it to be destroyed.
 
@@ -73,6 +75,15 @@ The critical issue was that applications call `surface.Destroy()` on the surface
 - Widget only actually destroyed when counter reaches zero
 
 This matches the Linux behavior and allows applications to safely destroy surface references.
+
+### 2. Window Creation Before Event Loop
+
+The second critical issue was that window creation was using `dispatch_sync` to the main queue, but this would deadlock when called before the event loop started (which is the normal initialization sequence).
+
+**Solution:** Create windows directly without dispatch wrapper:
+- Windows are created synchronously on the calling thread
+- This works because window creation happens before `DisplayRun` starts the event loop
+- Once the event loop is running, all UI updates happen on the main thread via CVDisplayLink callbacks
 
 ## Benefits
 

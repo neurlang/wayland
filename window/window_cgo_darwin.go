@@ -70,7 +70,7 @@ static void runOnMainThread(void (^block)(void)) {
     if ([NSThread isMainThread]) {
         block();
     } else {
-        dispatch_sync(dispatch_get_main_queue(), block);
+        dispatch_async(dispatch_get_main_queue(), block);
     }
 }
 
@@ -80,37 +80,35 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
     __block NSWindow* window = nil;
     __block NSImageView* imageView = nil;
     
-    // MUST create window on main thread
-    runOnMainThread(^{
-        @autoreleasepool {
-            NSRect frame = NSMakeRect(100, 100, width, height);
-            window = [[NSWindow alloc]
-                initWithContentRect:frame
-                styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | 
-                          NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
-                backing:NSBackingStoreBuffered
-                defer:NO];
-            
-            [window setTitle:[NSString stringWithUTF8String:title]];
-            [window center];
-            [window setAcceptsMouseMovedEvents:YES];
-            
-            // Use NSImageView for displaying bitmap content
-            imageView = [[NSImageView alloc] initWithFrame:frame];
-            [imageView setImageScaling:NSImageScaleAxesIndependently];
-            [imageView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-            [imageView setImageFrameStyle:NSImageFrameNone];
-            [imageView setEditable:NO];
-            [imageView setAnimates:NO];
-            
-            // Set window background to match
-            [window setBackgroundColor:[NSColor blackColor]];
-            [window setOpaque:YES];
-            
-            [window setContentView:imageView];
-            [window makeKeyAndOrderFront:nil];
-        }
-    });
+    // Create window directly - called before event loop starts
+    @autoreleasepool {
+        NSRect frame = NSMakeRect(100, 100, width, height);
+        window = [[NSWindow alloc]
+            initWithContentRect:frame
+            styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | 
+                      NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)
+            backing:NSBackingStoreBuffered
+            defer:NO];
+        
+        [window setTitle:[NSString stringWithUTF8String:title]];
+        [window center];
+        [window setAcceptsMouseMovedEvents:YES];
+        
+        // Use NSImageView for displaying bitmap content
+        imageView = [[NSImageView alloc] initWithFrame:frame];
+        [imageView setImageScaling:NSImageScaleAxesIndependently];
+        [imageView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [imageView setImageFrameStyle:NSImageFrameNone];
+        [imageView setEditable:NO];
+        [imageView setAnimates:NO];
+        
+        // Set window background to match
+        [window setBackgroundColor:[NSColor blackColor]];
+        [window setOpaque:YES];
+        
+        [window setContentView:imageView];
+        [window makeKeyAndOrderFront:nil];
+    }
     
     @autoreleasepool {
         
@@ -274,7 +272,10 @@ static void darwin_resizeWindow(DarwinWindow* dw, int width, int height) {
 static void darwin_startDisplayLink(DarwinWindow* dw) {
     if (dw && dw->goWindowPtr && !dw->displayLink) {
         // Create display link
-        CVDisplayLinkCreateWithActiveCGDisplays(&dw->displayLink);
+        CVReturn ret = CVDisplayLinkCreateWithActiveCGDisplays(&dw->displayLink);
+        if (ret != kCVReturnSuccess) {
+            return;
+        }
         
         // Set the callback
         CVDisplayLinkSetOutputCallback(dw->displayLink, &displayLinkCallback, dw);
