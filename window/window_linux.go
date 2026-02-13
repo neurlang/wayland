@@ -477,6 +477,7 @@ type Window struct {
 	frame *windowFrame
 
 	decoration *WindowDecoration
+	decorationsRequested bool
 
 	fullscreenHandler FullscreenHandler
 	closeHandler      CloseHandler
@@ -564,6 +565,32 @@ func (Window *Window) ToplevelConfigure(
 	} else if (Window.savedAllocation.Width > 0) &&
 		(Window.savedAllocation.Height > 0) {
 		Window.ScheduleResize(Window.savedAllocation.Width, Window.savedAllocation.Height)
+	}
+	
+	// Update decorations based on window state
+	// Only after we have a valid size
+	if Window.decoration != nil && Window.mainSurface != nil && 
+		Window.mainSurface.allocation.Width > 0 && 
+		Window.mainSurface.allocation.Height > 0 {
+		
+		// Update active state
+		Window.decoration.SetActive(Window.focused == 1)
+		
+		// Show/hide decorations based on state
+		if Window.fullscreen {
+			// Hide decorations in fullscreen
+			Window.decoration.Hide()
+		} else if Window.decoration.shadowSurf == nil {
+			// First time showing - create surfaces
+			if err := Window.decoration.Show(); err != nil {
+				// If decoration fails, disable it
+				Window.decoration.Destroy()
+				Window.decoration = nil
+			}
+		} else {
+			// Already shown, just redraw
+			Window.decoration.Redraw()
+		}
 	}
 }
 
@@ -2195,6 +2222,12 @@ func surfaceDestroy(surface *surface) {
 
 //line 1577
 func (Window *Window) Destroy() {
+	
+	// Clean up decorations first
+	if Window.decoration != nil {
+		Window.decoration.Destroy()
+		Window.decoration = nil
+	}
 
 	if Window.xdgToplevel != nil {
 		_ = Window.xdgToplevel.Destroy()
@@ -2856,7 +2889,29 @@ func windowDoResize(Window *Window) {
 		Window.pendingAllocation.Height)
 
 	surfaceResize(Window.mainSurface)
+	
+	// Create or update decorations
+	if Window.Display.subcompositor != nil && !Window.fullscreen &&
+		Window.pendingAllocation.Width > 0 && Window.pendingAllocation.Height > 0 {
 
+		if Window.decorationsRequested && Window.decoration == nil {
+			Window.decorationsRequested = false
+			Window.decoration = NewWindowDecoration(Window)
+			if err := Window.decoration.Show(); err != nil {
+				Window.decoration = nil
+			} else {
+				Window.decoration.SetActive(Window.focused == 1)
+			}
+		} else if Window.decoration != nil && Window.decoration.shadowSurf != nil {
+			Window.decoration.Destroy()
+			Window.decoration = NewWindowDecoration(Window)
+			if err := Window.decoration.Show(); err != nil {
+				Window.decoration = nil
+			} else {
+				Window.decoration.SetActive(Window.focused == 1)
+			}
+		}
+	}
 	if (!Window.fullscreen) && (!Window.maximized) {
 		Window.savedAllocation = Window.pendingAllocation
 	}
@@ -3200,6 +3255,10 @@ func Create(Display *Display) *Window {
 		Window.InhibitRedraw()
 
 		_ = Window.mainSurface.surface_.Commit()
+		
+		// Decorations will be created after first configure/resize
+		// when we know the window dimensions
+		Window.decorationsRequested = true
 	}
 
 	return Window
@@ -3208,6 +3267,45 @@ func Create(Display *Display) *Window {
 // line 5592
 func (Window *Window) SetBufferType(t int32) {
 	Window.mainSurface.bufferType = t
+}
+
+// EnableDecorations creates and shows window decorations
+func (Window *Window) EnableDecorations() error {
+	if Window.Display.subcompositor == nil {
+		return fmt.Errorf("subcompositor not available")
+	}
+	if Window.decoration != nil {
+		return nil
+	}
+
+	var width, height int32
+	if Window.mainSurface != nil && Window.mainSurface.allocation.Width > 0 {
+		width = Window.mainSurface.allocation.Width
+		height = Window.mainSurface.allocation.Height
+	} else if Window.pendingAllocation.Width > 0 {
+		width = Window.pendingAllocation.Width
+		height = Window.pendingAllocation.Height
+	} else {
+		return fmt.Errorf("window not yet configured")
+	}
+	_ = width
+	_ = height
+
+	Window.decoration = NewWindowDecoration(Window)
+	if err := Window.decoration.Show(); err != nil {
+		Window.decoration = nil
+		return err
+	}
+	Window.decoration.SetActive(Window.focused == 1)
+	return nil
+}
+
+// DisableDecorations removes window decorations
+func (Window *Window) DisableDecorations() {
+	if Window.decoration != nil {
+		Window.decoration.Destroy()
+		Window.decoration = nil
+	}
 }
 
 func minInt(a, b int) int {
