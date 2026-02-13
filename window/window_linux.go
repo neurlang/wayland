@@ -476,6 +476,8 @@ type Window struct {
 
 	frame *windowFrame
 
+	decoration *WindowDecoration
+
 	fullscreenHandler FullscreenHandler
 	closeHandler      CloseHandler
 	dataHandler       DataHandler
@@ -2350,6 +2352,7 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 
 	case "text_cursor_position":
 	case "wl_subcompositor":
+		d.subcompositor = wlclient.RegistryBindSubcompositorInterface(d.registry, id, 1)
 
 	default:
 	}

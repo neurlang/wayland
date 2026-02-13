@@ -281,6 +281,13 @@ func RegistryBindShmInterface(r *wl.Registry, name uint32, version uint32) *wl.S
 	return s
 }
 
+func RegistryBindSubcompositorInterface(r *wl.Registry, name uint32, version uint32) *wl.Subcompositor {
+	ctx, _ := wl.GetUserData[wl.Context](r)
+	s := wl.NewSubcompositor(ctx)
+	_ = r.Bind(name, "wl_subcompositor", version, s)
+	return s
+}
+
 func RegistryBindDataDeviceManagerInterface(
 	r *wl.Registry,
 	name uint32,
