@@ -21,12 +21,12 @@ type Window struct {
 	widgets        map[*Widget]struct{}
 	input          *Input
 	parent_display *Display
+	width          int32
+	height         int32
 	inhibited      bool
 	maximized      bool
 	fullscreen     bool
-	borderless     bool
-	width          int32
-	height         int32
+	decorated      bool  // Whether window has decorations (title bar, etc.)
 	
 	Display *Display
 	Popup   *xdg.Popup
@@ -67,7 +67,7 @@ func (d *Display) Exit() {
 	darwin_stopMainLoop()
 }
 
-// Create creates a new Window
+// Create creates a new Window with decorations
 func Create(d *Display) *Window {
 	w := &Window{
 		parent_display: d,
@@ -76,7 +76,7 @@ func Create(d *Display) *Window {
 		input:          &Input{},
 		width:          800,
 		height:         600,
-		borderless:     false,
+		decorated:      true,  // Window has decorations
 		darwinHandle:   nil, // Don't create window yet - wait for first resize
 	}
 	
@@ -88,7 +88,7 @@ func Create(d *Display) *Window {
 	return w
 }
 
-// CreateUndecorated creates a new borderless Window without decorations
+// CreateUndecorated creates a new Window without decorations (borderless)
 func CreateUndecorated(d *Display) *Window {
 	w := &Window{
 		parent_display: d,
@@ -97,7 +97,7 @@ func CreateUndecorated(d *Display) *Window {
 		input:          &Input{},
 		width:          800,
 		height:         600,
-		borderless:     true,
+		decorated:      false,  // Window has no decorations
 		darwinHandle:   nil, // Don't create window yet - wait for first resize
 	}
 	
@@ -188,11 +188,7 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 	
 	// Create window on first resize call with the correct size
 	if w.darwinHandle == nil {
-		if w.borderless {
-			w.darwinHandle = darwin_createBorderlessWindow(w.width, w.height, "Window", w)
-		} else {
-			w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w)
-		}
+		w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w.decorated, w)
 		// Start display link after window is created
 		darwin_startDisplayLink(w.darwinHandle)
 	} else {
