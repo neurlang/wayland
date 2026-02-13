@@ -16,7 +16,7 @@ import (
 
 // Decoration constants
 const (
-	ShadowMargin   = 24 // graspable part of the border
+	ShadowMargin   = 8  // graspable part of the border
 	TitleHeight    = 24
 	ButtonWidth    = 32
 	SymDim         = 14
@@ -25,13 +25,13 @@ const (
 
 // Colors (RGBA)
 var (
-	ColTitle       = color.RGBA{0x08, 0x07, 0x06, 0xFF}
+	ColTitle       = color.RGBA{0xEE, 0xEE, 0xEE, 0xFF}
 	ColTitleInact  = color.RGBA{0x30, 0x30, 0x30, 0xFF}
-	ColButtonMin   = color.RGBA{0xFF, 0xBB, 0x00, 0xFF}
-	ColButtonMax   = color.RGBA{0x23, 0x88, 0x23, 0xFF}
-	ColButtonClose = color.RGBA{0xFB, 0x65, 0x42, 0xFF}
+	ColButtonMin   = color.RGBA{0x08, 0x07, 0x06, 0xFF}
+	ColButtonMax   = color.RGBA{0x08, 0x07, 0x06, 0xFF}
+	ColButtonClose = color.RGBA{0x08, 0x07, 0x06, 0xFF}
 	ColButtonInact = color.RGBA{0x40, 0x40, 0x40, 0xFF}
-	ColSym         = color.RGBA{0xF4, 0xF4, 0xEF, 0xFF}
+	ColSym         = color.RGBA{0x08, 0x07, 0x06, 0xFF}
 	ColSymAct      = color.RGBA{0x20, 0x32, 0x2A, 0xFF}
 	ColSymInact    = color.RGBA{0x90, 0x90, 0x90, 0xFF}
 )
@@ -92,12 +92,13 @@ func NewWindowDecoration(window *Window) *WindowDecoration {
 // createShadowBlur creates a pre-rendered blurred shadow tile
 func (d *WindowDecoration) createShadowBlur() {
 	const size = 128
-	const boundary = 32
+	const boundary = 20 // Smaller boundary = larger shadow area
 
 	d.shadowBlur = image.NewRGBA(image.Rect(0, 0, size, size))
 	dc := gg.NewContextForRGBA(d.shadowBlur)
 
-	dc.SetColor(color.Black)
+	// Draw fully opaque black - blur will make it semi-transparent at edges
+	dc.SetColor(color.RGBA{0, 0, 0, 255})
 	dc.DrawRectangle(float64(boundary), float64(boundary),
 		float64(size-2*boundary), float64(size-2*boundary))
 	dc.Fill()
@@ -152,6 +153,8 @@ func (d *WindowDecoration) createShadowSurface() error {
 		contentHeight = d.window.pendingAllocation.Height
 	}
 
+	fmt.Printf("DEBUG: Shadow surface content size: %dx%d\n", contentWidth, contentHeight)
+
 	if contentWidth <= 0 || contentHeight <= 0 {
 		return fmt.Errorf("invalid content dimensions: %dx%d", contentWidth, contentHeight)
 	}
@@ -164,6 +167,8 @@ func (d *WindowDecoration) createShadowSurface() error {
 	height := contentHeight + 2*ShadowMargin + TitleHeight
 	x := int32(-ShadowMargin)
 	y := int32(-(ShadowMargin + TitleHeight))
+
+	fmt.Printf("DEBUG: Shadow surface total size: %dx%d at (%d,%d)\n", width, height, x, y)
 
 	surf, err := d.createDecorationSurface(x, y, width, height)
 	if err != nil {
@@ -247,12 +252,36 @@ func (d *WindowDecoration) drawShadow() {
 	dc.SetColor(color.Transparent)
 	dc.Clear()
 
-	renderShadow(dc, d.shadowBlur,
-		-ShadowMargin/2, -ShadowMargin/2,
-		int(surf.width)+ShadowMargin, int(surf.height)+ShadowMargin,
-		ShadowBlurSize, ShadowBlurSize)
+	// Draw shadow as a gradient from edges inward
+	shadowSize := float64(ShadowMargin)
+	w := float64(surf.width)
+	h := float64(surf.height)
+	
+	// Draw shadow on all four sides
+	for i := 0; i < int(shadowSize); i++ {
+		fi := float64(i)
+		alpha := uint8(255 * (fi/shadowSize) * 0.5) // Fade from 0% to 50%, darkest near window
+		shadowColor := color.RGBA{0, 0, 0, alpha}
+		dc.SetColor(shadowColor)
+		
+		// Top shadow (excluding left and right corners at this level)
+		dc.DrawRectangle(fi+1, fi, w-2*fi-2, 1)
+		dc.Fill()
+		
+		// Bottom shadow (excluding left and right corners at this level)
+		dc.DrawRectangle(fi+1, h-fi-1, w-2*fi-2, 1)
+		dc.Fill()
+		
+		// Left shadow (full height)
+		dc.DrawRectangle(fi, fi, 1, h-2*fi)
+		dc.Fill()
+		
+		// Right shadow (full height)
+		dc.DrawRectangle(w-fi-1, fi, 1, h-2*fi)
+		dc.Fill()
+	}
 
-	// Mask out the content area
+	// Mask out the content area (make it transparent)
 	dc.SetColor(color.Transparent)
 	dc.DrawRectangle(float64(ShadowMargin), float64(ShadowMargin+TitleHeight),
 		float64(d.window.pendingAllocation.Width),
