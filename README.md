@@ -1,8 +1,12 @@
 # wayland
 
-[![GoReportCard](https://goreportcard.com/badge/github.com/neurlang/wayland)](https://goreportcard.com/report/github.com/neurlang/wayland)
-
 [![GoDoc reference](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/neurlang/wayland)
+
+## Window Package OS Support
+
+| Linux | Wine    | MacOs   |
+|-------|---------|---------|
+| ![L](lin.gif?raw=true) | ![L](win.gif?raw=true) | ![L](mac.gif?raw=true) |
 
 
 Golang Wayland
