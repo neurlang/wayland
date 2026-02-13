@@ -305,6 +305,9 @@ func (w *Window) SeMaximized(maximized bool) error {
 	return nil
 }
 
+func (w *Window) SetMaximized(maximized bool) error {
+	return w.SeMaximized(maximized)
+}
 
 func (w *Window) SetMinimized() error {
 	w.form.Minimise()

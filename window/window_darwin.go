@@ -124,6 +124,11 @@ func (w *Window) SeMaximized(maximized bool) error {
 	return nil
 }
 
+// SetMaximized sets the maximized state (calls SeMaximized for compatibility)
+func (w *Window) SetMaximized(maximized bool) error {
+	return w.SeMaximized(maximized)
+}
+
 // ToggleMaximized toggles the maximized state
 func (w *Window) ToggleMaximized() error {
 	w.maximized = !w.maximized
