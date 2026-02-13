@@ -25,15 +25,14 @@ const (
 
 // Colors (RGBA)
 var (
-	ColTitle       = color.RGBA{0xEE, 0xEE, 0xEE, 0xFF}
-	ColTitleInact  = color.RGBA{0x30, 0x30, 0x30, 0xFF}
-	ColButtonMin   = color.RGBA{0x08, 0x07, 0x06, 0xFF}
-	ColButtonMax   = color.RGBA{0x08, 0x07, 0x06, 0xFF}
-	ColButtonClose = color.RGBA{0x08, 0x07, 0x06, 0xFF}
-	ColButtonInact = color.RGBA{0x40, 0x40, 0x40, 0xFF}
-	ColSym         = color.RGBA{0x08, 0x07, 0x06, 0xFF}
-	ColSymAct      = color.RGBA{0x20, 0x32, 0x2A, 0xFF}
-	ColSymInact    = color.RGBA{0x90, 0x90, 0x90, 0xFF}
+	ColTitle          = color.RGBA{0xEB, 0xEB, 0xEB, 0xFF} // Light gray titlebar
+	ColTitleInact     = color.RGBA{0xF6, 0xF5, 0xF4, 0xFF} // Very light gray when inactive
+	ColButtonMinHover = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColButtonMaxHover = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColButtonCloseHover = color.RGBA{0xE0, 0x1B, 0x24, 0xFF} // Red on hover (GNOME style)
+	ColSym            = color.RGBA{0x2E, 0x34, 0x36, 0xFF} // Dark gray/black for symbols
+	ColSymClose       = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
+	ColSymInact       = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
 )
 
 // Component types
@@ -71,12 +70,16 @@ type decorationBuffer struct {
 
 // WindowDecoration manages client-side decorations
 type WindowDecoration struct {
-	window      *Window
-	shadowSurf  *DecorationSurface
-	titleSurf   *DecorationSurface
-	shadowBlur  *image.RGBA
-	active      bool
-	hoverButton componentType
+	window       *Window
+	shadowSurf   *DecorationSurface
+	titleSurf    *DecorationSurface
+	shadowBlur   *image.RGBA
+	active       bool
+	hoverButton  componentType
+	pointerX     float32
+	pointerY     float32
+	pointerSerial uint32
+	isDragging   bool
 }
 
 // NewWindowDecoration creates a new decoration manager
@@ -211,11 +214,14 @@ func (d *WindowDecoration) createDecorationSurface(x, y, width, height int32) (*
 	wlSubsurf, err := display.subcompositor.GetSubsurface(wlSurf, parent)
 	if err != nil {
 		_ = wlSurf.Destroy()
-		return nil, fmt.Errorf("GetSubsurface failed: %w", err)
+		return nil, fmt.Errorf("CreateSurface failed: %w", err)
 	}
 
 	_ = wlSubsurf.SetPosition(x, y)
 	_ = wlSubsurf.PlaceBelow(parent)
+	
+	// Register surface in the surface2window map for input handling
+	display.surface2window[wlSurf] = d.window
 
 	return &DecorationSurface{
 		wlSurface:    wlSurf,
@@ -373,24 +379,26 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, 
 	}
 
 	var btnCol color.Color
+	var symCol color.Color
 	isHover := d.hoverButton == btnType
 
+	// Determine button background color
 	switch btnType {
 	case ComponentButtonMin:
 		if isHover && d.active {
-			btnCol = ColButtonMin
+			btnCol = ColButtonMinHover
 		} else {
 			btnCol = colTitle
 		}
 	case ComponentButtonMax:
 		if isHover && d.active {
-			btnCol = ColButtonMax
+			btnCol = ColButtonMaxHover
 		} else {
 			btnCol = colTitle
 		}
 	case ComponentButtonClose:
 		if isHover && d.active {
-			btnCol = ColButtonClose
+			btnCol = ColButtonCloseHover
 		} else {
 			btnCol = colTitle
 		}
@@ -398,43 +406,50 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, 
 		btnCol = colTitle
 	}
 
+	// Draw button background
 	dc.SetColor(btnCol)
 	dc.DrawRectangle(float64(x), float64(y), ButtonWidth, TitleHeight)
 	dc.Fill()
 
-	symCol := ColSym
+	// Determine symbol color
 	if !d.active {
 		symCol = ColSymInact
-	} else if isHover {
-		symCol = ColSymAct
+	} else if btnType == ComponentButtonClose && isHover {
+		// White symbol on red close button when hovering
+		symCol = ColSymClose
+	} else {
+		symCol = ColSym
 	}
 
 	dc.SetColor(symCol)
-	dc.SetLineWidth(1)
+	dc.SetLineWidth(1.5) // Slightly thicker lines for better visibility
 
 	symX := float64(x) + ButtonWidth/2.0 - SymDim/2.0 + 0.5
 	symY := float64(y) + TitleHeight/2.0 - SymDim/2.0 + 0.5
 
 	switch btnType {
 	case ComponentButtonMin:
+		// Horizontal line for minimize
 		dc.DrawLine(symX, symY+SymDim-1, symX+SymDim-1, symY+SymDim-1)
 		dc.Stroke()
 	case ComponentButtonMax:
 		if d.window.maximized {
-			const small = 12
-			dc.DrawRectangle(symX, symY+SymDim-small, small-1, small-1)
+			// Two overlapping squares for unmaximize
+			const small = 10
+			const offset = 2
+			// Back square
+			dc.DrawRectangle(symX+offset, symY+offset, small, small)
 			dc.Stroke()
-			dc.MoveTo(symX+SymDim-small, symY+SymDim-small)
-			dc.LineTo(symX+SymDim-small, symY)
-			dc.LineTo(symX+SymDim-1, symY)
-			dc.LineTo(symX+SymDim-1, symY+small-1)
-			dc.LineTo(symX+small-1, symY+small-1)
+			// Front square
+			dc.DrawRectangle(symX, symY, small, small)
 			dc.Stroke()
 		} else {
+			// Single square for maximize
 			dc.DrawRectangle(symX, symY, SymDim-1, SymDim-1)
 			dc.Stroke()
 		}
 	case ComponentButtonClose:
+		// X symbol for close
 		dc.DrawLine(symX, symY, symX+SymDim-1, symY+SymDim-1)
 		dc.DrawLine(symX+SymDim-1, symY, symX, symY+SymDim-1)
 		dc.Stroke()
@@ -482,6 +497,8 @@ func (d *WindowDecoration) destroySurface(surf *DecorationSurface) {
 		surf.wlSubsurface = nil
 	}
 	if surf.wlSurface != nil {
+		// Unregister from surface2window map
+		delete(d.window.Display.surface2window, surf.wlSurface)
 		_ = surf.wlSurface.Destroy()
 		surf.wlSurface = nil
 	}
@@ -714,4 +731,127 @@ func renderShadow(dc *gg.Context, shadowTile *image.RGBA,
 		}
 		dc.Pop()
 	}
+}
+
+// HandlePointerEnter handles pointer entering the titlebar
+func (d *WindowDecoration) HandlePointerEnter(serial uint32, x, y float32) {
+	d.pointerSerial = serial
+	d.pointerX = x
+	d.pointerY = y
+	d.updateHoverButton()
+}
+
+// HandlePointerLeave handles pointer leaving the titlebar
+func (d *WindowDecoration) HandlePointerLeave() {
+	if d.hoverButton != ComponentNone {
+		d.SetHoverButton(ComponentNone)
+	}
+}
+
+// HandlePointerMotion handles pointer motion over the titlebar
+func (d *WindowDecoration) HandlePointerMotion(x, y float32) {
+	d.pointerX = x
+	d.pointerY = y
+	d.updateHoverButton()
+}
+
+// HandlePointerButton handles pointer button clicks on the titlebar
+func (d *WindowDecoration) HandlePointerButton(serial uint32, button uint32, state wl.PointerButtonState) {
+	d.pointerSerial = serial
+	
+	if state == wl.PointerButtonStatePressed && button == 272 { // Left click (BTN_LEFT)
+		switch d.hoverButton {
+		case ComponentButtonClose:
+			d.handleClose()
+		case ComponentButtonMax:
+			d.handleMaximize()
+		case ComponentButtonMin:
+			d.handleMinimize()
+		case ComponentTitle:
+			d.handleDragStart(serial)
+		}
+	}
+}
+
+// updateHoverButton determines which button the pointer is over
+func (d *WindowDecoration) updateHoverButton() {
+	if d.titleSurf == nil {
+		return
+	}
+	
+	// Pointer coordinates are relative to the titlebar surface
+	x := d.pointerX
+	y := d.pointerY
+	
+	// Check if pointer is within titlebar bounds
+	if y < 0 || y >= float32(TitleHeight) || x < 0 || x >= float32(d.titleSurf.width) {
+		d.SetHoverButton(ComponentNone)
+		return
+	}
+	
+	// Check buttons (from right to left)
+	closeX := float32(d.titleSurf.width - ButtonWidth)
+	maxX := float32(d.titleSurf.width - 2*ButtonWidth)
+	minX := float32(d.titleSurf.width - 3*ButtonWidth)
+	
+	if x >= closeX {
+		d.SetHoverButton(ComponentButtonClose)
+	} else if x >= maxX {
+		d.SetHoverButton(ComponentButtonMax)
+	} else if x >= minX {
+		d.SetHoverButton(ComponentButtonMin)
+	} else {
+		d.SetHoverButton(ComponentTitle)
+	}
+}
+
+// handleDragStart initiates window dragging
+func (d *WindowDecoration) handleDragStart(serial uint32) {
+	if d.window.xdgToplevel == nil {
+		return
+	}
+	
+	// Get the seat from the display's input list
+	if len(d.window.Display.inputList) == 0 {
+		return
+	}
+	input := d.window.Display.inputList[0]
+	if input.seat == nil {
+		return
+	}
+	
+	// Start interactive move
+	_ = d.window.xdgToplevel.Move(input.seat, serial)
+}
+
+// handleClose closes the window
+func (d *WindowDecoration) handleClose() {
+	if d.window.closeHandler != nil {
+		d.window.closeHandler.Close()
+	} else {
+		// Default behavior: exit the display (same as compositor close event)
+		d.window.Display.Exit()
+	}
+}
+
+// handleMaximize toggles window maximization
+func (d *WindowDecoration) handleMaximize() {
+	if d.window.xdgToplevel == nil {
+		return
+	}
+	
+	if d.window.maximized {
+		_ = d.window.xdgToplevel.UnsetMaximized()
+	} else {
+		_ = d.window.xdgToplevel.SetMaximized()
+	}
+}
+
+// handleMinimize minimizes the window
+func (d *WindowDecoration) handleMinimize() {
+	if d.window.xdgToplevel == nil {
+		return
+	}
+	
+	_ = d.window.xdgToplevel.SetMinimized()
 }

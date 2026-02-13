@@ -1061,8 +1061,28 @@ func (input *Input) PointerEnter(
 
 	var Window = input.Display.surface2window[surface]
 
-	if Window == nil || surface != Window.mainSurface.surface_ {
+	if Window == nil {
+		return
+	}
 
+	// Check if this is a decoration surface
+	if Window.decoration != nil {
+		if Window.decoration.titleSurf != nil && surface == Window.decoration.titleSurf.wlSurface {
+			input.Display.serial = serial
+			input.pointerEnterSerial = serial
+			input.pointerFocus = Window
+			input.sx = sx
+			input.sy = sy
+			Window.decoration.HandlePointerEnter(serial, sx, sy)
+			return
+		}
+		if Window.decoration.shadowSurf != nil && surface == Window.decoration.shadowSurf.wlSurface {
+			// Shadow surface - ignore input
+			return
+		}
+	}
+
+	if surface != Window.mainSurface.surface_ {
 		//		DBG("Ignoring Input event from subsurface %p\n", surface);
 		return
 	}
@@ -1083,6 +1103,15 @@ func (input *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
 func (input *Input) PointerLeave(wlPointer *wl.Pointer, serial uint32, wlSurface *wl.Surface) {
 
 	input.Display.serial = serial
+	
+	// Check if leaving a decoration surface
+	if input.pointerFocus != nil && input.pointerFocus.decoration != nil {
+		if input.pointerFocus.decoration.titleSurf != nil && 
+			wlSurface == input.pointerFocus.decoration.titleSurf.wlSurface {
+			input.pointerFocus.decoration.HandlePointerLeave()
+		}
+	}
+	
 	inputRemovePointerFocus(input)
 
 }
@@ -1116,6 +1145,15 @@ func (input *Input) PointerButton(
 	var state = wl.PointerButtonState(stateW)
 
 	input.Display.serial = serial
+	
+	// Check if button event is on a decoration surface
+	if input.pointerFocus != nil && input.pointerFocus.decoration != nil {
+		if input.pointerFocus.decoration.hoverButton != ComponentNone {
+			input.pointerFocus.decoration.HandlePointerButton(serial, button, state)
+			return
+		}
+	}
+	
 	if input.focusWidget != nil && input.grab == nil &&
 		state == wl.PointerButtonStatePressed {
 		inputGrab(input, input.focusWidget, button)
@@ -2564,6 +2602,15 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 
 	Input.sx = sx
 	Input.sy = sy
+	
+	// Check if pointer is over a decoration surface
+	if Window.decoration != nil && Window.decoration.titleSurf != nil {
+		// If we're tracking decoration input, route motion there
+		if Window.decoration.hoverButton != ComponentNone || Window.decoration.isDragging {
+			Window.decoration.HandlePointerMotion(sx, sy)
+			return
+		}
+	}
 
 	// when making the Window smaller - e.g. after an unmaximise we might
 	// * still have a pending motion event that the compositor has picked
