@@ -146,8 +146,118 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         [window setContentView:imageView];
         [window makeKeyAndOrderFront:nil];
     }
+        
+        // Create DarwinWindow struct
+        DarwinWindow* dw = malloc(sizeof(DarwinWindow));
+        dw->nsWindow = (void*)CFBridgingRetain(window);
+        dw->nsView = (void*)CFBridgingRetain(imageView);
+        dw->goWindowPtr = goWindowPtr;
+        dw->displayLink = NULL;
+        dw->eventMonitor = NULL;
+        dw->buttonMonitor = NULL;
+        dw->currentImage = NULL;
+        dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
+        dw->needsRedraw = 1; // Start with redraw needed
+        
+        // Create and set window delegate for resize events
+        Class delegateClass = getDarwinWindowDelegateClass();
+        id delegate = [[delegateClass alloc] init];
+        object_setInstanceVariable(delegate, "darwinWindow", dw);
+        [window setDelegate:delegate];
+        dw->windowDelegate = (void*)CFBridgingRetain(delegate);
+        
+        // Set up mouse tracking for both moved and entered events
+        void* windowPtr = goWindowPtr;
+        NSEventMask eventMask = NSEventMaskMouseMoved | NSEventMaskMouseEntered | NSEventMaskMouseExited;
+        id eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:eventMask
+            handler:^NSEvent*(NSEvent* event) {
+                if ([event window] == window) {
+                    NSPoint locationInWindow = [event locationInWindow];
+                    NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
+                    
+                    // Flip Y coordinate to match Cairo's top-down coordinate system
+                    float y = [imageView bounds].size.height - locationInView.y;
+                    
+                    goMouseMotion(windowPtr, (float)locationInView.x, y);
+                }
+                return event;
+            }];
+        dw->eventMonitor = (void*)CFBridgingRetain(eventMonitor);
+        
+        // Set up mouse button tracking
+        NSEventMask buttonMask = NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | 
+                                 NSEventMaskRightMouseDown | NSEventMaskRightMouseUp;
+        id buttonMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:buttonMask
+            handler:^NSEvent*(NSEvent* event) {
+                if ([event window] == window) {
+                    NSPoint locationInWindow = [event locationInWindow];
+                    NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
+                    
+                    // Flip Y coordinate to match Cairo's top-down coordinate system
+                    float y = [imageView bounds].size.height - locationInView.y;
+                    
+                    int button = 0;
+                    int state = 0;
+                    
+                    NSEventType eventType = [event type];
+                    if (eventType == NSEventTypeLeftMouseDown) {
+                        button = 272; // Left button (BTN_LEFT in Linux)
+                        state = 1;    // Pressed
+                    } else if (eventType == NSEventTypeLeftMouseUp) {
+                        button = 272;
+                        state = 0;    // Released
+                    } else if (eventType == NSEventTypeRightMouseDown) {
+                        button = 273; // Right button (BTN_RIGHT in Linux)
+                        state = 1;
+                    } else if (eventType == NSEventTypeRightMouseUp) {
+                        button = 273;
+                        state = 0;
+                    }
+                    
+                    goMouseButton(windowPtr, button, state, (float)locationInView.x, y);
+                }
+                return event;
+            }];
+        dw->buttonMonitor = (void*)CFBridgingRetain(buttonMonitor);
+        
+        return dw;
+    }
+}
+
+// Create borderless window (no title bar, no decorations)
+static DarwinWindow* darwin_createBorderlessWindow(int width, int height, const char* title, void* goWindowPtr) {
+    __block DarwinWindow* dw = NULL;
+    __block NSWindow* window = nil;
+    __block NSImageView* imageView = nil;
     
+    // Create borderless window
     @autoreleasepool {
+        NSRect frame = NSMakeRect(100, 100, width, height);
+        window = [[NSWindow alloc]
+            initWithContentRect:frame
+            styleMask:NSWindowStyleMaskBorderless
+            backing:NSBackingStoreBuffered
+            defer:NO];
+        
+        [window setTitle:[NSString stringWithUTF8String:title]];
+        [window center];
+        [window setAcceptsMouseMovedEvents:YES];
+        
+        // Use NSImageView for displaying bitmap content
+        imageView = [[NSImageView alloc] initWithFrame:frame];
+        [imageView setImageScaling:NSImageScaleAxesIndependently];
+        [imageView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [imageView setImageFrameStyle:NSImageFrameNone];
+        [imageView setEditable:NO];
+        [imageView setAnimates:NO];
+        
+        // Set window background to match
+        [window setBackgroundColor:[NSColor blackColor]];
+        [window setOpaque:YES];
+        
+        [window setContentView:imageView];
+        [window makeKeyAndOrderFront:nil];
+    }
         
         // Create DarwinWindow struct
         DarwinWindow* dw = malloc(sizeof(DarwinWindow));
@@ -561,6 +671,32 @@ func darwin_createWindow(width, height int32, title string, goWindow *Window) *d
 	
 	// Pass the ID as a pointer (safe to pass to C)
 	cWindow := C.darwin_createWindow(C.int(width), C.int(height), cTitle, unsafe.Pointer(windowID))
+	
+	handle := &darwinWindowHandle{
+		cWindow:  cWindow,
+		goWindow: goWindow,
+		windowID: windowID,
+	}
+	
+	windowMutex.Lock()
+	windowRegistry[windowID] = handle
+	windowMutex.Unlock()
+	
+	return handle
+}
+
+func darwin_createBorderlessWindow(width, height int32, title string, goWindow *Window) *darwinWindowHandle {
+	cTitle := C.CString(title)
+	defer C.free(unsafe.Pointer(cTitle))
+	
+	// Allocate a unique ID for this window
+	windowMutex.Lock()
+	windowID := nextWindowID
+	nextWindowID++
+	windowMutex.Unlock()
+	
+	// Pass the ID as a pointer (safe to pass to C)
+	cWindow := C.darwin_createBorderlessWindow(C.int(width), C.int(height), cTitle, unsafe.Pointer(windowID))
 	
 	handle := &darwinWindowHandle{
 		cWindow:  cWindow,

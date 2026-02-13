@@ -51,6 +51,31 @@ func Create(d *Display) *Window {
 	return w
 }
 
+func CreateUndecorated(d *Display) *Window {
+	// Create a borderless window using WS_POPUP style
+	form := winc.NewCustomForm(nil, 0, w32.WS_POPUP|w32.WS_VISIBLE)
+	form.Center()
+
+	form.Show()
+
+	w := &Window{form: form, parent_display: d}
+	form.OnClose().Bind(func(arg *winc.Event) {
+		d.count--
+		for widget := range w.widgets {
+			widget.destroyed = true
+		}
+		if d.count == 0 {
+			winc.Exit()
+		} else {
+			form.Close()
+		}
+	})
+
+	d.count++
+
+	return w
+}
+
 func (w *Window) SetKeyboardHandler(t KeyboardHandler) {
 
 	w.input = &Input{}

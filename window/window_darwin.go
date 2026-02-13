@@ -24,6 +24,7 @@ type Window struct {
 	inhibited      bool
 	maximized      bool
 	fullscreen     bool
+	borderless     bool
 	width          int32
 	height         int32
 	
@@ -75,6 +76,28 @@ func Create(d *Display) *Window {
 		input:          &Input{},
 		width:          800,
 		height:         600,
+		borderless:     false,
+		darwinHandle:   nil, // Don't create window yet - wait for first resize
+	}
+	
+	d.mu.Lock()
+	d.windows = append(d.windows, w)
+	d.count++
+	d.mu.Unlock()
+	
+	return w
+}
+
+// CreateUndecorated creates a new borderless Window without decorations
+func CreateUndecorated(d *Display) *Window {
+	w := &Window{
+		parent_display: d,
+		Display:        d,
+		widgets:        make(map[*Widget]struct{}),
+		input:          &Input{},
+		width:          800,
+		height:         600,
+		borderless:     true,
 		darwinHandle:   nil, // Don't create window yet - wait for first resize
 	}
 	
@@ -165,7 +188,11 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 	
 	// Create window on first resize call with the correct size
 	if w.darwinHandle == nil {
-		w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w)
+		if w.borderless {
+			w.darwinHandle = darwin_createBorderlessWindow(w.width, w.height, "Window", w)
+		} else {
+			w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w)
+		}
 		// Start display link after window is created
 		darwin_startDisplayLink(w.darwinHandle)
 	} else {

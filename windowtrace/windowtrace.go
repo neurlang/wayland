@@ -66,6 +66,15 @@ func Create(d *Display) *Window {
 	return w
 }
 
+func CreateUndecorated(d *Display) *Window {
+	println("func CreateUndecorated")
+	w := &Window{
+		Window:  (window.CreateUndecorated((*window.Display)(d))),
+		Display: d,
+	}
+	return w
+}
+
 func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 	println("func SurfaceEnter")
 	window.SurfaceEnter(wlSurface, wlOutput)

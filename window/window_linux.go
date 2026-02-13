@@ -3311,13 +3311,49 @@ func Create(Display *Display) *Window {
 	return Window
 }
 
+// CreateUndecorated creates a window without client-side decorations
+func CreateUndecorated(Display *Display) *Window {
+	var Window = windowCreateInternal(Display, 0)
+
+	if Window.Display.xdgShell != nil {
+		surf, err := Window.Display.xdgShell.GetSurface(Window.mainSurface.surface_)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			Window.xdgSurface = surf
+		}
+
+		Window.xdgSurface.AddListener(Window)
+
+		tl, err := Window.xdgSurface.GetToplevel()
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			Window.xdgToplevel = tl
+		}
+
+		zxdg.ToplevelAddListener(Window.xdgToplevel, Window)
+
+		Window.InhibitRedraw()
+
+		_ = Window.mainSurface.surface_.Commit()
+		
+		// Explicitly disable decorations
+		Window.decorationsRequested = false
+	}
+
+	return Window
+}
+
 // line 5592
 func (Window *Window) SetBufferType(t int32) {
 	Window.mainSurface.bufferType = t
 }
 
-// EnableDecorations creates and shows window decorations
-func (Window *Window) EnableDecorations() error {
+// enableDecorations creates and shows window decorations (private)
+func (Window *Window) enableDecorations() error {
 	if Window.Display.subcompositor == nil {
 		return fmt.Errorf("subcompositor not available")
 	}
@@ -3347,8 +3383,8 @@ func (Window *Window) EnableDecorations() error {
 	return nil
 }
 
-// DisableDecorations removes window decorations
-func (Window *Window) DisableDecorations() {
+// disableDecorations removes window decorations (private)
+func (Window *Window) disableDecorations() {
 	if Window.decoration != nil {
 		Window.decoration.Destroy()
 		Window.decoration = nil
