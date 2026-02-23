@@ -12,6 +12,7 @@ import (
 	"github.com/fogleman/gg"
 	sys "github.com/neurlang/wayland/os"
 	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
 )
 
 // Decoration constants
@@ -56,6 +57,8 @@ type DecorationSurface struct {
 	width        int32
 	height       int32
 	scale        int32
+	frameCb      *wl.Callback
+	needsRedraw  bool
 }
 
 type decorationBuffer struct {
@@ -80,6 +83,32 @@ type WindowDecoration struct {
 	pointerY     float32
 	pointerSerial uint32
 	isDragging   bool
+	pendingShadowRedraw bool
+	pendingTitleRedraw  bool
+}
+
+// HandleCallbackDone handles frame callbacks for decoration surfaces
+func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {
+	// Determine which surface this callback is for
+	if d.shadowSurf != nil && d.shadowSurf.frameCb == ev.C {
+		wlclient.CallbackDestroy(ev.C)
+		d.shadowSurf.frameCb = nil
+		
+		// If another redraw is pending, schedule it
+		if d.pendingShadowRedraw {
+			d.pendingShadowRedraw = false
+			d.commitShadow()
+		}
+	} else if d.titleSurf != nil && d.titleSurf.frameCb == ev.C {
+		wlclient.CallbackDestroy(ev.C)
+		d.titleSurf.frameCb = nil
+		
+		// If another redraw is pending, schedule it
+		if d.pendingTitleRedraw {
+			d.pendingTitleRedraw = false
+			d.commitTitleBar()
+		}
+	}
 }
 
 // NewWindowDecoration creates a new decoration manager
@@ -234,14 +263,35 @@ func (d *WindowDecoration) createDecorationSurface(x, y, width, height int32) (*
 	}, nil
 }
 
-// drawShadow renders the shadow decoration
+// drawShadow renders the shadow decoration with frame callback synchronization
 func (d *WindowDecoration) drawShadow() {
+	if d.shadowSurf == nil {
+		return
+	}
+	
+	// If we're waiting for a frame callback, mark as pending
+	if d.shadowSurf.frameCb != nil {
+		d.pendingShadowRedraw = true
+		return
+	}
+	
+	d.renderShadow()
+	d.commitShadow()
+}
+
+// renderShadow renders shadow to buffer without committing
+func (d *WindowDecoration) renderShadow() {
 	if d.shadowSurf == nil {
 		return
 	}
 	surf := d.shadowSurf
 
-	if surf.buffer == nil || surf.buffer.width != surf.width || surf.buffer.height != surf.height {
+	// Only recreate buffer if size changed
+	needsNewBuffer := surf.buffer == nil || 
+		surf.buffer.width != surf.width || 
+		surf.buffer.height != surf.height
+	
+	if needsNewBuffer {
 		if surf.buffer != nil {
 			d.freeBuffer(surf.buffer)
 		}
@@ -294,21 +344,57 @@ func (d *WindowDecoration) drawShadow() {
 		float64(d.window.pendingAllocation.Height))
 	dc.SetFillStyle(gg.NewSolidPattern(color.Transparent))
 	dc.Fill()
+}
 
+// commitShadow commits the shadow surface with frame callback
+func (d *WindowDecoration) commitShadow() {
+	if d.shadowSurf == nil || d.shadowSurf.buffer == nil {
+		return
+	}
+	surf := d.shadowSurf
+	
+	// Request frame callback before commit
+	cb, err := surf.wlSurface.Frame()
+	if err == nil {
+		surf.frameCb = cb
+		cb.AddDoneHandler(d)
+	}
+	
 	_ = surf.wlSurface.Attach(surf.buffer.wlBuffer, 0, 0)
 	_ = surf.wlSurface.Damage(0, 0, surf.width, surf.height)
 	_ = surf.wlSurface.Commit()
 	surf.buffer.inUse = true
 }
 
-// drawTitleBar renders the title bar with buttons
+// drawTitleBar renders the title bar with buttons with frame callback synchronization
 func (d *WindowDecoration) drawTitleBar() {
+	if d.titleSurf == nil {
+		return
+	}
+	
+	// If we're waiting for a frame callback, mark as pending
+	if d.titleSurf.frameCb != nil {
+		d.pendingTitleRedraw = true
+		return
+	}
+	
+	d.renderTitleBar()
+	d.commitTitleBar()
+}
+
+// renderTitleBar renders titlebar to buffer without committing
+func (d *WindowDecoration) renderTitleBar() {
 	if d.titleSurf == nil {
 		return
 	}
 	surf := d.titleSurf
 
-	if surf.buffer == nil || surf.buffer.width != surf.width || surf.buffer.height != surf.height {
+	// Only recreate buffer if size changed
+	needsNewBuffer := surf.buffer == nil || 
+		surf.buffer.width != surf.width || 
+		surf.buffer.height != surf.height
+	
+	if needsNewBuffer {
 		if surf.buffer != nil {
 			d.freeBuffer(surf.buffer)
 		}
@@ -333,7 +419,22 @@ func (d *WindowDecoration) drawTitleBar() {
 	d.drawButton(dc, ComponentButtonMin, surf.width-3*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonMax, surf.width-2*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonClose, surf.width-ButtonWidth, 0)
+}
 
+// commitTitleBar commits the titlebar surface with frame callback
+func (d *WindowDecoration) commitTitleBar() {
+	if d.titleSurf == nil || d.titleSurf.buffer == nil {
+		return
+	}
+	surf := d.titleSurf
+	
+	// Request frame callback before commit
+	cb, err := surf.wlSurface.Frame()
+	if err == nil {
+		surf.frameCb = cb
+		cb.AddDoneHandler(d)
+	}
+	
 	_ = surf.wlSurface.Attach(surf.buffer.wlBuffer, 0, 0)
 	_ = surf.wlSurface.Damage(0, 0, surf.width, surf.height)
 	_ = surf.wlSurface.Commit()
@@ -468,7 +569,11 @@ func (d *WindowDecoration) SetActive(active bool) {
 func (d *WindowDecoration) SetHoverButton(btn componentType) {
 	if d.hoverButton != btn {
 		d.hoverButton = btn
-		d.drawTitleBar()
+		// Only redraw titlebar if we're actually on the titlebar
+		// Don't redraw when hovering over shadow/border areas
+		if d.titleSurf != nil {
+			d.drawTitleBar()
+		}
 	}
 }
 
@@ -476,6 +581,88 @@ func (d *WindowDecoration) SetHoverButton(btn componentType) {
 func (d *WindowDecoration) Redraw() {
 	d.drawShadow()
 	d.drawTitleBar()
+}
+
+// UpdateSize updates decoration surfaces when window is resized
+func (d *WindowDecoration) UpdateSize() {
+	if d.window == nil || d.window.mainSurface == nil {
+		return
+	}
+	
+	var contentWidth, contentHeight int32
+	if d.window.mainSurface.allocation.Width > 0 {
+		contentWidth = d.window.mainSurface.allocation.Width
+		contentHeight = d.window.mainSurface.allocation.Height
+	} else {
+		contentWidth = d.window.pendingAllocation.Width
+		contentHeight = d.window.pendingAllocation.Height
+	}
+	
+	if contentWidth <= 0 || contentHeight <= 0 {
+		return
+	}
+	
+	// Update shadow surface size
+	if d.shadowSurf != nil {
+		newWidth := contentWidth + 2*ShadowMargin
+		newHeight := contentHeight + 2*ShadowMargin + TitleHeight
+		
+		// Only update if size actually changed
+		if d.shadowSurf.width != newWidth || d.shadowSurf.height != newHeight {
+			d.shadowSurf.width = newWidth
+			d.shadowSurf.height = newHeight
+			// Buffer will be recreated on next draw
+			d.drawShadow()
+		}
+	}
+	
+	// Update titlebar surface size
+	if d.titleSurf != nil {
+		newWidth := contentWidth
+		
+		// Only update if size actually changed
+		if d.titleSurf.width != newWidth {
+			d.titleSurf.width = newWidth
+			// Buffer will be recreated on next draw
+			d.drawTitleBar()
+		}
+	}
+}
+
+// UpdateSizeForResize updates decoration surfaces during interactive resize
+// This is called on every configure event during resize for smooth tracking
+func (d *WindowDecoration) UpdateSizeForResize(contentWidth, contentHeight int32) {
+	if contentWidth <= 0 || contentHeight <= 0 {
+		return
+	}
+	
+	// Update shadow surface size
+	if d.shadowSurf != nil {
+		newWidth := contentWidth + 2*ShadowMargin
+		newHeight := contentHeight + 2*ShadowMargin + TitleHeight
+		
+		// Only update if size actually changed
+		if d.shadowSurf.width != newWidth || d.shadowSurf.height != newHeight {
+			d.shadowSurf.width = newWidth
+			d.shadowSurf.height = newHeight
+			// Render and commit with frame callback
+			d.renderShadow()
+			d.commitShadow()
+		}
+	}
+	
+	// Update titlebar surface size
+	if d.titleSurf != nil {
+		newWidth := contentWidth
+		
+		// Only update if size actually changed
+		if d.titleSurf.width != newWidth {
+			d.titleSurf.width = newWidth
+			// Render and commit with frame callback
+			d.renderTitleBar()
+			d.commitTitleBar()
+		}
+	}
 }
 
 // hideSurface hides a decoration surface
@@ -488,6 +675,10 @@ func (d *WindowDecoration) hideSurface(surf *DecorationSurface) {
 
 // destroySurface destroys a decoration surface
 func (d *WindowDecoration) destroySurface(surf *DecorationSurface) {
+	if surf.frameCb != nil {
+		wlclient.CallbackDestroy(surf.frameCb)
+		surf.frameCb = nil
+	}
 	if surf.buffer != nil {
 		d.freeBuffer(surf.buffer)
 		surf.buffer = nil

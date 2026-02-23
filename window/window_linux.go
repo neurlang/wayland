@@ -562,6 +562,13 @@ func (Window *Window) ToplevelConfigure(
 		var margin int32 = 0
 
 		Window.ScheduleResize(width+margin*2, height+margin*2)
+		
+		// Update decoration sizes immediately during resize for smooth tracking
+		// Frame callbacks in UpdateSizeForResize prevent flicker while maintaining responsiveness
+		// This is called on every configure event to ensure decorations track window size in real-time
+		if Window.decoration != nil && !Window.fullscreen {
+			Window.decoration.UpdateSizeForResize(width, height)
+		}
 	} else if (Window.savedAllocation.Width > 0) &&
 		(Window.savedAllocation.Height > 0) {
 		Window.ScheduleResize(Window.savedAllocation.Width, Window.savedAllocation.Height)
@@ -573,8 +580,10 @@ func (Window *Window) ToplevelConfigure(
 		Window.mainSurface.allocation.Width > 0 && 
 		Window.mainSurface.allocation.Height > 0 {
 		
-		// Update active state
-		Window.decoration.SetActive(Window.focused == 1)
+		// Update active state only if it changed (this only redraws titlebar)
+		if Window.decoration.active != (Window.focused == 1) {
+			Window.decoration.SetActive(Window.focused == 1)
+		}
 		
 		// Show/hide decorations based on state
 		if Window.fullscreen {
@@ -587,10 +596,9 @@ func (Window *Window) ToplevelConfigure(
 				Window.decoration.Destroy()
 				Window.decoration = nil
 			}
-		} else {
-			// Already shown, just redraw
-			Window.decoration.Redraw()
 		}
+		// DO NOT redraw decorations here during configure events
+		// They will be redrawn when resize completes
 	}
 }
 
@@ -2745,6 +2753,11 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 		adjustedX := sx - float32(ShadowMargin)
 		adjustedY := sy - float32(ShadowMargin+TitleHeight)
 		
+		// Don't update hover button when on shadow surface to prevent flicker
+		if Window.decoration.hoverButton != ComponentNone {
+			Window.decoration.hoverButton = ComponentNone
+		}
+		
 		cursor = getResizeCursor(adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
 		inputSetPointerImage(Input, cursor)
 		return
@@ -2754,9 +2767,7 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	if Window.decoration != nil && Window.decoration.titleSurf != nil && 
 		Input.currentPtrSurface == Window.decoration.titleSurf.wlSurface {
 		// We're on the titlebar surface - handle button hover and set cursor
-		if Window.decoration.hoverButton != ComponentNone || Window.decoration.isDragging {
-			Window.decoration.HandlePointerMotion(sx, sy)
-		}
+		Window.decoration.HandlePointerMotion(sx, sy)
 		// Always use arrow cursor on titlebar
 		cursor = CursorLeftPtr
 		inputSetPointerImage(Input, cursor)
@@ -3093,6 +3104,7 @@ func windowDoResize(Window *Window) {
 		Window.pendingAllocation.Width > 0 && Window.pendingAllocation.Height > 0 {
 
 		if Window.decorationsRequested && Window.decoration == nil {
+			// First time creating decorations
 			Window.decorationsRequested = false
 			Window.decoration = NewWindowDecoration(Window)
 			if err := Window.decoration.Show(); err != nil {
@@ -3101,13 +3113,9 @@ func windowDoResize(Window *Window) {
 				Window.decoration.SetActive(Window.focused == 1)
 			}
 		} else if Window.decoration != nil && Window.decoration.shadowSurf != nil {
-			Window.decoration.Destroy()
-			Window.decoration = NewWindowDecoration(Window)
-			if err := Window.decoration.Show(); err != nil {
-				Window.decoration = nil
-			} else {
-				Window.decoration.SetActive(Window.focused == 1)
-			}
+			// Decorations exist - just update their size without destroying
+			// This prevents flicker during resize
+			Window.decoration.UpdateSize()
 		}
 	}
 	if (!Window.fullscreen) && (!Window.maximized) {
