@@ -721,6 +721,7 @@ type Input struct {
 	cursorSerial       uint32
 	sx                 float32
 	sy                 float32
+	currentSurface     *wl.Surface // Track which surface pointer is on
 
 	focusWidget *Widget
 	grab        *Widget
@@ -1071,13 +1072,21 @@ func (input *Input) PointerEnter(
 			input.Display.serial = serial
 			input.pointerEnterSerial = serial
 			input.pointerFocus = Window
+			input.currentSurface = surface
 			input.sx = sx
 			input.sy = sy
 			Window.decoration.HandlePointerEnter(serial, sx, sy)
 			return
 		}
 		if Window.decoration.shadowSurf != nil && surface == Window.decoration.shadowSurf.wlSurface {
-			// Shadow surface - ignore input
+			// Shadow surface - handle for border resize cursors
+			fmt.Printf("*** POINTER ENTER SHADOW SURFACE *** sx=%.2f sy=%.2f\n", sx, sy)
+			input.Display.serial = serial
+			input.pointerEnterSerial = serial
+			input.pointerFocus = Window
+			input.currentSurface = surface
+			input.sx = sx
+			input.sy = sy
 			return
 		}
 	}
@@ -1090,6 +1099,7 @@ func (input *Input) PointerEnter(
 	input.Display.serial = serial
 	input.pointerEnterSerial = serial
 	input.pointerFocus = Window
+	input.currentSurface = surface
 
 	input.sx = sx
 	input.sy = sy
@@ -2587,6 +2597,59 @@ func inputRemovePointerFocus(input_ *Input) {
 	cancelPointerImageUpdate(input_)
 }
 
+// getResizeCursor determines the appropriate resize cursor based on pointer position
+// relative to the window borders. Handles coordinates that may be negative or beyond bounds.
+// Returns the cursor type for 4 edges and 4 corners.
+func getResizeCursor(sx, sy float32, width, height int32) int {
+	const cornerMargin = float32(ShadowMargin * 3) // Larger area for corners
+	
+	fWidth := float32(width)
+	fHeight := float32(height)
+	
+	// Determine which edge(s) we're near based on coordinate position
+	// sx < 0 means we're to the left of the surface
+	// sy < 0 means we're above the surface
+	// sx >= width means we're to the right
+	// sy >= height means we're below
+	
+	nearLeft := sx < 0 || sx < cornerMargin
+	nearRight := sx >= fWidth || sx >= fWidth-cornerMargin
+	nearTop := sy < 0 || sy < cornerMargin
+	nearBottom := sy >= fHeight || sy >= fHeight-cornerMargin
+	
+	// For corners, we need to be near both edges
+	// Check corners first (they take priority)
+	if nearTop && nearLeft {
+		return CursorTopLeft
+	}
+	if nearTop && nearRight {
+		return CursorTopRight
+	}
+	if nearBottom && nearLeft {
+		return CursorBottomLeft
+	}
+	if nearBottom && nearRight {
+		return CursorBottomRight
+	}
+	
+	// Check edges - only one edge is near
+	if nearTop {
+		return CursorTop
+	}
+	if nearBottom {
+		return CursorBottom
+	}
+	if nearLeft {
+		return CursorLeft
+	}
+	if nearRight {
+		return CursorRight
+	}
+	
+	// Not near any border
+	return CursorLeftPtr
+}
+
 // line 2776
 func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	time uint32, sx float32, sy float32) {
@@ -2603,11 +2666,54 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	Input.sx = sx
 	Input.sy = sy
 	
+	// Check if we're on the shadow surface (border area)
+	if Window.decoration != nil && Window.decoration.shadowSurf != nil && 
+		Input.currentSurface == Window.decoration.shadowSurf.wlSurface {
+		// We're on the shadow surface - convert coordinates to determine resize cursor
+		// Shadow surface coordinates need to be adjusted relative to main surface
+		// Shadow surface is positioned at (-ShadowMargin, -(ShadowMargin+TitleHeight))
+		adjustedX := sx - float32(ShadowMargin)
+		adjustedY := sy - float32(ShadowMargin+TitleHeight)
+		
+		fmt.Printf("*** ON SHADOW SURFACE *** sx=%.2f sy=%.2f -> adjustedX=%.2f adjustedY=%.2f width=%d height=%d\n", 
+			sx, sy, adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
+		
+		cursor = getResizeCursor(adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
+		fmt.Printf("*** CURSOR SELECTED: %d ***\n", cursor)
+		inputSetPointerImage(Input, cursor)
+		return
+	}
+	
 	// Check if pointer is over a decoration surface
 	if Window.decoration != nil && Window.decoration.titleSurf != nil {
 		// If we're tracking decoration input, route motion there
 		if Window.decoration.hoverButton != ComponentNone || Window.decoration.isDragging {
 			Window.decoration.HandlePointerMotion(sx, sy)
+			return
+		}
+		// Check if pointer is over the titlebar area (negative Y coordinates)
+		// Use arrow cursor instead of widget's cursor
+		if sy < 0 {
+			cursor = CursorLeftPtr
+			inputSetPointerImage(Input, cursor)
+			return
+		}
+	}
+
+	// Check if pointer is over the border area (shadow margin)
+	// If so, use directional resize cursor based on position
+	if Window.decoration != nil && Window.decoration.shadowSurf != nil {
+		// Check if we're in the border region (outside main surface but inside window bounds)
+		if sx < 0 || sy < 0 || 
+			sx >= float32(Window.mainSurface.allocation.Width) || 
+			sy >= float32(Window.mainSurface.allocation.Height) {
+			// DEBUG: Print position when in shadow/border area
+			fmt.Printf("*** SHADOW BORDER *** sx=%.2f sy=%.2f width=%d height=%d\n", 
+				sx, sy, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
+			// We're in the border/shadow area, use directional resize cursor
+			cursor = getResizeCursor(sx, sy, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
+			fmt.Printf("*** CURSOR SELECTED: %d ***\n", cursor)
+			inputSetPointerImage(Input, cursor)
 			return
 		}
 	}
