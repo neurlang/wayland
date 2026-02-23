@@ -721,7 +721,7 @@ type Input struct {
 	cursorSerial       uint32
 	sx                 float32
 	sy                 float32
-	currentSurface     *wl.Surface // Track which surface pointer is on
+	currentPtrSurface  *wl.Surface // Track which surface pointer is currently on
 
 	focusWidget *Widget
 	grab        *Widget
@@ -1072,19 +1072,20 @@ func (input *Input) PointerEnter(
 			input.Display.serial = serial
 			input.pointerEnterSerial = serial
 			input.pointerFocus = Window
-			input.currentSurface = surface
+			input.currentPtrSurface = surface
 			input.sx = sx
 			input.sy = sy
 			Window.decoration.HandlePointerEnter(serial, sx, sy)
+			// Set cursor to arrow when entering titlebar
+			inputSetPointerImage(input, CursorLeftPtr)
 			return
 		}
 		if Window.decoration.shadowSurf != nil && surface == Window.decoration.shadowSurf.wlSurface {
 			// Shadow surface - handle for border resize cursors
-			fmt.Printf("*** POINTER ENTER SHADOW SURFACE *** sx=%.2f sy=%.2f\n", sx, sy)
 			input.Display.serial = serial
 			input.pointerEnterSerial = serial
 			input.pointerFocus = Window
-			input.currentSurface = surface
+			input.currentPtrSurface = surface
 			input.sx = sx
 			input.sy = sy
 			return
@@ -1099,7 +1100,7 @@ func (input *Input) PointerEnter(
 	input.Display.serial = serial
 	input.pointerEnterSerial = serial
 	input.pointerFocus = Window
-	input.currentSurface = surface
+	input.currentPtrSurface = surface
 
 	input.sx = sx
 	input.sy = sy
@@ -2668,54 +2669,29 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 	
 	// Check if we're on the shadow surface (border area)
 	if Window.decoration != nil && Window.decoration.shadowSurf != nil && 
-		Input.currentSurface == Window.decoration.shadowSurf.wlSurface {
+		Input.currentPtrSurface == Window.decoration.shadowSurf.wlSurface {
 		// We're on the shadow surface - convert coordinates to determine resize cursor
 		// Shadow surface coordinates need to be adjusted relative to main surface
 		// Shadow surface is positioned at (-ShadowMargin, -(ShadowMargin+TitleHeight))
 		adjustedX := sx - float32(ShadowMargin)
 		adjustedY := sy - float32(ShadowMargin+TitleHeight)
 		
-		fmt.Printf("*** ON SHADOW SURFACE *** sx=%.2f sy=%.2f -> adjustedX=%.2f adjustedY=%.2f width=%d height=%d\n", 
-			sx, sy, adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
-		
 		cursor = getResizeCursor(adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
-		fmt.Printf("*** CURSOR SELECTED: %d ***\n", cursor)
 		inputSetPointerImage(Input, cursor)
 		return
 	}
 	
-	// Check if pointer is over a decoration surface
-	if Window.decoration != nil && Window.decoration.titleSurf != nil {
-		// If we're tracking decoration input, route motion there
+	// Check if we're on the titlebar decoration surface
+	if Window.decoration != nil && Window.decoration.titleSurf != nil && 
+		Input.currentPtrSurface == Window.decoration.titleSurf.wlSurface {
+		// We're on the titlebar surface - handle button hover and set cursor
 		if Window.decoration.hoverButton != ComponentNone || Window.decoration.isDragging {
 			Window.decoration.HandlePointerMotion(sx, sy)
-			return
 		}
-		// Check if pointer is over the titlebar area (negative Y coordinates)
-		// Use arrow cursor instead of widget's cursor
-		if sy < 0 {
-			cursor = CursorLeftPtr
-			inputSetPointerImage(Input, cursor)
-			return
-		}
-	}
-
-	// Check if pointer is over the border area (shadow margin)
-	// If so, use directional resize cursor based on position
-	if Window.decoration != nil && Window.decoration.shadowSurf != nil {
-		// Check if we're in the border region (outside main surface but inside window bounds)
-		if sx < 0 || sy < 0 || 
-			sx >= float32(Window.mainSurface.allocation.Width) || 
-			sy >= float32(Window.mainSurface.allocation.Height) {
-			// DEBUG: Print position when in shadow/border area
-			fmt.Printf("*** SHADOW BORDER *** sx=%.2f sy=%.2f width=%d height=%d\n", 
-				sx, sy, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
-			// We're in the border/shadow area, use directional resize cursor
-			cursor = getResizeCursor(sx, sy, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
-			fmt.Printf("*** CURSOR SELECTED: %d ***\n", cursor)
-			inputSetPointerImage(Input, cursor)
-			return
-		}
+		// Always use arrow cursor on titlebar
+		cursor = CursorLeftPtr
+		inputSetPointerImage(Input, cursor)
+		return
 	}
 
 	// when making the Window smaller - e.g. after an unmaximise we might
