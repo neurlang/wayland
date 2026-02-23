@@ -1163,6 +1163,30 @@ func (input *Input) PointerButton(
 			input.pointerFocus.decoration.HandlePointerButton(serial, button, state)
 			return
 		}
+		
+		// Check if button press is on shadow surface (border area) for resize
+		if input.currentPtrSurface == input.pointerFocus.decoration.shadowSurf.wlSurface &&
+			button == 272 && state == wl.PointerButtonStatePressed { // Left button press
+			// Don't resize if window is maximized
+			if !input.pointerFocus.maximized && input.pointerFocus.xdgToplevel != nil {
+				// Convert shadow surface coordinates to main surface relative
+				adjustedX := input.sx - float32(ShadowMargin)
+				adjustedY := input.sy - float32(ShadowMargin+TitleHeight)
+				
+				// Determine which edge/corner to resize from
+				edge := getResizeEdge(adjustedX, adjustedY, 
+					input.pointerFocus.mainSurface.allocation.Width,
+					input.pointerFocus.mainSurface.allocation.Height)
+				
+				if edge != zxdg.ToplevelResizeEdgeNone {
+					// Get the seat from the input list
+					if len(input.Display.inputList) > 0 && input.seat != nil {
+						_ = input.pointerFocus.xdgToplevel.Resize(input.seat, serial, edge)
+						return
+					}
+				}
+			}
+		}
 	}
 	
 	if input.focusWidget != nil && input.grab == nil &&
@@ -2649,6 +2673,51 @@ func getResizeCursor(sx, sy float32, width, height int32) int {
 	
 	// Not near any border
 	return CursorLeftPtr
+}
+
+// getResizeEdge determines the XDG resize edge based on pointer position
+// relative to the window borders. Returns the edge constant for xdgToplevel.Resize()
+func getResizeEdge(sx, sy float32, width, height int32) uint32 {
+	const cornerMargin = float32(ShadowMargin * 3) // Larger area for corners
+	
+	fWidth := float32(width)
+	fHeight := float32(height)
+	
+	nearLeft := sx < 0 || sx < cornerMargin
+	nearRight := sx >= fWidth || sx >= fWidth-cornerMargin
+	nearTop := sy < 0 || sy < cornerMargin
+	nearBottom := sy >= fHeight || sy >= fHeight-cornerMargin
+	
+	// Check corners first (they take priority)
+	if nearTop && nearLeft {
+		return zxdg.ToplevelResizeEdgeTopLeft
+	}
+	if nearTop && nearRight {
+		return zxdg.ToplevelResizeEdgeTopRight
+	}
+	if nearBottom && nearLeft {
+		return zxdg.ToplevelResizeEdgeBottomLeft
+	}
+	if nearBottom && nearRight {
+		return zxdg.ToplevelResizeEdgeBottomRight
+	}
+	
+	// Check edges
+	if nearTop {
+		return zxdg.ToplevelResizeEdgeTop
+	}
+	if nearBottom {
+		return zxdg.ToplevelResizeEdgeBottom
+	}
+	if nearLeft {
+		return zxdg.ToplevelResizeEdgeLeft
+	}
+	if nearRight {
+		return zxdg.ToplevelResizeEdgeRight
+	}
+	
+	// Not near any border
+	return zxdg.ToplevelResizeEdgeNone
 }
 
 // line 2776
