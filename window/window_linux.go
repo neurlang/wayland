@@ -3382,7 +3382,7 @@ func windowSetMinimized(window *Window) error {
 
 // line 4793
 func (Window *Window) SetTitle(title string) {
-
+	Window.title = title
 	if Window.xdgToplevel != nil {
 		_ = Window.xdgToplevel.SetTitle(title)
 	}

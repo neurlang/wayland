@@ -36,6 +36,16 @@ var (
 	ColSymInact       = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
 )
 
+// Font paths to try for titlebar text
+var decorationFonts = []string{
+	"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",      // fedora
+	"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",        // ubuntu
+	"/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf",    // fedora
+	"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+	"/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+}
+
 // Component types
 type componentType int
 
@@ -415,10 +425,13 @@ func (d *WindowDecoration) renderTitleBar() {
 	dc.SetColor(colTitle)
 	dc.Clear()
 
-	d.drawTitleText(dc, int(surf.width))
+	// Draw buttons first
 	d.drawButton(dc, ComponentButtonMin, surf.width-3*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonMax, surf.width-2*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonClose, surf.width-ButtonWidth, 0)
+	
+	// Draw title text last so it's on top
+	d.drawTitleText(dc, int(surf.width))
 }
 
 // commitTitleBar commits the titlebar surface with frame callback
@@ -443,33 +456,55 @@ func (d *WindowDecoration) commitTitleBar() {
 
 // drawTitleText renders the window title
 func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
-	if d.window.title == "" {
+	if d.window == nil || d.window.title == "" {
 		return
 	}
 
-	colText := ColSym
+	// Load font - try each path until one works
+	fontLoaded := false
+	for _, fontPath := range decorationFonts {
+		if err := dc.LoadFontFace(fontPath, 12); err == nil {
+			fontLoaded = true
+			break
+		}
+	}
+	
+	if !fontLoaded {
+		// Can't load any font
+		return
+	}
+
+	// Calculate available space for title (excluding buttons on right)
+	availableWidth := float64(titleWidth - 3*ButtonWidth - 40)
+	if availableWidth < 50 {
+		return
+	}
+	
+	// Truncate title if too long
+	title := d.window.title
+	textWidth, _ := dc.MeasureString(title)
+	
+	for textWidth > availableWidth && len(title) > 0 {
+		title = title[:len(title)-1]
+		textWidth, _ = dc.MeasureString(title + "...")
+	}
+	if len(title) < len(d.window.title) && len(title) > 0 {
+		title = title + "..."
+	}
+
+	// Position text
+	textX := 20.0 + availableWidth/2.0
+	textY := float64(TitleHeight) / 2.0
+
+	// Set text color - black when active, gray when inactive
 	if !d.active {
-		colText = ColSymInact
+		dc.SetRGB255(154, 153, 150)
+	} else {
+		dc.SetRGB255(0, 0, 0)
 	}
 
-	if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12); err != nil {
-		return
-	}
-
-	textWidth, textHeight := dc.MeasureString(d.window.title)
-
-	textX := float64(titleWidth)/2.0 - textWidth/2.0
-	maxTextX := float64(titleWidth - 3*ButtonWidth - 10)
-	if textX+textWidth > maxTextX {
-		textX = maxTextX - textWidth
-	}
-	if textX < ButtonWidth {
-		textX = ButtonWidth
-	}
-	textY := float64(TitleHeight)/2.0 + textHeight/2.0
-
-	dc.SetColor(colText)
-	dc.DrawString(d.window.title, textX, textY)
+	// Draw the title text
+	dc.DrawStringAnchored(title, textX, textY, 0.5, 0.5)
 }
 
 // drawButton renders a window button (min/max/close)
