@@ -212,13 +212,42 @@ func (w *Widget) AddWidget(_ WidgetHandler) *Widget {
 // Input represents input state for keyboard and mouse
 type Input struct {
 	keyboardHandler KeyboardHandler
+	modifiers       ModType
+}
+
+// updateModifiers updates the modifier state from NSEvent modifierFlags
+func (input *Input) updateModifiers(nsModifiers uint32) {
+	// NSEvent modifier flags (from NSEvent.h)
+	const (
+		NSEventModifierFlagShift   = 1 << 17
+		NSEventModifierFlagControl = 1 << 18
+		NSEventModifierFlagOption  = 1 << 19
+		NSEventModifierFlagCommand = 1 << 20
+		NSEventModifierFlagCapsLock = 1 << 16
+	)
+	
+	input.modifiers = 0
+	
+	if nsModifiers&NSEventModifierFlagShift != 0 {
+		input.modifiers |= ModShiftMask
+	}
+	if nsModifiers&NSEventModifierFlagControl != 0 {
+		input.modifiers |= ModControlMask
+	}
+	if nsModifiers&NSEventModifierFlagOption != 0 {
+		input.modifiers |= ModAltMask
+	}
+	// Note: Command and CapsLock don't have corresponding masks in constants.go
+	// but we track them internally if needed in the future
 }
 
 // Input methods for compatibility
 
 func (input *Input) GetModifiers() ModType {
-	// Not implemented for macOS
-	return 0
+	if input == nil {
+		return 0
+	}
+	return input.modifiers
 }
 
 func (input *Input) GetRune(sym *uint32, v uint32) rune {

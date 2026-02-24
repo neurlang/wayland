@@ -17,6 +17,7 @@ extern void goMouseMotion(void* windowPtr, float x, float y);
 extern void goScheduleRedraw(void* windowPtr);
 extern void goWindowResize(void* windowPtr, int width, int height);
 extern void goMouseButton(void* windowPtr, int button, int state, float x, float y);
+extern void goKeyPress(void* windowPtr, unsigned short keyCode, int state, unsigned long modifiers, unsigned short unicodeChar);
 
 // Simple window wrapper
 typedef struct {
@@ -26,6 +27,7 @@ typedef struct {
     CVDisplayLinkRef displayLink;
     void* eventMonitor; // id<NSObject>
     void* buttonMonitor; // id<NSObject> for button events
+    void* keyMonitor; // id<NSObject> for keyboard events
     CGImageRef currentImage;
     void* imageLock; // NSLock*
     int needsRedraw; // Atomic flag for redraw requests
@@ -175,6 +177,7 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
     dw->displayLink = NULL;
     dw->eventMonitor = NULL;
     dw->buttonMonitor = NULL;
+    dw->keyMonitor = NULL;
     dw->currentImage = NULL;
     dw->imageLock = (void*)CFBridgingRetain([[NSLock alloc] init]);
     dw->needsRedraw = 1; // Start with redraw needed
@@ -240,6 +243,41 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         }];
     dw->buttonMonitor = (void*)CFBridgingRetain(buttonMonitor);
     
+    // Set up keyboard event tracking
+    NSEventMask keyMask = NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged;
+    id keyMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:keyMask
+        handler:^NSEvent*(NSEvent* event) {
+            if ([event window] == window) {
+                unsigned short keyCode = [event keyCode];
+                NSEventType eventType = [event type];
+                int state = 0;
+                
+                if (eventType == NSEventTypeKeyDown) {
+                    state = 1; // Pressed
+                } else if (eventType == NSEventTypeKeyUp) {
+                    state = 0; // Released
+                } else if (eventType == NSEventTypeFlagsChanged) {
+                    // Handle modifier keys
+                    // For now, we'll skip these or handle them separately
+                    return event;
+                }
+                
+                // Get modifier flags
+                unsigned long modifiers = [event modifierFlags];
+                
+                // Get unicode character if available
+                unsigned short unicodeChar = 0;
+                NSString* characters = [event characters];
+                if (characters && [characters length] > 0) {
+                    unicodeChar = [characters characterAtIndex:0];
+                }
+                
+                goKeyPress(windowPtr, keyCode, state, modifiers, unicodeChar);
+            }
+            return event;
+        }];
+    dw->keyMonitor = (void*)CFBridgingRetain(keyMonitor);
+    
     return dw;
 }
 
@@ -263,6 +301,11 @@ static void darwin_destroyWindow(DarwinWindow* dw) {
                     id monitor = (__bridge_transfer id)dw->buttonMonitor;
                     [NSEvent removeMonitor:monitor];
                     dw->buttonMonitor = NULL;
+                }
+                if (dw->keyMonitor) {
+                    id monitor = (__bridge_transfer id)dw->keyMonitor;
+                    [NSEvent removeMonitor:monitor];
+                    dw->keyMonitor = NULL;
                 }
                 if (dw->imageLock) {
                     NSLock* lock = (__bridge NSLock*)dw->imageLock;
@@ -700,6 +743,53 @@ func goMouseButton(windowPtr unsafe.Pointer, button, state C.int, x, y C.float) 
 			}
 			widget.handler.Button(widget, window.input, timestamp, uint32(button), wlState, widget.handler)
 		}
+	}
+}
+
+//export goKeyPress
+func goKeyPress(windowPtr unsafe.Pointer, keyCode C.ushort, state C.int, modifiers C.ulong, unicodeChar C.ushort) {
+	windowID := uintptr(windowPtr)
+	
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+		return
+	}
+	
+	window := handle.goWindow
+	
+	// Update modifier state in input
+	if window.input != nil {
+		window.input.updateModifiers(uint32(modifiers))
+	}
+	
+	// Call keyboard handler if set
+	if window.input != nil && window.input.keyboardHandler != nil {
+		timestamp := uint32(time.Now().UnixNano() / 1000000)
+		
+		// Convert state: 1 = pressed, 0 = released
+		var wlState wl.KeyboardKeyState
+		if state == 1 {
+			wlState = wl.KeyboardKeyStatePressed
+		} else {
+			wlState = wl.KeyboardKeyStateReleased
+		}
+		
+		// Get the widget handler from the first widget (if any)
+		var widgetHandler WidgetHandler
+		for widget := range window.widgets {
+			if widget.handler != nil {
+				widgetHandler = widget.handler
+				break
+			}
+		}
+		
+		// Call the keyboard handler
+		// vKey = virtual key code (macOS keyCode)
+		// code = unicode character
+		window.input.keyboardHandler.Key(window, window.input, timestamp, uint32(keyCode), uint32(unicodeChar), wlState, widgetHandler)
 	}
 }
 
