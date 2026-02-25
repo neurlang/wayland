@@ -758,6 +758,12 @@ func darwin_createWindow(width, height int32, title string, decorated bool, goWi
 
 func goPopupGone(windowPtr, popupWindowPtr *Window) {
 	window := windowPtr
+    if popupWindowPtr == nil {
+        return
+    }
+    if windowPtr == nil {
+        return
+    }
     popupWindowID := uintptr(unsafe.Pointer(popupWindowPtr.darwinHandle.windowID))
 
     var newList [][5]uintptr

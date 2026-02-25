@@ -35,6 +35,7 @@ type Window struct {
 
 type Popup struct {
 	Popup   *xdg.Popup
+	popuper      Popuper
 	Display      *Display
 	popupWindow  *Window
 	parentWindow *Window
@@ -374,6 +375,8 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 	}
 	
 	println("[DEBUG] Popup widget added successfully")
+
+
 	return widget
 }
 
@@ -385,15 +388,11 @@ type Popuper interface {
 	Configure() *Widget
 }
 
-func (p *Popup) SetPopupHandler(handler interface{}) {
-	println("[DEBUG] SetPopupHandler called")
-	if popuper, ok := handler.(Popuper); ok {
-		println("[DEBUG] Handler is Popuper, calling Configure()")
-		widget := popuper.Configure()
-		println("[DEBUG] Configure() returned widget:", widget)
+func (p *Popup) SetPopupHandler(handler Popuper) {
+	p.popuper = handler
 
-	} else {
-		println("[DEBUG] Handler is not Popuper")
+	if p.popuper != nil {
+		p.popuper.Configure()
 	}
 }
 
