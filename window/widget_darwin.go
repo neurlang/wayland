@@ -204,8 +204,9 @@ func (w *Widget) GetAllocation() Rectangle {
 }
 
 // AddWidget adds a child widget (not implemented for macOS)
-func (w *Widget) AddWidget(_ WidgetHandler) *Widget {
+func (w *Widget) AddWidget(wh WidgetHandler) *Widget {
 	// TODO: implement child widgets if needed
+	println("ADD WIDGET DARWIN", wh)
 	return w
 }
 

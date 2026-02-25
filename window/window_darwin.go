@@ -28,13 +28,18 @@ type Window struct {
 	fullscreen     bool
 	decorated      bool  // Whether window has decorations (title bar, etc.)
 	
+	popupList      [][5]uintptr
+
 	Display *Display
-	Popup   *xdg.Popup
 }
 
 type Popup struct {
-	Display *Display
 	Popup   *xdg.Popup
+	Display      *Display
+	popupWindow  *Window
+	parentWindow *Window
+	x            int32
+	y            int32
 }
 
 // DisplayCreate creates a new Display instance for macOS
@@ -116,12 +121,32 @@ func (w *Window) Destroy() {
 		w.darwinHandle = nil
 	}
 	
-	w.parent_display.mu.Lock()
-	w.parent_display.count--
-	if w.parent_display.count == 0 {
-		w.parent_display.Exit()
+	// Only decrement count and potentially exit if this is NOT a popup window
+	// Popup windows shouldn't affect the main window count
+	if w.parent_display != nil {
+		w.parent_display.mu.Lock()
+		
+		// Check if this window is in the windows list (main windows only)
+		isMainWindow := false
+		for i, win := range w.parent_display.windows {
+			if win == w {
+				// Remove from windows list
+				w.parent_display.windows = append(w.parent_display.windows[:i], w.parent_display.windows[i+1:]...)
+				isMainWindow = true
+				break
+			}
+		}
+		
+		// Only decrement count and exit for main windows
+		if isMainWindow {
+			w.parent_display.count--
+			if w.parent_display.count == 0 {
+				w.parent_display.Exit()
+			}
+		}
+		
+		w.parent_display.mu.Unlock()
 	}
-	w.parent_display.mu.Unlock()
 }
 
 // SetTitle sets the window title
@@ -285,25 +310,91 @@ func (w *Window) Redraw() {
 	}
 }
 
-// CreatePopup creates a popup window (not implemented for macOS)
+// CreatePopup creates a popup window for macOS
 func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uint32) *Popup {
-	// Popup windows not implemented for macOS
+	println("[DEBUG] CreatePopup called")
+	println("[DEBUG]   width:", width, "height:", height)
+	println("[DEBUG]   x:", x, "y:", y)
+	println("[DEBUG]   parent window:", w)
+	
+	// Create a new undecorated window for the popup
+	popupWindow := CreateUndecorated(w.Display)
+	popupWindow.width = int32(width)
+	popupWindow.height = int32(height)
+	
+	// Store parent window reference
+	popupWindow.parent_display = w.Display
+	
+	println("[DEBUG] Created popup window:", popupWindow)
+	
 	return &Popup{
-		Display: w.Display,
-		Popup:   nil,
+		Display:      w.Display,
+		Popup:        nil,
+		popupWindow:  popupWindow,
+		parentWindow: w,
+		x:            int32(x),
+		y:            int32(y),
 	}
 }
 
-// AddPopupWidget adds a popup widget (not implemented for macOS)
+// AddPopupWidget adds a popup widget to the popup window
 func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
-	// Popup widgets not implemented for macOS
-	return w.AddWidget(handler)
+	println("[DEBUG] AddPopupWidget called")
+	
+	println("[DEBUG] Popup window size:", p.popupWindow.width, "x", p.popupWindow.height)
+	
+	// IMPORTANT: Create the popup window BEFORE adding widget
+	// This ensures the window has a valid darwinHandle and Cairo surface
+	if p.popupWindow.darwinHandle == nil {
+		println("[DEBUG] Creating popup window with ScheduleResize")
+		p.popupWindow.ScheduleResize(p.popupWindow.width, p.popupWindow.height)
+	}
+	
+	// Add widget to the popup window
+	widget := p.popupWindow.AddWidget(handler)
+	println("[DEBUG] Widget added to popup window")
+	
+	// Position the popup relative to parent window AFTER window is created
+	if p.parentWindow != nil && p.parentWindow.darwinHandle != nil && p.popupWindow.darwinHandle != nil {
+		if p.popupWindow == p.parentWindow {
+			panic("can't be same")
+		}
+		println("[DEBUG] Positioning popup at offset:", p.x, p.y)
+		darwin_positionPopup(p.popupWindow.darwinHandle, p.parentWindow.darwinHandle, p.x, p.y)
+	} else {
+		println("[DEBUG] ERROR: Cannot position popup - missing handles")
+		if p.parentWindow == nil {
+			println("[DEBUG]   parentWindow is nil")
+		} else if p.parentWindow.darwinHandle == nil {
+			println("[DEBUG]   parentWindow.darwinHandle is nil")
+		}
+		if p.popupWindow.darwinHandle == nil {
+			println("[DEBUG]   popupWindow.darwinHandle is nil")
+		}
+	}
+	
+	println("[DEBUG] Popup widget added successfully")
+	return widget
 }
 
 // Popup methods (stubs for macOS)
 
+type Popuper interface {
+	Render(cairo.Surface, uint32)
+	Done()
+	Configure() *Widget
+}
+
 func (p *Popup) SetPopupHandler(handler interface{}) {
-	// Not implemented for macOS
+	println("[DEBUG] SetPopupHandler called")
+	if popuper, ok := handler.(Popuper); ok {
+		println("[DEBUG] Handler is Popuper, calling Configure()")
+		widget := popuper.Configure()
+		println("[DEBUG] Configure() returned widget:", widget)
+
+	} else {
+		println("[DEBUG] Handler is not Popuper")
+	}
 }
 
 func (p *Popup) BufferRelease(buffer *wl.Buffer) {
@@ -311,12 +402,20 @@ func (p *Popup) BufferRelease(buffer *wl.Buffer) {
 }
 
 func (p *Popup) PopupGetSurface() cairo.Surface {
-	// Not implemented for macOS
+	println("[DEBUG] PopupGetSurface called")
+	if p.popupWindow != nil {
+		return p.popupWindow.WindowGetSurface()
+	}
 	return nil
 }
 
 func (p *Popup) Destroy() {
-	// Not implemented for macOS
+	println("[DEBUG] Popup Destroy called")
+	goPopupGone(p.parentWindow, p.popupWindow)
+	if p.popupWindow != nil {
+		p.popupWindow.Destroy()
+		p.popupWindow = nil
+	}
 }
 
 // Package-level functions for compatibility

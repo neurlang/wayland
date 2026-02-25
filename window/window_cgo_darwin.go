@@ -13,10 +13,11 @@ package window
 #import <objc/message.h>
 
 // Forward declarations for Go callbacks
+extern void goPopupCorner(void* windowPtr, int x, int y, int w, int h, void* popupWindowPtr);
 extern void goMouseMotion(void* windowPtr, float x, float y);
 extern void goScheduleRedraw(void* windowPtr);
 extern void goWindowResize(void* windowPtr, int width, int height);
-extern void goMouseButton(void* windowPtr, int button, int state, float x, float y);
+extern void goMouseButton(void* windowPtr, int button, int state);
 extern void goKeyPress(void* windowPtr, unsigned short keyCode, int state, unsigned long modifiers, unsigned short unicodeChar);
 
 // Simple window wrapper
@@ -124,8 +125,15 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         NSRect frame = NSMakeRect(100, 100, width, height);
         
         // Set style mask based on decorated flag
-        NSWindowStyleMask styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | 
-                                      NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+        NSWindowStyleMask styleMask;
+        
+        if (decorated) {
+            styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | 
+                       NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+        } else {
+            // For undecorated windows (popups), use borderless style
+            styleMask = NSWindowStyleMaskBorderless;
+        }
         
         window = [[NSWindow alloc]
             initWithContentRect:frame
@@ -137,20 +145,15 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         [window center];
         [window setAcceptsMouseMovedEvents:YES];
         
-        // For undecorated windows, hide the title bar
-        if (!decorated) {
-            [window setTitlebarAppearsTransparent:YES];
-            [window setTitleVisibility:NSWindowTitleHidden];
-            window.styleMask |= NSWindowStyleMaskFullSizeContentView;
-            
-            // Move the window buttons off-screen instead of hiding them
-            NSButton *closeButton = [window standardWindowButton:NSWindowCloseButton];
-            NSButton *miniaturizeButton = [window standardWindowButton:NSWindowMiniaturizeButton];
-            NSButton *zoomButton = [window standardWindowButton:NSWindowZoomButton];
-            
-            [closeButton setFrameOrigin:NSMakePoint(-100, -100)];
-            [miniaturizeButton setFrameOrigin:NSMakePoint(-100, -100)];
-            [zoomButton setFrameOrigin:NSMakePoint(-100, -100)];
+        // For decorated windows with transparency, hide title bar elements
+        if (decorated) {
+            // Normal decorated window - do nothing special
+        } else {
+            // Borderless window for popups
+            [window setBackgroundColor:[NSColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1.0]];
+            [window setOpaque:YES];
+            [window setHasShadow:YES];
+            [window setLevel:NSPopUpMenuWindowLevel]; // Keep popup above parent
         }
         
         // Use NSImageView for displaying bitmap content
@@ -162,7 +165,9 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
         [imageView setAnimates:NO];
         
         // Set window background
-        [window setBackgroundColor:[NSColor blackColor]];
+        if (decorated) {
+            [window setBackgroundColor:[NSColor blackColor]];
+        }
         [window setOpaque:YES];
         
         [window setContentView:imageView];
@@ -197,11 +202,12 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
             if ([event window] == window) {
                 NSPoint locationInWindow = [event locationInWindow];
                 NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
-                
+
                 // Flip Y coordinate to match Cairo's top-down coordinate system
                 float y = [imageView bounds].size.height - locationInView.y;
-                
+
                 goMouseMotion(windowPtr, (float)locationInView.x, y);
+                
             }
             return event;
         }];
@@ -212,13 +218,15 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
                              NSEventMaskRightMouseDown | NSEventMaskRightMouseUp;
     id buttonMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:buttonMask
         handler:^NSEvent*(NSEvent* event) {
-            if ([event window] == window) {
+            if (1) {
                 NSPoint locationInWindow = [event locationInWindow];
                 NSPoint locationInView = [imageView convertPoint:locationInWindow fromView:nil];
-                
+
                 // Flip Y coordinate to match Cairo's top-down coordinate system
                 float y = [imageView bounds].size.height - locationInView.y;
-                
+
+                goMouseMotion(windowPtr, (float)locationInView.x, y);
+                          
                 int button = 0;
                 int state = 0;
                 
@@ -237,7 +245,7 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
                     state = 0;
                 }
                 
-                goMouseButton(windowPtr, button, state, (float)locationInView.x, y);
+                goMouseButton(windowPtr, button, state);
             }
             return event;
         }];
@@ -284,8 +292,11 @@ static DarwinWindow* darwin_createWindow(int width, int height, const char* titl
 // Destroy window
 static void darwin_destroyWindow(DarwinWindow* dw) {
     if (dw) {
-        // Must be on main thread for NSWindow operations
-        dispatch_sync(dispatch_get_main_queue(), ^{
+        // Check if we're on main thread
+        BOOL isMainThread = [NSThread isMainThread];
+        
+        if (isMainThread) {
+            // Already on main thread, execute directly
             @autoreleasepool {
                 if (dw->displayLink) {
                     CVDisplayLinkStop(dw->displayLink);
@@ -333,7 +344,58 @@ static void darwin_destroyWindow(DarwinWindow* dw) {
                     [window close];
                 }
             }
-        });
+        } else {
+            // Not on main thread, use dispatch_sync
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                @autoreleasepool {
+                    if (dw->displayLink) {
+                        CVDisplayLinkStop(dw->displayLink);
+                        CVDisplayLinkRelease(dw->displayLink);
+                        dw->displayLink = NULL;
+                    }
+                    if (dw->eventMonitor) {
+                        id monitor = (__bridge_transfer id)dw->eventMonitor;
+                        [NSEvent removeMonitor:monitor];
+                        dw->eventMonitor = NULL;
+                    }
+                    if (dw->buttonMonitor) {
+                        id monitor = (__bridge_transfer id)dw->buttonMonitor;
+                        [NSEvent removeMonitor:monitor];
+                        dw->buttonMonitor = NULL;
+                    }
+                    if (dw->keyMonitor) {
+                        id monitor = (__bridge_transfer id)dw->keyMonitor;
+                        [NSEvent removeMonitor:monitor];
+                        dw->keyMonitor = NULL;
+                    }
+                    if (dw->imageLock) {
+                        NSLock* lock = (__bridge NSLock*)dw->imageLock;
+                        [lock lock];
+                        if (dw->currentImage) {
+                            CGImageRelease(dw->currentImage);
+                            dw->currentImage = NULL;
+                        }
+                        [lock unlock];
+                        CFBridgingRelease(dw->imageLock);
+                        dw->imageLock = NULL;
+                    }
+                    if (dw->windowDelegate) {
+                        id delegate = (__bridge_transfer id)dw->windowDelegate;
+                        object_setInstanceVariable(delegate, "darwinWindow", NULL);
+                        dw->windowDelegate = NULL;
+                    }
+                    if (dw->nsView) {
+                        CFBridgingRelease(dw->nsView);
+                        dw->nsView = NULL;
+                    }
+                    if (dw->nsWindow) {
+                        NSWindow* window = (__bridge_transfer NSWindow*)dw->nsWindow;
+                        [window setDelegate:nil];
+                        [window close];
+                    }
+                }
+            });
+        }
         free(dw);
     }
 }
@@ -585,6 +647,60 @@ static void darwin_drawBitmap(DarwinWindow* dw, void* data, int width, int heigh
         CGColorSpaceRelease(colorSpace);
     }
 }
+
+// Position popup window relative to parent window
+static void darwin_positionPopup(DarwinWindow* popupDw, DarwinWindow* parentDw, int offsetX, int offsetY) {
+    if (!popupDw || !popupDw->nsWindow || !parentDw || !parentDw->nsWindow) {
+        printf("[DEBUG C] darwin_positionPopup: NULL pointer check failed\n");
+        return;
+    }
+    
+    printf("[DEBUG C] darwin_positionPopup: offsetX=%d, offsetY=%d\n", offsetX, offsetY);
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool {
+            NSWindow* popupWindow = (__bridge NSWindow*)popupDw->nsWindow;
+            NSWindow* parentWindow = (__bridge NSWindow*)parentDw->nsWindow;
+            
+            // Get parent window's frame
+            NSRect parentFrame = [parentWindow frame];
+            NSRect parentContentRect = [parentWindow contentRectForFrameRect:parentFrame];
+            
+            printf("[DEBUG C] Parent window frame: x=%.1f, y=%.1f, w=%.1f, h=%.1f\n",
+                   parentContentRect.origin.x, parentContentRect.origin.y,
+                   parentContentRect.size.width, parentContentRect.size.height);
+            
+            // Get popup window size
+            NSRect popupFrame = [popupWindow frame];
+            CGFloat popupWidth = popupFrame.size.width;
+            CGFloat popupHeight = popupFrame.size.height;
+            
+            // Calculate popup position in screen coordinates
+            // offsetX and offsetY are in Cairo coordinates (top-left origin, Y down)
+            // We need to convert to macOS screen coordinates (bottom-left origin, Y up)
+            
+            // Convert Y from top-down to bottom-up
+            CGFloat screenX = parentContentRect.origin.x + offsetX - popupWidth/2;
+            CGFloat screenY = parentContentRect.origin.y + (parentContentRect.size.height - offsetY) - popupHeight/2;
+            
+            printf("[DEBUG C] Popup screen position: x=%.1f, y=%.1f (w=%.1f, h=%.1f)\n", 
+                   screenX, screenY, popupWidth, popupHeight);
+
+            goPopupCorner(parentDw->goWindowPtr, (int) (offsetX - popupWidth/2) , (int) (offsetY - popupHeight/2), popupWidth, popupHeight, popupDw->goWindowPtr);
+            
+            // Set new position
+            [popupWindow setFrameOrigin:NSMakePoint(screenX, screenY)];
+            
+            // Make popup window a child of parent (so it stays on top)
+            [parentWindow addChildWindow:popupWindow ordered:NSWindowAbove];
+            
+            printf("[DEBUG C] Popup window positioned and shown\n");
+            
+            // Show the popup window
+            [popupWindow orderFront:nil];
+        }
+    });
+}
 */
 import "C"
 import (
@@ -640,6 +756,56 @@ func darwin_createWindow(width, height int32, title string, decorated bool, goWi
 	return handle
 }
 
+func goPopupGone(windowPtr, popupWindowPtr *Window) {
+	window := windowPtr
+    popupWindowID := uintptr(unsafe.Pointer(popupWindowPtr.darwinHandle.windowID))
+
+    var newList [][5]uintptr
+    var found bool
+    for _, dimensions := range window.popupList {
+        if dimensions[4] != popupWindowID {
+            newList = append(newList, dimensions)
+        } else {
+            if len(window.popupList) == 1 {
+                newList = nil
+            }
+            found = true
+        }
+    }
+    if found {
+        window.popupList = newList
+    }
+}
+//export goPopupCorner
+func goPopupCorner(windowPtr unsafe.Pointer, x, y, w, h C.int, popupWindowPtr unsafe.Pointer) {
+	windowID := uintptr(windowPtr)
+
+	windowMutex.RLock()
+	handle, ok := windowRegistry[windowID]
+	windowMutex.RUnlock()
+	
+	if !ok || handle == nil || handle.goWindow == nil {
+        return
+	}
+	window := handle.goWindow
+	
+	// Debug: log mouse motion
+	println("[GO DEBUG] Window rectangle set for popup window", windowID, "at", (x), (y))
+
+    popupWindowID := uintptr(popupWindowPtr)
+
+
+    window.popupList = append(window.popupList, [5]uintptr{
+        uintptr((int(x))),
+        uintptr((int(y))),
+        uintptr((int(w))),
+        uintptr((int(h))),
+        uintptr(popupWindowID),
+    })
+
+}
+
+
 //export goMouseMotion
 func goMouseMotion(windowPtr unsafe.Pointer, x, y C.float) {
 	windowID := uintptr(windowPtr)
@@ -653,14 +819,43 @@ func goMouseMotion(windowPtr unsafe.Pointer, x, y C.float) {
 	}
 	
 	window := handle.goWindow
+    
+    for _, dimensions := range window.popupList {
+        if int(float32(x)) > int(dimensions[0]) && int(float32(y)) > int(dimensions[1]) &&
+        int(float32(x)) < int(dimensions[0]+dimensions[2]) && int(float32(y)) < int(dimensions[1]+dimensions[3]) {
+    
+            x := float32(x) - float32(dimensions[0])
+            y := float32(y) - float32(dimensions[1])
+
+            // Debug: log mouse motion on popup
+            println("[GO DEBUG] Mouse motion on popup", windowID, "at", int(float32(x)), int(float32(y)), (dimensions[2]), (dimensions[3]))
 	
-	// Call motion handler on all widgets
-	for widget := range window.widgets {
-		if widget.handler != nil {
-			timestamp := uint32(time.Now().UnixNano() / 1000000)
-			widget.handler.Motion(widget, window.input, timestamp, float32(x), float32(y))
-		}
-	}
+            // recursing the motion
+            // XXX: pointer may be bigger than int, but we don't care
+            goMouseMotion(unsafe.Pointer(uintptr(dimensions[4])),
+                          C.float(x),
+                          C.float(y))
+            return
+        } else {
+            // Debug: log mouse motion on popup
+            println("[GO DEBUG] Unhandled mouse motion on popup", windowID, "at", int(float32(x)), int(float32(y)), (dimensions[0]), (dimensions[1]))
+        }
+    }    
+
+    {
+
+
+        // Debug: log mouse motion
+        println("[GO DEBUG] Mouse motion on window", windowID, "at", float32(x), float32(y))
+
+        // Call motion handler on all widgets
+        for widget := range window.widgets {
+            if widget.handler != nil {
+                timestamp := uint32(time.Now().UnixNano() / 1000000)
+                widget.handler.Motion(widget, window.input, timestamp, float32(x), float32(y))
+            }
+        }
+    }
 }
 
 //export goScheduleRedraw
@@ -717,7 +912,7 @@ func goWindowResize(windowPtr unsafe.Pointer, width, height C.int) {
 }
 
 //export goMouseButton
-func goMouseButton(windowPtr unsafe.Pointer, button, state C.int, x, y C.float) {
+func goMouseButton(windowPtr unsafe.Pointer, button, state C.int) {
 	windowID := uintptr(windowPtr)
 	
 	windowMutex.RLock()
@@ -729,6 +924,21 @@ func goMouseButton(windowPtr unsafe.Pointer, button, state C.int, x, y C.float) 
 	}
 	
 	window := handle.goWindow
+
+    var proceed = len(window.popupList) == 0
+    for _, dimensions := range window.popupList {
+
+        if windowID == dimensions[4] {
+        {
+             // Debug: log mouse button on popup
+            println("[GO DEBUG] Mouse button on popup")
+            proceed = true
+
+        }}
+    }    
+    if !proceed {
+        return
+    }
 	
 	// Call button handler on all widgets
 	for widget := range window.widgets {
@@ -866,5 +1076,14 @@ func darwin_enableMouseTracking(handle *darwinWindowHandle) {
 func darwin_drawBitmap(handle *darwinWindowHandle, data []byte, width, height int32) {
 	if handle != nil && handle.cWindow != nil && len(data) > 0 {
 		C.darwin_drawBitmap(handle.cWindow, unsafe.Pointer(&data[0]), C.int(width), C.int(height))
+	}
+}
+
+func darwin_positionPopup(popupHandle, parentHandle *darwinWindowHandle, offsetX, offsetY int32) {
+    if popupHandle == parentHandle {
+        panic("can't be same")
+    }
+	if popupHandle != nil && popupHandle.cWindow != nil && parentHandle != nil && parentHandle.cWindow != nil {
+		C.darwin_positionPopup(popupHandle.cWindow, parentHandle.cWindow, C.int(offsetX), C.int(offsetY))
 	}
 }
