@@ -391,21 +391,26 @@ type Popuper interface {
 func (p *Popup) SetPopupHandler(handler Popuper) {
 	p.popuper = handler
 
-	if p.popuper != nil {
-		p.popuper.Configure()
-	}
 }
 
 func (p *Popup) BufferRelease(buffer *wl.Buffer) {
 	// Not implemented for macOS
 }
 
-func (p *Popup) PopupGetSurface() cairo.Surface {
+func (p *Popup) PopupGetSurface() (ret cairo.Surface) {
 	println("[DEBUG] PopupGetSurface called")
 	if p.popupWindow != nil {
-		return p.popupWindow.WindowGetSurface()
+		ret = p.popupWindow.WindowGetSurface()
 	}
-	return nil
+	if ret == nil {
+		if p.popuper != nil {
+			p.popuper.Configure()
+		}
+		if p.popupWindow != nil {
+			ret = p.popupWindow.WindowGetSurface()
+		}
+	}
+	return ret
 }
 
 func (p *Popup) Destroy() {
