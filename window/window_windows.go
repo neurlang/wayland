@@ -1,15 +1,16 @@
 package window
 
 import (
+	"sync"
+	"syscall"
+	"time"
+	"unsafe"
+
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/winc"
 	"github.com/neurlang/winc/w32"
-	"sync"
-	"syscall"
-	"time"
-	"unsafe"
 )
 
 type Window struct {
@@ -275,6 +276,18 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 
 		t.Motion(widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
 		//allRedrawer()
+	})
+
+	w.form.OnMouseWheel().Bind(func(arg *winc.Event) {
+		xy := arg.Data.(*winc.MouseEventData)
+		var wheel int32
+		switch xy.Button {
+		case 7864320:
+			wheel = -1
+		case 4287102976:
+			wheel = 1
+		}
+		t.AxisDiscrete(widget, w.input, 0, wheel)
 	})
 
 	w.form.OnLBDown().Bind(func(arg *winc.Event) {
