@@ -112,7 +112,6 @@ type Display struct {
 	//	padf		uint64
 	//	padg		uint64
 
-	theme       *theme
 	cursorTheme *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor
 
@@ -479,8 +478,6 @@ type Window struct {
 	subsurfaceListNew []*surface
 
 	keyboardHandler KeyboardHandler
-
-	frame *windowFrame
 
 	decoration           *WindowDecoration
 	decorationsRequested bool
@@ -2562,32 +2559,6 @@ func (Window *Window) WindowGetSurface() cairo.Surface {
 	return cairoSurface.Reference()
 }
 
-func (Window *Window) FrameCreate(data WidgetHandler) *Widget {
-	var buttons uint32
-
-	if Window.custom != 0 {
-		buttons = FrameButtonNone
-	} else {
-		buttons = FrameButtonAll
-	}
-
-	var frame = new(windowFrame)
-	frame.frame = frameCreate(Window.Display.theme, 0, 0, buttons, Window.title, nil)
-	if frame.frame == nil {
-		frame = nil
-		return nil
-	}
-
-	frame.widget = Window.AddWidget(frame)
-	frame.child = frame.widget.AddWidget(data)
-
-	frame.widget.userdata = data
-
-	Window.frame = frame
-
-	return frame.child
-}
-
 //line 2614
 func inputSetFocusWidget(Input *Input, focus *Widget,
 	x float32, y float32) {
@@ -3515,45 +3486,6 @@ func CreateUndecorated(Display *Display) *Window {
 // line 5592
 func (Window *Window) SetBufferType(t int32) {
 	Window.mainSurface.bufferType = t
-}
-
-// enableDecorations creates and shows window decorations (private)
-func (Window *Window) enableDecorations() error {
-	if Window.Display.subcompositor == nil {
-		return fmt.Errorf("subcompositor not available")
-	}
-	if Window.decoration != nil {
-		return nil
-	}
-
-	var width, height int32
-	if Window.mainSurface != nil && Window.mainSurface.allocation.Width > 0 {
-		width = Window.mainSurface.allocation.Width
-		height = Window.mainSurface.allocation.Height
-	} else if Window.pendingAllocation.Width > 0 {
-		width = Window.pendingAllocation.Width
-		height = Window.pendingAllocation.Height
-	} else {
-		return fmt.Errorf("window not yet configured")
-	}
-	_ = width
-	_ = height
-
-	Window.decoration = NewWindowDecoration(Window)
-	if err := Window.decoration.Show(); err != nil {
-		Window.decoration = nil
-		return err
-	}
-	Window.decoration.SetActive(Window.focused == 1)
-	return nil
-}
-
-// disableDecorations removes window decorations (private)
-func (Window *Window) disableDecorations() {
-	if Window.decoration != nil {
-		Window.decoration.Destroy()
-		Window.decoration = nil
-	}
 }
 
 func minInt(a, b int) int {

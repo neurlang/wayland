@@ -68,7 +68,6 @@ type DecorationSurface struct {
 	height       int32
 	scale        int32
 	frameCb      *wl.Callback
-	needsRedraw  bool
 }
 
 type decorationBuffer struct {
@@ -92,7 +91,6 @@ type WindowDecoration struct {
 	pointerX            float32
 	pointerY            float32
 	pointerSerial       uint32
-	isDragging          bool
 	pendingShadowRedraw bool
 	pendingTitleRedraw  bool
 }
@@ -869,93 +867,6 @@ func blurImage(img *image.RGBA, margin int) {
 				B: uint8(b / a), A: uint8(alpha / a),
 			})
 		}
-	}
-}
-
-// renderShadow renders a shadow using a pre-blurred tile
-func renderShadow(dc *gg.Context, shadowTile *image.RGBA,
-	x, y, width, height, margin, topMargin int) {
-
-	// Render four corners
-	for i := 0; i < 4; i++ {
-		fx := i & 1
-		fy := i >> 1
-
-		shadowWidth := margin
-		shadowHeight := topMargin
-		if fy != 0 {
-			shadowHeight = margin
-		}
-		if height < 2*shadowHeight {
-			shadowHeight = (height + (1 - fy)) / 2
-		}
-		if width < 2*shadowWidth {
-			shadowWidth = (width + (1 - fx)) / 2
-		}
-
-		srcX := fx * (128 - shadowWidth)
-		srcY := fy * (128 - shadowHeight)
-		dstX := x + fx*(width-shadowWidth)
-		dstY := y + fy*(height-shadowHeight)
-
-		dc.Push()
-		dc.DrawRectangle(float64(dstX), float64(dstY), float64(shadowWidth), float64(shadowHeight))
-		dc.Clip()
-		tilePart := shadowTile.SubImage(image.Rect(srcX, srcY, srcX+shadowWidth, srcY+shadowHeight))
-		dc.DrawImage(tilePart, dstX, dstY)
-		dc.Pop()
-	}
-
-	// Top and bottom stretches
-	sw := width - 2*margin
-	sh := topMargin
-	if height < 2*sh {
-		sh = height / 2
-	}
-	if sw > 0 && sh > 0 {
-		dc.Push()
-		dc.DrawRectangle(float64(x+margin), float64(y), float64(sw), float64(sh))
-		dc.Clip()
-		tilePart := shadowTile.SubImage(image.Rect(60, 0, 68, sh))
-		for sx := x + margin; sx < x+margin+sw; sx += 8 {
-			dc.DrawImage(tilePart, sx, y)
-		}
-		dc.Pop()
-
-		dc.Push()
-		dc.DrawRectangle(float64(x+margin), float64(y+height-margin), float64(sw), float64(margin))
-		dc.Clip()
-		tilePart = shadowTile.SubImage(image.Rect(60, 128-margin, 68, 128))
-		for sx := x + margin; sx < x+margin+sw; sx += 8 {
-			dc.DrawImage(tilePart, sx, y+height-margin)
-		}
-		dc.Pop()
-	}
-
-	// Left and right stretches
-	sw = margin
-	if width < 2*sw {
-		sw = width / 2
-	}
-	sh = height - margin - topMargin
-	if sh > 0 && sw > 0 {
-		dc.Push()
-		dc.DrawRectangle(float64(x), float64(y+topMargin), float64(sw), float64(sh))
-		dc.Clip()
-		tilePart := shadowTile.SubImage(image.Rect(0, 60, sw, 68))
-		for sy := y + topMargin; sy < y+topMargin+sh; sy += 8 {
-			dc.DrawImage(tilePart, x, sy)
-		}
-		dc.Pop()
-
-		dc.Push()
-		dc.DrawRectangle(float64(x+width-sw), float64(y+topMargin), float64(sw), float64(sh))
-		dc.Clip()
-		tilePart = shadowTile.SubImage(image.Rect(128-sw, 60, 128, 68))
-		for sy := y + topMargin; sy < y+topMargin+sh; sy += 8 {
-			dc.DrawImage(tilePart, x+width-sw, sy)
-		}
-		dc.Pop()
 	}
 }
 
