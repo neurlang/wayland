@@ -116,17 +116,17 @@ type cursorType = int
 
 const (
 	//DefaultCursor - Default arrow cursor
-	DefaultCursor cursorType = 4
+	DefaultCursor cursorType = window.CursorLeftPtr
 	//PointerCursor - Pointer cursor
-	PointerCursor cursorType = 11
+	PointerCursor cursorType = window.CursorHand1
 	//ArrowCursor - Arrow cursor
-	ArrowCursor cursorType = 4
+	ArrowCursor cursorType = window.CursorLeftPtr
 	//SpinnerCursor
-	SpinnerCursor cursorType = 12
+	SpinnerCursor cursorType = window.CursorWatch
 	//HandCursor
-	HandCursor cursorType = 11
+	HandCursor cursorType = window.CursorHand1
 	//IbeamCursor
-	IbeamCursor cursorType = 10
+	IbeamCursor cursorType = window.CursorIbeam
 )
 
 type widgetType int

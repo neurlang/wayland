@@ -1,11 +1,14 @@
 package windowtrace
 
-import "github.com/neurlang/wayland/window"
-import cairo "github.com/neurlang/wayland/cairoshim"
-import "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/xdg"
-import "github.com/neurlang/wayland/wlclient"
-import "io"
+import (
+	"io"
+
+	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/wayland/window"
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
+	"github.com/neurlang/wayland/xdg"
+)
 
 type Display window.Display
 type Window struct {
@@ -24,24 +27,25 @@ const PreferredFormatRgb565 = window.PreferredFormatRgb565
 
 const BufferTypeEglWindow = window.BufferTypeEglWindow
 const BufferTypeShm = window.BufferTypeShm
-
-const CursorBottomLeft = 0
-const CursorBottomRight = 1
-const CursorBottom = 2
-const CursorDragging = 3
-const CursorLeftPtr = 4
-const CursorLeft = 5
-const CursorRight = 6
-const CursorTopLeft = 7
-const CursorTopRight = 8
-const CursorTop = 9
-const CursorIbeam = 10
-const CursorHand1 = 11
-const CursorWatch = 12
-const CursorDndMove = 13
-const CursorDndCopy = 14
-const CursorDndForbidden = 15
-const CursorBlank = 16
+const (
+	CursorBottomLeft   = window.CursorBottomLeft
+	CursorBottomRight  = window.CursorBottomRight
+	CursorBottom       = window.CursorBottom
+	CursorDragging     = window.CursorDragging
+	CursorLeftPtr      = window.CursorLeftPtr
+	CursorLeft         = window.CursorLeft
+	CursorRight        = window.CursorRight
+	CursorTopLeft      = window.CursorTopLeft
+	CursorTopRight     = window.CursorTopRight
+	CursorTop          = window.CursorTop
+	CursorIbeam        = window.CursorIbeam
+	CursorHand1        = window.CursorHand1
+	CursorWatch        = window.CursorWatch
+	CursorDndMove      = window.CursorDndMove
+	CursorDndCopy      = window.CursorDndCopy
+	CursorDndForbidden = window.CursorDndForbidden
+	CursorBlank        = window.CursorBlank
+)
 
 const ZwpRelativePointerManagerV1Version = window.ZwpRelativePointerManagerV1Version
 const ZwpPointerConstraintsV1Version = window.ZwpPointerConstraintsV1Version

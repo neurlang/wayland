@@ -22,20 +22,25 @@
 package window
 
 //import zwp "github.com/neurlang/wayland/wayland"
-import "github.com/neurlang/wayland/wlclient"
-import "github.com/neurlang/wayland/wlcursor"
-import "github.com/neurlang/wayland/wl"
-import zxdg "github.com/neurlang/wayland/xdg"
-import cairo "github.com/neurlang/wayland/cairoshim"
+import (
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
+	"github.com/neurlang/wayland/wlcursor"
 
-import "os"
-import "io"
+	zxdg "github.com/neurlang/wayland/xdg"
 
-import sys "github.com/neurlang/wayland/os"
-import xkb "github.com/neurlang/wayland/xkbcommon"
-import "errors"
+	"io"
+	"os"
 
-import "fmt"
+	cairo "github.com/neurlang/wayland/cairoshim"
+
+	sys "github.com/neurlang/wayland/os"
+
+	"errors"
+	"fmt"
+
+	xkb "github.com/neurlang/wayland/xkbcommon"
+)
 
 type runner interface {
 	Run(uint32)
@@ -43,6 +48,7 @@ type runner interface {
 
 const BufferTypeShm = 1
 
+// cusors
 const CursorBottomLeft = 0
 const CursorBottomRight = 1
 const CursorBottom = 2
@@ -68,46 +74,46 @@ type global struct {
 }
 
 type Display struct {
-	Display               *wl.Display
-	registry              *wl.Registry
-	compositor            *wl.Compositor
-	subcompositor         *wl.Subcompositor         //nolint:unused // Reserved for future use
-	shm                   *wl.Shm
-	dataDeviceManager     *wl.DataDeviceManager
-	dataDeviceVersion     int                       //nolint:unused // Reserved for future use
-	textCursorPosition    *struct{}                 //nolint:unused // Reserved for future use
-	xdgShell              *zxdg.WmBase
-	serial                uint32
+	Display            *wl.Display
+	registry           *wl.Registry
+	compositor         *wl.Compositor
+	subcompositor      *wl.Subcompositor //nolint:unused // Reserved for future use
+	shm                *wl.Shm
+	dataDeviceManager  *wl.DataDeviceManager
+	dataDeviceVersion  int       //nolint:unused // Reserved for future use
+	textCursorPosition *struct{} //nolint:unused // Reserved for future use
+	xdgShell           *zxdg.WmBase
+	serial             uint32
 
 	//display_fd        int32
-	displayFdEvents       uint32                    //nolint:unused // Reserved for future use
+	displayFdEvents uint32 //nolint:unused // Reserved for future use
 
 	//display_task task
 	//	pad4		uint64
 	//	pad5		uint64
 	//	pad6		uint64
 
-	deferredList          [2]uintptr                //nolint:unused // Reserved for future use
+	deferredList [2]uintptr //nolint:unused // Reserved for future use
 	//	pad7		uint64
 	//	pad8		uint64
 
-	running               bool
+	running bool
 
-	globalList            []*global
+	globalList []*global
 	//	pad9		uint64
 	//	pada		uint64
-	windowList            [2]*Window                //nolint:unused // Reserved for future use
+	windowList [2]*Window //nolint:unused // Reserved for future use
 	//	padb		uint64
 	//	padc		uint64
-	inputList             []*Input
+	inputList []*Input
 	//	padd		uint64
 	//	pade		uint64
-	outputList            [2]*output                //nolint:unused // Reserved for future use
+	outputList [2]*output //nolint:unused // Reserved for future use
 	//	padf		uint64
 	//	padg		uint64
 
-	theme                 *theme
-	cursorTheme           *wlcursor.Theme
+	theme       *theme
+	cursorTheme *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor
 
 	xkbContext *xkb.Context
@@ -454,8 +460,8 @@ type Window struct {
 	xdgToplevel *zxdg.Toplevel
 	xdgPopup    *zxdg.Popup
 
-	parent     *Window     //nolint:unused // Reserved for future use
-	lastParent *Window     //nolint:unused // Reserved for future use
+	parent     *Window //nolint:unused // Reserved for future use
+	lastParent *Window //nolint:unused // Reserved for future use
 
 	/* struct surface::link, contains also mainSurface */
 	subsurfaceList [2]*surface //nolint:unused // Reserved for future use
@@ -476,7 +482,7 @@ type Window struct {
 
 	frame *windowFrame
 
-	decoration *WindowDecoration
+	decoration           *WindowDecoration
 	decorationsRequested bool
 
 	fullscreenHandler FullscreenHandler
@@ -562,7 +568,7 @@ func (Window *Window) ToplevelConfigure(
 		var margin int32 = 0
 
 		Window.ScheduleResize(width+margin*2, height+margin*2)
-		
+
 		// Update decoration sizes immediately during resize for smooth tracking
 		// Frame callbacks in UpdateSizeForResize prevent flicker while maintaining responsiveness
 		// This is called on every configure event to ensure decorations track window size in real-time
@@ -573,18 +579,18 @@ func (Window *Window) ToplevelConfigure(
 		(Window.savedAllocation.Height > 0) {
 		Window.ScheduleResize(Window.savedAllocation.Width, Window.savedAllocation.Height)
 	}
-	
+
 	// Update decorations based on window state
 	// Only after we have a valid size
-	if Window.decoration != nil && Window.mainSurface != nil && 
-		Window.mainSurface.allocation.Width > 0 && 
+	if Window.decoration != nil && Window.mainSurface != nil &&
+		Window.mainSurface.allocation.Width > 0 &&
 		Window.mainSurface.allocation.Height > 0 {
-		
+
 		// Update active state only if it changed (this only redraws titlebar)
 		if Window.decoration.active != (Window.focused == 1) {
 			Window.decoration.SetActive(Window.focused == 1)
 		}
-		
+
 		// Show/hide decorations based on state
 		if Window.fullscreen {
 			// Hide decorations in fullscreen
@@ -718,10 +724,10 @@ type Input struct {
 	currentCursor      int32
 	cursorAnimStart    uint32
 	cursorFrameCb      *wl.Callback
-	cursorTimerStart   uint32      //nolint:unused // Reserved for future use
+	cursorTimerStart   uint32 //nolint:unused // Reserved for future use
 	cursorAnimCurrent  uint32
-	cursorDelayFd      int32       //nolint:unused // Reserved for future use
-	cursorTimerRunning bool        //nolint:unused // Reserved for future use
+	cursorDelayFd      int32 //nolint:unused // Reserved for future use
+	cursorTimerRunning bool  //nolint:unused // Reserved for future use
 	//cursor_task          task
 	pointerSurface     *wl.Surface
 	modifiers          ModType
@@ -987,9 +993,9 @@ type output struct {
 	Display        *Display
 	output         *wl.Output
 	serverOutputId uint32
-	allocation     Rectangle //nolint:unused // Reserved for future use
+	allocation     Rectangle  //nolint:unused // Reserved for future use
 	link           [2]*output //nolint:unused // Reserved for future use
-	transform      int32 //nolint:unused // Reserved for future use
+	transform      int32      //nolint:unused // Reserved for future use
 	scale          int32
 	maker          string
 	model          string
@@ -1122,15 +1128,15 @@ func (input *Input) HandlePointerLeave(ev wl.PointerLeaveEvent) {
 func (input *Input) PointerLeave(wlPointer *wl.Pointer, serial uint32, wlSurface *wl.Surface) {
 
 	input.Display.serial = serial
-	
+
 	// Check if leaving a decoration surface
 	if input.pointerFocus != nil && input.pointerFocus.decoration != nil {
-		if input.pointerFocus.decoration.titleSurf != nil && 
+		if input.pointerFocus.decoration.titleSurf != nil &&
 			wlSurface == input.pointerFocus.decoration.titleSurf.wlSurface {
 			input.pointerFocus.decoration.HandlePointerLeave()
 		}
 	}
-	
+
 	inputRemovePointerFocus(input)
 
 }
@@ -1164,14 +1170,14 @@ func (input *Input) PointerButton(
 	var state = wl.PointerButtonState(stateW)
 
 	input.Display.serial = serial
-	
+
 	// Check if button event is on a decoration surface
 	if input.pointerFocus != nil && input.pointerFocus.decoration != nil {
 		if input.pointerFocus.decoration.hoverButton != ComponentNone {
 			input.pointerFocus.decoration.HandlePointerButton(serial, button, state)
 			return
 		}
-		
+
 		// Check if button press is on shadow surface (border area) for resize
 		if input.currentPtrSurface == input.pointerFocus.decoration.shadowSurf.wlSurface &&
 			button == 272 && state == wl.PointerButtonStatePressed { // Left button press
@@ -1180,12 +1186,12 @@ func (input *Input) PointerButton(
 				// Convert shadow surface coordinates to main surface relative
 				adjustedX := input.sx - float32(ShadowMargin)
 				adjustedY := input.sy - float32(ShadowMargin+TitleHeight)
-				
+
 				// Determine which edge/corner to resize from
-				edge := getResizeEdge(adjustedX, adjustedY, 
+				edge := getResizeEdge(adjustedX, adjustedY,
 					input.pointerFocus.mainSurface.allocation.Width,
 					input.pointerFocus.mainSurface.allocation.Height)
-				
+
 				if edge != zxdg.ToplevelResizeEdgeNone {
 					// Get the seat from the input list
 					if len(input.Display.inputList) > 0 && input.seat != nil {
@@ -1196,7 +1202,7 @@ func (input *Input) PointerButton(
 			}
 		}
 	}
-	
+
 	if input.focusWidget != nil && input.grab == nil &&
 		state == wl.PointerButtonStatePressed {
 		inputGrab(input, input.focusWidget, button)
@@ -2303,7 +2309,7 @@ func surfaceDestroy(surface *surface) {
 
 //line 1577
 func (Window *Window) Destroy() {
-	
+
 	// Clean up decorations first
 	if Window.decoration != nil {
 		Window.decoration.Destroy()
@@ -2635,21 +2641,21 @@ func inputRemovePointerFocus(input_ *Input) {
 // Returns the cursor type for 4 edges and 4 corners.
 func getResizeCursor(sx, sy float32, width, height int32) int {
 	const cornerMargin = float32(ShadowMargin * 3) // Larger area for corners
-	
+
 	fWidth := float32(width)
 	fHeight := float32(height)
-	
+
 	// Determine which edge(s) we're near based on coordinate position
 	// sx < 0 means we're to the left of the surface
 	// sy < 0 means we're above the surface
 	// sx >= width means we're to the right
 	// sy >= height means we're below
-	
+
 	nearLeft := sx < 0 || sx < cornerMargin
 	nearRight := sx >= fWidth || sx >= fWidth-cornerMargin
 	nearTop := sy < 0 || sy < cornerMargin
 	nearBottom := sy >= fHeight || sy >= fHeight-cornerMargin
-	
+
 	// For corners, we need to be near both edges
 	// Check corners first (they take priority)
 	if nearTop && nearLeft {
@@ -2664,7 +2670,7 @@ func getResizeCursor(sx, sy float32, width, height int32) int {
 	if nearBottom && nearRight {
 		return CursorBottomRight
 	}
-	
+
 	// Check edges - only one edge is near
 	if nearTop {
 		return CursorTop
@@ -2678,7 +2684,7 @@ func getResizeCursor(sx, sy float32, width, height int32) int {
 	if nearRight {
 		return CursorRight
 	}
-	
+
 	// Not near any border
 	return CursorLeftPtr
 }
@@ -2687,15 +2693,15 @@ func getResizeCursor(sx, sy float32, width, height int32) int {
 // relative to the window borders. Returns the edge constant for xdgToplevel.Resize()
 func getResizeEdge(sx, sy float32, width, height int32) uint32 {
 	const cornerMargin = float32(ShadowMargin * 3) // Larger area for corners
-	
+
 	fWidth := float32(width)
 	fHeight := float32(height)
-	
+
 	nearLeft := sx < 0 || sx < cornerMargin
 	nearRight := sx >= fWidth || sx >= fWidth-cornerMargin
 	nearTop := sy < 0 || sy < cornerMargin
 	nearBottom := sy >= fHeight || sy >= fHeight-cornerMargin
-	
+
 	// Check corners first (they take priority)
 	if nearTop && nearLeft {
 		return zxdg.ToplevelResizeEdgeTopLeft
@@ -2709,7 +2715,7 @@ func getResizeEdge(sx, sy float32, width, height int32) uint32 {
 	if nearBottom && nearRight {
 		return zxdg.ToplevelResizeEdgeBottomRight
 	}
-	
+
 	// Check edges
 	if nearTop {
 		return zxdg.ToplevelResizeEdgeTop
@@ -2723,7 +2729,7 @@ func getResizeEdge(sx, sy float32, width, height int32) uint32 {
 	if nearRight {
 		return zxdg.ToplevelResizeEdgeRight
 	}
-	
+
 	// Not near any border
 	return zxdg.ToplevelResizeEdgeNone
 }
@@ -2743,28 +2749,28 @@ func pointerHandleMotion(data *Input, pointer *wl.Pointer,
 
 	Input.sx = sx
 	Input.sy = sy
-	
+
 	// Check if we're on the shadow surface (border area)
-	if Window.decoration != nil && Window.decoration.shadowSurf != nil && 
+	if Window.decoration != nil && Window.decoration.shadowSurf != nil &&
 		Input.currentPtrSurface == Window.decoration.shadowSurf.wlSurface {
 		// We're on the shadow surface - convert coordinates to determine resize cursor
 		// Shadow surface coordinates need to be adjusted relative to main surface
 		// Shadow surface is positioned at (-ShadowMargin, -(ShadowMargin+TitleHeight))
 		adjustedX := sx - float32(ShadowMargin)
 		adjustedY := sy - float32(ShadowMargin+TitleHeight)
-		
+
 		// Don't update hover button when on shadow surface to prevent flicker
 		if Window.decoration.hoverButton != ComponentNone {
 			Window.decoration.hoverButton = ComponentNone
 		}
-		
+
 		cursor = getResizeCursor(adjustedX, adjustedY, Window.mainSurface.allocation.Width, Window.mainSurface.allocation.Height)
 		inputSetPointerImage(Input, cursor)
 		return
 	}
-	
+
 	// Check if we're on the titlebar decoration surface
-	if Window.decoration != nil && Window.decoration.titleSurf != nil && 
+	if Window.decoration != nil && Window.decoration.titleSurf != nil &&
 		Input.currentPtrSurface == Window.decoration.titleSurf.wlSurface {
 		// We're on the titlebar surface - handle button hover and set cursor
 		Window.decoration.HandlePointerMotion(sx, sy)
@@ -3098,7 +3104,7 @@ func windowDoResize(Window *Window) {
 		Window.pendingAllocation.Height)
 
 	surfaceResize(Window.mainSurface)
-	
+
 	// Create or update decorations
 	if Window.Display.subcompositor != nil && !Window.fullscreen &&
 		Window.pendingAllocation.Width > 0 && Window.pendingAllocation.Height > 0 {
@@ -3461,7 +3467,7 @@ func Create(Display *Display) *Window {
 		Window.InhibitRedraw()
 
 		_ = Window.mainSurface.surface_.Commit()
-		
+
 		// Decorations will be created after first configure/resize
 		// when we know the window dimensions
 		Window.decorationsRequested = true
@@ -3498,7 +3504,7 @@ func CreateUndecorated(Display *Display) *Window {
 		Window.InhibitRedraw()
 
 		_ = Window.mainSurface.surface_.Commit()
-		
+
 		// Explicitly disable decorations
 		Window.decorationsRequested = false
 	}
