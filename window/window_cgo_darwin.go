@@ -1078,8 +1078,7 @@ func goMouseWheel(windowPtr unsafe.Pointer, dx, dy C.float, discrete C.int) {
 
 	for widget := range window.widgets {
 		if widget.handler != nil {
-			timestamp := uint32(time.Now().UnixNano() / 1000000)
-			widget.handler.AxisDiscrete(widget, window.input, 0, C.int(dy))
+			widget.handler.AxisDiscrete(widget, window.input, 0, int32(dy))
 		}
 	}
 }
