@@ -1,3 +1,4 @@
+// Package libdecor implements a purego api to libdecor C library for window decorations in libwayland
 package libdecor
 
 import (

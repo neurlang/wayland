@@ -1,3 +1,4 @@
+// Package windowtrace is same as window except with tracing
 package windowtrace
 
 // ModType is the type of Mod Masks

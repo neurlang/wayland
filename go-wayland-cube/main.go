@@ -1,3 +1,4 @@
+// Go wayland cube demo - go build with -tags wayland
 package main
 
 //go:generate go run shaders/generate.go
