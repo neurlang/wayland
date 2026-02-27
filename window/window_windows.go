@@ -24,6 +24,8 @@ type Window struct {
 	down           [2]uint32
 	up             [2]uint32
 
+	current_cursor int
+
 	Display *Display
 }
 
@@ -270,7 +272,10 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 		xy := arg.Data.(*winc.MouseEventData)
 		cursor := t.Motion(widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
 		if CursorBottomLeft == cursor || CursorBottomRight == cursor || CursorBottom == cursor || CursorDragging == cursor || CursorLeftPtr == cursor || CursorLeft == cursor || CursorRight == cursor || CursorTopLeft == cursor || CursorTopRight == cursor || CursorTop == cursor || CursorIbeam == cursor || CursorHand1 == cursor || CursorWatch == cursor || CursorDndMove == cursor || CursorDndCopy == cursor || CursorDndForbidden == cursor || CursorBlank == cursor {
-			w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			if w.current_cursor != cursor {
+				w.current_cursor = cursor
+				w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			}
 		}
 		//allRedrawer()
 	})
@@ -279,7 +284,10 @@ func (w *Window) AddWidget(t WidgetHandler) (widget *Widget) {
 
 		cursor := t.Motion(widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
 		if CursorBottomLeft == cursor || CursorBottomRight == cursor || CursorBottom == cursor || CursorDragging == cursor || CursorLeftPtr == cursor || CursorLeft == cursor || CursorRight == cursor || CursorTopLeft == cursor || CursorTopRight == cursor || CursorTop == cursor || CursorIbeam == cursor || CursorHand1 == cursor || CursorWatch == cursor || CursorDndMove == cursor || CursorDndCopy == cursor || CursorDndForbidden == cursor || CursorBlank == cursor {
-			w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			if w.current_cursor != cursor {
+				w.current_cursor = cursor
+				w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			}
 		}
 		//allRedrawer()
 	})
@@ -418,7 +426,10 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 
 		cursor := p.widget.handler.Motion(&p.widget, w.input, uint32(time.Now().UnixNano()/1000000), float32(xy.X), float32(xy.Y))
 		if CursorBottomLeft == cursor || CursorBottomRight == cursor || CursorBottom == cursor || CursorDragging == cursor || CursorLeftPtr == cursor || CursorLeft == cursor || CursorRight == cursor || CursorTopLeft == cursor || CursorTopRight == cursor || CursorTop == cursor || CursorIbeam == cursor || CursorHand1 == cursor || CursorWatch == cursor || CursorDndMove == cursor || CursorDndCopy == cursor || CursorDndForbidden == cursor || CursorBlank == cursor {
-			w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			if w.current_cursor != cursor {
+				w.current_cursor = cursor
+				w32.SetCursor(w32.LoadCursor(0, w32.MakeIntResource(uint16(cursor))))
+			}
 		}
 		allRedrawer()
 	}
