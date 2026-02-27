@@ -1,8 +1,10 @@
 // Package wlclient implements a wayland-client like api
 package wlclient
 
-import "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/xdg"
+import (
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/xdg"
+)
 
 func DisplayDispatch(d *wl.Display) error {
 	return d.Context().Run()

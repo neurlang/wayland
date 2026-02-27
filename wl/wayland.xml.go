@@ -6,8 +6,8 @@ package wl
 
 import (
 	"sync"
-
 )
+
 // DisplayErrorInvalidObject means server couldn't find object
 const DisplayErrorInvalidObject = 0
 
@@ -614,15 +614,17 @@ const SubsurfaceErrorBadSurface = 0
 // Display core global object
 type Display struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateDisplayErrors map[DisplayErrorHandler]struct{}
+	mu                      sync.RWMutex
+	privateDisplayErrors    map[DisplayErrorHandler]struct{}
 	privateDisplayDeleteIds map[DisplayDeleteIdHandler]struct{}
 }
+
 // initDisplay initializes the Display object's handler maps
 func (ret *Display) initDisplay() {
 	ret.privateDisplayErrors = make(map[DisplayErrorHandler]struct{})
 	ret.privateDisplayDeleteIds = make(map[DisplayDeleteIdHandler]struct{})
 }
+
 // NewDisplay is a constructor for the Display object
 func NewDisplay(ctx *Context) *Display {
 	ret := new(Display)
@@ -630,16 +632,19 @@ func NewDisplay(ctx *Context) *Display {
 	ctx.Register(ret)
 	return ret
 }
+
 // Sync asynchronous roundtrip
 func (p *Display) Sync() (*Callback, error) {
 	retCallback := NewCallback(p.Context())
 	return retCallback, p.Context().SendRequest(p, 0, retCallback)
 }
+
 // GetRegistry get global registry object
 func (p *Display) GetRegistry() (*Registry, error) {
 	retRegistry := NewRegistry(p.Context())
 	return retRegistry, p.Context().SendRequest(p, 1, retRegistry)
 }
+
 // Dispatch dispatches event for object Display
 func (p *Display) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -668,6 +673,7 @@ func (p *Display) Dispatch(event *Event) {
 
 	}
 }
+
 // DisplayErrorEvent is the fatal error event
 type DisplayErrorEvent struct {
 	// ObjectId is the object where the error occurred
@@ -676,14 +682,14 @@ type DisplayErrorEvent struct {
 	Code uint32
 	// Message is the error description
 	Message string
-
 }
+
 // DisplayDeleteIdEvent is the acknowledge object ID deletion
 type DisplayDeleteIdEvent struct {
 	// Id is the deleted object ID
 	Id uint32
-
 }
+
 // DisplayErrorHandler is the handler interface for DisplayErrorEvent
 type DisplayErrorHandler interface {
 	HandleDisplayError(DisplayErrorEvent)
@@ -703,8 +709,9 @@ func (p *Display) RemoveErrorHandler(h DisplayErrorHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDisplayErrors, h)
+	delete(p.privateDisplayErrors, h)
 }
+
 // DisplayDeleteIdHandler is the handler interface for DisplayDeleteIdEvent
 type DisplayDeleteIdHandler interface {
 	HandleDisplayDeleteId(DisplayDeleteIdEvent)
@@ -724,20 +731,23 @@ func (p *Display) RemoveDeleteIdHandler(h DisplayDeleteIdHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDisplayDeleteIds, h)
+	delete(p.privateDisplayDeleteIds, h)
 }
+
 // Registry global registry object
 type Registry struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateRegistryGlobals map[RegistryGlobalHandler]struct{}
+	mu                           sync.RWMutex
+	privateRegistryGlobals       map[RegistryGlobalHandler]struct{}
 	privateRegistryGlobalRemoves map[RegistryGlobalRemoveHandler]struct{}
 }
+
 // initRegistry initializes the Registry object's handler maps
 func (ret *Registry) initRegistry() {
 	ret.privateRegistryGlobals = make(map[RegistryGlobalHandler]struct{})
 	ret.privateRegistryGlobalRemoves = make(map[RegistryGlobalRemoveHandler]struct{})
 }
+
 // NewRegistry is a constructor for the Registry object
 func NewRegistry(ctx *Context) *Registry {
 	ret := new(Registry)
@@ -745,11 +755,13 @@ func NewRegistry(ctx *Context) *Registry {
 	ctx.Register(ret)
 	return ret
 }
+
 // Bind bind an object to the display
-func (p *Registry) Bind(Name uint32, Iface string, Version uint32, Id Proxy) (error) {
-	
+func (p *Registry) Bind(Name uint32, Iface string, Version uint32, Id Proxy) error {
+
 	return p.Context().SendRequest(p, 0, Name, Iface, Version, Id)
 }
+
 // Dispatch dispatches event for object Registry
 func (p *Registry) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -778,6 +790,7 @@ func (p *Registry) Dispatch(event *Event) {
 
 	}
 }
+
 // RegistryGlobalEvent is the announce global object
 type RegistryGlobalEvent struct {
 	// Name is the numeric name of the global object
@@ -786,14 +799,14 @@ type RegistryGlobalEvent struct {
 	Interface string
 	// Version is the interface version
 	Version uint32
-
 }
+
 // RegistryGlobalRemoveEvent is the announce removal of global object
 type RegistryGlobalRemoveEvent struct {
 	// Name is the numeric name of the global object
 	Name uint32
-
 }
+
 // RegistryGlobalHandler is the handler interface for RegistryGlobalEvent
 type RegistryGlobalHandler interface {
 	HandleRegistryGlobal(RegistryGlobalEvent)
@@ -813,8 +826,9 @@ func (p *Registry) RemoveGlobalHandler(h RegistryGlobalHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateRegistryGlobals, h)
+	delete(p.privateRegistryGlobals, h)
 }
+
 // RegistryGlobalRemoveHandler is the handler interface for RegistryGlobalRemoveEvent
 type RegistryGlobalRemoveHandler interface {
 	HandleRegistryGlobalRemove(RegistryGlobalRemoveEvent)
@@ -834,18 +848,21 @@ func (p *Registry) RemoveGlobalRemoveHandler(h RegistryGlobalRemoveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateRegistryGlobalRemoves, h)
+	delete(p.privateRegistryGlobalRemoves, h)
 }
+
 // Callback callback object
 type Callback struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                   sync.RWMutex
 	privateCallbackDones map[CallbackDoneHandler]struct{}
 }
+
 // initCallback initializes the Callback object's handler maps
 func (ret *Callback) initCallback() {
 	ret.privateCallbackDones = make(map[CallbackDoneHandler]struct{})
 }
+
 // NewCallback is a constructor for the Callback object
 func NewCallback(ctx *Context) *Callback {
 	ret := new(Callback)
@@ -853,6 +870,7 @@ func NewCallback(ctx *Context) *Callback {
 	ctx.Register(ret)
 	return ret
 }
+
 // Dispatch dispatches event for object Callback
 func (p *Callback) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -870,12 +888,14 @@ func (p *Callback) Dispatch(event *Event) {
 
 	}
 }
+
 // CallbackDoneEvent is the done event
 type CallbackDoneEvent struct {
 	// CallbackData is the request-specific data for the callback
 	CallbackData uint32
-	C *Callback
+	C            *Callback
 }
+
 // CallbackDoneHandler is the handler interface for CallbackDoneEvent
 type CallbackDoneHandler interface {
 	HandleCallbackDone(CallbackDoneEvent)
@@ -895,75 +915,89 @@ func (p *Callback) RemoveDoneHandler(h CallbackDoneHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateCallbackDones, h)
+	delete(p.privateCallbackDones, h)
 }
+
 // Compositor the compositor singleton
 type Compositor struct {
 	BaseProxy
 }
+
 // NewCompositor is a constructor for the Compositor object
 func NewCompositor(ctx *Context) *Compositor {
 	ret := new(Compositor)
 	ctx.Register(ret)
 	return ret
 }
+
 // CreateSurface create new surface
 func (p *Compositor) CreateSurface() (*Surface, error) {
 	retId := NewSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
+
 // CreateRegion create new region
 func (p *Compositor) CreateRegion() (*Region, error) {
 	retId := NewRegion(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
+
 // Dispatch dispatches event for object Compositor
 func (p *Compositor) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // ShmPool a shared memory pool
 type ShmPool struct {
 	BaseProxy
 }
+
 // NewShmPool is a constructor for the ShmPool object
 func NewShmPool(ctx *Context) *ShmPool {
 	ret := new(ShmPool)
 	ctx.Register(ret)
 	return ret
 }
+
 // CreateBuffer create a buffer from the pool
 func (p *ShmPool) CreateBuffer(Offset int32, Width int32, Height int32, Stride int32, Format uint32) (*Buffer, error) {
 	retId := NewBuffer(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Offset, Width, Height, Stride, Format)
 }
+
 // Destroy destroy the pool
-func (p *ShmPool) Destroy() (error) {
-	
+func (p *ShmPool) Destroy() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // Resize change the size of the pool mapping
-func (p *ShmPool) Resize(Size int32) (error) {
-	
+func (p *ShmPool) Resize(Size int32) error {
+
 	return p.Context().SendRequest(p, 2, Size)
 }
+
 // Dispatch dispatches event for object ShmPool
 func (p *ShmPool) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Shm shared memory support
 type Shm struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                sync.RWMutex
 	privateShmFormats map[ShmFormatHandler]struct{}
 }
+
 // initShm initializes the Shm object's handler maps
 func (ret *Shm) initShm() {
 	ret.privateShmFormats = make(map[ShmFormatHandler]struct{})
 }
+
 // NewShm is a constructor for the Shm object
 func NewShm(ctx *Context) *Shm {
 	ret := new(Shm)
@@ -971,16 +1005,19 @@ func NewShm(ctx *Context) *Shm {
 	ctx.Register(ret)
 	return ret
 }
+
 // CreatePool create a shm pool
 func (p *Shm) CreatePool(Fd uintptr, Size int32) (*ShmPool, error) {
 	retId := NewShmPool(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Fd, Size)
 }
+
 // Release release the shm object
-func (p *Shm) Release() (error) {
-	
+func (p *Shm) Release() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // Dispatch dispatches event for object Shm
 func (p *Shm) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -997,12 +1034,13 @@ func (p *Shm) Dispatch(event *Event) {
 
 	}
 }
+
 // ShmFormatEvent is the pixel format description
 type ShmFormatEvent struct {
 	// Format is the buffer pixel format
 	Format uint32
-
 }
+
 // ShmFormatHandler is the handler interface for ShmFormatEvent
 type ShmFormatHandler interface {
 	HandleShmFormat(ShmFormatEvent)
@@ -1022,18 +1060,21 @@ func (p *Shm) RemoveFormatHandler(h ShmFormatHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateShmFormats, h)
+	delete(p.privateShmFormats, h)
 }
+
 // Buffer content for a wl_surface
 type Buffer struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                    sync.RWMutex
 	privateBufferReleases map[BufferReleaseHandler]struct{}
 }
+
 // initBuffer initializes the Buffer object's handler maps
 func (ret *Buffer) initBuffer() {
 	ret.privateBufferReleases = make(map[BufferReleaseHandler]struct{})
 }
+
 // NewBuffer is a constructor for the Buffer object
 func NewBuffer(ctx *Context) *Buffer {
 	ret := new(Buffer)
@@ -1041,11 +1082,13 @@ func NewBuffer(ctx *Context) *Buffer {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy a buffer
-func (p *Buffer) Destroy() (error) {
-	
+func (p *Buffer) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Dispatch dispatches event for object Buffer
 func (p *Buffer) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -1062,10 +1105,12 @@ func (p *Buffer) Dispatch(event *Event) {
 
 	}
 }
+
 // BufferReleaseEvent is the compositor releases buffer
 type BufferReleaseEvent struct {
 	B *Buffer
 }
+
 // BufferReleaseHandler is the handler interface for BufferReleaseEvent
 type BufferReleaseHandler interface {
 	HandleBufferRelease(BufferReleaseEvent)
@@ -1085,22 +1130,25 @@ func (p *Buffer) RemoveReleaseHandler(h BufferReleaseHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateBufferReleases, h)
+	delete(p.privateBufferReleases, h)
 }
+
 // DataOffer offer to transfer data
 type DataOffer struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateDataOfferOffers map[DataOfferOfferHandler]struct{}
+	mu                             sync.RWMutex
+	privateDataOfferOffers         map[DataOfferOfferHandler]struct{}
 	privateDataOfferSourceActionss map[DataOfferSourceActionsHandler]struct{}
-	privateDataOfferActions map[DataOfferActionHandler]struct{}
+	privateDataOfferActions        map[DataOfferActionHandler]struct{}
 }
+
 // initDataOffer initializes the DataOffer object's handler maps
 func (ret *DataOffer) initDataOffer() {
 	ret.privateDataOfferOffers = make(map[DataOfferOfferHandler]struct{})
 	ret.privateDataOfferSourceActionss = make(map[DataOfferSourceActionsHandler]struct{})
 	ret.privateDataOfferActions = make(map[DataOfferActionHandler]struct{})
 }
+
 // NewDataOffer is a constructor for the DataOffer object
 func NewDataOffer(ctx *Context) *DataOffer {
 	ret := new(DataOffer)
@@ -1108,31 +1156,37 @@ func NewDataOffer(ctx *Context) *DataOffer {
 	ctx.Register(ret)
 	return ret
 }
+
 // Accept accept one of the offered mime types
-func (p *DataOffer) Accept(Serial uint32, MimeType string) (error) {
-	
+func (p *DataOffer) Accept(Serial uint32, MimeType string) error {
+
 	return p.Context().SendRequest(p, 0, Serial, MimeType)
 }
+
 // Receive request that the data is transferred
-func (p *DataOffer) Receive(MimeType string, Fd uintptr) (error) {
-	
+func (p *DataOffer) Receive(MimeType string, Fd uintptr) error {
+
 	return p.Context().SendRequest(p, 1, MimeType, Fd)
 }
+
 // Destroy destroy data offer
-func (p *DataOffer) Destroy() (error) {
-	
+func (p *DataOffer) Destroy() error {
+
 	return p.Context().SendRequest(p, 2)
 }
+
 // Finish the offer will no longer be used
-func (p *DataOffer) Finish() (error) {
-	
+func (p *DataOffer) Finish() error {
+
 	return p.Context().SendRequest(p, 3)
 }
+
 // SetActions set the available/preferred drag-and-drop actions
-func (p *DataOffer) SetActions(DndActions uint32, PreferredAction uint32) (error) {
-	
+func (p *DataOffer) SetActions(DndActions uint32, PreferredAction uint32) error {
+
 	return p.Context().SendRequest(p, 4, DndActions, PreferredAction)
 }
+
 // Dispatch dispatches event for object DataOffer
 func (p *DataOffer) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -1169,24 +1223,25 @@ func (p *DataOffer) Dispatch(event *Event) {
 
 	}
 }
+
 // DataOfferOfferEvent is the advertise offered mime type
 type DataOfferOfferEvent struct {
 	// MimeType is the offered mime type
 	MimeType string
-
 }
+
 // DataOfferSourceActionsEvent is the notify the source-side available actions
 type DataOfferSourceActionsEvent struct {
 	// SourceActions is the actions offered by the data source
 	SourceActions uint32
-
 }
+
 // DataOfferActionEvent is the notify the selected action
 type DataOfferActionEvent struct {
 	// DndAction is the action selected by the compositor
 	DndAction uint32
-
 }
+
 // DataOfferOfferHandler is the handler interface for DataOfferOfferEvent
 type DataOfferOfferHandler interface {
 	HandleDataOfferOffer(DataOfferOfferEvent)
@@ -1206,8 +1261,9 @@ func (p *DataOffer) RemoveOfferHandler(h DataOfferOfferHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataOfferOffers, h)
+	delete(p.privateDataOfferOffers, h)
 }
+
 // DataOfferSourceActionsHandler is the handler interface for DataOfferSourceActionsEvent
 type DataOfferSourceActionsHandler interface {
 	HandleDataOfferSourceActions(DataOfferSourceActionsEvent)
@@ -1227,8 +1283,9 @@ func (p *DataOffer) RemoveSourceActionsHandler(h DataOfferSourceActionsHandler) 
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataOfferSourceActionss, h)
+	delete(p.privateDataOfferSourceActionss, h)
 }
+
 // DataOfferActionHandler is the handler interface for DataOfferActionEvent
 type DataOfferActionHandler interface {
 	HandleDataOfferAction(DataOfferActionEvent)
@@ -1248,19 +1305,21 @@ func (p *DataOffer) RemoveActionHandler(h DataOfferActionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataOfferActions, h)
+	delete(p.privateDataOfferActions, h)
 }
+
 // DataSource offer to transfer data
 type DataSource struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateDataSourceTargets map[DataSourceTargetHandler]struct{}
-	privateDataSourceSends map[DataSourceSendHandler]struct{}
-	privateDataSourceCancelleds map[DataSourceCancelledHandler]struct{}
+	mu                                 sync.RWMutex
+	privateDataSourceTargets           map[DataSourceTargetHandler]struct{}
+	privateDataSourceSends             map[DataSourceSendHandler]struct{}
+	privateDataSourceCancelleds        map[DataSourceCancelledHandler]struct{}
 	privateDataSourceDndDropPerformeds map[DataSourceDndDropPerformedHandler]struct{}
-	privateDataSourceDndFinisheds map[DataSourceDndFinishedHandler]struct{}
-	privateDataSourceActions map[DataSourceActionHandler]struct{}
+	privateDataSourceDndFinisheds      map[DataSourceDndFinishedHandler]struct{}
+	privateDataSourceActions           map[DataSourceActionHandler]struct{}
 }
+
 // initDataSource initializes the DataSource object's handler maps
 func (ret *DataSource) initDataSource() {
 	ret.privateDataSourceTargets = make(map[DataSourceTargetHandler]struct{})
@@ -1270,6 +1329,7 @@ func (ret *DataSource) initDataSource() {
 	ret.privateDataSourceDndFinisheds = make(map[DataSourceDndFinishedHandler]struct{})
 	ret.privateDataSourceActions = make(map[DataSourceActionHandler]struct{})
 }
+
 // NewDataSource is a constructor for the DataSource object
 func NewDataSource(ctx *Context) *DataSource {
 	ret := new(DataSource)
@@ -1277,21 +1337,25 @@ func NewDataSource(ctx *Context) *DataSource {
 	ctx.Register(ret)
 	return ret
 }
+
 // Offer add an offered mime type
-func (p *DataSource) Offer(MimeType string) (error) {
-	
+func (p *DataSource) Offer(MimeType string) error {
+
 	return p.Context().SendRequest(p, 0, MimeType)
 }
+
 // Destroy destroy the data source
-func (p *DataSource) Destroy() (error) {
-	
+func (p *DataSource) Destroy() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // SetActions set the available drag-and-drop actions
-func (p *DataSource) SetActions(DndActions uint32) (error) {
-	
+func (p *DataSource) SetActions(DndActions uint32) error {
+
 	return p.Context().SendRequest(p, 2, DndActions)
 }
+
 // Dispatch dispatches event for object DataSource
 func (p *DataSource) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -1356,12 +1420,13 @@ func (p *DataSource) Dispatch(event *Event) {
 
 	}
 }
+
 // DataSourceTargetEvent is the a target accepts an offered mime type
 type DataSourceTargetEvent struct {
 	// MimeType is the mime type accepted by the target
 	MimeType string
-
 }
+
 // DataSourceSendEvent is the send the data
 type DataSourceSendEvent struct {
 	// MimeType is the mime type for the data
@@ -1370,26 +1435,26 @@ type DataSourceSendEvent struct {
 	Fd uintptr
 	// FdError is the file descriptor for the data (error)
 	FdError error
-
 }
+
 // DataSourceCancelledEvent is the selection was cancelled
 type DataSourceCancelledEvent struct {
-
 }
+
 // DataSourceDndDropPerformedEvent is the the drag-and-drop operation physically finished
 type DataSourceDndDropPerformedEvent struct {
-
 }
+
 // DataSourceDndFinishedEvent is the the drag-and-drop operation concluded
 type DataSourceDndFinishedEvent struct {
-
 }
+
 // DataSourceActionEvent is the notify the selected action
 type DataSourceActionEvent struct {
 	// DndAction is the action selected by the compositor
 	DndAction uint32
-
 }
+
 // DataSourceTargetHandler is the handler interface for DataSourceTargetEvent
 type DataSourceTargetHandler interface {
 	HandleDataSourceTarget(DataSourceTargetEvent)
@@ -1409,8 +1474,9 @@ func (p *DataSource) RemoveTargetHandler(h DataSourceTargetHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceTargets, h)
+	delete(p.privateDataSourceTargets, h)
 }
+
 // DataSourceSendHandler is the handler interface for DataSourceSendEvent
 type DataSourceSendHandler interface {
 	HandleDataSourceSend(DataSourceSendEvent)
@@ -1430,8 +1496,9 @@ func (p *DataSource) RemoveSendHandler(h DataSourceSendHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceSends, h)
+	delete(p.privateDataSourceSends, h)
 }
+
 // DataSourceCancelledHandler is the handler interface for DataSourceCancelledEvent
 type DataSourceCancelledHandler interface {
 	HandleDataSourceCancelled(DataSourceCancelledEvent)
@@ -1451,8 +1518,9 @@ func (p *DataSource) RemoveCancelledHandler(h DataSourceCancelledHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceCancelleds, h)
+	delete(p.privateDataSourceCancelleds, h)
 }
+
 // DataSourceDndDropPerformedHandler is the handler interface for DataSourceDndDropPerformedEvent
 type DataSourceDndDropPerformedHandler interface {
 	HandleDataSourceDndDropPerformed(DataSourceDndDropPerformedEvent)
@@ -1472,8 +1540,9 @@ func (p *DataSource) RemoveDndDropPerformedHandler(h DataSourceDndDropPerformedH
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceDndDropPerformeds, h)
+	delete(p.privateDataSourceDndDropPerformeds, h)
 }
+
 // DataSourceDndFinishedHandler is the handler interface for DataSourceDndFinishedEvent
 type DataSourceDndFinishedHandler interface {
 	HandleDataSourceDndFinished(DataSourceDndFinishedEvent)
@@ -1493,8 +1562,9 @@ func (p *DataSource) RemoveDndFinishedHandler(h DataSourceDndFinishedHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceDndFinisheds, h)
+	delete(p.privateDataSourceDndFinisheds, h)
 }
+
 // DataSourceActionHandler is the handler interface for DataSourceActionEvent
 type DataSourceActionHandler interface {
 	HandleDataSourceAction(DataSourceActionEvent)
@@ -1514,19 +1584,21 @@ func (p *DataSource) RemoveActionHandler(h DataSourceActionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataSourceActions, h)
+	delete(p.privateDataSourceActions, h)
 }
+
 // DataDevice data transfer device
 type DataDevice struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                          sync.RWMutex
 	privateDataDeviceDataOffers map[DataDeviceDataOfferHandler]struct{}
-	privateDataDeviceEnters map[DataDeviceEnterHandler]struct{}
-	privateDataDeviceLeaves map[DataDeviceLeaveHandler]struct{}
-	privateDataDeviceMotions map[DataDeviceMotionHandler]struct{}
-	privateDataDeviceDrops map[DataDeviceDropHandler]struct{}
+	privateDataDeviceEnters     map[DataDeviceEnterHandler]struct{}
+	privateDataDeviceLeaves     map[DataDeviceLeaveHandler]struct{}
+	privateDataDeviceMotions    map[DataDeviceMotionHandler]struct{}
+	privateDataDeviceDrops      map[DataDeviceDropHandler]struct{}
 	privateDataDeviceSelections map[DataDeviceSelectionHandler]struct{}
 }
+
 // initDataDevice initializes the DataDevice object's handler maps
 func (ret *DataDevice) initDataDevice() {
 	ret.privateDataDeviceDataOffers = make(map[DataDeviceDataOfferHandler]struct{})
@@ -1536,6 +1608,7 @@ func (ret *DataDevice) initDataDevice() {
 	ret.privateDataDeviceDrops = make(map[DataDeviceDropHandler]struct{})
 	ret.privateDataDeviceSelections = make(map[DataDeviceSelectionHandler]struct{})
 }
+
 // NewDataDevice is a constructor for the DataDevice object
 func NewDataDevice(ctx *Context) *DataDevice {
 	ret := new(DataDevice)
@@ -1543,28 +1616,36 @@ func NewDataDevice(ctx *Context) *DataDevice {
 	ctx.Register(ret)
 	return ret
 }
+
 // StartDrag start drag-and-drop operation
-func (p *DataDevice) StartDrag(Source *DataSource, Origin *Surface, Icon *Surface, Serial uint32) (error) {
-	
+func (p *DataDevice) StartDrag(Source *DataSource, Origin *Surface, Icon *Surface, Serial uint32) error {
+
 	return p.Context().SendRequest(p, 0, Source, Origin, Icon, Serial)
 }
+
 // SetSelection copy data to the selection
-func (p *DataDevice) SetSelection(Source *DataSource, Serial uint32) (error) {
-	
+func (p *DataDevice) SetSelection(Source *DataSource, Serial uint32) error {
+
 	return p.Context().SendRequest(p, 1, Source, Serial)
 }
+
 // Release destroy data device
-func (p *DataDevice) Release() (error) {
-	
+func (p *DataDevice) Release() error {
+
 	return p.Context().SendRequest(p, 2)
 }
+
 // Dispatch dispatches event for object DataDevice
 func (p *DataDevice) Dispatch(event *Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.privateDataDeviceDataOffers) > 0 {
 			ev := DataDeviceDataOfferEvent{}
-			ev.Id = func() *DataOffer { ret := new(DataOffer); ret.initDataOffer(); return event.NewId(ret, p.Context()).(*DataOffer) }()
+			ev.Id = func() *DataOffer {
+				ret := new(DataOffer)
+				ret.initDataOffer()
+				return event.NewId(ret, p.Context()).(*DataOffer)
+			}()
 			p.mu.RLock()
 			for h := range p.privateDataDeviceDataOffers {
 				h.HandleDataDeviceDataOffer(ev)
@@ -1628,12 +1709,13 @@ func (p *DataDevice) Dispatch(event *Event) {
 
 	}
 }
+
 // DataDeviceDataOfferEvent is the introduce a new wl_data_offer
 type DataDeviceDataOfferEvent struct {
 	// Id is the the new data_offer object
 	Id *DataOffer
-
 }
+
 // DataDeviceEnterEvent is the initiate drag-and-drop session
 type DataDeviceEnterEvent struct {
 	// Serial is the serial number of the enter event
@@ -1646,12 +1728,12 @@ type DataDeviceEnterEvent struct {
 	Y float32
 	// Id is the source data_offer object
 	Id *DataOffer
-
 }
+
 // DataDeviceLeaveEvent is the end drag-and-drop session
 type DataDeviceLeaveEvent struct {
-
 }
+
 // DataDeviceMotionEvent is the drag-and-drop session motion
 type DataDeviceMotionEvent struct {
 	// Time is the timestamp with millisecond granularity
@@ -1660,18 +1742,18 @@ type DataDeviceMotionEvent struct {
 	X float32
 	// Y is the surface-local y coordinate
 	Y float32
-
 }
+
 // DataDeviceDropEvent is the end drag-and-drop session successfully
 type DataDeviceDropEvent struct {
-
 }
+
 // DataDeviceSelectionEvent is the advertise new selection
 type DataDeviceSelectionEvent struct {
 	// Id is the selection data_offer object
 	Id *DataOffer
-
 }
+
 // DataDeviceDataOfferHandler is the handler interface for DataDeviceDataOfferEvent
 type DataDeviceDataOfferHandler interface {
 	HandleDataDeviceDataOffer(DataDeviceDataOfferEvent)
@@ -1691,8 +1773,9 @@ func (p *DataDevice) RemoveDataOfferHandler(h DataDeviceDataOfferHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceDataOffers, h)
+	delete(p.privateDataDeviceDataOffers, h)
 }
+
 // DataDeviceEnterHandler is the handler interface for DataDeviceEnterEvent
 type DataDeviceEnterHandler interface {
 	HandleDataDeviceEnter(DataDeviceEnterEvent)
@@ -1712,8 +1795,9 @@ func (p *DataDevice) RemoveEnterHandler(h DataDeviceEnterHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceEnters, h)
+	delete(p.privateDataDeviceEnters, h)
 }
+
 // DataDeviceLeaveHandler is the handler interface for DataDeviceLeaveEvent
 type DataDeviceLeaveHandler interface {
 	HandleDataDeviceLeave(DataDeviceLeaveEvent)
@@ -1733,8 +1817,9 @@ func (p *DataDevice) RemoveLeaveHandler(h DataDeviceLeaveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceLeaves, h)
+	delete(p.privateDataDeviceLeaves, h)
 }
+
 // DataDeviceMotionHandler is the handler interface for DataDeviceMotionEvent
 type DataDeviceMotionHandler interface {
 	HandleDataDeviceMotion(DataDeviceMotionEvent)
@@ -1754,8 +1839,9 @@ func (p *DataDevice) RemoveMotionHandler(h DataDeviceMotionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceMotions, h)
+	delete(p.privateDataDeviceMotions, h)
 }
+
 // DataDeviceDropHandler is the handler interface for DataDeviceDropEvent
 type DataDeviceDropHandler interface {
 	HandleDataDeviceDrop(DataDeviceDropEvent)
@@ -1775,8 +1861,9 @@ func (p *DataDevice) RemoveDropHandler(h DataDeviceDropHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceDrops, h)
+	delete(p.privateDataDeviceDrops, h)
 }
+
 // DataDeviceSelectionHandler is the handler interface for DataDeviceSelectionEvent
 type DataDeviceSelectionHandler interface {
 	HandleDataDeviceSelection(DataDeviceSelectionEvent)
@@ -1796,69 +1883,81 @@ func (p *DataDevice) RemoveSelectionHandler(h DataDeviceSelectionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateDataDeviceSelections, h)
+	delete(p.privateDataDeviceSelections, h)
 }
+
 // DataDeviceManager data transfer interface
 type DataDeviceManager struct {
 	BaseProxy
 }
+
 // NewDataDeviceManager is a constructor for the DataDeviceManager object
 func NewDataDeviceManager(ctx *Context) *DataDeviceManager {
 	ret := new(DataDeviceManager)
 	ctx.Register(ret)
 	return ret
 }
+
 // CreateDataSource create a new data source
 func (p *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 	retId := NewDataSource(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
+
 // GetDataDevice create a new data device
 func (p *DataDeviceManager) GetDataDevice(Seat *Seat) (*DataDevice, error) {
 	retId := NewDataDevice(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Seat)
 }
+
 // Dispatch dispatches event for object DataDeviceManager
 func (p *DataDeviceManager) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Shell create desktop-style surfaces
 type Shell struct {
 	BaseProxy
 }
+
 // NewShell is a constructor for the Shell object
 func NewShell(ctx *Context) *Shell {
 	ret := new(Shell)
 	ctx.Register(ret)
 	return ret
 }
+
 // GetShellSurface create a shell surface from a surface
 func (p *Shell) GetShellSurface(Surface *Surface) (*ShellSurface, error) {
 	retId := NewShellSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Surface)
 }
+
 // Dispatch dispatches event for object Shell
 func (p *Shell) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // ShellSurface desktop-style metadata interface
 type ShellSurface struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateShellSurfacePings map[ShellSurfacePingHandler]struct{}
+	mu                            sync.RWMutex
+	privateShellSurfacePings      map[ShellSurfacePingHandler]struct{}
 	privateShellSurfaceConfigures map[ShellSurfaceConfigureHandler]struct{}
 	privateShellSurfacePopupDones map[ShellSurfacePopupDoneHandler]struct{}
 }
+
 // initShellSurface initializes the ShellSurface object's handler maps
 func (ret *ShellSurface) initShellSurface() {
 	ret.privateShellSurfacePings = make(map[ShellSurfacePingHandler]struct{})
 	ret.privateShellSurfaceConfigures = make(map[ShellSurfaceConfigureHandler]struct{})
 	ret.privateShellSurfacePopupDones = make(map[ShellSurfacePopupDoneHandler]struct{})
 }
+
 // NewShellSurface is a constructor for the ShellSurface object
 func NewShellSurface(ctx *Context) *ShellSurface {
 	ret := new(ShellSurface)
@@ -1866,56 +1965,67 @@ func NewShellSurface(ctx *Context) *ShellSurface {
 	ctx.Register(ret)
 	return ret
 }
+
 // Pong respond to a ping event
-func (p *ShellSurface) Pong(Serial uint32) (error) {
-	
+func (p *ShellSurface) Pong(Serial uint32) error {
+
 	return p.Context().SendRequest(p, 0, Serial)
 }
+
 // Move start an interactive move
-func (p *ShellSurface) Move(Seat *Seat, Serial uint32) (error) {
-	
+func (p *ShellSurface) Move(Seat *Seat, Serial uint32) error {
+
 	return p.Context().SendRequest(p, 1, Seat, Serial)
 }
+
 // Resize start an interactive resize
-func (p *ShellSurface) Resize(Seat *Seat, Serial uint32, Edges uint32) (error) {
-	
+func (p *ShellSurface) Resize(Seat *Seat, Serial uint32, Edges uint32) error {
+
 	return p.Context().SendRequest(p, 2, Seat, Serial, Edges)
 }
+
 // SetToplevel make the surface a toplevel surface
-func (p *ShellSurface) SetToplevel() (error) {
-	
+func (p *ShellSurface) SetToplevel() error {
+
 	return p.Context().SendRequest(p, 3)
 }
+
 // SetTransient make the surface a transient surface
-func (p *ShellSurface) SetTransient(Parent *Surface, X int32, Y int32, Flags uint32) (error) {
-	
+func (p *ShellSurface) SetTransient(Parent *Surface, X int32, Y int32, Flags uint32) error {
+
 	return p.Context().SendRequest(p, 4, Parent, X, Y, Flags)
 }
+
 // SetFullscreen make the surface a fullscreen surface
-func (p *ShellSurface) SetFullscreen(Method uint32, Framerate uint32, Output *Output) (error) {
-	
+func (p *ShellSurface) SetFullscreen(Method uint32, Framerate uint32, Output *Output) error {
+
 	return p.Context().SendRequest(p, 5, Method, Framerate, Output)
 }
+
 // SetPopup make the surface a popup surface
-func (p *ShellSurface) SetPopup(Seat *Seat, Serial uint32, Parent *Surface, X int32, Y int32, Flags uint32) (error) {
-	
+func (p *ShellSurface) SetPopup(Seat *Seat, Serial uint32, Parent *Surface, X int32, Y int32, Flags uint32) error {
+
 	return p.Context().SendRequest(p, 6, Seat, Serial, Parent, X, Y, Flags)
 }
+
 // SetMaximized make the surface a maximized surface
-func (p *ShellSurface) SetMaximized(Output *Output) (error) {
-	
+func (p *ShellSurface) SetMaximized(Output *Output) error {
+
 	return p.Context().SendRequest(p, 7, Output)
 }
+
 // SetTitle set surface title
-func (p *ShellSurface) SetTitle(Title string) (error) {
-	
+func (p *ShellSurface) SetTitle(Title string) error {
+
 	return p.Context().SendRequest(p, 8, Title)
 }
+
 // SetClass set surface class
-func (p *ShellSurface) SetClass(Class string) (error) {
-	
+func (p *ShellSurface) SetClass(Class string) error {
+
 	return p.Context().SendRequest(p, 9, Class)
 }
+
 // Dispatch dispatches event for object ShellSurface
 func (p *ShellSurface) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -1953,12 +2063,13 @@ func (p *ShellSurface) Dispatch(event *Event) {
 
 	}
 }
+
 // ShellSurfacePingEvent is the ping client
 type ShellSurfacePingEvent struct {
 	// Serial is the serial number of the ping
 	Serial uint32
-
 }
+
 // ShellSurfaceConfigureEvent is the suggest resize
 type ShellSurfaceConfigureEvent struct {
 	// Edges is the how the surface was resized
@@ -1967,12 +2078,12 @@ type ShellSurfaceConfigureEvent struct {
 	Width int32
 	// Height is the new height of the surface
 	Height int32
-
 }
+
 // ShellSurfacePopupDoneEvent is the popup interaction is done
 type ShellSurfacePopupDoneEvent struct {
-
 }
+
 // ShellSurfacePingHandler is the handler interface for ShellSurfacePingEvent
 type ShellSurfacePingHandler interface {
 	HandleShellSurfacePing(ShellSurfacePingEvent)
@@ -1992,8 +2103,9 @@ func (p *ShellSurface) RemovePingHandler(h ShellSurfacePingHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateShellSurfacePings, h)
+	delete(p.privateShellSurfacePings, h)
 }
+
 // ShellSurfaceConfigureHandler is the handler interface for ShellSurfaceConfigureEvent
 type ShellSurfaceConfigureHandler interface {
 	HandleShellSurfaceConfigure(ShellSurfaceConfigureEvent)
@@ -2013,8 +2125,9 @@ func (p *ShellSurface) RemoveConfigureHandler(h ShellSurfaceConfigureHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateShellSurfaceConfigures, h)
+	delete(p.privateShellSurfaceConfigures, h)
 }
+
 // ShellSurfacePopupDoneHandler is the handler interface for ShellSurfacePopupDoneEvent
 type ShellSurfacePopupDoneHandler interface {
 	HandleShellSurfacePopupDone(ShellSurfacePopupDoneEvent)
@@ -2034,17 +2147,19 @@ func (p *ShellSurface) RemovePopupDoneHandler(h ShellSurfacePopupDoneHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateShellSurfacePopupDones, h)
+	delete(p.privateShellSurfacePopupDones, h)
 }
+
 // Surface an onscreen surface
 type Surface struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateSurfaceEnters map[SurfaceEnterHandler]struct{}
-	privateSurfaceLeaves map[SurfaceLeaveHandler]struct{}
-	privateSurfacePreferredBufferScales map[SurfacePreferredBufferScaleHandler]struct{}
+	mu                                      sync.RWMutex
+	privateSurfaceEnters                    map[SurfaceEnterHandler]struct{}
+	privateSurfaceLeaves                    map[SurfaceLeaveHandler]struct{}
+	privateSurfacePreferredBufferScales     map[SurfacePreferredBufferScaleHandler]struct{}
 	privateSurfacePreferredBufferTransforms map[SurfacePreferredBufferTransformHandler]struct{}
 }
+
 // initSurface initializes the Surface object's handler maps
 func (ret *Surface) initSurface() {
 	ret.privateSurfaceEnters = make(map[SurfaceEnterHandler]struct{})
@@ -2052,6 +2167,7 @@ func (ret *Surface) initSurface() {
 	ret.privateSurfacePreferredBufferScales = make(map[SurfacePreferredBufferScaleHandler]struct{})
 	ret.privateSurfacePreferredBufferTransforms = make(map[SurfacePreferredBufferTransformHandler]struct{})
 }
+
 // NewSurface is a constructor for the Surface object
 func NewSurface(ctx *Context) *Surface {
 	ret := new(Surface)
@@ -2059,61 +2175,73 @@ func NewSurface(ctx *Context) *Surface {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy delete surface
-func (p *Surface) Destroy() (error) {
-	
+func (p *Surface) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Attach set the surface contents
-func (p *Surface) Attach(Buffer *Buffer, X int32, Y int32) (error) {
-	
+func (p *Surface) Attach(Buffer *Buffer, X int32, Y int32) error {
+
 	return p.Context().SendRequest(p, 1, Buffer, X, Y)
 }
+
 // Damage mark part of the surface damaged
-func (p *Surface) Damage(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Surface) Damage(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
 }
+
 // Frame request a frame throttling hint
 func (p *Surface) Frame() (*Callback, error) {
 	retCallback := NewCallback(p.Context())
 	return retCallback, p.Context().SendRequest(p, 3, retCallback)
 }
+
 // SetOpaqueRegion set opaque region
-func (p *Surface) SetOpaqueRegion(Region *Region) (error) {
-	
+func (p *Surface) SetOpaqueRegion(Region *Region) error {
+
 	return p.Context().SendRequest(p, 4, Region)
 }
+
 // SetInputRegion set input region
-func (p *Surface) SetInputRegion(Region *Region) (error) {
-	
+func (p *Surface) SetInputRegion(Region *Region) error {
+
 	return p.Context().SendRequest(p, 5, Region)
 }
+
 // Commit commit pending surface state
-func (p *Surface) Commit() (error) {
-	
+func (p *Surface) Commit() error {
+
 	return p.Context().SendRequest(p, 6)
 }
+
 // SetBufferTransform sets the buffer transformation
-func (p *Surface) SetBufferTransform(Transform int32) (error) {
-	
+func (p *Surface) SetBufferTransform(Transform int32) error {
+
 	return p.Context().SendRequest(p, 7, Transform)
 }
+
 // SetBufferScale sets the buffer scaling factor
-func (p *Surface) SetBufferScale(Scale int32) (error) {
-	
+func (p *Surface) SetBufferScale(Scale int32) error {
+
 	return p.Context().SendRequest(p, 8, Scale)
 }
+
 // DamageBuffer mark part of the surface damaged using buffer coordinates
-func (p *Surface) DamageBuffer(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Surface) DamageBuffer(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 9, X, Y, Width, Height)
 }
+
 // Offset set the surface contents offset
-func (p *Surface) Offset(X int32, Y int32) (error) {
-	
+func (p *Surface) Offset(X int32, Y int32) error {
+
 	return p.Context().SendRequest(p, 10, X, Y)
 }
+
 // Dispatch dispatches event for object Surface
 func (p *Surface) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -2160,30 +2288,31 @@ func (p *Surface) Dispatch(event *Event) {
 
 	}
 }
+
 // SurfaceEnterEvent is the surface enters an output
 type SurfaceEnterEvent struct {
 	// Output is the output entered by the surface
 	Output *Output
-
 }
+
 // SurfaceLeaveEvent is the surface leaves an output
 type SurfaceLeaveEvent struct {
 	// Output is the output left by the surface
 	Output *Output
-
 }
+
 // SurfacePreferredBufferScaleEvent is the preferred buffer scale for the surface
 type SurfacePreferredBufferScaleEvent struct {
 	// Factor is the preferred scaling factor
 	Factor int32
-
 }
+
 // SurfacePreferredBufferTransformEvent is the preferred buffer transform for the surface
 type SurfacePreferredBufferTransformEvent struct {
 	// Transform is the preferred transform
 	Transform uint32
-
 }
+
 // SurfaceEnterHandler is the handler interface for SurfaceEnterEvent
 type SurfaceEnterHandler interface {
 	HandleSurfaceEnter(SurfaceEnterEvent)
@@ -2203,8 +2332,9 @@ func (p *Surface) RemoveEnterHandler(h SurfaceEnterHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSurfaceEnters, h)
+	delete(p.privateSurfaceEnters, h)
 }
+
 // SurfaceLeaveHandler is the handler interface for SurfaceLeaveEvent
 type SurfaceLeaveHandler interface {
 	HandleSurfaceLeave(SurfaceLeaveEvent)
@@ -2224,8 +2354,9 @@ func (p *Surface) RemoveLeaveHandler(h SurfaceLeaveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSurfaceLeaves, h)
+	delete(p.privateSurfaceLeaves, h)
 }
+
 // SurfacePreferredBufferScaleHandler is the handler interface for SurfacePreferredBufferScaleEvent
 type SurfacePreferredBufferScaleHandler interface {
 	HandleSurfacePreferredBufferScale(SurfacePreferredBufferScaleEvent)
@@ -2245,8 +2376,9 @@ func (p *Surface) RemovePreferredBufferScaleHandler(h SurfacePreferredBufferScal
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSurfacePreferredBufferScales, h)
+	delete(p.privateSurfacePreferredBufferScales, h)
 }
+
 // SurfacePreferredBufferTransformHandler is the handler interface for SurfacePreferredBufferTransformEvent
 type SurfacePreferredBufferTransformHandler interface {
 	HandleSurfacePreferredBufferTransform(SurfacePreferredBufferTransformEvent)
@@ -2266,20 +2398,23 @@ func (p *Surface) RemovePreferredBufferTransformHandler(h SurfacePreferredBuffer
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSurfacePreferredBufferTransforms, h)
+	delete(p.privateSurfacePreferredBufferTransforms, h)
 }
+
 // Seat group of input devices
 type Seat struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                       sync.RWMutex
 	privateSeatCapabilitiess map[SeatCapabilitiesHandler]struct{}
-	privateSeatNames map[SeatNameHandler]struct{}
+	privateSeatNames         map[SeatNameHandler]struct{}
 }
+
 // initSeat initializes the Seat object's handler maps
 func (ret *Seat) initSeat() {
 	ret.privateSeatCapabilitiess = make(map[SeatCapabilitiesHandler]struct{})
 	ret.privateSeatNames = make(map[SeatNameHandler]struct{})
 }
+
 // NewSeat is a constructor for the Seat object
 func NewSeat(ctx *Context) *Seat {
 	ret := new(Seat)
@@ -2287,26 +2422,31 @@ func NewSeat(ctx *Context) *Seat {
 	ctx.Register(ret)
 	return ret
 }
+
 // GetPointer return pointer object
 func (p *Seat) GetPointer() (*Pointer, error) {
 	retId := NewPointer(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId)
 }
+
 // GetKeyboard return keyboard object
 func (p *Seat) GetKeyboard() (*Keyboard, error) {
 	retId := NewKeyboard(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
+
 // GetTouch return touch object
 func (p *Seat) GetTouch() (*Touch, error) {
 	retId := NewTouch(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId)
 }
+
 // Release release the seat object
-func (p *Seat) Release() (error) {
-	
+func (p *Seat) Release() error {
+
 	return p.Context().SendRequest(p, 3)
 }
+
 // Dispatch dispatches event for object Seat
 func (p *Seat) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -2333,18 +2473,19 @@ func (p *Seat) Dispatch(event *Event) {
 
 	}
 }
+
 // SeatCapabilitiesEvent is the seat capabilities changed
 type SeatCapabilitiesEvent struct {
 	// Capabilities is the capabilities of the seat
 	Capabilities uint32
-
 }
+
 // SeatNameEvent is the unique identifier for this seat
 type SeatNameEvent struct {
 	// Name is the seat identifier
 	Name string
-
 }
+
 // SeatCapabilitiesHandler is the handler interface for SeatCapabilitiesEvent
 type SeatCapabilitiesHandler interface {
 	HandleSeatCapabilities(SeatCapabilitiesEvent)
@@ -2364,8 +2505,9 @@ func (p *Seat) RemoveCapabilitiesHandler(h SeatCapabilitiesHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSeatCapabilitiess, h)
+	delete(p.privateSeatCapabilitiess, h)
 }
+
 // SeatNameHandler is the handler interface for SeatNameEvent
 type SeatNameHandler interface {
 	HandleSeatName(SeatNameEvent)
@@ -2385,24 +2527,26 @@ func (p *Seat) RemoveNameHandler(h SeatNameHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSeatNames, h)
+	delete(p.privateSeatNames, h)
 }
+
 // Pointer pointer input device
 type Pointer struct {
 	BaseProxy
-	mu sync.RWMutex
-	privatePointerEnters map[PointerEnterHandler]struct{}
-	privatePointerLeaves map[PointerLeaveHandler]struct{}
-	privatePointerMotions map[PointerMotionHandler]struct{}
-	privatePointerButtons map[PointerButtonHandler]struct{}
-	privatePointerAxiss map[PointerAxisHandler]struct{}
-	privatePointerFrames map[PointerFrameHandler]struct{}
-	privatePointerAxisSources map[PointerAxisSourceHandler]struct{}
-	privatePointerAxisStops map[PointerAxisStopHandler]struct{}
-	privatePointerAxisDiscretes map[PointerAxisDiscreteHandler]struct{}
-	privatePointerAxisValue120s map[PointerAxisValue120Handler]struct{}
+	mu                                   sync.RWMutex
+	privatePointerEnters                 map[PointerEnterHandler]struct{}
+	privatePointerLeaves                 map[PointerLeaveHandler]struct{}
+	privatePointerMotions                map[PointerMotionHandler]struct{}
+	privatePointerButtons                map[PointerButtonHandler]struct{}
+	privatePointerAxiss                  map[PointerAxisHandler]struct{}
+	privatePointerFrames                 map[PointerFrameHandler]struct{}
+	privatePointerAxisSources            map[PointerAxisSourceHandler]struct{}
+	privatePointerAxisStops              map[PointerAxisStopHandler]struct{}
+	privatePointerAxisDiscretes          map[PointerAxisDiscreteHandler]struct{}
+	privatePointerAxisValue120s          map[PointerAxisValue120Handler]struct{}
 	privatePointerAxisRelativeDirections map[PointerAxisRelativeDirectionHandler]struct{}
 }
+
 // initPointer initializes the Pointer object's handler maps
 func (ret *Pointer) initPointer() {
 	ret.privatePointerEnters = make(map[PointerEnterHandler]struct{})
@@ -2417,6 +2561,7 @@ func (ret *Pointer) initPointer() {
 	ret.privatePointerAxisValue120s = make(map[PointerAxisValue120Handler]struct{})
 	ret.privatePointerAxisRelativeDirections = make(map[PointerAxisRelativeDirectionHandler]struct{})
 }
+
 // NewPointer is a constructor for the Pointer object
 func NewPointer(ctx *Context) *Pointer {
 	ret := new(Pointer)
@@ -2424,16 +2569,19 @@ func NewPointer(ctx *Context) *Pointer {
 	ctx.Register(ret)
 	return ret
 }
+
 // SetCursor set the pointer surface
-func (p *Pointer) SetCursor(Serial uint32, Surface *Surface, HotspotX int32, HotspotY int32) (error) {
-	
+func (p *Pointer) SetCursor(Serial uint32, Surface *Surface, HotspotX int32, HotspotY int32) error {
+
 	return p.Context().SendRequest(p, 0, Serial, Surface, HotspotX, HotspotY)
 }
+
 // Release release the pointer object
-func (p *Pointer) Release() (error) {
-	
+func (p *Pointer) Release() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // Dispatch dispatches event for object Pointer
 func (p *Pointer) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -2566,6 +2714,7 @@ func (p *Pointer) Dispatch(event *Event) {
 
 	}
 }
+
 // PointerEnterEvent is the enter event
 type PointerEnterEvent struct {
 	// Serial is the serial number of the enter event
@@ -2576,16 +2725,16 @@ type PointerEnterEvent struct {
 	SurfaceX float32
 	// SurfaceY is the surface-local y coordinate
 	SurfaceY float32
-
 }
+
 // PointerLeaveEvent is the leave event
 type PointerLeaveEvent struct {
 	// Serial is the serial number of the leave event
 	Serial uint32
 	// Surface is the surface left by the pointer
 	Surface *Surface
-
 }
+
 // PointerMotionEvent is the pointer motion event
 type PointerMotionEvent struct {
 	// Time is the timestamp with millisecond granularity
@@ -2594,8 +2743,9 @@ type PointerMotionEvent struct {
 	SurfaceX float32
 	// SurfaceY is the surface-local y coordinate
 	SurfaceY float32
-	P *Pointer
+	P        *Pointer
 }
+
 // PointerButtonEvent is the pointer button event
 type PointerButtonEvent struct {
 	// Serial is the serial number of the button event
@@ -2606,8 +2756,9 @@ type PointerButtonEvent struct {
 	Button uint32
 	// State is the physical state of the button
 	State uint32
-	P *Pointer
+	P     *Pointer
 }
+
 // PointerAxisEvent is the axis event
 type PointerAxisEvent struct {
 	// Time is the timestamp with millisecond granularity
@@ -2616,50 +2767,50 @@ type PointerAxisEvent struct {
 	Axis uint32
 	// Value is the length of vector in surface-local coordinate space
 	Value float32
-
 }
+
 // PointerFrameEvent is the end of a pointer event sequence
 type PointerFrameEvent struct {
-
 }
+
 // PointerAxisSourceEvent is the axis source event
 type PointerAxisSourceEvent struct {
 	// AxisSource is the source of the axis event
 	AxisSource uint32
-
 }
+
 // PointerAxisStopEvent is the axis stop event
 type PointerAxisStopEvent struct {
 	// Time is the timestamp with millisecond granularity
 	Time uint32
 	// Axis is the the axis stopped with this event
 	Axis uint32
-
 }
+
 // PointerAxisDiscreteEvent is the axis click event
 type PointerAxisDiscreteEvent struct {
 	// Axis is the axis type
 	Axis uint32
 	// Discrete is the number of steps
 	Discrete int32
-
 }
+
 // PointerAxisValue120Event is the axis high-resolution scroll event
 type PointerAxisValue120Event struct {
 	// Axis is the axis type
 	Axis uint32
 	// Value120 is the scroll distance as fraction of 120
 	Value120 int32
-
 }
+
 // PointerAxisRelativeDirectionEvent is the axis relative physical direction event
 type PointerAxisRelativeDirectionEvent struct {
 	// Axis is the axis type
 	Axis uint32
 	// Direction is the physical direction relative to axis motion
 	Direction uint32
-
 }
+
 // PointerEnterHandler is the handler interface for PointerEnterEvent
 type PointerEnterHandler interface {
 	HandlePointerEnter(PointerEnterEvent)
@@ -2679,8 +2830,9 @@ func (p *Pointer) RemoveEnterHandler(h PointerEnterHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerEnters, h)
+	delete(p.privatePointerEnters, h)
 }
+
 // PointerLeaveHandler is the handler interface for PointerLeaveEvent
 type PointerLeaveHandler interface {
 	HandlePointerLeave(PointerLeaveEvent)
@@ -2700,8 +2852,9 @@ func (p *Pointer) RemoveLeaveHandler(h PointerLeaveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerLeaves, h)
+	delete(p.privatePointerLeaves, h)
 }
+
 // PointerMotionHandler is the handler interface for PointerMotionEvent
 type PointerMotionHandler interface {
 	HandlePointerMotion(PointerMotionEvent)
@@ -2721,8 +2874,9 @@ func (p *Pointer) RemoveMotionHandler(h PointerMotionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerMotions, h)
+	delete(p.privatePointerMotions, h)
 }
+
 // PointerButtonHandler is the handler interface for PointerButtonEvent
 type PointerButtonHandler interface {
 	HandlePointerButton(PointerButtonEvent)
@@ -2742,8 +2896,9 @@ func (p *Pointer) RemoveButtonHandler(h PointerButtonHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerButtons, h)
+	delete(p.privatePointerButtons, h)
 }
+
 // PointerAxisHandler is the handler interface for PointerAxisEvent
 type PointerAxisHandler interface {
 	HandlePointerAxis(PointerAxisEvent)
@@ -2763,8 +2918,9 @@ func (p *Pointer) RemoveAxisHandler(h PointerAxisHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxiss, h)
+	delete(p.privatePointerAxiss, h)
 }
+
 // PointerFrameHandler is the handler interface for PointerFrameEvent
 type PointerFrameHandler interface {
 	HandlePointerFrame(PointerFrameEvent)
@@ -2784,8 +2940,9 @@ func (p *Pointer) RemoveFrameHandler(h PointerFrameHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerFrames, h)
+	delete(p.privatePointerFrames, h)
 }
+
 // PointerAxisSourceHandler is the handler interface for PointerAxisSourceEvent
 type PointerAxisSourceHandler interface {
 	HandlePointerAxisSource(PointerAxisSourceEvent)
@@ -2805,8 +2962,9 @@ func (p *Pointer) RemoveAxisSourceHandler(h PointerAxisSourceHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxisSources, h)
+	delete(p.privatePointerAxisSources, h)
 }
+
 // PointerAxisStopHandler is the handler interface for PointerAxisStopEvent
 type PointerAxisStopHandler interface {
 	HandlePointerAxisStop(PointerAxisStopEvent)
@@ -2826,8 +2984,9 @@ func (p *Pointer) RemoveAxisStopHandler(h PointerAxisStopHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxisStops, h)
+	delete(p.privatePointerAxisStops, h)
 }
+
 // PointerAxisDiscreteHandler is the handler interface for PointerAxisDiscreteEvent
 type PointerAxisDiscreteHandler interface {
 	HandlePointerAxisDiscrete(PointerAxisDiscreteEvent)
@@ -2847,8 +3006,9 @@ func (p *Pointer) RemoveAxisDiscreteHandler(h PointerAxisDiscreteHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxisDiscretes, h)
+	delete(p.privatePointerAxisDiscretes, h)
 }
+
 // PointerAxisValue120Handler is the handler interface for PointerAxisValue120Event
 type PointerAxisValue120Handler interface {
 	HandlePointerAxisValue120(PointerAxisValue120Event)
@@ -2868,8 +3028,9 @@ func (p *Pointer) RemoveAxisValue120Handler(h PointerAxisValue120Handler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxisValue120s, h)
+	delete(p.privatePointerAxisValue120s, h)
 }
+
 // PointerAxisRelativeDirectionHandler is the handler interface for PointerAxisRelativeDirectionEvent
 type PointerAxisRelativeDirectionHandler interface {
 	HandlePointerAxisRelativeDirection(PointerAxisRelativeDirectionEvent)
@@ -2889,19 +3050,21 @@ func (p *Pointer) RemoveAxisRelativeDirectionHandler(h PointerAxisRelativeDirect
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePointerAxisRelativeDirections, h)
+	delete(p.privatePointerAxisRelativeDirections, h)
 }
+
 // Keyboard keyboard input device
 type Keyboard struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateKeyboardKeymaps map[KeyboardKeymapHandler]struct{}
-	privateKeyboardEnters map[KeyboardEnterHandler]struct{}
-	privateKeyboardLeaves map[KeyboardLeaveHandler]struct{}
-	privateKeyboardKeys map[KeyboardKeyHandler]struct{}
-	privateKeyboardModifierss map[KeyboardModifiersHandler]struct{}
+	mu                         sync.RWMutex
+	privateKeyboardKeymaps     map[KeyboardKeymapHandler]struct{}
+	privateKeyboardEnters      map[KeyboardEnterHandler]struct{}
+	privateKeyboardLeaves      map[KeyboardLeaveHandler]struct{}
+	privateKeyboardKeys        map[KeyboardKeyHandler]struct{}
+	privateKeyboardModifierss  map[KeyboardModifiersHandler]struct{}
 	privateKeyboardRepeatInfos map[KeyboardRepeatInfoHandler]struct{}
 }
+
 // initKeyboard initializes the Keyboard object's handler maps
 func (ret *Keyboard) initKeyboard() {
 	ret.privateKeyboardKeymaps = make(map[KeyboardKeymapHandler]struct{})
@@ -2911,6 +3074,7 @@ func (ret *Keyboard) initKeyboard() {
 	ret.privateKeyboardModifierss = make(map[KeyboardModifiersHandler]struct{})
 	ret.privateKeyboardRepeatInfos = make(map[KeyboardRepeatInfoHandler]struct{})
 }
+
 // NewKeyboard is a constructor for the Keyboard object
 func NewKeyboard(ctx *Context) *Keyboard {
 	ret := new(Keyboard)
@@ -2918,11 +3082,13 @@ func NewKeyboard(ctx *Context) *Keyboard {
 	ctx.Register(ret)
 	return ret
 }
+
 // Release release the keyboard object
-func (p *Keyboard) Release() (error) {
-	
+func (p *Keyboard) Release() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Dispatch dispatches event for object Keyboard
 func (p *Keyboard) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -3002,6 +3168,7 @@ func (p *Keyboard) Dispatch(event *Event) {
 
 	}
 }
+
 // KeyboardKeymapEvent is the keyboard mapping
 type KeyboardKeymapEvent struct {
 	// Format is the keymap format
@@ -3012,8 +3179,8 @@ type KeyboardKeymapEvent struct {
 	FdError error
 	// Size is the keymap size, in bytes
 	Size uint32
-
 }
+
 // KeyboardEnterEvent is the enter event
 type KeyboardEnterEvent struct {
 	// Serial is the serial number of the enter event
@@ -3022,16 +3189,16 @@ type KeyboardEnterEvent struct {
 	Surface *Surface
 	// Keys is the the keys currently logically down
 	Keys []int32
-
 }
+
 // KeyboardLeaveEvent is the leave event
 type KeyboardLeaveEvent struct {
 	// Serial is the serial number of the leave event
 	Serial uint32
 	// Surface is the surface that lost keyboard focus
 	Surface *Surface
-
 }
+
 // KeyboardKeyEvent is the key event
 type KeyboardKeyEvent struct {
 	// Serial is the serial number of the key event
@@ -3042,8 +3209,8 @@ type KeyboardKeyEvent struct {
 	Key uint32
 	// State is the physical state of the key
 	State uint32
-
 }
+
 // KeyboardModifiersEvent is the modifier and group state
 type KeyboardModifiersEvent struct {
 	// Serial is the serial number of the modifiers event
@@ -3056,16 +3223,16 @@ type KeyboardModifiersEvent struct {
 	ModsLocked uint32
 	// Group is the keyboard layout
 	Group uint32
-
 }
+
 // KeyboardRepeatInfoEvent is the repeat rate and delay
 type KeyboardRepeatInfoEvent struct {
 	// Rate is the the rate of repeating keys in characters per second
 	Rate int32
 	// Delay is the delay in milliseconds since key down until repeating starts
 	Delay int32
-
 }
+
 // KeyboardKeymapHandler is the handler interface for KeyboardKeymapEvent
 type KeyboardKeymapHandler interface {
 	HandleKeyboardKeymap(KeyboardKeymapEvent)
@@ -3085,8 +3252,9 @@ func (p *Keyboard) RemoveKeymapHandler(h KeyboardKeymapHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardKeymaps, h)
+	delete(p.privateKeyboardKeymaps, h)
 }
+
 // KeyboardEnterHandler is the handler interface for KeyboardEnterEvent
 type KeyboardEnterHandler interface {
 	HandleKeyboardEnter(KeyboardEnterEvent)
@@ -3106,8 +3274,9 @@ func (p *Keyboard) RemoveEnterHandler(h KeyboardEnterHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardEnters, h)
+	delete(p.privateKeyboardEnters, h)
 }
+
 // KeyboardLeaveHandler is the handler interface for KeyboardLeaveEvent
 type KeyboardLeaveHandler interface {
 	HandleKeyboardLeave(KeyboardLeaveEvent)
@@ -3127,8 +3296,9 @@ func (p *Keyboard) RemoveLeaveHandler(h KeyboardLeaveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardLeaves, h)
+	delete(p.privateKeyboardLeaves, h)
 }
+
 // KeyboardKeyHandler is the handler interface for KeyboardKeyEvent
 type KeyboardKeyHandler interface {
 	HandleKeyboardKey(KeyboardKeyEvent)
@@ -3148,8 +3318,9 @@ func (p *Keyboard) RemoveKeyHandler(h KeyboardKeyHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardKeys, h)
+	delete(p.privateKeyboardKeys, h)
 }
+
 // KeyboardModifiersHandler is the handler interface for KeyboardModifiersEvent
 type KeyboardModifiersHandler interface {
 	HandleKeyboardModifiers(KeyboardModifiersEvent)
@@ -3169,8 +3340,9 @@ func (p *Keyboard) RemoveModifiersHandler(h KeyboardModifiersHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardModifierss, h)
+	delete(p.privateKeyboardModifierss, h)
 }
+
 // KeyboardRepeatInfoHandler is the handler interface for KeyboardRepeatInfoEvent
 type KeyboardRepeatInfoHandler interface {
 	HandleKeyboardRepeatInfo(KeyboardRepeatInfoEvent)
@@ -3190,20 +3362,22 @@ func (p *Keyboard) RemoveRepeatInfoHandler(h KeyboardRepeatInfoHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateKeyboardRepeatInfos, h)
+	delete(p.privateKeyboardRepeatInfos, h)
 }
+
 // Touch touchscreen input device
 type Touch struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateTouchDowns map[TouchDownHandler]struct{}
-	privateTouchUps map[TouchUpHandler]struct{}
-	privateTouchMotions map[TouchMotionHandler]struct{}
-	privateTouchFrames map[TouchFrameHandler]struct{}
-	privateTouchCancels map[TouchCancelHandler]struct{}
-	privateTouchShapes map[TouchShapeHandler]struct{}
+	mu                       sync.RWMutex
+	privateTouchDowns        map[TouchDownHandler]struct{}
+	privateTouchUps          map[TouchUpHandler]struct{}
+	privateTouchMotions      map[TouchMotionHandler]struct{}
+	privateTouchFrames       map[TouchFrameHandler]struct{}
+	privateTouchCancels      map[TouchCancelHandler]struct{}
+	privateTouchShapes       map[TouchShapeHandler]struct{}
 	privateTouchOrientations map[TouchOrientationHandler]struct{}
 }
+
 // initTouch initializes the Touch object's handler maps
 func (ret *Touch) initTouch() {
 	ret.privateTouchDowns = make(map[TouchDownHandler]struct{})
@@ -3214,6 +3388,7 @@ func (ret *Touch) initTouch() {
 	ret.privateTouchShapes = make(map[TouchShapeHandler]struct{})
 	ret.privateTouchOrientations = make(map[TouchOrientationHandler]struct{})
 }
+
 // NewTouch is a constructor for the Touch object
 func NewTouch(ctx *Context) *Touch {
 	ret := new(Touch)
@@ -3221,11 +3396,13 @@ func NewTouch(ctx *Context) *Touch {
 	ctx.Register(ret)
 	return ret
 }
+
 // Release release the touch object
-func (p *Touch) Release() (error) {
-	
+func (p *Touch) Release() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Dispatch dispatches event for object Touch
 func (p *Touch) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -3313,6 +3490,7 @@ func (p *Touch) Dispatch(event *Event) {
 
 	}
 }
+
 // TouchDownEvent is the touch down event and beginning of a touch sequence
 type TouchDownEvent struct {
 	// Serial is the serial number of the touch down event
@@ -3327,8 +3505,8 @@ type TouchDownEvent struct {
 	X float32
 	// Y is the surface-local y coordinate
 	Y float32
-
 }
+
 // TouchUpEvent is the end of a touch event sequence
 type TouchUpEvent struct {
 	// Serial is the serial number of the touch up event
@@ -3337,8 +3515,8 @@ type TouchUpEvent struct {
 	Time uint32
 	// Id is the the unique ID of this touch point
 	Id int32
-
 }
+
 // TouchMotionEvent is the update of touch point coordinates
 type TouchMotionEvent struct {
 	// Time is the timestamp with millisecond granularity
@@ -3349,16 +3527,16 @@ type TouchMotionEvent struct {
 	X float32
 	// Y is the surface-local y coordinate
 	Y float32
-
 }
+
 // TouchFrameEvent is the end of touch frame event
 type TouchFrameEvent struct {
-
 }
+
 // TouchCancelEvent is the touch session cancelled
 type TouchCancelEvent struct {
-
 }
+
 // TouchShapeEvent is the update shape of touch point
 type TouchShapeEvent struct {
 	// Id is the the unique ID of this touch point
@@ -3367,16 +3545,16 @@ type TouchShapeEvent struct {
 	Major float32
 	// Minor is the length of the minor axis in surface-local coordinates
 	Minor float32
-
 }
+
 // TouchOrientationEvent is the update orientation of touch point
 type TouchOrientationEvent struct {
 	// Id is the the unique ID of this touch point
 	Id int32
 	// Orientation is the angle between major axis and positive surface y-axis in degrees
 	Orientation float32
-
 }
+
 // TouchDownHandler is the handler interface for TouchDownEvent
 type TouchDownHandler interface {
 	HandleTouchDown(TouchDownEvent)
@@ -3396,8 +3574,9 @@ func (p *Touch) RemoveDownHandler(h TouchDownHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchDowns, h)
+	delete(p.privateTouchDowns, h)
 }
+
 // TouchUpHandler is the handler interface for TouchUpEvent
 type TouchUpHandler interface {
 	HandleTouchUp(TouchUpEvent)
@@ -3417,8 +3596,9 @@ func (p *Touch) RemoveUpHandler(h TouchUpHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchUps, h)
+	delete(p.privateTouchUps, h)
 }
+
 // TouchMotionHandler is the handler interface for TouchMotionEvent
 type TouchMotionHandler interface {
 	HandleTouchMotion(TouchMotionEvent)
@@ -3438,8 +3618,9 @@ func (p *Touch) RemoveMotionHandler(h TouchMotionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchMotions, h)
+	delete(p.privateTouchMotions, h)
 }
+
 // TouchFrameHandler is the handler interface for TouchFrameEvent
 type TouchFrameHandler interface {
 	HandleTouchFrame(TouchFrameEvent)
@@ -3459,8 +3640,9 @@ func (p *Touch) RemoveFrameHandler(h TouchFrameHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchFrames, h)
+	delete(p.privateTouchFrames, h)
 }
+
 // TouchCancelHandler is the handler interface for TouchCancelEvent
 type TouchCancelHandler interface {
 	HandleTouchCancel(TouchCancelEvent)
@@ -3480,8 +3662,9 @@ func (p *Touch) RemoveCancelHandler(h TouchCancelHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchCancels, h)
+	delete(p.privateTouchCancels, h)
 }
+
 // TouchShapeHandler is the handler interface for TouchShapeEvent
 type TouchShapeHandler interface {
 	HandleTouchShape(TouchShapeEvent)
@@ -3501,8 +3684,9 @@ func (p *Touch) RemoveShapeHandler(h TouchShapeHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchShapes, h)
+	delete(p.privateTouchShapes, h)
 }
+
 // TouchOrientationHandler is the handler interface for TouchOrientationEvent
 type TouchOrientationHandler interface {
 	HandleTouchOrientation(TouchOrientationEvent)
@@ -3522,19 +3706,21 @@ func (p *Touch) RemoveOrientationHandler(h TouchOrientationHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateTouchOrientations, h)
+	delete(p.privateTouchOrientations, h)
 }
+
 // Output compositor output region
 type Output struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateOutputGeometrys map[OutputGeometryHandler]struct{}
-	privateOutputModes map[OutputModeHandler]struct{}
-	privateOutputDones map[OutputDoneHandler]struct{}
-	privateOutputScales map[OutputScaleHandler]struct{}
-	privateOutputNames map[OutputNameHandler]struct{}
+	mu                        sync.RWMutex
+	privateOutputGeometrys    map[OutputGeometryHandler]struct{}
+	privateOutputModes        map[OutputModeHandler]struct{}
+	privateOutputDones        map[OutputDoneHandler]struct{}
+	privateOutputScales       map[OutputScaleHandler]struct{}
+	privateOutputNames        map[OutputNameHandler]struct{}
 	privateOutputDescriptions map[OutputDescriptionHandler]struct{}
 }
+
 // initOutput initializes the Output object's handler maps
 func (ret *Output) initOutput() {
 	ret.privateOutputGeometrys = make(map[OutputGeometryHandler]struct{})
@@ -3544,6 +3730,7 @@ func (ret *Output) initOutput() {
 	ret.privateOutputNames = make(map[OutputNameHandler]struct{})
 	ret.privateOutputDescriptions = make(map[OutputDescriptionHandler]struct{})
 }
+
 // NewOutput is a constructor for the Output object
 func NewOutput(ctx *Context) *Output {
 	ret := new(Output)
@@ -3551,11 +3738,13 @@ func NewOutput(ctx *Context) *Output {
 	ctx.Register(ret)
 	return ret
 }
+
 // Release release the output object
-func (p *Output) Release() (error) {
-	
+func (p *Output) Release() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Dispatch dispatches event for object Output
 func (p *Output) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -3631,6 +3820,7 @@ func (p *Output) Dispatch(event *Event) {
 
 	}
 }
+
 // OutputGeometryEvent is the properties of the output
 type OutputGeometryEvent struct {
 	// X is the x position within the global compositor space
@@ -3649,8 +3839,8 @@ type OutputGeometryEvent struct {
 	Model string
 	// Transform is the additional transformation applied to buffer contents during presentation
 	Transform int32
-
 }
+
 // OutputModeEvent is the advertise available modes for the output
 type OutputModeEvent struct {
 	// Flags is the bitfield of mode flags
@@ -3661,30 +3851,30 @@ type OutputModeEvent struct {
 	Height int32
 	// Refresh is the vertical refresh rate in mHz
 	Refresh int32
-
 }
+
 // OutputDoneEvent is the sent all information about output
 type OutputDoneEvent struct {
-
 }
+
 // OutputScaleEvent is the output scaling properties
 type OutputScaleEvent struct {
 	// Factor is the scaling factor of output
 	Factor int32
-
 }
+
 // OutputNameEvent is the name of this output
 type OutputNameEvent struct {
 	// Name is the output name
 	Name string
-
 }
+
 // OutputDescriptionEvent is the human-readable description of this output
 type OutputDescriptionEvent struct {
 	// Description is the output description
 	Description string
-
 }
+
 // OutputGeometryHandler is the handler interface for OutputGeometryEvent
 type OutputGeometryHandler interface {
 	HandleOutputGeometry(OutputGeometryEvent)
@@ -3704,8 +3894,9 @@ func (p *Output) RemoveGeometryHandler(h OutputGeometryHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputGeometrys, h)
+	delete(p.privateOutputGeometrys, h)
 }
+
 // OutputModeHandler is the handler interface for OutputModeEvent
 type OutputModeHandler interface {
 	HandleOutputMode(OutputModeEvent)
@@ -3725,8 +3916,9 @@ func (p *Output) RemoveModeHandler(h OutputModeHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputModes, h)
+	delete(p.privateOutputModes, h)
 }
+
 // OutputDoneHandler is the handler interface for OutputDoneEvent
 type OutputDoneHandler interface {
 	HandleOutputDone(OutputDoneEvent)
@@ -3746,8 +3938,9 @@ func (p *Output) RemoveDoneHandler(h OutputDoneHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputDones, h)
+	delete(p.privateOutputDones, h)
 }
+
 // OutputScaleHandler is the handler interface for OutputScaleEvent
 type OutputScaleHandler interface {
 	HandleOutputScale(OutputScaleEvent)
@@ -3767,8 +3960,9 @@ func (p *Output) RemoveScaleHandler(h OutputScaleHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputScales, h)
+	delete(p.privateOutputScales, h)
 }
+
 // OutputNameHandler is the handler interface for OutputNameEvent
 type OutputNameHandler interface {
 	HandleOutputName(OutputNameEvent)
@@ -3788,8 +3982,9 @@ func (p *Output) RemoveNameHandler(h OutputNameHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputNames, h)
+	delete(p.privateOutputNames, h)
 }
+
 // OutputDescriptionHandler is the handler interface for OutputDescriptionEvent
 type OutputDescriptionHandler interface {
 	HandleOutputDescription(OutputDescriptionEvent)
@@ -3809,131 +4004,156 @@ func (p *Output) RemoveDescriptionHandler(h OutputDescriptionHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateOutputDescriptions, h)
+	delete(p.privateOutputDescriptions, h)
 }
+
 // Region region interface
 type Region struct {
 	BaseProxy
 }
+
 // NewRegion is a constructor for the Region object
 func NewRegion(ctx *Context) *Region {
 	ret := new(Region)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy region
-func (p *Region) Destroy() (error) {
-	
+func (p *Region) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Add add rectangle to region
-func (p *Region) Add(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Region) Add(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 1, X, Y, Width, Height)
 }
+
 // Subtract subtract rectangle from region
-func (p *Region) Subtract(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Region) Subtract(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
 }
+
 // Dispatch dispatches event for object Region
 func (p *Region) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Subcompositor sub-surface compositing
 type Subcompositor struct {
 	BaseProxy
 }
+
 // NewSubcompositor is a constructor for the Subcompositor object
 func NewSubcompositor(ctx *Context) *Subcompositor {
 	ret := new(Subcompositor)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy unbind from the subcompositor interface
-func (p *Subcompositor) Destroy() (error) {
-	
+func (p *Subcompositor) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // GetSubsurface give a surface the role sub-surface
 func (p *Subcompositor) GetSubsurface(Surface *Surface, Parent *Surface) (*Subsurface, error) {
 	retId := NewSubsurface(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Surface, Parent)
 }
+
 // Dispatch dispatches event for object Subcompositor
 func (p *Subcompositor) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Subsurface sub-surface interface to a wl_surface
 type Subsurface struct {
 	BaseProxy
 }
+
 // NewSubsurface is a constructor for the Subsurface object
 func NewSubsurface(ctx *Context) *Subsurface {
 	ret := new(Subsurface)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy remove sub-surface interface
-func (p *Subsurface) Destroy() (error) {
-	
+func (p *Subsurface) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // SetPosition reposition the sub-surface
-func (p *Subsurface) SetPosition(X int32, Y int32) (error) {
-	
+func (p *Subsurface) SetPosition(X int32, Y int32) error {
+
 	return p.Context().SendRequest(p, 1, X, Y)
 }
+
 // PlaceAbove restack the sub-surface
-func (p *Subsurface) PlaceAbove(Sibling *Surface) (error) {
-	
+func (p *Subsurface) PlaceAbove(Sibling *Surface) error {
+
 	return p.Context().SendRequest(p, 2, Sibling)
 }
+
 // PlaceBelow restack the sub-surface
-func (p *Subsurface) PlaceBelow(Sibling *Surface) (error) {
-	
+func (p *Subsurface) PlaceBelow(Sibling *Surface) error {
+
 	return p.Context().SendRequest(p, 3, Sibling)
 }
+
 // SetSync set sub-surface to synchronized mode
-func (p *Subsurface) SetSync() (error) {
-	
+func (p *Subsurface) SetSync() error {
+
 	return p.Context().SendRequest(p, 4)
 }
+
 // SetDesync set sub-surface to desynchronized mode
-func (p *Subsurface) SetDesync() (error) {
-	
+func (p *Subsurface) SetDesync() error {
+
 	return p.Context().SendRequest(p, 5)
 }
+
 // Dispatch dispatches event for object Subsurface
 func (p *Subsurface) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Fixes wayland protocol fixes
 type Fixes struct {
 	BaseProxy
 }
+
 // NewFixes is a constructor for the Fixes object
 func NewFixes(ctx *Context) *Fixes {
 	ret := new(Fixes)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroys this object
-func (p *Fixes) Destroy() (error) {
-	
+func (p *Fixes) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // DestroyRegistry destroy a wl_registry
-func (p *Fixes) DestroyRegistry(Registry *Registry) (error) {
-	
+func (p *Fixes) DestroyRegistry(Registry *Registry) error {
+
 	return p.Context().SendRequest(p, 1, Registry)
 }
+
 // Dispatch dispatches event for object Fixes
 func (p *Fixes) Dispatch(event *Event) {
 	switch event.Opcode {

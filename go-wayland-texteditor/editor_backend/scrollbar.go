@@ -1,9 +1,11 @@
 package main
 
-import "image"
-import "image/color"
-import "image/png"
-import "bytes"
+import (
+	"bytes"
+	"image"
+	"image/color"
+	"image/png"
+)
 
 func bias_towards_larger(n int) int {
 	n = 255 - (((n & 15) * ((n >> 4) & 15)) + ((n >> 8) & 15))

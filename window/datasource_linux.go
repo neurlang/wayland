@@ -1,7 +1,9 @@
 package window
 
-import wl "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/wlclient"
+import (
+	wl "github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
+)
 
 type DataSource struct {
 	src        *wl.DataSource

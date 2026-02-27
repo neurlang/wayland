@@ -21,20 +21,25 @@
 // Go Wayland Textarea demo
 package main
 
-import "time"
-import "math/rand"
+import (
+	"math/rand"
+	"time"
 
-import cairo "github.com/neurlang/wayland/cairoshim"
-import wl "github.com/neurlang/wayland/wl"
-import xkb "github.com/neurlang/wayland/xkbcommon"
-import window "github.com/neurlang/wayland/windowtrace"
-import "fmt"
-import "sync"
-import "os/exec"
-import "strings"
-import "bytes"
-import "os"
-import "io"
+	cairo "github.com/neurlang/wayland/cairoshim"
+	wl "github.com/neurlang/wayland/wl"
+
+	xkb "github.com/neurlang/wayland/xkbcommon"
+
+	"bytes"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+
+	window "github.com/neurlang/wayland/windowtrace"
+)
 
 const navigateUp = 1
 const navigateDown = 2

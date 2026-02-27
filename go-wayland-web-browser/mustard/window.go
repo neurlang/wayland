@@ -1,10 +1,11 @@
 package mustard
 
 import (
+	"image"
+
 	gg "github.com/danfragoso/thdwb/gg"
 	window "github.com/neurlang/wayland/windowtrace"
 	"github.com/neurlang/wayland/wl"
-	"image"
 )
 
 // Define Constants

@@ -1,12 +1,14 @@
 package mustard
 
 import (
+	"image"
+
 	"github.com/danfragoso/thdwb/gg"
 	"github.com/goki/freetype/truetype"
 	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
-	"image"
+
+	cairo "github.com/neurlang/wayland/cairoshim"
 )
-import cairo "github.com/neurlang/wayland/cairoshim"
 
 // CreateTreeWidget - Creates and returns a new Tree Widget
 func CreateTreeWidget() *TreeWidget {

@@ -32,6 +32,5 @@ const KeyF10 = 9999999 /* can't be able to be pressed on wine */
 const KeyF11 = 5701633
 const KeyF12 = 5767169
 
-
 const KeyQ = 81
 const KEYq = 81

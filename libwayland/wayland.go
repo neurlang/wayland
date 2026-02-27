@@ -35,8 +35,10 @@ package libwayland
 #include <errno.h>
 */
 import "C"
-import "unsafe"
-import "sync"
+import (
+	"sync"
+	"unsafe"
+)
 
 // Interfaces
 

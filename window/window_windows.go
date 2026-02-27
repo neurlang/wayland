@@ -389,10 +389,10 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 
 }
 
-func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {	
+func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 	p.widget.handler = handler
 	p.widget.parent_window = nil
-	
+
 	// Mark as configured to prevent PopupGetSurface from calling Configure again
 	p.configured = true
 
@@ -411,7 +411,7 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 			}
 		}
 	}
-	
+
 	p.form.OnPaint().Bind(func(arg *winc.Event) {
 		if !p.inhibited && !p.widget.destroyed {
 			if p.popuper != nil {
@@ -423,7 +423,7 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 			}
 		}
 	})
-	
+
 	p.form.OnSize().Bind(func(arg *winc.Event) {
 		p.widget.destroyed = false
 		xy := arg.Data.(*winc.SizeEventData)
@@ -468,18 +468,18 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 		p.form.OnLBUp().Bind(nil)
 		p.Destroy()
 	})
-	
+
 	// Focus loss should close the popup
 	p.form.OnKillFocus().Bind(func(arg *winc.Event) {
 		p.Destroy()
 	})
-	
+
 	p.form.Show()
 
 	return &p.widget
 }
 func (w *Window) CreatePopup(_ *wl.Seat, _, width, height, x, y uint32) (popup *Popup) {
-	
+
 	form := winc.NewCustomForm(w.form, 0, w32.WS_POPUP)
 
 	//var bx = (w.form.Width() - w.form.ClientWidth())
@@ -491,12 +491,12 @@ func (w *Window) CreatePopup(_ *wl.Seat, _, width, height, x, y uint32) (popup *
 	popup = &Popup{
 		form: form,
 	}
-	
+
 	// Set parent_window before any operations that might trigger ScheduleRedraw
 	popup.widget.parent_window = nil
 	popup.widget.form = form
 	popup.widget.SetAllocation(int32(x), int32(y), int32(width), int32(height))
-	
+
 	return
 }
 

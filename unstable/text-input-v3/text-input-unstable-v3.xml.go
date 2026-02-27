@@ -6,8 +6,8 @@ package text
 
 import (
 	"sync"
-
 )
+
 // ZwpInputV3ChangeCauseInputMethod means input method caused the change
 const ZwpInputV3ChangeCauseInputMethod = 0
 
@@ -92,14 +92,15 @@ const ZwpInputV3ContentPurposeTerminal = 13
 // ZwpInputV3 text input
 type ZwpInputV3 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpInputV3Enters map[ZwpInputV3EnterHandler]struct{}
-	privateZwpInputV3Leaves map[ZwpInputV3LeaveHandler]struct{}
-	privateZwpInputV3PreeditStrings map[ZwpInputV3PreeditStringHandler]struct{}
-	privateZwpInputV3CommitStrings map[ZwpInputV3CommitStringHandler]struct{}
+	mu                                      sync.RWMutex
+	privateZwpInputV3Enters                 map[ZwpInputV3EnterHandler]struct{}
+	privateZwpInputV3Leaves                 map[ZwpInputV3LeaveHandler]struct{}
+	privateZwpInputV3PreeditStrings         map[ZwpInputV3PreeditStringHandler]struct{}
+	privateZwpInputV3CommitStrings          map[ZwpInputV3CommitStringHandler]struct{}
 	privateZwpInputV3DeleteSurroundingTexts map[ZwpInputV3DeleteSurroundingTextHandler]struct{}
-	privateZwpInputV3Dones map[ZwpInputV3DoneHandler]struct{}
+	privateZwpInputV3Dones                  map[ZwpInputV3DoneHandler]struct{}
 }
+
 // initZwpInputV3 initializes the ZwpInputV3 object's handler maps
 func (ret *ZwpInputV3) initZwpInputV3() {
 	ret.privateZwpInputV3Enters = make(map[ZwpInputV3EnterHandler]struct{})
@@ -109,6 +110,7 @@ func (ret *ZwpInputV3) initZwpInputV3() {
 	ret.privateZwpInputV3DeleteSurroundingTexts = make(map[ZwpInputV3DeleteSurroundingTextHandler]struct{})
 	ret.privateZwpInputV3Dones = make(map[ZwpInputV3DoneHandler]struct{})
 }
+
 // NewZwpInputV3 is a constructor for the ZwpInputV3 object
 func NewZwpInputV3(ctx *Context) *ZwpInputV3 {
 	ret := new(ZwpInputV3)
@@ -116,46 +118,55 @@ func NewZwpInputV3(ctx *Context) *ZwpInputV3 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy Destroy the wp_text_input
-func (p *ZwpInputV3) Destroy() (error) {
-	
+func (p *ZwpInputV3) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Enable Request text input to be enabled
-func (p *ZwpInputV3) Enable() (error) {
-	
+func (p *ZwpInputV3) Enable() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // Disable Disable text input on a surface
-func (p *ZwpInputV3) Disable() (error) {
-	
+func (p *ZwpInputV3) Disable() error {
+
 	return p.Context().SendRequest(p, 2)
 }
+
 // SetSurroundingText sets the surrounding text
-func (p *ZwpInputV3) SetSurroundingText(Text string, Cursor int32, Anchor int32) (error) {
-	
+func (p *ZwpInputV3) SetSurroundingText(Text string, Cursor int32, Anchor int32) error {
+
 	return p.Context().SendRequest(p, 3, Text, Cursor, Anchor)
 }
+
 // SetChangeCause indicates the cause of surrounding text change
-func (p *ZwpInputV3) SetChangeCause(Cause uint32) (error) {
-	
+func (p *ZwpInputV3) SetChangeCause(Cause uint32) error {
+
 	return p.Context().SendRequest(p, 4, Cause)
 }
+
 // SetContentType set content purpose and hint
-func (p *ZwpInputV3) SetContentType(Hint uint32, Purpose uint32) (error) {
-	
+func (p *ZwpInputV3) SetContentType(Hint uint32, Purpose uint32) error {
+
 	return p.Context().SendRequest(p, 5, Hint, Purpose)
 }
+
 // SetCursorRectangle set cursor position
-func (p *ZwpInputV3) SetCursorRectangle(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *ZwpInputV3) SetCursorRectangle(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 6, X, Y, Width, Height)
 }
+
 // Commit commit state
-func (p *ZwpInputV3) Commit() (error) {
-	
+func (p *ZwpInputV3) Commit() error {
+
 	return p.Context().SendRequest(p, 7)
 }
+
 // Dispatch dispatches event for object ZwpInputV3
 func (p *ZwpInputV3) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -225,48 +236,49 @@ func (p *ZwpInputV3) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpInputV3EnterEvent is the enter event
 type ZwpInputV3EnterEvent struct {
-	// Surface is the 
+	// Surface is the
 	Surface *Surface
-
 }
+
 // ZwpInputV3LeaveEvent is the leave event
 type ZwpInputV3LeaveEvent struct {
-	// Surface is the 
+	// Surface is the
 	Surface *Surface
-
 }
+
 // ZwpInputV3PreeditStringEvent is the pre-edit
 type ZwpInputV3PreeditStringEvent struct {
-	// Text is the 
+	// Text is the
 	Text string
-	// CursorBegin is the 
+	// CursorBegin is the
 	CursorBegin int32
-	// CursorEnd is the 
+	// CursorEnd is the
 	CursorEnd int32
-
 }
+
 // ZwpInputV3CommitStringEvent is the text commit
 type ZwpInputV3CommitStringEvent struct {
-	// Text is the 
+	// Text is the
 	Text string
-
 }
+
 // ZwpInputV3DeleteSurroundingTextEvent is the delete surrounding text
 type ZwpInputV3DeleteSurroundingTextEvent struct {
 	// BeforeLength is the length of text before current cursor position
 	BeforeLength uint32
 	// AfterLength is the length of text after current cursor position
 	AfterLength uint32
-
 }
+
 // ZwpInputV3DoneEvent is the apply changes
 type ZwpInputV3DoneEvent struct {
-	// Serial is the 
+	// Serial is the
 	Serial uint32
-
 }
+
 // ZwpInputV3EnterHandler is the handler interface for ZwpInputV3EnterEvent
 type ZwpInputV3EnterHandler interface {
 	HandleZwpInputV3Enter(ZwpInputV3EnterEvent)
@@ -286,8 +298,9 @@ func (p *ZwpInputV3) RemoveEnterHandler(h ZwpInputV3EnterHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3Enters, h)
+	delete(p.privateZwpInputV3Enters, h)
 }
+
 // ZwpInputV3LeaveHandler is the handler interface for ZwpInputV3LeaveEvent
 type ZwpInputV3LeaveHandler interface {
 	HandleZwpInputV3Leave(ZwpInputV3LeaveEvent)
@@ -307,8 +320,9 @@ func (p *ZwpInputV3) RemoveLeaveHandler(h ZwpInputV3LeaveHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3Leaves, h)
+	delete(p.privateZwpInputV3Leaves, h)
 }
+
 // ZwpInputV3PreeditStringHandler is the handler interface for ZwpInputV3PreeditStringEvent
 type ZwpInputV3PreeditStringHandler interface {
 	HandleZwpInputV3PreeditString(ZwpInputV3PreeditStringEvent)
@@ -328,8 +342,9 @@ func (p *ZwpInputV3) RemovePreeditStringHandler(h ZwpInputV3PreeditStringHandler
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3PreeditStrings, h)
+	delete(p.privateZwpInputV3PreeditStrings, h)
 }
+
 // ZwpInputV3CommitStringHandler is the handler interface for ZwpInputV3CommitStringEvent
 type ZwpInputV3CommitStringHandler interface {
 	HandleZwpInputV3CommitString(ZwpInputV3CommitStringEvent)
@@ -349,8 +364,9 @@ func (p *ZwpInputV3) RemoveCommitStringHandler(h ZwpInputV3CommitStringHandler) 
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3CommitStrings, h)
+	delete(p.privateZwpInputV3CommitStrings, h)
 }
+
 // ZwpInputV3DeleteSurroundingTextHandler is the handler interface for ZwpInputV3DeleteSurroundingTextEvent
 type ZwpInputV3DeleteSurroundingTextHandler interface {
 	HandleZwpInputV3DeleteSurroundingText(ZwpInputV3DeleteSurroundingTextEvent)
@@ -370,8 +386,9 @@ func (p *ZwpInputV3) RemoveDeleteSurroundingTextHandler(h ZwpInputV3DeleteSurrou
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3DeleteSurroundingTexts, h)
+	delete(p.privateZwpInputV3DeleteSurroundingTexts, h)
 }
+
 // ZwpInputV3DoneHandler is the handler interface for ZwpInputV3DoneEvent
 type ZwpInputV3DoneHandler interface {
 	HandleZwpInputV3Done(ZwpInputV3DoneEvent)
@@ -391,28 +408,33 @@ func (p *ZwpInputV3) RemoveDoneHandler(h ZwpInputV3DoneHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpInputV3Dones, h)
+	delete(p.privateZwpInputV3Dones, h)
 }
+
 // ZwpInputManagerV3 text input manager
 type ZwpInputManagerV3 struct {
 	BaseProxy
 }
+
 // NewZwpInputManagerV3 is a constructor for the ZwpInputManagerV3 object
 func NewZwpInputManagerV3(ctx *Context) *ZwpInputManagerV3 {
 	ret := new(ZwpInputManagerV3)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy Destroy the wp_text_input_manager
-func (p *ZwpInputManagerV3) Destroy() (error) {
-	
+func (p *ZwpInputManagerV3) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // GetInput create a new text input object
 func (p *ZwpInputManagerV3) GetInput(Seat *Seat) (*ZwpInputV3, error) {
 	retId := NewZwpInputV3(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Seat)
 }
+
 // Dispatch dispatches event for object ZwpInputManagerV3
 func (p *ZwpInputManagerV3) Dispatch(event *Event) {
 	switch event.Opcode {

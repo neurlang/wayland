@@ -9,9 +9,9 @@ import (
 
 // Widget represents a drawable area within a window on macOS
 type Widget struct {
-	userdata interface{}
-	buffer   []byte
-	swapbuffer []byte
+	userdata    interface{}
+	buffer      []byte
+	swapbuffer  []byte
 	drawnHash   uint64
 	drawnHashes map[int]uint64
 
@@ -24,7 +24,7 @@ type Widget struct {
 	handler       WidgetHandler
 
 	destroyed bool
-	refCount  int  // Reference count for cairo surface references
+	refCount  int // Reference count for cairo surface references
 	draw_mut  sync.Mutex
 }
 
@@ -116,14 +116,14 @@ func (w *Widget) ScheduleResize(width int32, height int32) {
 func (w *Widget) Destroy() {
 	w.draw_mut.Lock()
 	defer w.draw_mut.Unlock()
-	
+
 	if w.refCount > 0 {
 		w.refCount--
 		return
 	}
-	
+
 	w.destroyed = true
-	
+
 	// Remove from parent window's widgets map
 	if w.parent_window != nil {
 		delete(w.parent_window.widgets, w)
@@ -220,15 +220,15 @@ type Input struct {
 func (input *Input) updateModifiers(nsModifiers uint32) {
 	// NSEvent modifier flags (from NSEvent.h)
 	const (
-		NSEventModifierFlagShift   = 1 << 17
-		NSEventModifierFlagControl = 1 << 18
-		NSEventModifierFlagOption  = 1 << 19
-		NSEventModifierFlagCommand = 1 << 20
+		NSEventModifierFlagShift    = 1 << 17
+		NSEventModifierFlagControl  = 1 << 18
+		NSEventModifierFlagOption   = 1 << 19
+		NSEventModifierFlagCommand  = 1 << 20
 		NSEventModifierFlagCapsLock = 1 << 16
 	)
-	
+
 	input.modifiers = 0
-	
+
 	if nsModifiers&NSEventModifierFlagShift != 0 {
 		input.modifiers |= ModShiftMask
 	}
@@ -288,5 +288,3 @@ func (ds *DataSource) Offer(str string) {
 func (ds *DataSource) RemoveListener(l interface{}) {
 	// Not implemented for macOS
 }
-
-

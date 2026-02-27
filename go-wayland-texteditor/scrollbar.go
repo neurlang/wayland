@@ -1,8 +1,10 @@
 package main
 
-import "net/http"
-import "image/png"
-import "image/color"
+import (
+	"image/color"
+	"image/png"
+	"net/http"
+)
 
 const scrollTestFilename = "live.png"
 

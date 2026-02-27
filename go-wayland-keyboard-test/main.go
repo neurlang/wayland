@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package main
@@ -32,30 +33,37 @@ func (app *KeyboardTestApp) Redraw(widget *window.Widget) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			offset := y*stride + x*4
-			surface[offset+0] = 40   // B
-			surface[offset+1] = 40   // G
-			surface[offset+2] = 40   // R
-			surface[offset+3] = 255  // A
+			surface[offset+0] = 40  // B
+			surface[offset+1] = 40  // G
+			surface[offset+2] = 40  // R
+			surface[offset+3] = 255 // A
 		}
 	}
 
 }
 
 func (app *KeyboardTestApp) Enter(widget *window.Widget, input *window.Input, x float32, y float32) {}
-func (app *KeyboardTestApp) Leave(widget *window.Widget, input *window.Input) {}
+func (app *KeyboardTestApp) Leave(widget *window.Widget, input *window.Input)                       {}
 func (app *KeyboardTestApp) Motion(widget *window.Widget, input *window.Input, time uint32, x float32, y float32) int {
 	return 0
 }
-func (app *KeyboardTestApp) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {}
-func (app *KeyboardTestApp) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {}
-func (app *KeyboardTestApp) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {}
-func (app *KeyboardTestApp) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {}
-func (app *KeyboardTestApp) TouchFrame(widget *window.Widget, input *window.Input) {}
+func (app *KeyboardTestApp) Button(widget *window.Widget, input *window.Input, time uint32, button uint32, state wl.PointerButtonState, data window.WidgetHandler) {
+}
+func (app *KeyboardTestApp) TouchUp(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32) {
+}
+func (app *KeyboardTestApp) TouchDown(widget *window.Widget, input *window.Input, serial uint32, time uint32, id int32, x float32, y float32) {
+}
+func (app *KeyboardTestApp) TouchMotion(widget *window.Widget, input *window.Input, time uint32, id int32, x float32, y float32) {
+}
+func (app *KeyboardTestApp) TouchFrame(widget *window.Widget, input *window.Input)        {}
 func (app *KeyboardTestApp) TouchCancel(widget *window.Widget, width int32, height int32) {}
-func (app *KeyboardTestApp) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {}
+func (app *KeyboardTestApp) Axis(widget *window.Widget, input *window.Input, time uint32, axis uint32, value float32) {
+}
 func (app *KeyboardTestApp) AxisSource(widget *window.Widget, input *window.Input, source uint32) {}
-func (app *KeyboardTestApp) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {}
-func (app *KeyboardTestApp) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {}
+func (app *KeyboardTestApp) AxisStop(widget *window.Widget, input *window.Input, time uint32, axis uint32) {
+}
+func (app *KeyboardTestApp) AxisDiscrete(widget *window.Widget, input *window.Input, axis uint32, discrete int32) {
+}
 func (app *KeyboardTestApp) PointerFrame(widget *window.Widget, input *window.Input) {}
 
 // Key handles keyboard events
@@ -243,13 +251,13 @@ func main() {
 	app := &KeyboardTestApp{}
 	app.window = window.Create(display)
 	app.window.SetTitle("Keyboard Test")
-	
+
 	// Set keyboard handler
 	app.window.SetKeyboardHandler(app)
-	
+
 	// Add widget
 	app.widget = app.window.AddWidget(app)
-	
+
 	// Set initial size
 	app.window.ScheduleResize(600, 300)
 

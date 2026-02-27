@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 )
-import "encoding/json"
-import "bytes"
 
 type WriteRequest struct {
 	X, Y   int

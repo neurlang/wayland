@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package window
@@ -26,15 +27,15 @@ type Window struct {
 	inhibited      bool
 	maximized      bool
 	fullscreen     bool
-	decorated      bool  // Whether window has decorations (title bar, etc.)
-	
-	popupList      [][5]uintptr
+	decorated      bool // Whether window has decorations (title bar, etc.)
+
+	popupList [][5]uintptr
 
 	Display *Display
 }
 
 type Popup struct {
-	Popup   *xdg.Popup
+	Popup        *xdg.Popup
 	popuper      Popuper
 	Display      *Display
 	popupWindow  *Window
@@ -54,7 +55,7 @@ func DisplayCreate(args []string) (*Display, error) {
 func (d *Display) Destroy() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	
+
 	for _, w := range d.windows {
 		if w.darwinHandle != nil {
 			darwin_destroyWindow(w.darwinHandle)
@@ -82,15 +83,15 @@ func Create(d *Display) *Window {
 		input:          &Input{},
 		width:          800,
 		height:         600,
-		decorated:      true,  // Window has decorations
-		darwinHandle:   nil, // Don't create window yet - wait for first resize
+		decorated:      true, // Window has decorations
+		darwinHandle:   nil,  // Don't create window yet - wait for first resize
 	}
-	
+
 	d.mu.Lock()
 	d.windows = append(d.windows, w)
 	d.count++
 	d.mu.Unlock()
-	
+
 	return w
 }
 
@@ -103,15 +104,15 @@ func CreateUndecorated(d *Display) *Window {
 		input:          &Input{},
 		width:          800,
 		height:         600,
-		decorated:      false,  // Window has no decorations
-		darwinHandle:   nil, // Don't create window yet - wait for first resize
+		decorated:      false, // Window has no decorations
+		darwinHandle:   nil,   // Don't create window yet - wait for first resize
 	}
-	
+
 	d.mu.Lock()
 	d.windows = append(d.windows, w)
 	d.count++
 	d.mu.Unlock()
-	
+
 	return w
 }
 
@@ -121,12 +122,12 @@ func (w *Window) Destroy() {
 		darwin_destroyWindow(w.darwinHandle)
 		w.darwinHandle = nil
 	}
-	
+
 	// Only decrement count and potentially exit if this is NOT a popup window
 	// Popup windows shouldn't affect the main window count
 	if w.parent_display != nil {
 		w.parent_display.mu.Lock()
-		
+
 		// Check if this window is in the windows list (main windows only)
 		isMainWindow := false
 		for i, win := range w.parent_display.windows {
@@ -137,7 +138,7 @@ func (w *Window) Destroy() {
 				break
 			}
 		}
-		
+
 		// Only decrement count and exit for main windows
 		if isMainWindow {
 			w.parent_display.count--
@@ -145,7 +146,7 @@ func (w *Window) Destroy() {
 				w.parent_display.Exit()
 			}
 		}
-		
+
 		w.parent_display.mu.Unlock()
 	}
 }
@@ -208,10 +209,10 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 	if height < 32 {
 		height = 32
 	}
-	
+
 	w.width = width
 	w.height = height
-	
+
 	// Create window on first resize call with the correct size
 	if w.darwinHandle == nil {
 		w.darwinHandle = darwin_createWindow(w.width, w.height, "Window", w.decorated, w)
@@ -221,7 +222,7 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 		// Resize existing window
 		darwin_resizeWindow(w.darwinHandle, width, height)
 	}
-	
+
 	// Update all widgets
 	for widget := range w.widgets {
 		widget.SetAllocation(0, 0, width, height)
@@ -231,7 +232,7 @@ func (w *Window) ScheduleResize(width int32, height int32) {
 			widget.handler.Resize(widget, width, height, width, height)
 		}
 	}
-	
+
 	// Request redraw after resize
 	darwin_requestRedraw(w.darwinHandle)
 }
@@ -242,16 +243,16 @@ func (w *Window) AddWidget(handler WidgetHandler) *Widget {
 		parent_window: w,
 		handler:       handler,
 	}
-	
+
 	if w.widgets == nil {
 		w.widgets = make(map[*Widget]struct{})
 	}
-	
+
 	w.widgets[widget] = struct{}{}
-	
+
 	// Initial size
 	widget.SetAllocation(0, 0, w.width, w.height)
-	
+
 	return widget
 }
 
@@ -293,14 +294,14 @@ func (w *Window) Redraw() {
 	if w.inhibited {
 		return
 	}
-	
+
 	for widget := range w.widgets {
 		if !widget.destroyed {
 			// Call handler's redraw method
 			if widget.handler != nil {
 				widget.handler.Redraw(widget)
 			}
-			
+
 			// Get buffer and check if content changed
 			buf, width, height, hash := widget.getBufferAndAllocAndHash()
 			if hash != widget.drawnHash && width > 0 && height > 0 {
@@ -317,17 +318,17 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 	println("[DEBUG]   width:", width, "height:", height)
 	println("[DEBUG]   x:", x, "y:", y)
 	println("[DEBUG]   parent window:", w)
-	
+
 	// Create a new undecorated window for the popup
 	popupWindow := CreateUndecorated(w.Display)
 	popupWindow.width = int32(width)
 	popupWindow.height = int32(height)
-	
+
 	// Store parent window reference
 	popupWindow.parent_display = w.Display
-	
+
 	println("[DEBUG] Created popup window:", popupWindow)
-	
+
 	return &Popup{
 		Display:      w.Display,
 		Popup:        nil,
@@ -341,20 +342,20 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 // AddPopupWidget adds a popup widget to the popup window
 func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 	println("[DEBUG] AddPopupWidget called")
-	
+
 	println("[DEBUG] Popup window size:", p.popupWindow.width, "x", p.popupWindow.height)
-	
+
 	// IMPORTANT: Create the popup window BEFORE adding widget
 	// This ensures the window has a valid darwinHandle and Cairo surface
 	if p.popupWindow.darwinHandle == nil {
 		println("[DEBUG] Creating popup window with ScheduleResize")
 		p.popupWindow.ScheduleResize(p.popupWindow.width, p.popupWindow.height)
 	}
-	
+
 	// Add widget to the popup window
 	widget := p.popupWindow.AddWidget(handler)
 	println("[DEBUG] Widget added to popup window")
-	
+
 	// Position the popup relative to parent window AFTER window is created
 	if p.parentWindow != nil && p.parentWindow.darwinHandle != nil && p.popupWindow.darwinHandle != nil {
 		if p.popupWindow == p.parentWindow {
@@ -373,9 +374,8 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 			println("[DEBUG]   popupWindow.darwinHandle is nil")
 		}
 	}
-	
-	println("[DEBUG] Popup widget added successfully")
 
+	println("[DEBUG] Popup widget added successfully")
 
 	return widget
 }
@@ -467,5 +467,3 @@ func (d *Display) SetUserData(_ interface{}) {}
 func (d *Display) ShellPing(*xdg.WmBase, uint32) {}
 
 func (d *Display) ShmFormat(*wl.Shm, uint32) {}
-
-

@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -18,10 +19,10 @@ func main() {
 	}
 
 	shaders := []struct {
-		source string
-		stage  string
-		output string
-		goFile string
+		source  string
+		stage   string
+		output  string
+		goFile  string
 		varName string
 	}{
 		{"vertex.glsl", "vert", "vertex.spv", "../vertex_shader.go", "vs_spirv_source"},
@@ -33,7 +34,7 @@ func main() {
 		cmd := exec.Command("glslangValidator", "-V", "-S", shader.stage, shader.source, "-o", shader.output)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		
+
 		if err := cmd.Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to compile %s: %v\n", shader.source, err)
 			fmt.Fprintf(os.Stderr, "Make sure glslangValidator is installed (sudo apt install glslang-tools or sudo dnf install glslang)\n")
@@ -89,7 +90,7 @@ func main() {
 		}
 		fmt.Fprintf(goFile, "}\n")
 
-		fmt.Printf("Generated %s from %s (%d uint32 values)\n", 
+		fmt.Printf("Generated %s from %s (%d uint32 values)\n",
 			filepath.Base(shader.goFile), shader.source, len(uint32Data))
 	}
 }

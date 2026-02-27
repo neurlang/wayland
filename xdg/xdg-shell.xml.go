@@ -6,8 +6,8 @@ package xdg
 
 import (
 	"sync"
-
 )
+
 // WmBaseErrorRole means given wl_surface has another role
 const WmBaseErrorRole = 0
 
@@ -206,13 +206,15 @@ const PopupErrorInvalidGrab = 0
 // WmBase create desktop-style surfaces
 type WmBase struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                 sync.RWMutex
 	privateWmBasePings map[WmBasePingHandler]struct{}
 }
+
 // initWmBase initializes the WmBase object's handler maps
 func (ret *WmBase) initWmBase() {
 	ret.privateWmBasePings = make(map[WmBasePingHandler]struct{})
 }
+
 // NewWmBase is a constructor for the WmBase object
 func NewWmBase(ctx *Context) *WmBase {
 	ret := new(WmBase)
@@ -220,26 +222,31 @@ func NewWmBase(ctx *Context) *WmBase {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy xdg_wm_base
-func (p *WmBase) Destroy() (error) {
-	
+func (p *WmBase) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // CreatePositioner create a positioner object
 func (p *WmBase) CreatePositioner() (*Positioner, error) {
 	retId := NewPositioner(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
+
 // GetSurface create a shell surface from a surface
 func (p *WmBase) GetSurface(Surface *WlSurface) (*Surface, error) {
 	retId := NewSurface(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId, Surface)
 }
+
 // Pong respond to a ping event
-func (p *WmBase) Pong(Serial uint32) (error) {
-	
+func (p *WmBase) Pong(Serial uint32) error {
+
 	return p.Context().SendRequest(p, 3, Serial)
 }
+
 // Dispatch dispatches event for object WmBase
 func (p *WmBase) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -256,12 +263,13 @@ func (p *WmBase) Dispatch(event *Event) {
 
 	}
 }
+
 // WmBasePingEvent is the check if the client is alive
 type WmBasePingEvent struct {
 	// Serial is the pass this to the pong request
 	Serial uint32
-
 }
+
 // WmBasePingHandler is the handler interface for WmBasePingEvent
 type WmBasePingHandler interface {
 	HandleWmBasePing(WmBasePingEvent)
@@ -281,84 +289,100 @@ func (p *WmBase) RemovePingHandler(h WmBasePingHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateWmBasePings, h)
+	delete(p.privateWmBasePings, h)
 }
+
 // Positioner child surface positioner
 type Positioner struct {
 	BaseProxy
 }
+
 // NewPositioner is a constructor for the Positioner object
 func NewPositioner(ctx *Context) *Positioner {
 	ret := new(Positioner)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the xdg_positioner object
-func (p *Positioner) Destroy() (error) {
-	
+func (p *Positioner) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // SetSize set the size of the to-be positioned rectangle
-func (p *Positioner) SetSize(Width int32, Height int32) (error) {
-	
+func (p *Positioner) SetSize(Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 1, Width, Height)
 }
+
 // SetAnchorRect set the anchor rectangle within the parent surface
-func (p *Positioner) SetAnchorRect(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Positioner) SetAnchorRect(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 2, X, Y, Width, Height)
 }
+
 // SetAnchor set anchor rectangle anchor
-func (p *Positioner) SetAnchor(Anchor uint32) (error) {
-	
+func (p *Positioner) SetAnchor(Anchor uint32) error {
+
 	return p.Context().SendRequest(p, 3, Anchor)
 }
+
 // SetGravity set child surface gravity
-func (p *Positioner) SetGravity(Gravity uint32) (error) {
-	
+func (p *Positioner) SetGravity(Gravity uint32) error {
+
 	return p.Context().SendRequest(p, 4, Gravity)
 }
+
 // SetConstraintAdjustment set the adjustment to be done when constrained
-func (p *Positioner) SetConstraintAdjustment(ConstraintAdjustment uint32) (error) {
-	
+func (p *Positioner) SetConstraintAdjustment(ConstraintAdjustment uint32) error {
+
 	return p.Context().SendRequest(p, 5, ConstraintAdjustment)
 }
+
 // SetOffset set surface position offset
-func (p *Positioner) SetOffset(X int32, Y int32) (error) {
-	
+func (p *Positioner) SetOffset(X int32, Y int32) error {
+
 	return p.Context().SendRequest(p, 6, X, Y)
 }
+
 // SetReactive continuously reconstrain the surface
-func (p *Positioner) SetReactive() (error) {
-	
+func (p *Positioner) SetReactive() error {
+
 	return p.Context().SendRequest(p, 7)
 }
-// SetParentSize 
-func (p *Positioner) SetParentSize(ParentWidth int32, ParentHeight int32) (error) {
-	
+
+// SetParentSize
+func (p *Positioner) SetParentSize(ParentWidth int32, ParentHeight int32) error {
+
 	return p.Context().SendRequest(p, 8, ParentWidth, ParentHeight)
 }
+
 // SetParentConfigure set parent configure this is a response to
-func (p *Positioner) SetParentConfigure(Serial uint32) (error) {
-	
+func (p *Positioner) SetParentConfigure(Serial uint32) error {
+
 	return p.Context().SendRequest(p, 9, Serial)
 }
+
 // Dispatch dispatches event for object Positioner
 func (p *Positioner) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // Surface desktop user interface surface base interface
 type Surface struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                       sync.RWMutex
 	privateSurfaceConfigures map[SurfaceConfigureHandler]struct{}
 }
+
 // initSurface initializes the Surface object's handler maps
 func (ret *Surface) initSurface() {
 	ret.privateSurfaceConfigures = make(map[SurfaceConfigureHandler]struct{})
 }
+
 // NewSurface is a constructor for the Surface object
 func NewSurface(ctx *Context) *Surface {
 	ret := new(Surface)
@@ -366,31 +390,37 @@ func NewSurface(ctx *Context) *Surface {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the xdg_surface
-func (p *Surface) Destroy() (error) {
-	
+func (p *Surface) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // GetToplevel assign the xdg_toplevel surface role
 func (p *Surface) GetToplevel() (*Toplevel, error) {
 	retId := NewToplevel(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId)
 }
+
 // GetPopup assign the xdg_popup surface role
 func (p *Surface) GetPopup(Parent *Surface, Positioner *Positioner) (*Popup, error) {
 	retId := NewPopup(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId, Parent, Positioner)
 }
+
 // SetWindowGeometry set the new window geometry
-func (p *Surface) SetWindowGeometry(X int32, Y int32, Width int32, Height int32) (error) {
-	
+func (p *Surface) SetWindowGeometry(X int32, Y int32, Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 3, X, Y, Width, Height)
 }
+
 // AckConfigure ack a configure event
-func (p *Surface) AckConfigure(Serial uint32) (error) {
-	
+func (p *Surface) AckConfigure(Serial uint32) error {
+
 	return p.Context().SendRequest(p, 4, Serial)
 }
+
 // Dispatch dispatches event for object Surface
 func (p *Surface) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -407,12 +437,13 @@ func (p *Surface) Dispatch(event *Event) {
 
 	}
 }
+
 // SurfaceConfigureEvent is the suggest a surface change
 type SurfaceConfigureEvent struct {
 	// Serial is the serial of the configure event
 	Serial uint32
-
 }
+
 // SurfaceConfigureHandler is the handler interface for SurfaceConfigureEvent
 type SurfaceConfigureHandler interface {
 	HandleSurfaceConfigure(SurfaceConfigureEvent)
@@ -432,17 +463,19 @@ func (p *Surface) RemoveConfigureHandler(h SurfaceConfigureHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateSurfaceConfigures, h)
+	delete(p.privateSurfaceConfigures, h)
 }
+
 // Toplevel toplevel surface
 type Toplevel struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateToplevelConfigures map[ToplevelConfigureHandler]struct{}
-	privateToplevelCloses map[ToplevelCloseHandler]struct{}
+	mu                              sync.RWMutex
+	privateToplevelConfigures       map[ToplevelConfigureHandler]struct{}
+	privateToplevelCloses           map[ToplevelCloseHandler]struct{}
 	privateToplevelConfigureBoundss map[ToplevelConfigureBoundsHandler]struct{}
-	privateToplevelWmCapabilitiess map[ToplevelWmCapabilitiesHandler]struct{}
+	privateToplevelWmCapabilitiess  map[ToplevelWmCapabilitiesHandler]struct{}
 }
+
 // initToplevel initializes the Toplevel object's handler maps
 func (ret *Toplevel) initToplevel() {
 	ret.privateToplevelConfigures = make(map[ToplevelConfigureHandler]struct{})
@@ -450,6 +483,7 @@ func (ret *Toplevel) initToplevel() {
 	ret.privateToplevelConfigureBoundss = make(map[ToplevelConfigureBoundsHandler]struct{})
 	ret.privateToplevelWmCapabilitiess = make(map[ToplevelWmCapabilitiesHandler]struct{})
 }
+
 // NewToplevel is a constructor for the Toplevel object
 func NewToplevel(ctx *Context) *Toplevel {
 	ret := new(Toplevel)
@@ -457,76 +491,91 @@ func NewToplevel(ctx *Context) *Toplevel {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the xdg_toplevel
-func (p *Toplevel) Destroy() (error) {
-	
+func (p *Toplevel) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // SetParent set the parent of this surface
-func (p *Toplevel) SetParent(Parent *Toplevel) (error) {
-	
+func (p *Toplevel) SetParent(Parent *Toplevel) error {
+
 	return p.Context().SendRequest(p, 1, Parent)
 }
+
 // SetTitle set surface title
-func (p *Toplevel) SetTitle(Title string) (error) {
-	
+func (p *Toplevel) SetTitle(Title string) error {
+
 	return p.Context().SendRequest(p, 2, Title)
 }
+
 // SetAppId set application ID
-func (p *Toplevel) SetAppId(AppId string) (error) {
-	
+func (p *Toplevel) SetAppId(AppId string) error {
+
 	return p.Context().SendRequest(p, 3, AppId)
 }
+
 // ShowWindowMenu show the window menu
-func (p *Toplevel) ShowWindowMenu(Seat *Seat, Serial uint32, X int32, Y int32) (error) {
-	
+func (p *Toplevel) ShowWindowMenu(Seat *Seat, Serial uint32, X int32, Y int32) error {
+
 	return p.Context().SendRequest(p, 4, Seat, Serial, X, Y)
 }
+
 // Move start an interactive move
-func (p *Toplevel) Move(Seat *Seat, Serial uint32) (error) {
-	
+func (p *Toplevel) Move(Seat *Seat, Serial uint32) error {
+
 	return p.Context().SendRequest(p, 5, Seat, Serial)
 }
+
 // Resize start an interactive resize
-func (p *Toplevel) Resize(Seat *Seat, Serial uint32, Edges uint32) (error) {
-	
+func (p *Toplevel) Resize(Seat *Seat, Serial uint32, Edges uint32) error {
+
 	return p.Context().SendRequest(p, 6, Seat, Serial, Edges)
 }
+
 // SetMaxSize set the maximum size
-func (p *Toplevel) SetMaxSize(Width int32, Height int32) (error) {
-	
+func (p *Toplevel) SetMaxSize(Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 7, Width, Height)
 }
+
 // SetMinSize set the minimum size
-func (p *Toplevel) SetMinSize(Width int32, Height int32) (error) {
-	
+func (p *Toplevel) SetMinSize(Width int32, Height int32) error {
+
 	return p.Context().SendRequest(p, 8, Width, Height)
 }
+
 // SetMaximized maximize the window
-func (p *Toplevel) SetMaximized() (error) {
-	
+func (p *Toplevel) SetMaximized() error {
+
 	return p.Context().SendRequest(p, 9)
 }
+
 // UnsetMaximized unmaximize the window
-func (p *Toplevel) UnsetMaximized() (error) {
-	
+func (p *Toplevel) UnsetMaximized() error {
+
 	return p.Context().SendRequest(p, 10)
 }
+
 // SetFullscreen set the window as fullscreen on an output
-func (p *Toplevel) SetFullscreen(Output *Output) (error) {
-	
+func (p *Toplevel) SetFullscreen(Output *Output) error {
+
 	return p.Context().SendRequest(p, 11, Output)
 }
+
 // UnsetFullscreen unset the window as fullscreen
-func (p *Toplevel) UnsetFullscreen() (error) {
-	
+func (p *Toplevel) UnsetFullscreen() error {
+
 	return p.Context().SendRequest(p, 12)
 }
+
 // SetMinimized set the window as minimized
-func (p *Toplevel) SetMinimized() (error) {
-	
+func (p *Toplevel) SetMinimized() error {
+
 	return p.Context().SendRequest(p, 13)
 }
+
 // Dispatch dispatches event for object Toplevel
 func (p *Toplevel) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -575,34 +624,35 @@ func (p *Toplevel) Dispatch(event *Event) {
 
 	}
 }
+
 // ToplevelConfigureEvent is the suggest a surface change
 type ToplevelConfigureEvent struct {
-	// Width is the 
+	// Width is the
 	Width int32
-	// Height is the 
+	// Height is the
 	Height int32
-	// States is the 
+	// States is the
 	States []int32
-
 }
+
 // ToplevelCloseEvent is the surface wants to be closed
 type ToplevelCloseEvent struct {
-
 }
+
 // ToplevelConfigureBoundsEvent is the recommended window geometry bounds
 type ToplevelConfigureBoundsEvent struct {
-	// Width is the 
+	// Width is the
 	Width int32
-	// Height is the 
+	// Height is the
 	Height int32
-
 }
+
 // ToplevelWmCapabilitiesEvent is the compositor capabilities
 type ToplevelWmCapabilitiesEvent struct {
 	// Capabilities is the array of 32-bit capabilities
 	Capabilities []int32
-
 }
+
 // ToplevelConfigureHandler is the handler interface for ToplevelConfigureEvent
 type ToplevelConfigureHandler interface {
 	HandleToplevelConfigure(ToplevelConfigureEvent)
@@ -622,8 +672,9 @@ func (p *Toplevel) RemoveConfigureHandler(h ToplevelConfigureHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateToplevelConfigures, h)
+	delete(p.privateToplevelConfigures, h)
 }
+
 // ToplevelCloseHandler is the handler interface for ToplevelCloseEvent
 type ToplevelCloseHandler interface {
 	HandleToplevelClose(ToplevelCloseEvent)
@@ -643,8 +694,9 @@ func (p *Toplevel) RemoveCloseHandler(h ToplevelCloseHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateToplevelCloses, h)
+	delete(p.privateToplevelCloses, h)
 }
+
 // ToplevelConfigureBoundsHandler is the handler interface for ToplevelConfigureBoundsEvent
 type ToplevelConfigureBoundsHandler interface {
 	HandleToplevelConfigureBounds(ToplevelConfigureBoundsEvent)
@@ -664,8 +716,9 @@ func (p *Toplevel) RemoveConfigureBoundsHandler(h ToplevelConfigureBoundsHandler
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateToplevelConfigureBoundss, h)
+	delete(p.privateToplevelConfigureBoundss, h)
 }
+
 // ToplevelWmCapabilitiesHandler is the handler interface for ToplevelWmCapabilitiesEvent
 type ToplevelWmCapabilitiesHandler interface {
 	HandleToplevelWmCapabilities(ToplevelWmCapabilitiesEvent)
@@ -685,22 +738,25 @@ func (p *Toplevel) RemoveWmCapabilitiesHandler(h ToplevelWmCapabilitiesHandler) 
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateToplevelWmCapabilitiess, h)
+	delete(p.privateToplevelWmCapabilitiess, h)
 }
+
 // Popup short-lived, popup surfaces for menus
 type Popup struct {
 	BaseProxy
-	mu sync.RWMutex
-	privatePopupConfigures map[PopupConfigureHandler]struct{}
-	privatePopupPopupDones map[PopupPopupDoneHandler]struct{}
+	mu                        sync.RWMutex
+	privatePopupConfigures    map[PopupConfigureHandler]struct{}
+	privatePopupPopupDones    map[PopupPopupDoneHandler]struct{}
 	privatePopupRepositioneds map[PopupRepositionedHandler]struct{}
 }
+
 // initPopup initializes the Popup object's handler maps
 func (ret *Popup) initPopup() {
 	ret.privatePopupConfigures = make(map[PopupConfigureHandler]struct{})
 	ret.privatePopupPopupDones = make(map[PopupPopupDoneHandler]struct{})
 	ret.privatePopupRepositioneds = make(map[PopupRepositionedHandler]struct{})
 }
+
 // NewPopup is a constructor for the Popup object
 func NewPopup(ctx *Context) *Popup {
 	ret := new(Popup)
@@ -708,21 +764,25 @@ func NewPopup(ctx *Context) *Popup {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy remove xdg_popup interface
-func (p *Popup) Destroy() (error) {
-	
+func (p *Popup) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Grab make the popup take an explicit grab
-func (p *Popup) Grab(Seat *Seat, Serial uint32) (error) {
-	
+func (p *Popup) Grab(Seat *Seat, Serial uint32) error {
+
 	return p.Context().SendRequest(p, 1, Seat, Serial)
 }
+
 // Reposition recalculate the popup's location
-func (p *Popup) Reposition(Positioner *Positioner, Token uint32) (error) {
-	
+func (p *Popup) Reposition(Positioner *Positioner, Token uint32) error {
+
 	return p.Context().SendRequest(p, 2, Positioner, Token)
 }
+
 // Dispatch dispatches event for object Popup
 func (p *Popup) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -761,6 +821,7 @@ func (p *Popup) Dispatch(event *Event) {
 
 	}
 }
+
 // PopupConfigureEvent is the configure the popup surface
 type PopupConfigureEvent struct {
 	// X is the x position relative to parent surface window geometry
@@ -771,18 +832,18 @@ type PopupConfigureEvent struct {
 	Width int32
 	// Height is the window geometry height
 	Height int32
-
 }
+
 // PopupPopupDoneEvent is the popup interaction is done
 type PopupPopupDoneEvent struct {
-
 }
+
 // PopupRepositionedEvent is the signal the completion of a repositioned request
 type PopupRepositionedEvent struct {
 	// Token is the reposition request token
 	Token uint32
-
 }
+
 // PopupConfigureHandler is the handler interface for PopupConfigureEvent
 type PopupConfigureHandler interface {
 	HandlePopupConfigure(PopupConfigureEvent)
@@ -802,8 +863,9 @@ func (p *Popup) RemoveConfigureHandler(h PopupConfigureHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePopupConfigures, h)
+	delete(p.privatePopupConfigures, h)
 }
+
 // PopupPopupDoneHandler is the handler interface for PopupPopupDoneEvent
 type PopupPopupDoneHandler interface {
 	HandlePopupPopupDone(PopupPopupDoneEvent)
@@ -823,8 +885,9 @@ func (p *Popup) RemovePopupDoneHandler(h PopupPopupDoneHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePopupPopupDones, h)
+	delete(p.privatePopupPopupDones, h)
 }
+
 // PopupRepositionedHandler is the handler interface for PopupRepositionedEvent
 type PopupRepositionedHandler interface {
 	HandlePopupRepositioned(PopupRepositionedEvent)
@@ -844,5 +907,5 @@ func (p *Popup) RemoveRepositionedHandler(h PopupRepositionedHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privatePopupRepositioneds, h)
+	delete(p.privatePopupRepositioneds, h)
 }

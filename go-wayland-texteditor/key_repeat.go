@@ -1,7 +1,9 @@
 package main
 
-import "time"
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 var RepeatedFunc KeyReloader
 var RepeatedKey string

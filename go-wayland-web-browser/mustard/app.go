@@ -34,5 +34,3 @@ func (app *App) DestroyWindow(window *Window) {
 	window.window.Destroy()
 	window.window = nil
 }
-
-

@@ -21,14 +21,18 @@
 // Go Wayland Smoke demo
 package main
 
-import "time"
-import "math/rand"
+import (
+	"math/rand"
+	"time"
 
-import cairo "github.com/neurlang/wayland/cairoshim"
-import "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/window"
-import xkb "github.com/neurlang/wayland/xkbcommon"
-import "fmt"
+	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/wayland/window"
+	"github.com/neurlang/wayland/wl"
+
+	"fmt"
+
+	xkb "github.com/neurlang/wayland/xkbcommon"
+)
 
 type smoke struct {
 	display     *window.Display

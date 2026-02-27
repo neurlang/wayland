@@ -3,10 +3,11 @@ package wlcursor
 
 import (
 	"fmt"
-	sys "github.com/neurlang/wayland/os"
-	"github.com/neurlang/wayland/wl"
 	"os"
 	"strconv"
+
+	sys "github.com/neurlang/wayland/os"
+	"github.com/neurlang/wayland/wl"
 
 	"github.com/neurlang/wayland/wlcursor/xcursor"
 )

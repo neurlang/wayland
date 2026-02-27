@@ -6,8 +6,8 @@ package xdg
 
 import (
 	"sync"
-
 )
+
 // ZxdgToplevelDecorationV1ErrorUnconfiguredBuffer means xdg_toplevel has a buffer attached before configure
 const ZxdgToplevelDecorationV1ErrorUnconfiguredBuffer = 0
 
@@ -30,38 +30,45 @@ const ZxdgToplevelDecorationV1ModeServerSide = 2
 type ZxdgDecorationManagerV1 struct {
 	BaseProxy
 }
+
 // NewZxdgDecorationManagerV1 is a constructor for the ZxdgDecorationManagerV1 object
 func NewZxdgDecorationManagerV1(ctx *Context) *ZxdgDecorationManagerV1 {
 	ret := new(ZxdgDecorationManagerV1)
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the decoration manager object
-func (p *ZxdgDecorationManagerV1) Destroy() (error) {
-	
+func (p *ZxdgDecorationManagerV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // GetToplevelDecoration create a new toplevel decoration object
 func (p *ZxdgDecorationManagerV1) GetToplevelDecoration(Toplevel *Toplevel) (*ZxdgToplevelDecorationV1, error) {
 	retId := NewZxdgToplevelDecorationV1(p.Context())
 	return retId, p.Context().SendRequest(p, 1, retId, Toplevel)
 }
+
 // Dispatch dispatches event for object ZxdgDecorationManagerV1
 func (p *ZxdgDecorationManagerV1) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
+
 // ZxdgToplevelDecorationV1 decoration object for a toplevel surface
 type ZxdgToplevelDecorationV1 struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                                        sync.RWMutex
 	privateZxdgToplevelDecorationV1Configures map[ZxdgToplevelDecorationV1ConfigureHandler]struct{}
 }
+
 // initZxdgToplevelDecorationV1 initializes the ZxdgToplevelDecorationV1 object's handler maps
 func (ret *ZxdgToplevelDecorationV1) initZxdgToplevelDecorationV1() {
 	ret.privateZxdgToplevelDecorationV1Configures = make(map[ZxdgToplevelDecorationV1ConfigureHandler]struct{})
 }
+
 // NewZxdgToplevelDecorationV1 is a constructor for the ZxdgToplevelDecorationV1 object
 func NewZxdgToplevelDecorationV1(ctx *Context) *ZxdgToplevelDecorationV1 {
 	ret := new(ZxdgToplevelDecorationV1)
@@ -69,21 +76,25 @@ func NewZxdgToplevelDecorationV1(ctx *Context) *ZxdgToplevelDecorationV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the decoration object
-func (p *ZxdgToplevelDecorationV1) Destroy() (error) {
-	
+func (p *ZxdgToplevelDecorationV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // SetMode set the decoration mode
-func (p *ZxdgToplevelDecorationV1) SetMode(Mode uint32) (error) {
-	
+func (p *ZxdgToplevelDecorationV1) SetMode(Mode uint32) error {
+
 	return p.Context().SendRequest(p, 1, Mode)
 }
+
 // UnsetMode unset the decoration mode
-func (p *ZxdgToplevelDecorationV1) UnsetMode() (error) {
-	
+func (p *ZxdgToplevelDecorationV1) UnsetMode() error {
+
 	return p.Context().SendRequest(p, 2)
 }
+
 // Dispatch dispatches event for object ZxdgToplevelDecorationV1
 func (p *ZxdgToplevelDecorationV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -100,12 +111,13 @@ func (p *ZxdgToplevelDecorationV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZxdgToplevelDecorationV1ConfigureEvent is the notify a decoration mode change
 type ZxdgToplevelDecorationV1ConfigureEvent struct {
 	// Mode is the the decoration mode
 	Mode uint32
-
 }
+
 // ZxdgToplevelDecorationV1ConfigureHandler is the handler interface for ZxdgToplevelDecorationV1ConfigureEvent
 type ZxdgToplevelDecorationV1ConfigureHandler interface {
 	HandleZxdgToplevelDecorationV1Configure(ZxdgToplevelDecorationV1ConfigureEvent)
@@ -125,5 +137,5 @@ func (p *ZxdgToplevelDecorationV1) RemoveConfigureHandler(h ZxdgToplevelDecorati
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZxdgToplevelDecorationV1Configures, h)
+	delete(p.privateZxdgToplevelDecorationV1Configures, h)
 }

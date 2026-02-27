@@ -1,7 +1,9 @@
 package main
 
-import "strings"
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type GoFile struct {
 	Structs   []*GoStruct
@@ -120,7 +122,7 @@ type GoConstructor struct{}
 
 func (c *GoConstructor) Serialize(s *GoStruct) string {
 	var b strings.Builder
-	
+
 	// Generate init method if there are handlers
 	if len(s.Handlers) > 0 {
 		b.WriteString(`// init` + s.Name + ` initializes the ` + s.Name + ` object's handler maps
@@ -131,7 +133,7 @@ func (ret *` + s.Name + `) init` + s.Name + `() {
 		}
 		b.WriteString("}\n")
 	}
-	
+
 	b.WriteString(`// New` + s.Name + ` is a constructor for the ` + s.Name + ` object
 func New` + s.Name + `(ctx *Context) *` + s.Name + ` {
 	ret := new(` + s.Name + `)

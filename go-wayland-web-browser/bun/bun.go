@@ -48,8 +48,6 @@ func getNodeChildren(NodeDOM *hotdog.NodeDOM) []*hotdog.NodeDOM {
 	return NodeDOM.Children
 }
 
-
-
 func layoutDOM(ctx *gg.Context, node *hotdog.NodeDOM, childIdx int) {
 	nodeChildren := getNodeChildren(node)
 

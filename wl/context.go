@@ -34,7 +34,7 @@ func (ctx *Context) RegisterMapped(proxy Proxy, num uint32) {
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
-	
+
 	// avoid colliding with server side mapped proxy id?
 	startId := ctx.currentId
 	for {

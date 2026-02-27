@@ -1,8 +1,9 @@
 package ketchup
 
 import (
-	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	"strings"
+
+	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 
 	"golang.org/x/net/html"
 )

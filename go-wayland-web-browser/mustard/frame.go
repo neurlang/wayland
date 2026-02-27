@@ -1,8 +1,10 @@
 package mustard
 
-import window "github.com/neurlang/wayland/windowtrace"
-import wl "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/external/swizzle"
+import (
+	"github.com/neurlang/wayland/external/swizzle"
+	window "github.com/neurlang/wayland/windowtrace"
+	wl "github.com/neurlang/wayland/wl"
+)
 
 // CreateFrame - Creates and returns a new Frame
 func CreateFrame(orientation FrameOrientation) *Frame {

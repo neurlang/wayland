@@ -17,7 +17,7 @@ import (
 
 // Decoration constants
 const (
-	ShadowMargin   = 8  // graspable part of the border
+	ShadowMargin   = 8 // graspable part of the border
 	TitleHeight    = 24
 	ButtonWidth    = 32
 	SymDim         = 14
@@ -26,22 +26,22 @@ const (
 
 // Colors (RGBA)
 var (
-	ColTitle          = color.RGBA{0xEB, 0xEB, 0xEB, 0xFF} // Light gray titlebar
-	ColTitleInact     = color.RGBA{0xF6, 0xF5, 0xF4, 0xFF} // Very light gray when inactive
-	ColButtonMinHover = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
-	ColButtonMaxHover = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColTitle            = color.RGBA{0xEB, 0xEB, 0xEB, 0xFF} // Light gray titlebar
+	ColTitleInact       = color.RGBA{0xF6, 0xF5, 0xF4, 0xFF} // Very light gray when inactive
+	ColButtonMinHover   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColButtonMaxHover   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
 	ColButtonCloseHover = color.RGBA{0xE0, 0x1B, 0x24, 0xFF} // Red on hover (GNOME style)
-	ColSym            = color.RGBA{0x2E, 0x34, 0x36, 0xFF} // Dark gray/black for symbols
-	ColSymClose       = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
-	ColSymInact       = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
+	ColSym              = color.RGBA{0x2E, 0x34, 0x36, 0xFF} // Dark gray/black for symbols
+	ColSymClose         = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
+	ColSymInact         = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
 )
 
 // Font paths to try for titlebar text
 var decorationFonts = []string{
-	"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",      // fedora
-	"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",        // ubuntu
+	"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf", // fedora
+	"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",   // ubuntu
 	"/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf",    // fedora
+	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf", // fedora
 	"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
 	"/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
 }
@@ -83,16 +83,16 @@ type decorationBuffer struct {
 
 // WindowDecoration manages client-side decorations
 type WindowDecoration struct {
-	window       *Window
-	shadowSurf   *DecorationSurface
-	titleSurf    *DecorationSurface
-	shadowBlur   *image.RGBA
-	active       bool
-	hoverButton  componentType
-	pointerX     float32
-	pointerY     float32
-	pointerSerial uint32
-	isDragging   bool
+	window              *Window
+	shadowSurf          *DecorationSurface
+	titleSurf           *DecorationSurface
+	shadowBlur          *image.RGBA
+	active              bool
+	hoverButton         componentType
+	pointerX            float32
+	pointerY            float32
+	pointerSerial       uint32
+	isDragging          bool
 	pendingShadowRedraw bool
 	pendingTitleRedraw  bool
 }
@@ -103,7 +103,7 @@ func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	if d.shadowSurf != nil && d.shadowSurf.frameCb == ev.C {
 		wlclient.CallbackDestroy(ev.C)
 		d.shadowSurf.frameCb = nil
-		
+
 		// If another redraw is pending, schedule it
 		if d.pendingShadowRedraw {
 			d.pendingShadowRedraw = false
@@ -112,7 +112,7 @@ func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 	} else if d.titleSurf != nil && d.titleSurf.frameCb == ev.C {
 		wlclient.CallbackDestroy(ev.C)
 		d.titleSurf.frameCb = nil
-		
+
 		// If another redraw is pending, schedule it
 		if d.pendingTitleRedraw {
 			d.pendingTitleRedraw = false
@@ -258,7 +258,7 @@ func (d *WindowDecoration) createDecorationSurface(x, y, width, height int32) (*
 
 	_ = wlSubsurf.SetPosition(x, y)
 	_ = wlSubsurf.PlaceBelow(parent)
-	
+
 	// Register surface in the surface2window map for input handling
 	display.surface2window[wlSurf] = d.window
 
@@ -278,13 +278,13 @@ func (d *WindowDecoration) drawShadow() {
 	if d.shadowSurf == nil {
 		return
 	}
-	
+
 	// If we're waiting for a frame callback, mark as pending
 	if d.shadowSurf.frameCb != nil {
 		d.pendingShadowRedraw = true
 		return
 	}
-	
+
 	d.renderShadow()
 	d.commitShadow()
 }
@@ -297,10 +297,10 @@ func (d *WindowDecoration) renderShadow() {
 	surf := d.shadowSurf
 
 	// Only recreate buffer if size changed
-	needsNewBuffer := surf.buffer == nil || 
-		surf.buffer.width != surf.width || 
+	needsNewBuffer := surf.buffer == nil ||
+		surf.buffer.width != surf.width ||
 		surf.buffer.height != surf.height
-	
+
 	if needsNewBuffer {
 		if surf.buffer != nil {
 			d.freeBuffer(surf.buffer)
@@ -322,26 +322,26 @@ func (d *WindowDecoration) renderShadow() {
 	shadowSize := float64(ShadowMargin)
 	w := float64(surf.width)
 	h := float64(surf.height)
-	
+
 	// Draw shadow on all four sides
 	for i := 0; i < int(shadowSize); i++ {
 		fi := float64(i)
-		alpha := uint8(255 * (fi/shadowSize) * 0.5) // Fade from 0% to 50%, darkest near window
+		alpha := uint8(255 * (fi / shadowSize) * 0.5) // Fade from 0% to 50%, darkest near window
 		shadowColor := color.RGBA{0, 0, 0, alpha}
 		dc.SetColor(shadowColor)
-		
+
 		// Top shadow (excluding left and right corners at this level)
 		dc.DrawRectangle(fi+1, fi, w-2*fi-2, 1)
 		dc.Fill()
-		
+
 		// Bottom shadow (excluding left and right corners at this level)
 		dc.DrawRectangle(fi+1, h-fi-1, w-2*fi-2, 1)
 		dc.Fill()
-		
+
 		// Left shadow (full height)
 		dc.DrawRectangle(fi, fi, 1, h-2*fi)
 		dc.Fill()
-		
+
 		// Right shadow (full height)
 		dc.DrawRectangle(w-fi-1, fi, 1, h-2*fi)
 		dc.Fill()
@@ -362,14 +362,14 @@ func (d *WindowDecoration) commitShadow() {
 		return
 	}
 	surf := d.shadowSurf
-	
+
 	// Request frame callback before commit
 	cb, err := surf.wlSurface.Frame()
 	if err == nil {
 		surf.frameCb = cb
 		cb.AddDoneHandler(d)
 	}
-	
+
 	_ = surf.wlSurface.Attach(surf.buffer.wlBuffer, 0, 0)
 	_ = surf.wlSurface.Damage(0, 0, surf.width, surf.height)
 	_ = surf.wlSurface.Commit()
@@ -381,13 +381,13 @@ func (d *WindowDecoration) drawTitleBar() {
 	if d.titleSurf == nil {
 		return
 	}
-	
+
 	// If we're waiting for a frame callback, mark as pending
 	if d.titleSurf.frameCb != nil {
 		d.pendingTitleRedraw = true
 		return
 	}
-	
+
 	d.renderTitleBar()
 	d.commitTitleBar()
 }
@@ -400,10 +400,10 @@ func (d *WindowDecoration) renderTitleBar() {
 	surf := d.titleSurf
 
 	// Only recreate buffer if size changed
-	needsNewBuffer := surf.buffer == nil || 
-		surf.buffer.width != surf.width || 
+	needsNewBuffer := surf.buffer == nil ||
+		surf.buffer.width != surf.width ||
 		surf.buffer.height != surf.height
-	
+
 	if needsNewBuffer {
 		if surf.buffer != nil {
 			d.freeBuffer(surf.buffer)
@@ -429,7 +429,7 @@ func (d *WindowDecoration) renderTitleBar() {
 	d.drawButton(dc, ComponentButtonMin, surf.width-3*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonMax, surf.width-2*ButtonWidth, 0)
 	d.drawButton(dc, ComponentButtonClose, surf.width-ButtonWidth, 0)
-	
+
 	// Draw title text last so it's on top
 	d.drawTitleText(dc, int(surf.width))
 }
@@ -440,14 +440,14 @@ func (d *WindowDecoration) commitTitleBar() {
 		return
 	}
 	surf := d.titleSurf
-	
+
 	// Request frame callback before commit
 	cb, err := surf.wlSurface.Frame()
 	if err == nil {
 		surf.frameCb = cb
 		cb.AddDoneHandler(d)
 	}
-	
+
 	_ = surf.wlSurface.Attach(surf.buffer.wlBuffer, 0, 0)
 	_ = surf.wlSurface.Damage(0, 0, surf.width, surf.height)
 	_ = surf.wlSurface.Commit()
@@ -468,7 +468,7 @@ func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 			break
 		}
 	}
-	
+
 	if !fontLoaded {
 		// Can't load any font
 		return
@@ -479,11 +479,11 @@ func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 	if availableWidth < 50 {
 		return
 	}
-	
+
 	// Truncate title if too long
 	title := d.window.title
 	textWidth, _ := dc.MeasureString(title)
-	
+
 	for textWidth > availableWidth && len(title) > 0 {
 		title = title[:len(title)-1]
 		textWidth, _ = dc.MeasureString(title + "...")
@@ -623,7 +623,7 @@ func (d *WindowDecoration) UpdateSize() {
 	if d.window == nil || d.window.mainSurface == nil {
 		return
 	}
-	
+
 	var contentWidth, contentHeight int32
 	if d.window.mainSurface.allocation.Width > 0 {
 		contentWidth = d.window.mainSurface.allocation.Width
@@ -632,16 +632,16 @@ func (d *WindowDecoration) UpdateSize() {
 		contentWidth = d.window.pendingAllocation.Width
 		contentHeight = d.window.pendingAllocation.Height
 	}
-	
+
 	if contentWidth <= 0 || contentHeight <= 0 {
 		return
 	}
-	
+
 	// Update shadow surface size
 	if d.shadowSurf != nil {
 		newWidth := contentWidth + 2*ShadowMargin
 		newHeight := contentHeight + 2*ShadowMargin + TitleHeight
-		
+
 		// Only update if size actually changed
 		if d.shadowSurf.width != newWidth || d.shadowSurf.height != newHeight {
 			d.shadowSurf.width = newWidth
@@ -650,11 +650,11 @@ func (d *WindowDecoration) UpdateSize() {
 			d.drawShadow()
 		}
 	}
-	
+
 	// Update titlebar surface size
 	if d.titleSurf != nil {
 		newWidth := contentWidth
-		
+
 		// Only update if size actually changed
 		if d.titleSurf.width != newWidth {
 			d.titleSurf.width = newWidth
@@ -670,12 +670,12 @@ func (d *WindowDecoration) UpdateSizeForResize(contentWidth, contentHeight int32
 	if contentWidth <= 0 || contentHeight <= 0 {
 		return
 	}
-	
+
 	// Update shadow surface size
 	if d.shadowSurf != nil {
 		newWidth := contentWidth + 2*ShadowMargin
 		newHeight := contentHeight + 2*ShadowMargin + TitleHeight
-		
+
 		// Only update if size actually changed
 		if d.shadowSurf.width != newWidth || d.shadowSurf.height != newHeight {
 			d.shadowSurf.width = newWidth
@@ -685,11 +685,11 @@ func (d *WindowDecoration) UpdateSizeForResize(contentWidth, contentHeight int32
 			d.commitShadow()
 		}
 	}
-	
+
 	// Update titlebar surface size
 	if d.titleSurf != nil {
 		newWidth := contentWidth
-		
+
 		// Only update if size actually changed
 		if d.titleSurf.width != newWidth {
 			d.titleSurf.width = newWidth
@@ -984,7 +984,7 @@ func (d *WindowDecoration) HandlePointerMotion(x, y float32) {
 // HandlePointerButton handles pointer button clicks on the titlebar
 func (d *WindowDecoration) HandlePointerButton(serial uint32, button uint32, state wl.PointerButtonState) {
 	d.pointerSerial = serial
-	
+
 	if state == wl.PointerButtonStatePressed && button == 272 { // Left click (BTN_LEFT)
 		switch d.hoverButton {
 		case ComponentButtonClose:
@@ -1004,22 +1004,22 @@ func (d *WindowDecoration) updateHoverButton() {
 	if d.titleSurf == nil {
 		return
 	}
-	
+
 	// Pointer coordinates are relative to the titlebar surface
 	x := d.pointerX
 	y := d.pointerY
-	
+
 	// Check if pointer is within titlebar bounds
 	if y < 0 || y >= float32(TitleHeight) || x < 0 || x >= float32(d.titleSurf.width) {
 		d.SetHoverButton(ComponentNone)
 		return
 	}
-	
+
 	// Check buttons (from right to left)
 	closeX := float32(d.titleSurf.width - ButtonWidth)
 	maxX := float32(d.titleSurf.width - 2*ButtonWidth)
 	minX := float32(d.titleSurf.width - 3*ButtonWidth)
-	
+
 	if x >= closeX {
 		d.SetHoverButton(ComponentButtonClose)
 	} else if x >= maxX {
@@ -1036,7 +1036,7 @@ func (d *WindowDecoration) handleDragStart(serial uint32) {
 	if d.window.xdgToplevel == nil {
 		return
 	}
-	
+
 	// Get the seat from the display's input list
 	if len(d.window.Display.inputList) == 0 {
 		return
@@ -1045,7 +1045,7 @@ func (d *WindowDecoration) handleDragStart(serial uint32) {
 	if input.seat == nil {
 		return
 	}
-	
+
 	// Start interactive move
 	_ = d.window.xdgToplevel.Move(input.seat, serial)
 }
@@ -1065,7 +1065,7 @@ func (d *WindowDecoration) handleMaximize() {
 	if d.window.xdgToplevel == nil {
 		return
 	}
-	
+
 	if d.window.maximized {
 		_ = d.window.xdgToplevel.UnsetMaximized()
 	} else {
@@ -1078,6 +1078,6 @@ func (d *WindowDecoration) handleMinimize() {
 	if d.window.xdgToplevel == nil {
 		return
 	}
-	
+
 	_ = d.window.xdgToplevel.SetMinimized()
 }

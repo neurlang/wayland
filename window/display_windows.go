@@ -1,8 +1,10 @@
 package window
 
-import "github.com/neurlang/winc"
-import "github.com/neurlang/wayland/wl"
-import "github.com/neurlang/wayland/xdg"
+import (
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/xdg"
+	"github.com/neurlang/winc"
+)
 
 type Display struct {
 	count int

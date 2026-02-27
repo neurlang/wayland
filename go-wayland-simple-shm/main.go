@@ -21,12 +21,16 @@
 // Go Wayland SimpleShm demo
 package main
 
-import "github.com/neurlang/wayland/wl"
-import zxdg "github.com/neurlang/wayland/xdg"
-import "github.com/neurlang/wayland/wlclient"
-import "log"
-import "github.com/neurlang/wayland/os"
-import os2 "os"
+import (
+	"log"
+
+	"github.com/neurlang/wayland/os"
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
+	zxdg "github.com/neurlang/wayland/xdg"
+
+	os2 "os"
+)
 
 type display struct {
 	display    *wl.Display

@@ -6,8 +6,8 @@ package linux
 
 import (
 	"sync"
-
 )
+
 // ZwpBufferParamsV1ErrorAlreadyUsed means the dmabuf_batch object has already been used to create a wl_buffer
 const ZwpBufferParamsV1ErrorAlreadyUsed = 0
 
@@ -47,15 +47,17 @@ const ZwpDmabufFeedbackV1TrancheFlagsScanout = 1
 // ZwpDmabufV1 factory for creating dmabuf-based wl_buffers
 type ZwpDmabufV1 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpDmabufV1Formats map[ZwpDmabufV1FormatHandler]struct{}
+	mu                          sync.RWMutex
+	privateZwpDmabufV1Formats   map[ZwpDmabufV1FormatHandler]struct{}
 	privateZwpDmabufV1Modifiers map[ZwpDmabufV1ModifierHandler]struct{}
 }
+
 // initZwpDmabufV1 initializes the ZwpDmabufV1 object's handler maps
 func (ret *ZwpDmabufV1) initZwpDmabufV1() {
 	ret.privateZwpDmabufV1Formats = make(map[ZwpDmabufV1FormatHandler]struct{})
 	ret.privateZwpDmabufV1Modifiers = make(map[ZwpDmabufV1ModifierHandler]struct{})
 }
+
 // NewZwpDmabufV1 is a constructor for the ZwpDmabufV1 object
 func NewZwpDmabufV1(ctx *Context) *ZwpDmabufV1 {
 	ret := new(ZwpDmabufV1)
@@ -63,26 +65,31 @@ func NewZwpDmabufV1(ctx *Context) *ZwpDmabufV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy unbind the factory
-func (p *ZwpDmabufV1) Destroy() (error) {
-	
+func (p *ZwpDmabufV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // CreateParams create a temporary object for buffer parameters
 func (p *ZwpDmabufV1) CreateParams() (*ZwpBufferParamsV1, error) {
 	retParamsId := NewZwpBufferParamsV1(p.Context())
 	return retParamsId, p.Context().SendRequest(p, 1, retParamsId)
 }
+
 // GetDefaultFeedback get default feedback
 func (p *ZwpDmabufV1) GetDefaultFeedback() (*ZwpDmabufFeedbackV1, error) {
 	retId := NewZwpDmabufFeedbackV1(p.Context())
 	return retId, p.Context().SendRequest(p, 2, retId)
 }
+
 // GetSurfaceFeedback get feedback for a surface
 func (p *ZwpDmabufV1) GetSurfaceFeedback(Surface *Surface) (*ZwpDmabufFeedbackV1, error) {
 	retId := NewZwpDmabufFeedbackV1(p.Context())
 	return retId, p.Context().SendRequest(p, 3, retId, Surface)
 }
+
 // Dispatch dispatches event for object ZwpDmabufV1
 func (p *ZwpDmabufV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -111,12 +118,13 @@ func (p *ZwpDmabufV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpDmabufV1FormatEvent is the supported buffer format
 type ZwpDmabufV1FormatEvent struct {
 	// Format is the DRM_FORMAT code
 	Format uint32
-
 }
+
 // ZwpDmabufV1ModifierEvent is the supported buffer format modifier
 type ZwpDmabufV1ModifierEvent struct {
 	// Format is the DRM_FORMAT code
@@ -125,8 +133,8 @@ type ZwpDmabufV1ModifierEvent struct {
 	ModifierHi uint32
 	// ModifierLo is the low 32 bits of layout modifier
 	ModifierLo uint32
-
 }
+
 // ZwpDmabufV1FormatHandler is the handler interface for ZwpDmabufV1FormatEvent
 type ZwpDmabufV1FormatHandler interface {
 	HandleZwpDmabufV1Format(ZwpDmabufV1FormatEvent)
@@ -146,8 +154,9 @@ func (p *ZwpDmabufV1) RemoveFormatHandler(h ZwpDmabufV1FormatHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufV1Formats, h)
+	delete(p.privateZwpDmabufV1Formats, h)
 }
+
 // ZwpDmabufV1ModifierHandler is the handler interface for ZwpDmabufV1ModifierEvent
 type ZwpDmabufV1ModifierHandler interface {
 	HandleZwpDmabufV1Modifier(ZwpDmabufV1ModifierEvent)
@@ -167,20 +176,23 @@ func (p *ZwpDmabufV1) RemoveModifierHandler(h ZwpDmabufV1ModifierHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufV1Modifiers, h)
+	delete(p.privateZwpDmabufV1Modifiers, h)
 }
+
 // ZwpBufferParamsV1 parameters for creating a dmabuf-based wl_buffer
 type ZwpBufferParamsV1 struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                               sync.RWMutex
 	privateZwpBufferParamsV1Createds map[ZwpBufferParamsV1CreatedHandler]struct{}
-	privateZwpBufferParamsV1Faileds map[ZwpBufferParamsV1FailedHandler]struct{}
+	privateZwpBufferParamsV1Faileds  map[ZwpBufferParamsV1FailedHandler]struct{}
 }
+
 // initZwpBufferParamsV1 initializes the ZwpBufferParamsV1 object's handler maps
 func (ret *ZwpBufferParamsV1) initZwpBufferParamsV1() {
 	ret.privateZwpBufferParamsV1Createds = make(map[ZwpBufferParamsV1CreatedHandler]struct{})
 	ret.privateZwpBufferParamsV1Faileds = make(map[ZwpBufferParamsV1FailedHandler]struct{})
 }
+
 // NewZwpBufferParamsV1 is a constructor for the ZwpBufferParamsV1 object
 func NewZwpBufferParamsV1(ctx *Context) *ZwpBufferParamsV1 {
 	ret := new(ZwpBufferParamsV1)
@@ -188,26 +200,31 @@ func NewZwpBufferParamsV1(ctx *Context) *ZwpBufferParamsV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy delete this object, used or not
-func (p *ZwpBufferParamsV1) Destroy() (error) {
-	
+func (p *ZwpBufferParamsV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Add add a dmabuf to the temporary set
-func (p *ZwpBufferParamsV1) Add(Fd uintptr, PlaneIdx uint32, Offset uint32, Stride uint32, ModifierHi uint32, ModifierLo uint32) (error) {
-	
+func (p *ZwpBufferParamsV1) Add(Fd uintptr, PlaneIdx uint32, Offset uint32, Stride uint32, ModifierHi uint32, ModifierLo uint32) error {
+
 	return p.Context().SendRequest(p, 1, Fd, PlaneIdx, Offset, Stride, ModifierHi, ModifierLo)
 }
+
 // Create create a wl_buffer from the given dmabufs
-func (p *ZwpBufferParamsV1) Create(Width int32, Height int32, Format uint32, Flags uint32) (error) {
-	
+func (p *ZwpBufferParamsV1) Create(Width int32, Height int32, Format uint32, Flags uint32) error {
+
 	return p.Context().SendRequest(p, 2, Width, Height, Format, Flags)
 }
+
 // CreateImmed immediately create a wl_buffer from the given dmabufs
 func (p *ZwpBufferParamsV1) CreateImmed(Width int32, Height int32, Format uint32, Flags uint32) (*Buffer, error) {
 	retBufferId := NewBuffer(p.Context())
 	return retBufferId, p.Context().SendRequest(p, 3, retBufferId, Width, Height, Format, Flags)
 }
+
 // Dispatch dispatches event for object ZwpBufferParamsV1
 func (p *ZwpBufferParamsV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -233,16 +250,17 @@ func (p *ZwpBufferParamsV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpBufferParamsV1CreatedEvent is the buffer creation succeeded
 type ZwpBufferParamsV1CreatedEvent struct {
 	// Buffer is the the newly created wl_buffer
 	Buffer *Buffer
-
 }
+
 // ZwpBufferParamsV1FailedEvent is the buffer creation failed
 type ZwpBufferParamsV1FailedEvent struct {
-
 }
+
 // ZwpBufferParamsV1CreatedHandler is the handler interface for ZwpBufferParamsV1CreatedEvent
 type ZwpBufferParamsV1CreatedHandler interface {
 	HandleZwpBufferParamsV1Created(ZwpBufferParamsV1CreatedEvent)
@@ -262,8 +280,9 @@ func (p *ZwpBufferParamsV1) RemoveCreatedHandler(h ZwpBufferParamsV1CreatedHandl
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpBufferParamsV1Createds, h)
+	delete(p.privateZwpBufferParamsV1Createds, h)
 }
+
 // ZwpBufferParamsV1FailedHandler is the handler interface for ZwpBufferParamsV1FailedEvent
 type ZwpBufferParamsV1FailedHandler interface {
 	HandleZwpBufferParamsV1Failed(ZwpBufferParamsV1FailedEvent)
@@ -283,20 +302,22 @@ func (p *ZwpBufferParamsV1) RemoveFailedHandler(h ZwpBufferParamsV1FailedHandler
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpBufferParamsV1Faileds, h)
+	delete(p.privateZwpBufferParamsV1Faileds, h)
 }
+
 // ZwpDmabufFeedbackV1 dmabuf feedback
 type ZwpDmabufFeedbackV1 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpDmabufFeedbackV1Dones map[ZwpDmabufFeedbackV1DoneHandler]struct{}
-	privateZwpDmabufFeedbackV1FormatTables map[ZwpDmabufFeedbackV1FormatTableHandler]struct{}
-	privateZwpDmabufFeedbackV1MainDevices map[ZwpDmabufFeedbackV1MainDeviceHandler]struct{}
-	privateZwpDmabufFeedbackV1TrancheDones map[ZwpDmabufFeedbackV1TrancheDoneHandler]struct{}
+	mu                                             sync.RWMutex
+	privateZwpDmabufFeedbackV1Dones                map[ZwpDmabufFeedbackV1DoneHandler]struct{}
+	privateZwpDmabufFeedbackV1FormatTables         map[ZwpDmabufFeedbackV1FormatTableHandler]struct{}
+	privateZwpDmabufFeedbackV1MainDevices          map[ZwpDmabufFeedbackV1MainDeviceHandler]struct{}
+	privateZwpDmabufFeedbackV1TrancheDones         map[ZwpDmabufFeedbackV1TrancheDoneHandler]struct{}
 	privateZwpDmabufFeedbackV1TrancheTargetDevices map[ZwpDmabufFeedbackV1TrancheTargetDeviceHandler]struct{}
-	privateZwpDmabufFeedbackV1TrancheFormatss map[ZwpDmabufFeedbackV1TrancheFormatsHandler]struct{}
-	privateZwpDmabufFeedbackV1TrancheFlagss map[ZwpDmabufFeedbackV1TrancheFlagsHandler]struct{}
+	privateZwpDmabufFeedbackV1TrancheFormatss      map[ZwpDmabufFeedbackV1TrancheFormatsHandler]struct{}
+	privateZwpDmabufFeedbackV1TrancheFlagss        map[ZwpDmabufFeedbackV1TrancheFlagsHandler]struct{}
 }
+
 // initZwpDmabufFeedbackV1 initializes the ZwpDmabufFeedbackV1 object's handler maps
 func (ret *ZwpDmabufFeedbackV1) initZwpDmabufFeedbackV1() {
 	ret.privateZwpDmabufFeedbackV1Dones = make(map[ZwpDmabufFeedbackV1DoneHandler]struct{})
@@ -307,6 +328,7 @@ func (ret *ZwpDmabufFeedbackV1) initZwpDmabufFeedbackV1() {
 	ret.privateZwpDmabufFeedbackV1TrancheFormatss = make(map[ZwpDmabufFeedbackV1TrancheFormatsHandler]struct{})
 	ret.privateZwpDmabufFeedbackV1TrancheFlagss = make(map[ZwpDmabufFeedbackV1TrancheFlagsHandler]struct{})
 }
+
 // NewZwpDmabufFeedbackV1 is a constructor for the ZwpDmabufFeedbackV1 object
 func NewZwpDmabufFeedbackV1(ctx *Context) *ZwpDmabufFeedbackV1 {
 	ret := new(ZwpDmabufFeedbackV1)
@@ -314,11 +336,13 @@ func NewZwpDmabufFeedbackV1(ctx *Context) *ZwpDmabufFeedbackV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Destroy destroy the feedback object
-func (p *ZwpDmabufFeedbackV1) Destroy() (error) {
-	
+func (p *ZwpDmabufFeedbackV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // Dispatch dispatches event for object ZwpDmabufFeedbackV1
 func (p *ZwpDmabufFeedbackV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -394,10 +418,11 @@ func (p *ZwpDmabufFeedbackV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpDmabufFeedbackV1DoneEvent is the all feedback has been sent
 type ZwpDmabufFeedbackV1DoneEvent struct {
-
 }
+
 // ZwpDmabufFeedbackV1FormatTableEvent is the format and modifier table
 type ZwpDmabufFeedbackV1FormatTableEvent struct {
 	// Fd is the table file descriptor
@@ -406,36 +431,36 @@ type ZwpDmabufFeedbackV1FormatTableEvent struct {
 	FdError error
 	// Size is the table size, in bytes
 	Size uint32
-
 }
+
 // ZwpDmabufFeedbackV1MainDeviceEvent is the preferred main device
 type ZwpDmabufFeedbackV1MainDeviceEvent struct {
 	// Device is the device dev_t value
 	Device []int32
-
 }
+
 // ZwpDmabufFeedbackV1TrancheDoneEvent is the a preference tranche has been sent
 type ZwpDmabufFeedbackV1TrancheDoneEvent struct {
-
 }
+
 // ZwpDmabufFeedbackV1TrancheTargetDeviceEvent is the target device
 type ZwpDmabufFeedbackV1TrancheTargetDeviceEvent struct {
 	// Device is the device dev_t value
 	Device []int32
-
 }
+
 // ZwpDmabufFeedbackV1TrancheFormatsEvent is the supported buffer format modifier
 type ZwpDmabufFeedbackV1TrancheFormatsEvent struct {
 	// Indices is the array of 16-bit indexes
 	Indices []int32
-
 }
+
 // ZwpDmabufFeedbackV1TrancheFlagsEvent is the tranche flags
 type ZwpDmabufFeedbackV1TrancheFlagsEvent struct {
 	// Flags is the tranche flags
 	Flags uint32
-
 }
+
 // ZwpDmabufFeedbackV1DoneHandler is the handler interface for ZwpDmabufFeedbackV1DoneEvent
 type ZwpDmabufFeedbackV1DoneHandler interface {
 	HandleZwpDmabufFeedbackV1Done(ZwpDmabufFeedbackV1DoneEvent)
@@ -455,8 +480,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveDoneHandler(h ZwpDmabufFeedbackV1DoneHandler
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1Dones, h)
+	delete(p.privateZwpDmabufFeedbackV1Dones, h)
 }
+
 // ZwpDmabufFeedbackV1FormatTableHandler is the handler interface for ZwpDmabufFeedbackV1FormatTableEvent
 type ZwpDmabufFeedbackV1FormatTableHandler interface {
 	HandleZwpDmabufFeedbackV1FormatTable(ZwpDmabufFeedbackV1FormatTableEvent)
@@ -476,8 +502,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveFormatTableHandler(h ZwpDmabufFeedbackV1Form
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1FormatTables, h)
+	delete(p.privateZwpDmabufFeedbackV1FormatTables, h)
 }
+
 // ZwpDmabufFeedbackV1MainDeviceHandler is the handler interface for ZwpDmabufFeedbackV1MainDeviceEvent
 type ZwpDmabufFeedbackV1MainDeviceHandler interface {
 	HandleZwpDmabufFeedbackV1MainDevice(ZwpDmabufFeedbackV1MainDeviceEvent)
@@ -497,8 +524,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveMainDeviceHandler(h ZwpDmabufFeedbackV1MainD
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1MainDevices, h)
+	delete(p.privateZwpDmabufFeedbackV1MainDevices, h)
 }
+
 // ZwpDmabufFeedbackV1TrancheDoneHandler is the handler interface for ZwpDmabufFeedbackV1TrancheDoneEvent
 type ZwpDmabufFeedbackV1TrancheDoneHandler interface {
 	HandleZwpDmabufFeedbackV1TrancheDone(ZwpDmabufFeedbackV1TrancheDoneEvent)
@@ -518,8 +546,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveTrancheDoneHandler(h ZwpDmabufFeedbackV1Tran
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1TrancheDones, h)
+	delete(p.privateZwpDmabufFeedbackV1TrancheDones, h)
 }
+
 // ZwpDmabufFeedbackV1TrancheTargetDeviceHandler is the handler interface for ZwpDmabufFeedbackV1TrancheTargetDeviceEvent
 type ZwpDmabufFeedbackV1TrancheTargetDeviceHandler interface {
 	HandleZwpDmabufFeedbackV1TrancheTargetDevice(ZwpDmabufFeedbackV1TrancheTargetDeviceEvent)
@@ -539,8 +568,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveTrancheTargetDeviceHandler(h ZwpDmabufFeedba
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1TrancheTargetDevices, h)
+	delete(p.privateZwpDmabufFeedbackV1TrancheTargetDevices, h)
 }
+
 // ZwpDmabufFeedbackV1TrancheFormatsHandler is the handler interface for ZwpDmabufFeedbackV1TrancheFormatsEvent
 type ZwpDmabufFeedbackV1TrancheFormatsHandler interface {
 	HandleZwpDmabufFeedbackV1TrancheFormats(ZwpDmabufFeedbackV1TrancheFormatsEvent)
@@ -560,8 +590,9 @@ func (p *ZwpDmabufFeedbackV1) RemoveTrancheFormatsHandler(h ZwpDmabufFeedbackV1T
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1TrancheFormatss, h)
+	delete(p.privateZwpDmabufFeedbackV1TrancheFormatss, h)
 }
+
 // ZwpDmabufFeedbackV1TrancheFlagsHandler is the handler interface for ZwpDmabufFeedbackV1TrancheFlagsEvent
 type ZwpDmabufFeedbackV1TrancheFlagsHandler interface {
 	HandleZwpDmabufFeedbackV1TrancheFlags(ZwpDmabufFeedbackV1TrancheFlagsEvent)
@@ -581,5 +612,5 @@ func (p *ZwpDmabufFeedbackV1) RemoveTrancheFlagsHandler(h ZwpDmabufFeedbackV1Tra
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpDmabufFeedbackV1TrancheFlagss, h)
+	delete(p.privateZwpDmabufFeedbackV1TrancheFlagss, h)
 }

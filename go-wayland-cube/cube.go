@@ -3,10 +3,11 @@ package main
 import (
 	"time"
 
+	"unsafe"
+
 	"github.com/neurlang/gm/mat4"
 	"github.com/neurlang/gm/vec3"
 	vulkan "github.com/vulkan-go/vulkan"
-	"unsafe"
 )
 
 type ubo struct {

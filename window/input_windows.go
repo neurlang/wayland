@@ -1,10 +1,11 @@
 package window
 
 import (
+	"io"
+
 	xkb "github.com/neurlang/wayland/xkbcommon"
 	"github.com/zzl/go-win32api/v2/win32"
 	"golang.design/x/clipboard"
-	"io"
 )
 
 type Input struct {

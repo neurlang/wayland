@@ -2,10 +2,11 @@ package wl
 
 import (
 	"errors"
-	"github.com/neurlang/wayland/os"
-	"github.com/yalue/native_endian"
 	"net"
 	"reflect"
+
+	"github.com/neurlang/wayland/os"
+	"github.com/yalue/native_endian"
 )
 
 // Request is the request message from your program to the Wayland compositor

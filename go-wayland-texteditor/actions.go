@@ -1,9 +1,12 @@
 package main
 
-import "fmt"
-import window "github.com/neurlang/wayland/windowtrace"
-import "os"
-import "bufio"
+import (
+	"bufio"
+	"fmt"
+	"os"
+
+	window "github.com/neurlang/wayland/windowtrace"
+)
 
 func (textarea *textarea) selectAll() {
 

@@ -5,54 +5,54 @@ package xkbcommon
 // and HIToolbox/Events.h
 
 // Navigation keys
-const KeyLeft = 0x7B   // kVK_LeftArrow
-const KeyRight = 0x7C  // kVK_RightArrow
-const KeyUp = 0x7E     // kVK_UpArrow
-const KeyDown = 0x7D   // kVK_DownArrow
-const KeyHome = 0x73   // kVK_Home
-const KeyEnd = 0x77    // kVK_End
+const KeyLeft = 0x7B  // kVK_LeftArrow
+const KeyRight = 0x7C // kVK_RightArrow
+const KeyUp = 0x7E    // kVK_UpArrow
+const KeyDown = 0x7D  // kVK_DownArrow
+const KeyHome = 0x73  // kVK_Home
+const KeyEnd = 0x77   // kVK_End
 
 // Special keys
-const KeyKpEnter = 0x4C // kVK_ANSI_KeypadEnter
-const KeyReturn = 0x24  // kVK_Return
+const KeyKpEnter = 0x4C   // kVK_ANSI_KeypadEnter
+const KeyReturn = 0x24    // kVK_Return
 const KeyBackspace = 0x33 // kVK_Delete (backspace)
-const KeyDelete = 0x75  // kVK_ForwardDelete
+const KeyDelete = 0x75    // kVK_ForwardDelete
 
 // Control keys
-const KeyControl = 0x3B   // kVK_Control
-const KeyControlL = 0x3B  // kVK_Control (left)
-const KeyControlR = 0x3E  // kVK_RightControl
+const KeyControl = 0x3B  // kVK_Control
+const KeyControlL = 0x3B // kVK_Control (left)
+const KeyControlR = 0x3E // kVK_RightControl
 
 // Letter Q (both uppercase and lowercase use same virtual key code)
-const KeyQ = 0x0C  // kVK_ANSI_Q
-const KEYq = 0x0C  // kVK_ANSI_Q (same as uppercase)
+const KeyQ = 0x0C // kVK_ANSI_Q
+const KEYq = 0x0C // kVK_ANSI_Q (same as uppercase)
 
 // Additional common keys for reference
-const KeyA = 0x00  // kVK_ANSI_A
-const KeyS = 0x01  // kVK_ANSI_S
-const KeyD = 0x02  // kVK_ANSI_D
-const KeyF = 0x03  // kVK_ANSI_F
-const KeyH = 0x04  // kVK_ANSI_H
-const KeyG = 0x05  // kVK_ANSI_G
-const KeyZ = 0x06  // kVK_ANSI_Z
-const KeyX = 0x07  // kVK_ANSI_X
-const KeyC = 0x08  // kVK_ANSI_C
-const KeyV = 0x09  // kVK_ANSI_V
-const KeyB = 0x0B  // kVK_ANSI_B
-const KeyW = 0x0D  // kVK_ANSI_W
-const KeyE = 0x0E  // kVK_ANSI_E
-const KeyR = 0x0F  // kVK_ANSI_R
-const KeyY = 0x10  // kVK_ANSI_Y
-const KeyT = 0x11  // kVK_ANSI_T
-const KeyO = 0x1F  // kVK_ANSI_O
-const KeyU = 0x20  // kVK_ANSI_U
-const KeyI = 0x22  // kVK_ANSI_I
-const KeyP = 0x23  // kVK_ANSI_P
-const KeyL = 0x25  // kVK_ANSI_L
-const KeyJ = 0x26  // kVK_ANSI_J
-const KeyK = 0x28  // kVK_ANSI_K
-const KeyN = 0x2D  // kVK_ANSI_N
-const KeyM = 0x2E  // kVK_ANSI_M
+const KeyA = 0x00 // kVK_ANSI_A
+const KeyS = 0x01 // kVK_ANSI_S
+const KeyD = 0x02 // kVK_ANSI_D
+const KeyF = 0x03 // kVK_ANSI_F
+const KeyH = 0x04 // kVK_ANSI_H
+const KeyG = 0x05 // kVK_ANSI_G
+const KeyZ = 0x06 // kVK_ANSI_Z
+const KeyX = 0x07 // kVK_ANSI_X
+const KeyC = 0x08 // kVK_ANSI_C
+const KeyV = 0x09 // kVK_ANSI_V
+const KeyB = 0x0B // kVK_ANSI_B
+const KeyW = 0x0D // kVK_ANSI_W
+const KeyE = 0x0E // kVK_ANSI_E
+const KeyR = 0x0F // kVK_ANSI_R
+const KeyY = 0x10 // kVK_ANSI_Y
+const KeyT = 0x11 // kVK_ANSI_T
+const KeyO = 0x1F // kVK_ANSI_O
+const KeyU = 0x20 // kVK_ANSI_U
+const KeyI = 0x22 // kVK_ANSI_I
+const KeyP = 0x23 // kVK_ANSI_P
+const KeyL = 0x25 // kVK_ANSI_L
+const KeyJ = 0x26 // kVK_ANSI_J
+const KeyK = 0x28 // kVK_ANSI_K
+const KeyN = 0x2D // kVK_ANSI_N
+const KeyM = 0x2E // kVK_ANSI_M
 
 // Lowercase versions (same as uppercase on macOS)
 const KEYa = 0x00
@@ -94,18 +94,18 @@ const Key8 = 0x1C // kVK_ANSI_8
 const Key0 = 0x1D // kVK_ANSI_0
 
 // Function keys
-const KeyF1 = 0x7A   // kVK_F1
-const KeyF2 = 0x78   // kVK_F2
-const KeyF3 = 0x63   // kVK_F3
-const KeyF4 = 0x76   // kVK_F4
-const KeyF5 = 0x60   // kVK_F5
-const KeyF6 = 0x61   // kVK_F6
-const KeyF7 = 0x62   // kVK_F7
-const KeyF8 = 0x64   // kVK_F8
-const KeyF9 = 0x65   // kVK_F9
-const KeyF10 = 0x6D  // kVK_F10
-const KeyF11 = 0x67  // kVK_F11
-const KeyF12 = 0x6F  // kVK_F12
+const KeyF1 = 0x7A  // kVK_F1
+const KeyF2 = 0x78  // kVK_F2
+const KeyF3 = 0x63  // kVK_F3
+const KeyF4 = 0x76  // kVK_F4
+const KeyF5 = 0x60  // kVK_F5
+const KeyF6 = 0x61  // kVK_F6
+const KeyF7 = 0x62  // kVK_F7
+const KeyF8 = 0x64  // kVK_F8
+const KeyF9 = 0x65  // kVK_F9
+const KeyF10 = 0x6D // kVK_F10
+const KeyF11 = 0x67 // kVK_F11
+const KeyF12 = 0x6F // kVK_F12
 
 // Modifier keys
 const KeyShift = 0x38    // kVK_Shift
@@ -120,11 +120,11 @@ const KeyCommandR = 0x36 // kVK_RightCommand
 const KeyCapsLock = 0x39 // kVK_CapsLock
 
 // Other common keys
-const KeySpace = 0x31    // kVK_Space
-const KeyTab = 0x30      // kVK_Tab
-const KeyEscape = 0x35   // kVK_Escape
-const KeyEqual = 0x18    // kVK_ANSI_Equal
-const KeyMinus = 0x1B    // kVK_ANSI_Minus
+const KeySpace = 0x31        // kVK_Space
+const KeyTab = 0x30          // kVK_Tab
+const KeyEscape = 0x35       // kVK_Escape
+const KeyEqual = 0x18        // kVK_ANSI_Equal
+const KeyMinus = 0x1B        // kVK_ANSI_Minus
 const KeyLeftBracket = 0x21  // kVK_ANSI_LeftBracket
 const KeyRightBracket = 0x1E // kVK_ANSI_RightBracket
 const KeyQuote = 0x27        // kVK_ANSI_Quote
@@ -136,23 +136,23 @@ const KeyPeriod = 0x2F       // kVK_ANSI_Period
 const KeyGrave = 0x32        // kVK_ANSI_Grave
 
 // Keypad keys
-const KeyKp0 = 0x52      // kVK_ANSI_Keypad0
-const KeyKp1 = 0x53      // kVK_ANSI_Keypad1
-const KeyKp2 = 0x54      // kVK_ANSI_Keypad2
-const KeyKp3 = 0x55      // kVK_ANSI_Keypad3
-const KeyKp4 = 0x56      // kVK_ANSI_Keypad4
-const KeyKp5 = 0x57      // kVK_ANSI_Keypad5
-const KeyKp6 = 0x58      // kVK_ANSI_Keypad6
-const KeyKp7 = 0x59      // kVK_ANSI_Keypad7
-const KeyKp8 = 0x5B      // kVK_ANSI_Keypad8
-const KeyKp9 = 0x5C      // kVK_ANSI_Keypad9
-const KeyKpDecimal = 0x41    // kVK_ANSI_KeypadDecimal
-const KeyKpMultiply = 0x43   // kVK_ANSI_KeypadMultiply
-const KeyKpPlus = 0x45       // kVK_ANSI_KeypadPlus
-const KeyKpClear = 0x47      // kVK_ANSI_KeypadClear
-const KeyKpDivide = 0x4B     // kVK_ANSI_KeypadDivide
-const KeyKpMinus = 0x4E      // kVK_ANSI_KeypadMinus
-const KeyKpEquals = 0x51     // kVK_ANSI_KeypadEquals
+const KeyKp0 = 0x52        // kVK_ANSI_Keypad0
+const KeyKp1 = 0x53        // kVK_ANSI_Keypad1
+const KeyKp2 = 0x54        // kVK_ANSI_Keypad2
+const KeyKp3 = 0x55        // kVK_ANSI_Keypad3
+const KeyKp4 = 0x56        // kVK_ANSI_Keypad4
+const KeyKp5 = 0x57        // kVK_ANSI_Keypad5
+const KeyKp6 = 0x58        // kVK_ANSI_Keypad6
+const KeyKp7 = 0x59        // kVK_ANSI_Keypad7
+const KeyKp8 = 0x5B        // kVK_ANSI_Keypad8
+const KeyKp9 = 0x5C        // kVK_ANSI_Keypad9
+const KeyKpDecimal = 0x41  // kVK_ANSI_KeypadDecimal
+const KeyKpMultiply = 0x43 // kVK_ANSI_KeypadMultiply
+const KeyKpPlus = 0x45     // kVK_ANSI_KeypadPlus
+const KeyKpClear = 0x47    // kVK_ANSI_KeypadClear
+const KeyKpDivide = 0x4B   // kVK_ANSI_KeypadDivide
+const KeyKpMinus = 0x4E    // kVK_ANSI_KeypadMinus
+const KeyKpEquals = 0x51   // kVK_ANSI_KeypadEquals
 
 // Page navigation
 const KeyPageUp = 0x74   // kVK_PageUp

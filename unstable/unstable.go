@@ -2,7 +2,7 @@ package unstable
 
 import (
 	"github.com/neurlang/wayland/wl"
-	
+
 	fullscreen "github.com/neurlang/wayland/unstable/fullscreen-shell-v1"
 	imv1 "github.com/neurlang/wayland/unstable/input-method-v1"
 	tiv3 "github.com/neurlang/wayland/unstable/text-input-v3"

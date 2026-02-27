@@ -2,9 +2,10 @@ package mustard
 
 import (
 	"image"
+
+	gg "github.com/danfragoso/thdwb/gg"
+	cairo "github.com/neurlang/wayland/cairoshim"
 )
-import gg "github.com/danfragoso/thdwb/gg"
-import cairo "github.com/neurlang/wayland/cairoshim"
 
 type Surface = cairo.Surface
 

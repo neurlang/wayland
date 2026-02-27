@@ -2,8 +2,9 @@ package hotdog
 
 import (
 	"fmt"
-	profiler "github.com/danfragoso/thdwb/profiler"
 	"net/url"
+
+	profiler "github.com/danfragoso/thdwb/profiler"
 )
 
 type WebBrowser struct {

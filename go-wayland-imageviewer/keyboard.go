@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/neurlang/wayland/wl"
 	"log"
+
+	"github.com/neurlang/wayland/wl"
 )
 
 const (

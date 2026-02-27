@@ -1,9 +1,11 @@
 package main
 
-import "sync"
-import "sort"
-import "fmt"
-import "unicode"
+import (
+	"fmt"
+	"sort"
+	"sync"
+	"unicode"
+)
 
 const rowHeight = 2
 const whiteRectThick = 2

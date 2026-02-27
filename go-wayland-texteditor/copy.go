@@ -1,9 +1,11 @@
 package main
 
-import "io"
-import "os"
-import "fmt"
-import "strings"
+import (
+	"fmt"
+	"io"
+	"os"
+	"strings"
+)
 
 type Copy struct {
 	file     *os.File

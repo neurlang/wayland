@@ -1069,8 +1069,8 @@ func goMouseWheel(windowPtr unsafe.Pointer, dx, dy C.float, discrete C.int) {
 			{
 				println("[GO DEBUG] Mouse wheel on popup")
 				proceed = true
-                // TODO: not implemented, avoid scrolling the main window so we just return:
-                return
+				// TODO: not implemented, avoid scrolling the main window so we just return:
+				return
 			}
 		}
 	}

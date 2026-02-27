@@ -3,6 +3,7 @@ package wl
 import (
 	"bytes"
 	"errors"
+
 	"github.com/neurlang/wayland/os"
 	"github.com/yalue/native_endian"
 )

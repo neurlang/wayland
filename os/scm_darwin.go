@@ -4,8 +4,9 @@
 package os
 
 import (
-	"golang.org/x/sys/unix"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 // SocketControlMessage is a socket control message

@@ -39,11 +39,11 @@ func sanitizeSingleLineComment(input string) string {
 		"\t", " ",
 	)
 	input = replacer.Replace(input)
-	
+
 	// Normalize multiple spaces to single space
 	for strings.Contains(input, "  ") {
 		input = strings.Replace(input, "  ", " ", -1)
 	}
-	
+
 	return input
 }

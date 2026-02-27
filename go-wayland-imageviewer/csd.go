@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/fogleman/gg"
 	"image"
 	"unicode/utf8"
+
+	"github.com/fogleman/gg"
 )
 
 type DecorationButton struct {

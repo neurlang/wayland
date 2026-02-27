@@ -1,12 +1,14 @@
 package main
 
-import "embed"
-import "image"
-import "image/png"
-import "image/jpeg"
-import "image/color"
-import "strings"
-import "fmt"
+import (
+	"embed"
+	"fmt"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"image/png"
+	"strings"
+)
 
 //go:embed *.jpg
 //go:embed *.png

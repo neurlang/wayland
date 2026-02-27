@@ -21,11 +21,13 @@
 // Package os implements an operating system routines useful for graphics
 package os
 
-import "os"
-import "syscall"
-import "errors"
-import "crypto/rand"
-import "fmt"
+import (
+	"crypto/rand"
+	"errors"
+	"fmt"
+	"os"
+	"syscall"
+)
 
 // MkOsTemp is a Golang version of the popular C library function call
 // The string can contain the pattern consisting of XXX that will be replaced

@@ -3,8 +3,11 @@
 
 package os
 
-import "golang.org/x/sys/unix"
-import "syscall"
+import (
+	"syscall"
+
+	"golang.org/x/sys/unix"
+)
 
 // SocketControlMessage is a socket control message
 type SocketControlMessage = syscall.SocketControlMessage

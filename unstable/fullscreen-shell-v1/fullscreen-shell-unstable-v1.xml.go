@@ -6,8 +6,8 @@ package fullscreen
 
 import (
 	"sync"
-
 )
+
 // ZwpShellV1CapabilityArbitraryModes means compositor is capable of almost any output mode
 const ZwpShellV1CapabilityArbitraryModes = 1
 
@@ -38,13 +38,15 @@ const ZwpShellV1ErrorRole = 1
 // ZwpShellV1 displays a single surface per output
 type ZwpShellV1 struct {
 	BaseProxy
-	mu sync.RWMutex
+	mu                           sync.RWMutex
 	privateZwpShellV1Capabilitys map[ZwpShellV1CapabilityHandler]struct{}
 }
+
 // initZwpShellV1 initializes the ZwpShellV1 object's handler maps
 func (ret *ZwpShellV1) initZwpShellV1() {
 	ret.privateZwpShellV1Capabilitys = make(map[ZwpShellV1CapabilityHandler]struct{})
 }
+
 // NewZwpShellV1 is a constructor for the ZwpShellV1 object
 func NewZwpShellV1(ctx *Context) *ZwpShellV1 {
 	ret := new(ZwpShellV1)
@@ -52,21 +54,25 @@ func NewZwpShellV1(ctx *Context) *ZwpShellV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Release release the wl_fullscreen_shell interface
-func (p *ZwpShellV1) Release() (error) {
-	
+func (p *ZwpShellV1) Release() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // PresentSurface present surface for display
-func (p *ZwpShellV1) PresentSurface(Surface *Surface, Method uint32, Output *Output) (error) {
-	
+func (p *ZwpShellV1) PresentSurface(Surface *Surface, Method uint32, Output *Output) error {
+
 	return p.Context().SendRequest(p, 1, Surface, Method, Output)
 }
+
 // PresentSurfaceForMode present surface for display at a particular mode
 func (p *ZwpShellV1) PresentSurfaceForMode(Surface *Surface, Output *Output, Framerate int32) (*ZwpShellModeFeedbackV1, error) {
 	retFeedback := NewZwpShellModeFeedbackV1(p.Context())
 	return retFeedback, p.Context().SendRequest(p, 2, Surface, Output, Framerate, retFeedback)
 }
+
 // Dispatch dispatches event for object ZwpShellV1
 func (p *ZwpShellV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -83,12 +89,13 @@ func (p *ZwpShellV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpShellV1CapabilityEvent is the advertises a capability of the compositor
 type ZwpShellV1CapabilityEvent struct {
-	// Capability is the 
+	// Capability is the
 	Capability uint32
-
 }
+
 // ZwpShellV1CapabilityHandler is the handler interface for ZwpShellV1CapabilityEvent
 type ZwpShellV1CapabilityHandler interface {
 	HandleZwpShellV1Capability(ZwpShellV1CapabilityEvent)
@@ -108,22 +115,25 @@ func (p *ZwpShellV1) RemoveCapabilityHandler(h ZwpShellV1CapabilityHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpShellV1Capabilitys, h)
+	delete(p.privateZwpShellV1Capabilitys, h)
 }
-// ZwpShellModeFeedbackV1 
+
+// ZwpShellModeFeedbackV1
 type ZwpShellModeFeedbackV1 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpShellModeFeedbackV1ModeSuccessfuls map[ZwpShellModeFeedbackV1ModeSuccessfulHandler]struct{}
-	privateZwpShellModeFeedbackV1ModeFaileds map[ZwpShellModeFeedbackV1ModeFailedHandler]struct{}
+	mu                                             sync.RWMutex
+	privateZwpShellModeFeedbackV1ModeSuccessfuls   map[ZwpShellModeFeedbackV1ModeSuccessfulHandler]struct{}
+	privateZwpShellModeFeedbackV1ModeFaileds       map[ZwpShellModeFeedbackV1ModeFailedHandler]struct{}
 	privateZwpShellModeFeedbackV1PresentCancelleds map[ZwpShellModeFeedbackV1PresentCancelledHandler]struct{}
 }
+
 // initZwpShellModeFeedbackV1 initializes the ZwpShellModeFeedbackV1 object's handler maps
 func (ret *ZwpShellModeFeedbackV1) initZwpShellModeFeedbackV1() {
 	ret.privateZwpShellModeFeedbackV1ModeSuccessfuls = make(map[ZwpShellModeFeedbackV1ModeSuccessfulHandler]struct{})
 	ret.privateZwpShellModeFeedbackV1ModeFaileds = make(map[ZwpShellModeFeedbackV1ModeFailedHandler]struct{})
 	ret.privateZwpShellModeFeedbackV1PresentCancelleds = make(map[ZwpShellModeFeedbackV1PresentCancelledHandler]struct{})
 }
+
 // NewZwpShellModeFeedbackV1 is a constructor for the ZwpShellModeFeedbackV1 object
 func NewZwpShellModeFeedbackV1(ctx *Context) *ZwpShellModeFeedbackV1 {
 	ret := new(ZwpShellModeFeedbackV1)
@@ -131,6 +141,7 @@ func NewZwpShellModeFeedbackV1(ctx *Context) *ZwpShellModeFeedbackV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Dispatch dispatches event for object ZwpShellModeFeedbackV1
 func (p *ZwpShellModeFeedbackV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -164,18 +175,19 @@ func (p *ZwpShellModeFeedbackV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpShellModeFeedbackV1ModeSuccessfulEvent is the mode switch succeeded
 type ZwpShellModeFeedbackV1ModeSuccessfulEvent struct {
-
 }
+
 // ZwpShellModeFeedbackV1ModeFailedEvent is the mode switch failed
 type ZwpShellModeFeedbackV1ModeFailedEvent struct {
-
 }
+
 // ZwpShellModeFeedbackV1PresentCancelledEvent is the mode switch cancelled
 type ZwpShellModeFeedbackV1PresentCancelledEvent struct {
-
 }
+
 // ZwpShellModeFeedbackV1ModeSuccessfulHandler is the handler interface for ZwpShellModeFeedbackV1ModeSuccessfulEvent
 type ZwpShellModeFeedbackV1ModeSuccessfulHandler interface {
 	HandleZwpShellModeFeedbackV1ModeSuccessful(ZwpShellModeFeedbackV1ModeSuccessfulEvent)
@@ -195,8 +207,9 @@ func (p *ZwpShellModeFeedbackV1) RemoveModeSuccessfulHandler(h ZwpShellModeFeedb
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpShellModeFeedbackV1ModeSuccessfuls, h)
+	delete(p.privateZwpShellModeFeedbackV1ModeSuccessfuls, h)
 }
+
 // ZwpShellModeFeedbackV1ModeFailedHandler is the handler interface for ZwpShellModeFeedbackV1ModeFailedEvent
 type ZwpShellModeFeedbackV1ModeFailedHandler interface {
 	HandleZwpShellModeFeedbackV1ModeFailed(ZwpShellModeFeedbackV1ModeFailedEvent)
@@ -216,8 +229,9 @@ func (p *ZwpShellModeFeedbackV1) RemoveModeFailedHandler(h ZwpShellModeFeedbackV
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpShellModeFeedbackV1ModeFaileds, h)
+	delete(p.privateZwpShellModeFeedbackV1ModeFaileds, h)
 }
+
 // ZwpShellModeFeedbackV1PresentCancelledHandler is the handler interface for ZwpShellModeFeedbackV1PresentCancelledEvent
 type ZwpShellModeFeedbackV1PresentCancelledHandler interface {
 	HandleZwpShellModeFeedbackV1PresentCancelled(ZwpShellModeFeedbackV1PresentCancelledEvent)
@@ -237,5 +251,5 @@ func (p *ZwpShellModeFeedbackV1) RemovePresentCancelledHandler(h ZwpShellModeFee
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpShellModeFeedbackV1PresentCancelleds, h)
+	delete(p.privateZwpShellModeFeedbackV1PresentCancelleds, h)
 }

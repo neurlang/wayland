@@ -6,22 +6,23 @@ package input
 
 import (
 	"sync"
-
 )
+
 // ZwpPanelSurfaceV1PositionCenterBottom
 const ZwpPanelSurfaceV1PositionCenterBottom = 0
 
 // ZwpMethodContextV1 input method context
 type ZwpMethodContextV1 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpMethodContextV1SurroundingTexts map[ZwpMethodContextV1SurroundingTextHandler]struct{}
-	privateZwpMethodContextV1Resets map[ZwpMethodContextV1ResetHandler]struct{}
-	privateZwpMethodContextV1ContentTypes map[ZwpMethodContextV1ContentTypeHandler]struct{}
-	privateZwpMethodContextV1InvokeActions map[ZwpMethodContextV1InvokeActionHandler]struct{}
-	privateZwpMethodContextV1CommitStates map[ZwpMethodContextV1CommitStateHandler]struct{}
+	mu                                          sync.RWMutex
+	privateZwpMethodContextV1SurroundingTexts   map[ZwpMethodContextV1SurroundingTextHandler]struct{}
+	privateZwpMethodContextV1Resets             map[ZwpMethodContextV1ResetHandler]struct{}
+	privateZwpMethodContextV1ContentTypes       map[ZwpMethodContextV1ContentTypeHandler]struct{}
+	privateZwpMethodContextV1InvokeActions      map[ZwpMethodContextV1InvokeActionHandler]struct{}
+	privateZwpMethodContextV1CommitStates       map[ZwpMethodContextV1CommitStateHandler]struct{}
 	privateZwpMethodContextV1PreferredLanguages map[ZwpMethodContextV1PreferredLanguageHandler]struct{}
 }
+
 // initZwpMethodContextV1 initializes the ZwpMethodContextV1 object's handler maps
 func (ret *ZwpMethodContextV1) initZwpMethodContextV1() {
 	ret.privateZwpMethodContextV1SurroundingTexts = make(map[ZwpMethodContextV1SurroundingTextHandler]struct{})
@@ -31,6 +32,7 @@ func (ret *ZwpMethodContextV1) initZwpMethodContextV1() {
 	ret.privateZwpMethodContextV1CommitStates = make(map[ZwpMethodContextV1CommitStateHandler]struct{})
 	ret.privateZwpMethodContextV1PreferredLanguages = make(map[ZwpMethodContextV1PreferredLanguageHandler]struct{})
 }
+
 // NewZwpMethodContextV1 is a constructor for the ZwpMethodContextV1 object
 func NewZwpMethodContextV1(ctx *Context) *ZwpMethodContextV1 {
 	ret := new(ZwpMethodContextV1)
@@ -38,76 +40,91 @@ func NewZwpMethodContextV1(ctx *Context) *ZwpMethodContextV1 {
 	ctx.Register(ret)
 	return ret
 }
-// Destroy 
-func (p *ZwpMethodContextV1) Destroy() (error) {
-	
+
+// Destroy
+func (p *ZwpMethodContextV1) Destroy() error {
+
 	return p.Context().SendRequest(p, 0)
 }
+
 // CommitString commit string
-func (p *ZwpMethodContextV1) CommitString(Serial uint32, Text string) (error) {
-	
+func (p *ZwpMethodContextV1) CommitString(Serial uint32, Text string) error {
+
 	return p.Context().SendRequest(p, 1, Serial, Text)
 }
+
 // PreeditString pre-edit string
-func (p *ZwpMethodContextV1) PreeditString(Serial uint32, Text string, Commit string) (error) {
-	
+func (p *ZwpMethodContextV1) PreeditString(Serial uint32, Text string, Commit string) error {
+
 	return p.Context().SendRequest(p, 2, Serial, Text, Commit)
 }
+
 // PreeditStyling pre-edit styling
-func (p *ZwpMethodContextV1) PreeditStyling(Index uint32, Length uint32, Style uint32) (error) {
-	
+func (p *ZwpMethodContextV1) PreeditStyling(Index uint32, Length uint32, Style uint32) error {
+
 	return p.Context().SendRequest(p, 3, Index, Length, Style)
 }
+
 // PreeditCursor pre-edit cursor
-func (p *ZwpMethodContextV1) PreeditCursor(Index int32) (error) {
-	
+func (p *ZwpMethodContextV1) PreeditCursor(Index int32) error {
+
 	return p.Context().SendRequest(p, 4, Index)
 }
+
 // DeleteSurroundingText delete text
-func (p *ZwpMethodContextV1) DeleteSurroundingText(Index int32, Length uint32) (error) {
-	
+func (p *ZwpMethodContextV1) DeleteSurroundingText(Index int32, Length uint32) error {
+
 	return p.Context().SendRequest(p, 5, Index, Length)
 }
+
 // CursorPosition set cursor to a new position
-func (p *ZwpMethodContextV1) CursorPosition(Index int32, Anchor int32) (error) {
-	
+func (p *ZwpMethodContextV1) CursorPosition(Index int32, Anchor int32) error {
+
 	return p.Context().SendRequest(p, 6, Index, Anchor)
 }
-// ModifiersMap 
-func (p *ZwpMethodContextV1) ModifiersMap(Map []int32) (error) {
-	
+
+// ModifiersMap
+func (p *ZwpMethodContextV1) ModifiersMap(Map []int32) error {
+
 	return p.Context().SendRequest(p, 7, Map)
 }
+
 // Keysym keysym
-func (p *ZwpMethodContextV1) Keysym(Serial uint32, Time uint32, Sym uint32, State uint32, Modifiers uint32) (error) {
-	
+func (p *ZwpMethodContextV1) Keysym(Serial uint32, Time uint32, Sym uint32, State uint32, Modifiers uint32) error {
+
 	return p.Context().SendRequest(p, 8, Serial, Time, Sym, State, Modifiers)
 }
+
 // GrabKeyboard grab hardware keyboard
 func (p *ZwpMethodContextV1) GrabKeyboard() (*Keyboard, error) {
 	retKeyboard := NewKeyboard(p.Context())
 	return retKeyboard, p.Context().SendRequest(p, 9, retKeyboard)
 }
+
 // Key forward key event
-func (p *ZwpMethodContextV1) Key(Serial uint32, Time uint32, Key uint32, State uint32) (error) {
-	
+func (p *ZwpMethodContextV1) Key(Serial uint32, Time uint32, Key uint32, State uint32) error {
+
 	return p.Context().SendRequest(p, 10, Serial, Time, Key, State)
 }
+
 // Modifiers forward modifiers event
-func (p *ZwpMethodContextV1) Modifiers(Serial uint32, ModsDepressed uint32, ModsLatched uint32, ModsLocked uint32, Group uint32) (error) {
-	
+func (p *ZwpMethodContextV1) Modifiers(Serial uint32, ModsDepressed uint32, ModsLatched uint32, ModsLocked uint32, Group uint32) error {
+
 	return p.Context().SendRequest(p, 11, Serial, ModsDepressed, ModsLatched, ModsLocked, Group)
 }
-// Language 
-func (p *ZwpMethodContextV1) Language(Serial uint32, Language string) (error) {
-	
+
+// Language
+func (p *ZwpMethodContextV1) Language(Serial uint32, Language string) error {
+
 	return p.Context().SendRequest(p, 12, Serial, Language)
 }
-// TextDirection 
-func (p *ZwpMethodContextV1) TextDirection(Serial uint32, Direction uint32) (error) {
-	
+
+// TextDirection
+func (p *ZwpMethodContextV1) TextDirection(Serial uint32, Direction uint32) error {
+
 	return p.Context().SendRequest(p, 13, Serial, Direction)
 }
+
 // Dispatch dispatches event for object ZwpMethodContextV1
 func (p *ZwpMethodContextV1) Dispatch(event *Event) {
 	switch event.Opcode {
@@ -177,48 +194,49 @@ func (p *ZwpMethodContextV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpMethodContextV1SurroundingTextEvent is the surrounding text event
 type ZwpMethodContextV1SurroundingTextEvent struct {
-	// Text is the 
+	// Text is the
 	Text string
-	// Cursor is the 
+	// Cursor is the
 	Cursor uint32
-	// Anchor is the 
+	// Anchor is the
 	Anchor uint32
-
 }
-// ZwpMethodContextV1ResetEvent is the 
+
+// ZwpMethodContextV1ResetEvent is the
 type ZwpMethodContextV1ResetEvent struct {
-
 }
-// ZwpMethodContextV1ContentTypeEvent is the 
+
+// ZwpMethodContextV1ContentTypeEvent is the
 type ZwpMethodContextV1ContentTypeEvent struct {
-	// Hint is the 
+	// Hint is the
 	Hint uint32
-	// Purpose is the 
+	// Purpose is the
 	Purpose uint32
-
 }
-// ZwpMethodContextV1InvokeActionEvent is the 
+
+// ZwpMethodContextV1InvokeActionEvent is the
 type ZwpMethodContextV1InvokeActionEvent struct {
-	// Button is the 
+	// Button is the
 	Button uint32
-	// Index is the 
+	// Index is the
 	Index uint32
-
 }
-// ZwpMethodContextV1CommitStateEvent is the 
+
+// ZwpMethodContextV1CommitStateEvent is the
 type ZwpMethodContextV1CommitStateEvent struct {
 	// Serial is the serial of text input state
 	Serial uint32
-
 }
-// ZwpMethodContextV1PreferredLanguageEvent is the 
+
+// ZwpMethodContextV1PreferredLanguageEvent is the
 type ZwpMethodContextV1PreferredLanguageEvent struct {
-	// Language is the 
+	// Language is the
 	Language string
-
 }
+
 // ZwpMethodContextV1SurroundingTextHandler is the handler interface for ZwpMethodContextV1SurroundingTextEvent
 type ZwpMethodContextV1SurroundingTextHandler interface {
 	HandleZwpMethodContextV1SurroundingText(ZwpMethodContextV1SurroundingTextEvent)
@@ -238,8 +256,9 @@ func (p *ZwpMethodContextV1) RemoveSurroundingTextHandler(h ZwpMethodContextV1Su
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1SurroundingTexts, h)
+	delete(p.privateZwpMethodContextV1SurroundingTexts, h)
 }
+
 // ZwpMethodContextV1ResetHandler is the handler interface for ZwpMethodContextV1ResetEvent
 type ZwpMethodContextV1ResetHandler interface {
 	HandleZwpMethodContextV1Reset(ZwpMethodContextV1ResetEvent)
@@ -259,8 +278,9 @@ func (p *ZwpMethodContextV1) RemoveResetHandler(h ZwpMethodContextV1ResetHandler
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1Resets, h)
+	delete(p.privateZwpMethodContextV1Resets, h)
 }
+
 // ZwpMethodContextV1ContentTypeHandler is the handler interface for ZwpMethodContextV1ContentTypeEvent
 type ZwpMethodContextV1ContentTypeHandler interface {
 	HandleZwpMethodContextV1ContentType(ZwpMethodContextV1ContentTypeEvent)
@@ -280,8 +300,9 @@ func (p *ZwpMethodContextV1) RemoveContentTypeHandler(h ZwpMethodContextV1Conten
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1ContentTypes, h)
+	delete(p.privateZwpMethodContextV1ContentTypes, h)
 }
+
 // ZwpMethodContextV1InvokeActionHandler is the handler interface for ZwpMethodContextV1InvokeActionEvent
 type ZwpMethodContextV1InvokeActionHandler interface {
 	HandleZwpMethodContextV1InvokeAction(ZwpMethodContextV1InvokeActionEvent)
@@ -301,8 +322,9 @@ func (p *ZwpMethodContextV1) RemoveInvokeActionHandler(h ZwpMethodContextV1Invok
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1InvokeActions, h)
+	delete(p.privateZwpMethodContextV1InvokeActions, h)
 }
+
 // ZwpMethodContextV1CommitStateHandler is the handler interface for ZwpMethodContextV1CommitStateEvent
 type ZwpMethodContextV1CommitStateHandler interface {
 	HandleZwpMethodContextV1CommitState(ZwpMethodContextV1CommitStateEvent)
@@ -322,8 +344,9 @@ func (p *ZwpMethodContextV1) RemoveCommitStateHandler(h ZwpMethodContextV1Commit
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1CommitStates, h)
+	delete(p.privateZwpMethodContextV1CommitStates, h)
 }
+
 // ZwpMethodContextV1PreferredLanguageHandler is the handler interface for ZwpMethodContextV1PreferredLanguageEvent
 type ZwpMethodContextV1PreferredLanguageHandler interface {
 	HandleZwpMethodContextV1PreferredLanguage(ZwpMethodContextV1PreferredLanguageEvent)
@@ -343,20 +366,23 @@ func (p *ZwpMethodContextV1) RemovePreferredLanguageHandler(h ZwpMethodContextV1
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodContextV1PreferredLanguages, h)
+	delete(p.privateZwpMethodContextV1PreferredLanguages, h)
 }
+
 // ZwpMethodV1 input method
 type ZwpMethodV1 struct {
 	BaseProxy
-	mu sync.RWMutex
-	privateZwpMethodV1Activates map[ZwpMethodV1ActivateHandler]struct{}
+	mu                            sync.RWMutex
+	privateZwpMethodV1Activates   map[ZwpMethodV1ActivateHandler]struct{}
 	privateZwpMethodV1Deactivates map[ZwpMethodV1DeactivateHandler]struct{}
 }
+
 // initZwpMethodV1 initializes the ZwpMethodV1 object's handler maps
 func (ret *ZwpMethodV1) initZwpMethodV1() {
 	ret.privateZwpMethodV1Activates = make(map[ZwpMethodV1ActivateHandler]struct{})
 	ret.privateZwpMethodV1Deactivates = make(map[ZwpMethodV1DeactivateHandler]struct{})
 }
+
 // NewZwpMethodV1 is a constructor for the ZwpMethodV1 object
 func NewZwpMethodV1(ctx *Context) *ZwpMethodV1 {
 	ret := new(ZwpMethodV1)
@@ -364,13 +390,18 @@ func NewZwpMethodV1(ctx *Context) *ZwpMethodV1 {
 	ctx.Register(ret)
 	return ret
 }
+
 // Dispatch dispatches event for object ZwpMethodV1
 func (p *ZwpMethodV1) Dispatch(event *Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.privateZwpMethodV1Activates) > 0 {
 			ev := ZwpMethodV1ActivateEvent{}
-			ev.Id = func() *ZwpMethodContextV1 { ret := new(ZwpMethodContextV1); ret.initZwpMethodContextV1(); return event.NewId(ret, p.Context()).(*ZwpMethodContextV1) }()
+			ev.Id = func() *ZwpMethodContextV1 {
+				ret := new(ZwpMethodContextV1)
+				ret.initZwpMethodContextV1()
+				return event.NewId(ret, p.Context()).(*ZwpMethodContextV1)
+			}()
 			p.mu.RLock()
 			for h := range p.privateZwpMethodV1Activates {
 				h.HandleZwpMethodV1Activate(ev)
@@ -390,18 +421,19 @@ func (p *ZwpMethodV1) Dispatch(event *Event) {
 
 	}
 }
+
 // ZwpMethodV1ActivateEvent is the activate event
 type ZwpMethodV1ActivateEvent struct {
-	// Id is the 
+	// Id is the
 	Id *ZwpMethodContextV1
-
 }
+
 // ZwpMethodV1DeactivateEvent is the deactivate event
 type ZwpMethodV1DeactivateEvent struct {
-	// Context is the 
+	// Context is the
 	Context *ZwpMethodContextV1
-
 }
+
 // ZwpMethodV1ActivateHandler is the handler interface for ZwpMethodV1ActivateEvent
 type ZwpMethodV1ActivateHandler interface {
 	HandleZwpMethodV1Activate(ZwpMethodV1ActivateEvent)
@@ -421,8 +453,9 @@ func (p *ZwpMethodV1) RemoveActivateHandler(h ZwpMethodV1ActivateHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodV1Activates, h)
+	delete(p.privateZwpMethodV1Activates, h)
 }
+
 // ZwpMethodV1DeactivateHandler is the handler interface for ZwpMethodV1DeactivateEvent
 type ZwpMethodV1DeactivateHandler interface {
 	HandleZwpMethodV1Deactivate(ZwpMethodV1DeactivateEvent)
@@ -442,49 +475,58 @@ func (p *ZwpMethodV1) RemoveDeactivateHandler(h ZwpMethodV1DeactivateHandler) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete (p.privateZwpMethodV1Deactivates, h)
+	delete(p.privateZwpMethodV1Deactivates, h)
 }
+
 // ZwpPanelV1 interface for implementing keyboards
 type ZwpPanelV1 struct {
 	BaseProxy
 }
+
 // NewZwpPanelV1 is a constructor for the ZwpPanelV1 object
 func NewZwpPanelV1(ctx *Context) *ZwpPanelV1 {
 	ret := new(ZwpPanelV1)
 	ctx.Register(ret)
 	return ret
 }
-// GetPanelSurface 
+
+// GetPanelSurface
 func (p *ZwpPanelV1) GetPanelSurface(Surface *Surface) (*ZwpPanelSurfaceV1, error) {
 	retId := NewZwpPanelSurfaceV1(p.Context())
 	return retId, p.Context().SendRequest(p, 0, retId, Surface)
 }
+
 // Dispatch dispatches event for object ZwpPanelV1
 func (p *ZwpPanelV1) Dispatch(event *Event) {
 	switch event.Opcode {
 
 	}
 }
-// ZwpPanelSurfaceV1 
+
+// ZwpPanelSurfaceV1
 type ZwpPanelSurfaceV1 struct {
 	BaseProxy
 }
+
 // NewZwpPanelSurfaceV1 is a constructor for the ZwpPanelSurfaceV1 object
 func NewZwpPanelSurfaceV1(ctx *Context) *ZwpPanelSurfaceV1 {
 	ret := new(ZwpPanelSurfaceV1)
 	ctx.Register(ret)
 	return ret
 }
+
 // SetToplevel set the surface type as a keyboard
-func (p *ZwpPanelSurfaceV1) SetToplevel(Output *Output, Position uint32) (error) {
-	
+func (p *ZwpPanelSurfaceV1) SetToplevel(Output *Output, Position uint32) error {
+
 	return p.Context().SendRequest(p, 0, Output, Position)
 }
+
 // SetOverlayPanel set the surface type as an overlay panel
-func (p *ZwpPanelSurfaceV1) SetOverlayPanel() (error) {
-	
+func (p *ZwpPanelSurfaceV1) SetOverlayPanel() error {
+
 	return p.Context().SendRequest(p, 1)
 }
+
 // Dispatch dispatches event for object ZwpPanelSurfaceV1
 func (p *ZwpPanelSurfaceV1) Dispatch(event *Event) {
 	switch event.Opcode {

@@ -1,11 +1,12 @@
 package window
 
 import (
+	"sync"
+	"time"
+
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/winc"
 	"github.com/spaolacci/murmur3"
-	"sync"
-	"time"
 )
 
 type Widget struct {

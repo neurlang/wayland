@@ -1,7 +1,9 @@
 package window
 
-import cairo "github.com/neurlang/wayland/cairoshim"
-import "github.com/neurlang/wayland/wl"
+import (
+	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/wayland/wl"
+)
 
 const FrameStatusNone = 0
 const FrameStatusRepaint = 0x1
@@ -132,7 +134,7 @@ func (*windowFrame) AxisDiscrete(Widget *Widget, Input *Input, axis uint32, disc
 func (*windowFrame) PointerFrame(Widget *Widget, Input *Input)                                  {}
 
 type frame struct {
-	width, height int32 //nolint:unused // Reserved for future use
+	width, height int32  //nolint:unused // Reserved for future use
 	title         string //nolint:unused // Reserved for future use
 	flags         uint32 //nolint:unused // Reserved for future use
 	theme         *theme //nolint:unused // Reserved for future use
