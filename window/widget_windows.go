@@ -19,6 +19,7 @@ type Widget struct {
 	allocation_x, allocation_y int
 
 	parent_window *Window
+	form          *winc.Form
 	handler       WidgetHandler
 
 	allocation_width  int
@@ -147,9 +148,12 @@ func (w *Widget) ScheduleRedraw() {
 			w.handler.Redraw(w)
 			w.draw_mut.Unlock()
 
-			w.parent_window.form.Invalidate(false)
-			redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
-			w.parent_window.form.Invalidate(false)
+			// Safety check: parent_window might be nil for popup widgets
+			if w.parent_window != nil && w.parent_window.form != nil {
+				w.parent_window.form.Invalidate(false)
+				redrawer(w, winc.NewCanvasFromHwnd(w.parent_window.form.Handle()))
+				w.parent_window.form.Invalidate(false)
+			}
 
 			w.draw_mut.Lock()
 			w.scheduled = false
