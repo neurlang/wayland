@@ -334,9 +334,9 @@ func (w *Window) UninhibitRedraw() {
 func (w *Window) SeMaximized(maximized bool) error {
 	if w.maximized != maximized {
 		if w.maximized {
-			w.form.Restore()
+			go w.form.Restore()
 		} else {
-			w.form.Maximise()
+			go w.form.Maximise()
 		}
 		w.maximized = maximized
 	}
@@ -348,15 +348,15 @@ func (w *Window) SetMaximized(maximized bool) error {
 }
 
 func (w *Window) SetMinimized() error {
-	w.form.Minimise()
+	go w.form.Minimise()
 	return nil
 }
 
 func (w *Window) ToggleMaximized() error {
 	if w.maximized {
-		w.form.Restore()
+		go w.form.Restore()
 	} else {
-		w.form.Maximise()
+		go w.form.Maximise()
 	}
 	w.maximized = !w.maximized
 	return nil
