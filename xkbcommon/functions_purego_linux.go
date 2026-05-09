@@ -35,6 +35,9 @@ import "runtime"
 // It returns A compose table for the given locale, or nil if the
 // compilation failed or a Compose file was not found.
 func (context *Context) ComposeTableNewFromLocale(locale string, flags uint32) (ret *ComposeTable) {
+	if xkb_compose_table_new_from_locale == nil {
+		return nil
+	}
 	ct := xkb_compose_table_new_from_locale(context.cx, locale, flags)
 	if ct == 0 {
 		return nil
@@ -55,6 +58,9 @@ func (context *Context) ComposeTableNewFromLocale(locale string, flags uint32) (
 //
 // It returns A new compose state, or nil on failure.
 func ComposeStateNew(table *ComposeTable, flags uint32) (ret *ComposeState) {
+	if xkb_compose_state_new == nil {
+		return nil
+	}
 	cs := xkb_compose_state_new(table.ct, flags)
 	ret = &ComposeState{
 		cs: cs,
@@ -281,6 +287,9 @@ func (keymap *Keymap) KeyRepeats(code uint32) bool {
 //
 // It returns A new context, or nil on failure.
 func ContextNew(flags uint32) (ret *Context) {
+	if xkb_context_new == nil {
+		return nil
+	}
 	var cx = xkb_context_new(flags)
 	if cx == 0 {
 		return nil
@@ -316,6 +325,9 @@ func contextUnref(context *Context) {
 //
 // See also StateKeyGetUtf32()
 func KeysymToUtf32(keysym uint32) uint32 {
+	if xkb_keysym_to_utf32 == nil {
+		return 0
+	}
 	return uint32(xkb_keysym_to_utf32(uint(keysym)))
 }
 

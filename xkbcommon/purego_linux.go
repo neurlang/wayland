@@ -51,10 +51,10 @@ var xkb_state_update_mask func(uintptr, uint, uint, uint, uint, uint, uint) uint
 func init() {
 	libxkbcommon, err := purego.Dlopen(getSystemLibrary(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {
-		libxkbcommon, err = purego.Dlopen(getSystemLibrary()+getSystemLibraryDotVersion(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
-		if err != nil {
-			panic(err)
-		}
+		libxkbcommon, _ = purego.Dlopen(getSystemLibrary()+getSystemLibraryDotVersion(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	}
+	if libxkbcommon == 0 {
+		return
 	}
 	purego.RegisterLibFunc(&xkb_compose_state_feed, libxkbcommon, "xkb_compose_state_feed")
 	purego.RegisterLibFunc(&xkb_compose_state_get_one_sym, libxkbcommon, "xkb_compose_state_get_one_sym")
