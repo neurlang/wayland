@@ -3193,9 +3193,15 @@ func windowSyncGeometry(Window *Window) {
 		geometry.Height == Window.lastGeometry.Height {
 		return
 	}
+
+	var yFix int32
+	if Window.decoration != nil {
+		yFix = TitleHeight
+	}
+
 	_ = Window.xdgSurface.SetWindowGeometry(
 		geometry.X,
-		geometry.Y,
+		geometry.Y-yFix,
 		geometry.Width,
 		geometry.Height)
 	Window.lastGeometry = geometry
