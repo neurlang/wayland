@@ -26,15 +26,42 @@ const (
 
 // Colors (RGBA)
 var (
-	ColTitle            = color.RGBA{0xEB, 0xEB, 0xEB, 0xFF} // Light gray titlebar
-	ColTitleInact       = color.RGBA{0xF6, 0xF5, 0xF4, 0xFF} // Very light gray when inactive
-	ColButtonMinHover   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
-	ColButtonMaxHover   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
-	ColButtonCloseHover = color.RGBA{0xE0, 0x1B, 0x24, 0xFF} // Red on hover (GNOME style)
-	ColSym              = color.RGBA{0x2E, 0x34, 0x36, 0xFF} // Dark gray/black for symbols
-	ColSymClose         = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
-	ColSymInact         = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
+	ColTitleLight            = color.RGBA{0xEB, 0xEB, 0xEB, 0xFF} // Light gray titlebar
+	ColTitleInactLight       = color.RGBA{0xF6, 0xF5, 0xF4, 0xFF} // Very light gray when inactive
+	ColButtonMinHoverLight   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColButtonMaxHoverLight   = color.RGBA{0xDA, 0xDA, 0xDA, 0xFF} // Slightly darker on hover
+	ColButtonCloseHoverLight = color.RGBA{0xE0, 0x1B, 0x24, 0xFF} // Red on hover (GNOME style)
+	ColSymLight              = color.RGBA{0x2E, 0x34, 0x36, 0xFF} // Dark gray/black for symbols
+	ColSymCloseLight         = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
+	ColSymInactLight         = color.RGBA{0x9A, 0x99, 0x96, 0xFF} // Gray when inactive
+	ColTextActiveLight       = color.RGBA{0, 0, 0, 0xff}
+	ColTextInactiveLight     = color.RGBA{154, 153, 150, 0xff}
 )
+
+// Dark Mode Colors (RGBA)
+var (
+	ColTitleDark            = color.RGBA{0x0E, 0x0E, 0x0E, 0xFF} // Dark blue-gray titlebar
+	ColTitleInactDark       = color.RGBA{0x04, 0x04, 0x04, 0xFF} // Slightly darker when inactive
+	ColButtonMinHoverDark   = color.RGBA{0x3C, 0x3C, 0x52, 0xFF} // Lighter accent on hover
+	ColButtonMaxHoverDark   = color.RGBA{0x3C, 0x3C, 0x52, 0xFF} // Lighter accent on hover
+	ColButtonCloseHoverDark = color.RGBA{0xBF, 0x4D, 0x55, 0xFF} // Muted red on hover
+	ColSymDark              = color.RGBA{0xC8, 0xC9, 0xD1, 0xFF} // Light gray/white for symbols
+	ColSymCloseDark         = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF} // White symbol on red close button
+	ColSymInactDark         = color.RGBA{0x75, 0x76, 0x81, 0xFF} // Gray when inactive
+	ColTextActiveDark       = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	ColTextInactiveDark     = color.RGBA{100, 100, 100, 0xff}
+)
+
+var ColTitle = [2]color.RGBA{ColTitleLight, ColTitleDark}
+var ColTitleInact = [2]color.RGBA{ColTitleInactLight, ColTitleInactDark}
+var ColButtonMinHover = [2]color.RGBA{ColButtonMinHoverLight, ColButtonMinHoverDark}
+var ColButtonMaxHover = [2]color.RGBA{ColButtonMaxHoverLight, ColButtonMaxHoverDark}
+var ColButtonCloseHover = [2]color.RGBA{ColButtonCloseHoverLight, ColButtonCloseHoverDark}
+var ColSym = [2]color.RGBA{ColSymLight, ColSymDark}
+var ColSymClose = [2]color.RGBA{ColSymCloseLight, ColSymCloseDark}
+var ColSymInact = [2]color.RGBA{ColSymInactLight, ColSymInactDark}
+var ColTextActive = [2]color.RGBA{ColTextActiveLight, ColTextActiveDark}
+var ColTextInactive = [2]color.RGBA{ColTextInactiveLight, ColTextInactiveDark}
 
 // Font paths to try for titlebar text
 var decorationFonts = []string{
@@ -416,9 +443,9 @@ func (d *WindowDecoration) renderTitleBar() {
 	img := imageFromBuffer(surf.buffer)
 	dc := gg.NewContextForRGBA(img)
 
-	colTitle := ColTitle
+	colTitle := ColTitle[d.window.decoration_theme]
 	if !d.active {
-		colTitle = ColTitleInact
+		colTitle = ColTitleInact[d.window.decoration_theme]
 	}
 	dc.SetColor(colTitle)
 	dc.Clear()
@@ -496,9 +523,9 @@ func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 
 	// Set text color - black when active, gray when inactive
 	if !d.active {
-		dc.SetRGB255(154, 153, 150)
+		dc.SetColor(ColTextInactive[d.window.decoration_theme])
 	} else {
-		dc.SetRGB255(0, 0, 0)
+		dc.SetColor(ColTextActive[d.window.decoration_theme])
 	}
 
 	// Draw the title text
@@ -507,9 +534,9 @@ func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 
 // drawButton renders a window button (min/max/close)
 func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, y int32) {
-	colTitle := ColTitle
+	colTitle := ColTitle[d.window.decoration_theme]
 	if !d.active {
-		colTitle = ColTitleInact
+		colTitle = ColTitleInact[d.window.decoration_theme]
 	}
 
 	var btnCol color.Color
@@ -520,19 +547,19 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, 
 	switch btnType {
 	case ComponentButtonMin:
 		if isHover && d.active {
-			btnCol = ColButtonMinHover
+			btnCol = ColButtonMinHover[d.window.decoration_theme]
 		} else {
 			btnCol = colTitle
 		}
 	case ComponentButtonMax:
 		if isHover && d.active {
-			btnCol = ColButtonMaxHover
+			btnCol = ColButtonMaxHover[d.window.decoration_theme]
 		} else {
 			btnCol = colTitle
 		}
 	case ComponentButtonClose:
 		if isHover && d.active {
-			btnCol = ColButtonCloseHover
+			btnCol = ColButtonCloseHover[d.window.decoration_theme]
 		} else {
 			btnCol = colTitle
 		}
@@ -547,12 +574,12 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, 
 
 	// Determine symbol color
 	if !d.active {
-		symCol = ColSymInact
+		symCol = ColSymInact[d.window.decoration_theme]
 	} else if btnType == ComponentButtonClose && isHover {
 		// White symbol on red close button when hovering
-		symCol = ColSymClose
+		symCol = ColSymClose[d.window.decoration_theme]
 	} else {
-		symCol = ColSym
+		symCol = ColSym[d.window.decoration_theme]
 	}
 
 	dc.SetColor(symCol)

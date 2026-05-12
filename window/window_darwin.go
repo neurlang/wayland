@@ -34,6 +34,9 @@ type Window struct {
 	Display *Display
 }
 
+func (w *Window) SetDecorationTheme(theme byte) {
+}
+
 type Popup struct {
 	Popup        *xdg.Popup
 	popuper      Popuper

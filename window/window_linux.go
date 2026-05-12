@@ -46,6 +46,11 @@ type runner interface {
 	Run(uint32)
 }
 
+// Sets the decoration theme of window
+func (w *Window) SetDecorationTheme(theme Theme) {
+	w.decoration_theme = byte(theme)
+}
+
 const BufferTypeShm = 1
 
 // cusors
@@ -492,6 +497,8 @@ type Window struct {
 	fullscreenMethod uint32 //nolint:unused // Reserved for future use
 
 	resizor ResizeHandler
+
+	decoration_theme byte
 }
 
 func (Window *Window) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {

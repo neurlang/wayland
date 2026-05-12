@@ -29,6 +29,9 @@ type Window struct {
 	Display *Display
 }
 
+func (w *Window) SetDecorationTheme(theme byte) {
+}
+
 func Create(d *Display) *Window {
 
 	form := winc.NewForm(nil)

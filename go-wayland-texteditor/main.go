@@ -906,6 +906,8 @@ func main() {
 	textarea.display = d
 	textarea.window = window.Create(d)
 
+	textarea.window.SetDecorationTheme(window.ThemeDark)
+
 	textarea.widget = textarea.window.AddWidget(&textarea)
 
 	textarea.window.SetTitle("textarea")

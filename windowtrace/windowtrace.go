@@ -585,3 +585,12 @@ func (f fullscreenHandler) Fullscreen(w *window.Window, h window.WidgetHandler) 
 	println("func Fullscreen")
 	f.FullscreenHandler.Fullscreen(&Window{Window: w, Display: (*Display)(w.Display)}, whan)
 }
+
+type Theme window.Theme
+
+const ThemeLight = Theme(window.ThemeLight)
+const ThemeDark = Theme(window.ThemeDark)
+
+func (w *Window) SetDecorationTheme(theme Theme) {
+	w.Window.SetDecorationTheme(window.Theme(theme))
+}
