@@ -378,8 +378,11 @@ func (w *Window) CreatePopup(seat *wl.Seat, clickSerial, width, height, x, y uin
 	if err != nil {
 		panic(err.Error())
 	}
-
-	_ = positioner.SetOffset(int32(x), int32(y))
+	var yFix int32
+	if w.decoration != nil {
+		yFix = TitleHeight
+	}
+	_ = positioner.SetOffset(int32(x), int32(y)+yFix)
 	_ = positioner.SetSize(int32(width), int32(height))
 	_ = positioner.SetAnchor(zxdg.PositionerAnchorTopLeft)
 
