@@ -295,10 +295,25 @@ func mainloop(vc *VkCube) {
 	fds := []unix.PollFd{{Fd: int32(wayland.DisplayGetFd(vc.wl.ndisplay)), Events: unix.POLLIN}}
 
 	for {
-
 		var index uint32
 		vc.swapchainResize()
 		vc.swapchainResize = func() {}
+
+		for {
+			var res vk.Result
+			res = vk.AcquireNextImage(vc.device, vc.swap_chain[0], ^uint64(0),
+				vc.semaphore, nil, &index)
+			if res == vk.Success || int32(res) == 1000001003 {
+				break
+			}
+			if int32(res) == -1000000000 {
+				println("surface lost")
+				vc.swapchainResize = func() {}
+				continue
+			}
+			println("AcquireNextImage failed:", int32(res))
+			return
+		}
 
 		for wayland.DisplayPrepareRead(vc.wl.ndisplay) != 0 {
 
@@ -334,19 +349,13 @@ func mainloop(vc *VkCube) {
 			wayland.DisplayCancelRead(vc.wl.ndisplay)
 		}
 
-		var result = [1]vk.Result{vk.AcquireNextImage(vc.device, vc.swap_chain[0], 60,
-			vc.semaphore, nil, &index)}
-		if result[0] != vk.Success {
-			println("AcquireNextImage is not success")
-			return
-		}
-
 		if !(index <= MAX_NUM_IMAGES) {
 			panic("assert")
 		}
 
 		vc.Render(&vc.buffers[index], 1)
 
+		var result = [1]vk.Result{0}
 		vk.QueuePresent(vc.queue,
 			&vk.PresentInfo{
 				SType:          vk.StructureTypePresentInfo,
@@ -366,7 +375,6 @@ func mainloop(vc *VkCube) {
 		vc.wl.nsurface.Commit()
 
 	}
-
 }
 
 func init_buffer(vc *VkCube, b *VkCubeBuffer) {
