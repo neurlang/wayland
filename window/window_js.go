@@ -1,10 +1,10 @@
 //go:build js
-// +build js
 
 package window
 
 import (
 	"syscall/js"
+	"time"
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
 )
@@ -16,6 +16,7 @@ var (
 	ctx      js.Value
 	surface  *Surface
 	windows  []*Window
+	renderFn js.Func
 )
 
 type Display struct {
@@ -53,8 +54,12 @@ func (d *Display) Exit() {
 	js.Global().Get("window").Call("close")
 }
 
+// DisplayRun blocks with sleep for cooperative threading
 func DisplayRun(d *Display) {
-	select {}
+	startRenderLoop()
+	for {
+		time.Sleep(time.Hour)
+	}
 }
 
 type Rectangle struct {
@@ -131,101 +136,82 @@ func initCanvas() {
 	existingCanvas := document.Call("getElementById", "canvas")
 	if existingCanvas.Truthy() {
 		canvas = existingCanvas
-		console.Call("log", "=== Using existing canvas with id=canvas ===")
+		
+		ctx = canvas.Call("getContext", "2d")
+		
+		width := int(canvas.Get("width").Int())
+		height := int(canvas.Get("height").Int())
+		stride := width * 4
+		surfaceData := make([]byte, stride*height)
+		surface = &Surface{
+			data:   surfaceData,
+			width:  int32(width),
+			height: int32(height),
+			stride: int32(stride),
+		}
+		
+		console.Call("log", "=== Using existing canvas ===")
 	} else {
 		width := 640
 		height := 640
 		
 		canvas = document.Call("createElement", "canvas")
-		widthVal := js.ValueOf(width)
-		heightVal := js.ValueOf(height)
 		
-		canvas.Call("setAttribute", "width", widthVal)
-		canvas.Call("setAttribute", "height", heightVal)
+		canvas.Call("setAttribute", "width", js.ValueOf(width))
+		canvas.Call("setAttribute", "height", js.ValueOf(height))
 		
 		body.Call("appendChild", canvas)
-		console.Call("log", "=== Created new canvas, size "+string(widthVal.String())+"x"+string(heightVal.String())+" ===")
+		
+		ctx = canvas.Call("getContext", "2d")
+		
+		stride := width * 4
+		surfaceData := make([]byte, stride*height)
+		surface = &Surface{
+			data:   surfaceData,
+			width:  int32(width),
+			height: int32(height),
+			stride: int32(stride),
+		}
+		
+		console.Call("log", "=== Created new canvas ===")
 	}
 	
-	ctx = canvas.Call("getContext", "2d")
-	
-	width := int(canvas.Get("width").Int())
-	height := int(canvas.Get("height").Int())
-	stride := width * 4
-	surfaceData := make([]byte, stride*height)
-	surface = &Surface{
-		data:   surfaceData,
-		width:  int32(width),
-		height: int32(height),
-		stride: int32(stride),
-	}
-	
-	console.Call("log", "=== Canvas initialized: "+string(canvas.Get("width").String())+"x"+string(canvas.Get("height").String())+", id="+string(canvas.Get("id").String())+" ===")
 	setupInputHandlers()
 }
 
 func setupInputHandlers() {
-	console := js.Global().Get("console")
-	
 	if !canvas.Truthy() {
-		console.Call("log", "ERROR: Canvas is not initialized!")
 		return
 	}
 	
-	idStr := string(canvas.Get("id").String())
-	console.Call("log", "=== Setting up mouse handlers on canvas id="+idStr+" ===")
-	
 	canvas.Call("addEventListener", "mousedown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
-		
 		buttonVal := event.Get("button")
-		button := buttonVal.Int()
-		
-		xVal := event.Get("offsetX")
-		yVal := event.Get("offsetY")
-		
-		console.Call("log", "=== MOUSE DOWN on canvas "+idStr+": button="+string(buttonVal.String())+", x="+string(xVal.String())+", y="+string(yVal.String())+" ===")
 		
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
-				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(button), wl.PointerButtonStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
+				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(buttonVal.Int()), wl.PointerButtonStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
-		
 		return nil
 	}))
-	
-	console.Call("log", "=== Mouse down listener attached to canvas "+idStr+" ===")
 	
 	canvas.Call("addEventListener", "mouseup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
-		
 		buttonVal := event.Get("button")
-		button := buttonVal.Int()
-		
-		xVal := event.Get("offsetX")
-		yVal := event.Get("offsetY")
-		
-		console.Call("log", "=== MOUSE UP on canvas "+idStr+": button="+string(buttonVal.String())+", x="+string(xVal.String())+", y="+string(yVal.String())+" ===")
 		
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
-				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(button), wl.PointerButtonStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
+				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(buttonVal.Int()), wl.PointerButtonStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
-		
 		return nil
 	}))
 	
-	console.Call("log", "=== Mouse up listener attached to canvas "+idStr+" ===")
-	
-	mouseMoveListener := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	canvas.Call("addEventListener", "mousemove", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
-		
 		xVal := event.Get("offsetX")
 		yVal := event.Get("offsetY")
-		
-		console.Call("log", "=== MOUSE MOVE on canvas "+idStr+": x="+string(xVal.String())+", y="+string(yVal.String())+" ===")
 		
 		if len(windows) > 0 && windows[0].widgets[0].userdata != nil {
 			cursor := -1
@@ -241,24 +227,16 @@ func setupInputHandlers() {
 				style.Set("cursor", "default")
 			}
 		}
-		
 		return nil
-	})
-	
-	canvas.Call("addEventListener", "mousemove", mouseMoveListener)
-	
-	console.Call("log", "=== Mouse move listener attached to canvas "+idStr+" ===")
+	}))
 	
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		keyCodeVal := event.Get("keyCode")
 		
-		console.Call("log", "=== KEY DOWN: keyCode="+string(keyCodeVal.String())+" ===")
-		
 		if len(windows) > 0 && windows[0].handler != nil {
 			windows[0].handler.Key(windows[0], &Input{}, 0, uint32(keyCodeVal.Int()), uint32(keyCodeVal.Int()), wl.KeyboardKeyStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
 		}
-		
 		return nil
 	}))
 	
@@ -266,16 +244,11 @@ func setupInputHandlers() {
 		event := args[0]
 		keyCodeVal := event.Get("keyCode")
 		
-		console.Call("log", "=== KEY UP: keyCode="+string(keyCodeVal.String())+" ===")
-		
 		if len(windows) > 0 && windows[0].handler != nil {
 			windows[0].handler.Key(windows[0], &Input{}, 0, uint32(keyCodeVal.Int()), uint32(keyCodeVal.Int()), wl.KeyboardKeyStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
 		}
-		
 		return nil
 	}))
-	
-	console.Call("log", "=== All input handlers setup complete for canvas "+idStr+" ===")
 }
 
 func (w *Window) WindowGetSurface() cairo.Surface {
@@ -323,11 +296,13 @@ func (s *Surface) ImageSurfaceGetStride() int {
 }
 
 func renderToCanvas() {
-	if surface != nil && surface.data != nil && ctx.Truthy() {
-		imgData := ctx.Get("ImageData").New(js.ValueOf(surface.width), js.ValueOf(surface.height))
-		imgData.Call("set", js.ValueOf(surface.data))
-		ctx.Call("putImageData", imgData, 0, 0)
+	if surface == nil || len(surface.data) == 0 || !ctx.Truthy() {
+		return
 	}
+
+	imgData := js.Global().Get("ImageData").New(js.ValueOf(surface.width), js.ValueOf(surface.height))
+	js.CopyBytesToJS(imgData.Get("data"), surface.data)
+	ctx.Call("putImageData", imgData, 0, 0)
 }
 
 func (w *Widget) SetUserDataWidgetHandler(wh interface{}) {
@@ -345,12 +320,7 @@ func (w *Widget) ScheduleResize(width int32, height int32) {
 }
 
 func (w *Widget) ScheduleRedraw() {
-	if w.userdata != nil {
-		if handler, ok := w.userdata.(interface{ Redraw(*Widget) }); ok {
-			handler.Redraw(w)
-		}
-		renderToCanvas()
-	}
+	renderToCanvas()
 }
 
 func (w *Widget) WidgetGetLastTime() uint32 {
@@ -363,4 +333,19 @@ func (w *Widget) Destroy() {
 type KeyboardHandler interface {
 	Key(window *Window, input *Input, time uint32, key uint32, notUnicode uint32, state wl.KeyboardKeyState, data WidgetHandler)
 	Focus(window *Window, device *Input)
+}
+
+// startRenderLoop sets up the rendering loop
+func startRenderLoop() {
+	renderFn = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
+			if handler, ok := windows[0].widgets[0].userdata.(interface{ Redraw(*Widget) }); ok {
+				handler.Redraw(windows[0].widgets[0])
+			}
+		}
+		renderToCanvas()
+		js.Global().Call("requestAnimationFrame", renderFn)
+		return nil
+	})
+	js.Global().Call("requestAnimationFrame", renderFn)
 }
