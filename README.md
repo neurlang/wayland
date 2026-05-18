@@ -4,9 +4,9 @@
 
 ## Window Package OS Support
 
-| Linux | Wine    | MacOs   |
-|-------|---------|---------|
-| ![L](lin.gif?raw=true) | ![L](win.gif?raw=true) | ![L](mac.gif?raw=true) |
+| Linux | Wine    | MacOs   | Wasm |
+|-------|---------|---------|------|
+| ![L](lin.gif?raw=true) | ![L](win.gif?raw=true) | ![L](mac.gif?raw=true) | [WASM](https://neurlang.online/dl/go-wayland-smoke/)
 
 
 Golang Wayland
