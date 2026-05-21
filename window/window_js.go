@@ -7,6 +7,7 @@ import (
 	"syscall/js"
 	"time"
 	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/wayland/external/swizzle"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/xdg"
 )
@@ -403,7 +404,10 @@ func renderToCanvas() {
 	}
 
 	imgData := js.Global().Get("ImageData").New(js.ValueOf(surface.width), js.ValueOf(surface.height))
-	js.CopyBytesToJS(imgData.Get("data"), surface.data)
+	var buf = make([]byte, len(surface.data), len(surface.data))
+	copy(buf, surface.data)
+	swizzle.BGRA(buf)
+	js.CopyBytesToJS(imgData.Get("data"), buf)
 	ctx.Call("putImageData", imgData, 0, 0)
 }
 
