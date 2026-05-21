@@ -289,11 +289,20 @@ func setupInputHandlers() {
 	
 	canvas.Call("addEventListener", "mousedown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
-		buttonVal := event.Get("button")
+		jsButton := event.Get("button")
+		var waylandButton uint32
+		switch jsButton.Int() {
+		case 0:
+			waylandButton = 272
+		case 1:
+			waylandButton = 274
+		case 2:
+			waylandButton = 273
+		}
 		
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
-				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(buttonVal.Int()), wl.PointerButtonStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
+				handler.Button(windows[0].widgets[0], &Input{}, uint32(time.Now().UnixNano()/1000000), waylandButton, wl.PointerButtonStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
 		return nil
@@ -301,11 +310,20 @@ func setupInputHandlers() {
 	
 	canvas.Call("addEventListener", "mouseup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
-		buttonVal := event.Get("button")
+		jsButton := event.Get("button")
+		var waylandButton uint32
+		switch jsButton.Int() {
+		case 0:
+			waylandButton = 272
+		case 1:
+			waylandButton = 274
+		case 2:
+			waylandButton = 273
+		}
 		
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
-				handler.Button(windows[0].widgets[0], &Input{}, 0, uint32(buttonVal.Int()), wl.PointerButtonStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
+				handler.Button(windows[0].widgets[0], &Input{}, uint32(time.Now().UnixNano()/1000000), waylandButton, wl.PointerButtonStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
 		return nil
@@ -316,7 +334,7 @@ func setupInputHandlers() {
 		xVal := event.Get("offsetX")
 		yVal := event.Get("offsetY")
 		
-		if len(windows) > 0 && windows[0].widgets[0].userdata != nil {
+		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			cursor := -1
 			if handler, ok := windows[0].widgets[0].userdata.(interface{ Motion(*Widget, *Input, uint32, float32, float32) int }); ok {
 				cursor = handler.Motion(windows[0].widgets[0], &Input{}, 0, float32(xVal.Float()), float32(yVal.Float()))
