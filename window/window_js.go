@@ -3,10 +3,12 @@
 package window
 
 import (
+	"io"
 	"syscall/js"
 	"time"
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/xdg"
 )
 
 var (
@@ -23,7 +25,7 @@ type Display struct {
 }
 
 type Window struct {
-	display  *Display
+	Display  *Display
 	width    int32
 	height   int32
 	title    string
@@ -42,6 +44,20 @@ type Input struct {
 
 type WidgetHandler interface{}
 
+type DataSource struct {
+	CopyBuffer string
+}
+
+type Popup struct {
+	Popup   *xdg.Popup
+	Display *Display
+}
+
+func (p *Popup) SetPopupHandler(_ interface{}) {}
+func (p *Popup) BufferRelease(_ *wl.Buffer) {}
+func (p *Popup) PopupGetSurface() cairo.Surface { return nil }
+func (p *Popup) Destroy() {}
+
 func DisplayCreate(args []string) (*Display, error) {
 	initCanvas()
 	return &Display{}, nil
@@ -52,6 +68,53 @@ func (d *Display) Destroy() {
 
 func (d *Display) Exit() {
 	js.Global().Get("window").Call("close")
+}
+
+func (d *Display) SetSeatHandler(_ interface{}) {
+}
+
+func (d *Display) CreateDataSource() (*DataSource, error) {
+	return &DataSource{}, nil
+}
+
+func (d *Display) GetSerial() uint32 {
+	return 0
+}
+
+func (d *Display) HandleRegistryGlobal(_ wl.RegistryGlobalEvent) {
+}
+
+func (d *Display) HandleRegistryGlobalRemove(_ wl.RegistryGlobalRemoveEvent) {
+}
+
+func (d *Display) HandleShmFormat(_ wl.ShmFormatEvent) {
+}
+
+func (d *Display) HandleWmBasePing(_ xdg.WmBasePingEvent) {
+}
+
+func (d *Display) RegistryGlobal(_ *wl.Registry, _ uint32, _ string, _ uint32) {
+}
+
+func (d *Display) RegistryGlobalRemove(_ *wl.Registry, _ uint32) {
+}
+
+func (d *Display) SetGlobalHandler(_ interface{}) {
+}
+
+func (d *Display) SetUserData(_ interface{}) {
+}
+
+func (d *Display) ShellPing(_ *xdg.WmBase, _ uint32) {
+}
+
+func (d *Display) ShmFormat(_ *wl.Shm, _ uint32) {
+}
+
+func SurfaceEnter(_ *wl.Surface, _ *wl.Output) {
+}
+
+func SurfaceLeave(_ *wl.Surface, _ *wl.Output) {
 }
 
 // DisplayRun blocks with sleep for cooperative threading
@@ -92,10 +155,14 @@ const (
 const BufferTypeShm = 1
 
 func Create(d *Display) *Window {
-	w := &Window{display: d, width: 200, height: 200}
+	w := &Window{Display: d, width: 200, height: 200}
 	w.widgets = make([]*Widget, 0)
 	windows = append(windows, w)
 	return w
+}
+
+func CreateUndecorated(d *Display) *Window {
+	return Create(d)
 }
 
 func (w *Window) SetTitle(title string) {
@@ -107,6 +174,41 @@ func (w *Window) SetBufferType(t int32) {
 
 func (w *Window) SetKeyboardHandler(h KeyboardHandler) {
 	w.handler = h
+}
+
+func (w *Window) SetFullscreenHandler(_ interface{}) {
+}
+
+func (w *Window) SetDecorationTheme(_ Theme) {
+}
+
+func (w *Window) SetFullscreen(_ bool) error {
+	return nil
+}
+
+func (w *Window) SetMinimized() error {
+	return nil
+}
+
+func (w *Window) ToggleMaximized() error {
+	return nil
+}
+
+func (w *Window) UninhibitRedraw() {
+}
+
+func (w *Window) InhibitRedraw() {
+}
+
+func (w *Window) ScheduleResize(_ int32, _ int32) {
+}
+
+func (w *Window) AddPopupWidget(_ *Popup, _ WidgetHandler) *Widget {
+	return nil
+}
+
+func (w *Window) CreatePopup(_ *wl.Seat, _, _, _, _, _ uint32) *Popup {
+	return nil
 }
 
 func (w *Window) AddWidget(wh interface{}) *Widget {
@@ -307,6 +409,46 @@ func renderToCanvas() {
 
 func (w *Widget) SetUserDataWidgetHandler(wh interface{}) {
 	w.userdata = wh
+}
+
+func (w *Widget) GetAllocation() Rectangle {
+	return w.allocation
+}
+
+func (w *Widget) SetAllocation(a int32, b int32, c int32, d int32) {
+	w.allocation = Rectangle{a, b, c, d}
+}
+
+func (w *Widget) AddWidget(_ WidgetHandler) *Widget {
+	return w
+}
+
+func (i *Input) GetModifiers() ModType {
+	return 0
+}
+
+func (i *Input) GetRune(sym *uint32, key uint32) rune {
+	return 0
+}
+
+func (i *Input) GetUtf8() []byte {
+	return nil
+}
+
+func (i *Input) ReceiveSelectionData(_ string, _ io.WriteCloser) error {
+	return nil
+}
+
+func (i *Input) DeviceSetSelection(_ *DataSource, _ uint32) {
+}
+
+func (s *DataSource) RemoveListener(_ interface{}) {
+}
+
+func (s *DataSource) Offer(_ string) {
+}
+
+func (s *DataSource) AddListener(_ interface{}) {
 }
 
 func (w *Widget) ScheduleResize(width int32, height int32) {
