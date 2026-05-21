@@ -1,4 +1,4 @@
-package main
+package lib_editor_backend
 
 func detect_csharp(file [][]string) bool {
 	for _, row := range file {

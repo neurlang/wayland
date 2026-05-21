@@ -1,4 +1,4 @@
-package main
+package lib_editor_backend
 
 import (
 	"bytes"

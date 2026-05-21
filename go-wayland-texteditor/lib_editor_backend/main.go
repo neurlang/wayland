@@ -1,10 +1,7 @@
-package main
+package lib_editor_backend
 
 import (
 	"encoding/json"
-	"io"
-	"log"
-	"net/http"
 	"strings"
 	"sync"
 )
@@ -342,18 +339,12 @@ type EraseResponse struct {
 	Erased bool
 }
 
-func handlerContent(w http.ResponseWriter, r *http.Request) {
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return
-	}
-	println(string(body))
+func handleContent(body string) string {
 
 	var cr ContentRequest
-	err = json.Unmarshal(body, &cr)
+	var err = json.Unmarshal([]byte(body), &cr)
 	if err != nil {
-		return
+		return "{}"
 	}
 	var resp ContentResponse
 	var recolor bool
@@ -429,16 +420,14 @@ func handlerContent(w http.ResponseWriter, r *http.Request) {
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
-		return
+		return "{}"
 	}
 
-	if _, err := w.Write(bytes); err != nil {
-		log.Printf("failed to write response: %v", err)
-	}
+	return string(bytes)
 }
-func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
+func handleScrollbar(path string) string {
 
-	path := req.URL.Path[strings.LastIndex(req.URL.Path, "/"):]
+	path = path[strings.LastIndex(path, "/"):]
 	path = strings.TrimSuffix(path, ".png")
 	path = strings.TrimPrefix(path, "/")
 	if path == "live" {
@@ -451,14 +440,7 @@ func handlerScrollbar(w http.ResponseWriter, req *http.Request) {
 
 	body, err := reprocess_scrollbar(file)
 	if err != nil {
-		return
+		return "{}"
 	}
-	if _, err := w.Write(body); err != nil {
-		log.Printf("failed to write response: %v", err)
-	}
-}
-func main() {
-	http.HandleFunc("/content", handlerContent)
-	http.HandleFunc("/scrollbar/", handlerScrollbar)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	return string(body)
 }
