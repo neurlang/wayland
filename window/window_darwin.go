@@ -34,7 +34,7 @@ type Window struct {
 	Display *Display
 }
 
-func (w *Window) SetDecorationTheme(theme byte) {
+func (w *Window) SetDecorationTheme(theme Theme) {
 }
 
 type Popup struct {
