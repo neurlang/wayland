@@ -107,7 +107,6 @@ go install github.com/neurlang/wayland/go-wayland-smoke@latest
 go install github.com/neurlang/wayland/go-wayland-imageviewer@latest
 go install -tags wayland github.com/neurlang/wayland/go-wayland-cube@latest
 go install github.com/neurlang/wayland/go-wayland-texteditor@latest
-go install github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
 go install github.com/neurlang/wayland/go-wayland-web-browser/browser@latest
 ```
 
@@ -118,13 +117,6 @@ go get github.com/neurlang/wayland/go-wayland-simple-shm@latest
 go get github.com/neurlang/wayland/go-wayland-smoke@latest
 go get github.com/neurlang/wayland/go-wayland-imageviewer@latest
 go get github.com/neurlang/wayland/go-wayland-texteditor@latest
-go get github.com/neurlang/wayland/go-wayland-texteditor/editor_backend@latest
 ```
 
 Finally, run weston and the executables.
-
-# Running the go-wayland-texteditor (Windows and Linux)
-
-First, run the editor_backend executable
-
-Secondly, run the go-wayland-texteditor executable, in the folder with the PNGs and JPGs (to see the fonts)
