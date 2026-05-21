@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
-	"net/http"
 )
 
 type WriteRequest struct {
@@ -61,25 +58,15 @@ type EraseResponse struct {
 	Erased bool
 }
 
-func (req *ContentRequest) Reader() *bytes.Reader {
-	requestByte, _ := json.Marshal(req)
-	requestReader := bytes.NewReader(requestByte)
-	return requestReader
-}
 
 func load_content(creq ContentRequest) (*ContentResponse, error) {
-	resp, err := http.Post("http://127.0.0.1:8080/content", "application/json", creq.Reader())
+	requestByte, err := json.Marshal(creq)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	resp := libInstance.Call("/content", string(requestByte))
 	var cr ContentResponse
-	//println(string(body))
-	err = json.Unmarshal(body, &cr)
+	err = json.Unmarshal([]byte(resp), &cr)
 	if err != nil {
 		return nil, err
 	}

@@ -3,18 +3,15 @@ package main
 import (
 	"image/color"
 	"image/png"
-	"net/http"
+	"strings"
 )
 
 const scrollTestFilename = "live.png"
 
 func downloadScrollbarPatch(filename string) ([][3]byte, error) {
-	resp, err := http.Get("http://127.0.0.1:8080/scrollbar/" + filename)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	img, err := png.Decode(resp.Body)
+	resp := libInstance.Call("/scrollbar/"+filename, "")
+	reader := strings.NewReader(resp)
+	img, err := png.Decode(reader)
 	if err != nil {
 		return nil, err
 	}
