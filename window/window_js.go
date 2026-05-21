@@ -10,6 +10,7 @@ import (
 	"github.com/neurlang/wayland/external/swizzle"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/xdg"
+	"github.com/neurlang/wayland/xkbcommon"
 )
 
 var (
@@ -41,6 +42,7 @@ type Widget struct {
 }
 
 type Input struct {
+	lastKey string
 }
 
 type WidgetHandler interface{}
@@ -354,19 +356,77 @@ func setupInputHandlers() {
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		keyCodeVal := event.Get("keyCode")
-		
+		keyStr := event.Get("key").String()
+
+		notUnicode := uint32(keyCodeVal.Int())
+		switch keyStr {
+		case "Backspace":
+			notUnicode = xkbcommon.KeyBackspace
+		case "Delete":
+			notUnicode = xkbcommon.KeyDelete
+		case "Enter":
+			notUnicode = xkbcommon.KeyReturn
+		case "ArrowLeft":
+			notUnicode = xkbcommon.KeyLeft
+		case "ArrowRight":
+			notUnicode = xkbcommon.KeyRight
+		case "ArrowUp":
+			notUnicode = xkbcommon.KeyUp
+		case "ArrowDown":
+			notUnicode = xkbcommon.KeyDown
+		case "Home":
+			notUnicode = xkbcommon.KeyHome
+		case "End":
+			notUnicode = xkbcommon.KeyEnd
+		default:
+			runes := []rune(keyStr)
+			if len(runes) > 0 {
+				notUnicode = uint32(runes[0])
+			}
+		}
+
 		if len(windows) > 0 && windows[0].handler != nil {
-			windows[0].handler.Key(windows[0], &Input{}, 0, uint32(keyCodeVal.Int()), uint32(keyCodeVal.Int()), wl.KeyboardKeyStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
+			input := &Input{lastKey: keyStr}
+			windows[0].handler.Key(windows[0], input, 0, uint32(keyCodeVal.Int()), notUnicode, wl.KeyboardKeyStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
 		}
 		return nil
 	}))
-	
+
 	js.Global().Call("addEventListener", "keyup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		keyCodeVal := event.Get("keyCode")
-		
+		keyStr := event.Get("key").String()
+
+		notUnicode := uint32(keyCodeVal.Int())
+		switch keyStr {
+		case "Backspace":
+			notUnicode = xkbcommon.KeyBackspace
+		case "Delete":
+			notUnicode = xkbcommon.KeyDelete
+		case "Enter":
+			notUnicode = xkbcommon.KeyReturn
+		case "ArrowLeft":
+			notUnicode = xkbcommon.KeyLeft
+		case "ArrowRight":
+			notUnicode = xkbcommon.KeyRight
+		case "ArrowUp":
+			notUnicode = xkbcommon.KeyUp
+		case "ArrowDown":
+			notUnicode = xkbcommon.KeyDown
+		case "Home":
+			notUnicode = xkbcommon.KeyHome
+		case "End":
+			notUnicode = xkbcommon.KeyEnd
+		default:
+			runes := []rune(keyStr)
+			if len(runes) > 0 {
+				notUnicode = uint32(runes[0])
+			}
+		}
+
 		if len(windows) > 0 && windows[0].handler != nil {
-			windows[0].handler.Key(windows[0], &Input{}, 0, uint32(keyCodeVal.Int()), uint32(keyCodeVal.Int()), wl.KeyboardKeyStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
+			input := &Input{lastKey: keyStr}
+			windows[0].handler.Key(windows[0], input, 0, uint32(keyCodeVal.Int()), notUnicode, wl.KeyboardKeyStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
 		}
 		return nil
 	}))
@@ -450,11 +510,17 @@ func (i *Input) GetModifiers() ModType {
 }
 
 func (i *Input) GetRune(sym *uint32, key uint32) rune {
-	return 0
+	switch *sym {
+	case xkbcommon.KeyBackspace, xkbcommon.KeyDelete, xkbcommon.KeyReturn, xkbcommon.KeyKpEnter,
+		xkbcommon.KeyLeft, xkbcommon.KeyRight, xkbcommon.KeyUp, xkbcommon.KeyDown,
+		xkbcommon.KeyHome, xkbcommon.KeyEnd:
+		return 0
+	}
+	return rune(*sym)
 }
 
 func (i *Input) GetUtf8() []byte {
-	return nil
+	return []byte(i.lastKey)
 }
 
 func (i *Input) ReceiveSelectionData(_ string, _ io.WriteCloser) error {
