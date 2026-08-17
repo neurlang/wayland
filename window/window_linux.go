@@ -38,6 +38,7 @@ import (
 
 	"errors"
 	"fmt"
+	"sync"
 
 	xkb "github.com/neurlang/wayland/xkbcommon"
 )
@@ -129,6 +130,8 @@ type Display struct {
 	dataDeviceManagerVersion uint32
 
 	deferredListNew []runner
+
+	deferredMu sync.Mutex // guards deferredListNew
 
 	//display_task_new os.Runner
 	surface2window map[*wl.Surface]*Window
@@ -3712,8 +3715,9 @@ func (d *Display) CreateDataSource() (*DataSource, error) {
 
 //line 6478
 func displayDefer(Display *Display /*task *task,*/, fun runner) {
-
+	Display.deferredMu.Lock() 
 	Display.deferredListNew = append(Display.deferredListNew, fun)
+	Display.deferredMu.Unlock()
 }
 
 //line 6501
@@ -3721,14 +3725,15 @@ func DisplayRun(Display *Display) {
 
 	Display.running = true
 	for {
-
+		Display.deferredMu.Lock()
 		for len(Display.deferredListNew) > 0 {
-
-			Display.deferredListNew[0].Run(0)
-
+			task := Display.deferredListNew[0]
 			Display.deferredListNew = Display.deferredListNew[1:]
-
+			Display.deferredMu.Unlock()
+			task.Run(0)
+			Display.deferredMu.Lock()
 		}
+		Display.deferredMu.Unlock()
 
 		if !Display.running {
 			break
