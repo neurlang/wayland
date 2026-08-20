@@ -146,3 +146,48 @@ func TestFractionalBufferSize(t *testing.T) {
 		})
 	}
 }
+
+type nestedResizeHandler struct {
+	WidgetHandler
+	calls int
+}
+
+func (h *nestedResizeHandler) Resize(widget *Widget, _, _, _, _ int32) {
+	h.calls++
+	if h.calls == 1 {
+		widget.ScheduleResize(933, 680)
+	}
+}
+
+func TestDrainPendingResizesAppliesRequestFromResizeHandler(t *testing.T) {
+	display := &Display{}
+	window := &Window{
+		Display: display,
+		pendingAllocation: Rectangle{
+			Width:  1000,
+			Height: 690,
+		},
+		resizeNeeded: 1,
+	}
+	surface := &surface{Window: window}
+	handler := &nestedResizeHandler{}
+	widget := &Widget{
+		Window:   window,
+		surface:  surface,
+		userdata: handler,
+	}
+	surface.Widget = widget
+	window.mainSurface = surface
+
+	drainPendingResizes(window)
+
+	if handler.calls != 2 {
+		t.Fatalf("resize handler called %d times, want 2", handler.calls)
+	}
+	if got := widget.allocation; got.Width != 933 || got.Height != 680 {
+		t.Errorf("final allocation = %dx%d, want 933x680", got.Width, got.Height)
+	}
+	if window.resizeNeeded != 0 {
+		t.Errorf("resizeNeeded = %d, want 0", window.resizeNeeded)
+	}
+}

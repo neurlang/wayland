@@ -3312,6 +3312,18 @@ func idleResize(Window *Window) {
 	windowDoResize(Window)
 }
 
+// drainPendingResizes applies resize requests until the widget and the
+// compositor-facing allocation agree. A resize handler may discover its final
+// pixel geometry (for example after receiving a fractional scale) and request
+// another logical size from inside windowDoResize. Processing only one request
+// here leaves the old, oversized allocation visible until an unrelated user
+// resize wakes the event loop again.
+func drainPendingResizes(Window *Window) {
+	for Window.resizeNeeded != 0 {
+		idleResize(Window)
+	}
+}
+
 //line 4223
 func (Window *Window) ScheduleResize(width int32, height int32) {
 	// this is an explicit change from upstream wayland/weston
@@ -3495,7 +3507,7 @@ func (Window *Window) Run(events uint32) {
 			return
 		}
 
-		idleResize(Window)
+		drainPendingResizes(Window)
 
 	}
 
