@@ -114,7 +114,7 @@ type Display struct {
 	inputList []*Input
 	//	padd		uint64
 	//	pade		uint64
-	outputList [2]*output //nolint:unused // Reserved for future use
+	outputList []*output
 	//	padf		uint64
 	//	padg		uint64
 
@@ -183,6 +183,7 @@ type surface struct {
 	bufferType      int32
 	bufferTransform int32
 	bufferScale     int32
+	enteredOutputs  map[*wl.Output]struct{}
 
 	cairoSurface cairo.Surface
 }
@@ -632,6 +633,64 @@ func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
 
+func (surface *surface) enterOutput(wlSurface *wl.Surface, wlOutput *wl.Output) {
+	if wlSurface != surface.surface_ || surface.Window == nil {
+		return
+	}
+	output := surface.Window.Display.outputByProxy(wlOutput)
+	if output == nil {
+		return
+	}
+	if surface.enteredOutputs == nil {
+		surface.enteredOutputs = make(map[*wl.Output]struct{})
+	}
+	if _, entered := surface.enteredOutputs[wlOutput]; entered {
+		return
+	}
+	surface.enteredOutputs[wlOutput] = struct{}{}
+	output.surfaces[surface] = struct{}{}
+	surface.updateBufferScale()
+}
+
+func (surface *surface) leaveOutput(wlSurface *wl.Surface, wlOutput *wl.Output) {
+	if wlSurface != surface.surface_ || surface.Window == nil || surface.enteredOutputs == nil {
+		return
+	}
+	if _, entered := surface.enteredOutputs[wlOutput]; !entered {
+		return
+	}
+	delete(surface.enteredOutputs, wlOutput)
+	if output := surface.Window.Display.outputByProxy(wlOutput); output != nil {
+		delete(output.surfaces, surface)
+	}
+	surface.updateBufferScale()
+}
+
+func (surface *surface) updateBufferScale() {
+	if surface.Window == nil {
+		return
+	}
+	var scale int32
+	for wlOutput := range surface.enteredOutputs {
+		if output := surface.Window.Display.outputByProxy(wlOutput); output != nil && output.scale > scale {
+			scale = output.scale
+		}
+	}
+	if scale == 0 {
+		scale = surface.Window.Display.BufferScale()
+	}
+	scale = normalizeBufferScale(scale)
+	if surface.bufferScale == scale {
+		return
+	}
+	surface.bufferScale = scale
+	_ = surface.surface_.SetBufferScale(scale)
+	if surface.Widget != nil {
+		surfaceResize(surface)
+	}
+	surface.Window.ScheduleRedraw()
+}
+
 type Widget struct {
 	Window     *Window
 	surface    *surface
@@ -1007,8 +1066,47 @@ type output struct {
 	link           [2]*output //nolint:unused // Reserved for future use
 	transform      int32      //nolint:unused // Reserved for future use
 	scale          int32
+	surfaces       map[*surface]struct{}
 	maker          string
 	model          string
+}
+
+func normalizeBufferScale(scale int32) int32 {
+	if scale < 1 {
+		return 1
+	}
+	return scale
+}
+
+func maxBufferScale(scales ...int32) int32 {
+	max := int32(1)
+	for _, scale := range scales {
+		if scale > max {
+			max = scale
+		}
+	}
+	return max
+}
+
+// BufferScale reports the highest integer scale announced by the connected
+// outputs. It is useful before a surface has entered a specific output.
+func (d *Display) BufferScale() int32 {
+	scales := make([]int32, 0, len(d.outputList))
+	for _, output := range d.outputList {
+		if output != nil {
+			scales = append(scales, output.scale)
+		}
+	}
+	return maxBufferScale(scales...)
+}
+
+func (d *Display) outputByProxy(wlOutput *wl.Output) *output {
+	for _, output := range d.outputList {
+		if output != nil && output.output == wlOutput {
+			return output
+		}
+	}
+	return nil
 }
 
 type shmPool struct {
@@ -2293,6 +2391,13 @@ func windowCreateMainSurface(Window *Window) {
 
 //line 1552
 func surfaceDestroy(surface *surface) {
+	if surface.Window != nil {
+		for wlOutput := range surface.enteredOutputs {
+			if output := surface.Window.Display.outputByProxy(wlOutput); output != nil {
+				delete(output.surfaces, surface)
+			}
+		}
+	}
 	if surface.frameCb != nil {
 		wlclient.CallbackDestroy(surface.frameCb)
 	}
@@ -3060,12 +3165,18 @@ func (input *Input) ReceiveSelectionData(mimeType string, function io.WriteClose
 func surfaceResize(surface *surface) {
 	var Widget = surface.Widget
 
+	if Widget == nil {
+		return
+	}
+
 	if Widget.userdata != nil {
+		pwidth := Widget.allocation.Width * surface.bufferScale
+		pheight := Widget.allocation.Height * surface.bufferScale
 		Widget.userdata.Resize(Widget,
 			Widget.allocation.Width,
 			Widget.allocation.Height,
-			Widget.Window.pendingAllocation.Width,
-			Widget.Window.pendingAllocation.Height)
+			pwidth,
+			pheight)
 	}
 
 	if (surface.allocation.Width != Widget.allocation.Width) ||
@@ -3395,8 +3506,9 @@ func surfaceCreate(Window *Window) *surface {
 	}
 	surface.surface_ = surf
 
-	surface.bufferScale = 1
-	wlclient.SurfaceAddListener(surface.surface_, SurfaceEnter, SurfaceLeave)
+	surface.bufferScale = Display.BufferScale()
+	_ = surface.surface_.SetBufferScale(surface.bufferScale)
+	wlclient.SurfaceAddListener(surface.surface_, surface.enterOutput, surface.leaveOutput)
 
 	Window.subsurfaceListNew = append(Window.subsurfaceListNew, surface)
 
@@ -3539,7 +3651,14 @@ func (o *output) OutputDone(wlOutput *wl.Output) {
 
 }
 func (o *output) OutputScale(wlOutput *wl.Output, factor int32) {
-
+	scale := normalizeBufferScale(factor)
+	if o.scale == scale {
+		return
+	}
+	o.scale = scale
+	for surface := range o.surfaces {
+		surface.updateBufferScale()
+	}
 }
 
 func (o *output) OutputMode(
@@ -3559,11 +3678,13 @@ func displayAddOutput(d *Display, id uint32) {
 
 	output.Display = d
 	output.scale = 1
+	output.surfaces = make(map[*surface]struct{})
 	output.output = wlclient.RegistryBindOutputInterface(d.registry, id, 2)
 
 	output.serverOutputId = id
 
 	wlclient.OutputAddListener(output.output, output)
+	d.outputList = append(d.outputList, output)
 
 }
 
@@ -3715,7 +3836,7 @@ func (d *Display) CreateDataSource() (*DataSource, error) {
 
 //line 6478
 func displayDefer(Display *Display /*task *task,*/, fun runner) {
-	Display.deferredMu.Lock() 
+	Display.deferredMu.Lock()
 	Display.deferredListNew = append(Display.deferredListNew, fun)
 	Display.deferredMu.Unlock()
 }

@@ -102,3 +102,24 @@ func TestDisplayRunWakesOnDefer(t *testing.T) {
 		}
 	}
 }
+
+func TestDisplayBufferScaleUsesLargestAvailableOutputScale(t *testing.T) {
+	d := &Display{outputList: []*output{
+		{scale: 1},
+		nil,
+		{scale: 2},
+		{scale: 3},
+	}}
+
+	if got := d.BufferScale(); got != 3 {
+		t.Errorf("BufferScale() = %d, want 3", got)
+	}
+}
+
+func TestNormalizeBufferScaleRejectsInvalidScale(t *testing.T) {
+	for _, scale := range []int32{-1, 0} {
+		if got := normalizeBufferScale(scale); got != 1 {
+			t.Errorf("normalizeBufferScale(%d) = %d, want 1", scale, got)
+		}
+	}
+}
