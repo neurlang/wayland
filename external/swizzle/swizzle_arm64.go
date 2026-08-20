@@ -6,7 +6,11 @@
 
 package swizzle
 
-const useBGRA32 = true
+// bgra32's arm64 assembly routine does not consult the slice length and uses
+// hard-coded offsets. It can therefore read and write beyond a cursor image
+// buffer. Use BGRA's bounds-safe Go implementation until the assembly
+// implementation is corrected.
+const useBGRA32 = false
 const useBGRA16 = false
 const useBGRA4 = false
 
