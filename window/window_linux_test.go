@@ -123,3 +123,26 @@ func TestNormalizeBufferScaleRejectsInvalidScale(t *testing.T) {
 		}
 	}
 }
+
+func TestFractionalBufferSize(t *testing.T) {
+	tests := []struct {
+		name   string
+		length int32
+		scale  uint32
+		want   int32
+	}{
+		{name: "one times", length: 1000, scale: 120, want: 1000},
+		{name: "one and a half times", length: 1000, scale: 180, want: 1500},
+		{name: "rounds up", length: 101, scale: 180, want: 152},
+		{name: "sub-unit scale", length: 1000, scale: 90, want: 750},
+		{name: "zero falls back to one", length: 1000, scale: 0, want: 1000},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fractionalBufferSize(tt.length, tt.scale); got != tt.want {
+				t.Errorf("fractionalBufferSize(%d, %d) = %d, want %d", tt.length, tt.scale, got, tt.want)
+			}
+		})
+	}
+}
