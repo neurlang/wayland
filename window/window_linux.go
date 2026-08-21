@@ -39,6 +39,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	xkb "github.com/neurlang/wayland/xkbcommon"
 )
@@ -3164,7 +3165,7 @@ func (parent *Widget) ScheduleResize(width int32, height int32) {
 //line 4269
 func (Window *Window) InhibitRedraw() {
 	Window.redrawInhibited = 1
-	Window.redrawTaskScheduled = 0
+	atomic.StoreInt32(&Window.redrawTaskScheduled, 0)
 }
 
 func (Window *Window) UninhibitRedraw() {
@@ -3297,7 +3298,7 @@ func surfaceRedraw(surface *surface) int {
 // line 4617
 func (Window *Window) Run(events uint32) {
 
-	Window.redrawTaskScheduled = 0
+	atomic.StoreInt32(&Window.redrawTaskScheduled, 0)
 
 	if Window.resizeNeeded != 0 {
 		if nil != Window.mainSurface.frameCb {
@@ -3322,11 +3323,12 @@ func windowScheduleRedrawTask(Window *Window) {
 		return
 	}
 
-	if Window.redrawTaskScheduled == 0 {
-
+	// Claim the task before publishing it to the display queue. Publishing
+	// first lets DisplayRun consume the task and clear this flag before this
+	// goroutine stores 1, leaving an empty queue with a permanently stale flag.
+	if atomic.CompareAndSwapInt32(&Window.redrawTaskScheduled, 0, 1) {
 		Window.redrawRunner = Window
 		displayDefer(Window.Display /*&Window.redraw_task,*/, Window)
-		Window.redrawTaskScheduled = 1
 	}
 }
 
@@ -3715,7 +3717,7 @@ func (d *Display) CreateDataSource() (*DataSource, error) {
 
 //line 6478
 func displayDefer(Display *Display /*task *task,*/, fun runner) {
-	Display.deferredMu.Lock() 
+	Display.deferredMu.Lock()
 	Display.deferredListNew = append(Display.deferredListNew, fun)
 	Display.deferredMu.Unlock()
 }
