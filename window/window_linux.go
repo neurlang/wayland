@@ -721,6 +721,14 @@ type WidgetHandler interface {
 	PointerFrame(Widget *Widget, Input *Input)
 }
 
+// AxisValue120Handler optionally receives high-resolution wheel values from
+// wl_pointer version 8 and newer. Widget handlers that only implement
+// WidgetHandler continue to receive accumulated whole steps through
+// AxisDiscrete.
+type AxisValue120Handler interface {
+	AxisValue120(Widget *Widget, Input *Input, axis uint32, value120 int32)
+}
+
 type Input struct {
 	Display            *Display
 	seat               *wl.Seat
@@ -739,13 +747,14 @@ type Input struct {
 	cursorDelayFd      int32 //nolint:unused // Reserved for future use
 	cursorTimerRunning bool  //nolint:unused // Reserved for future use
 	//cursor_task          task
-	pointerSurface     *wl.Surface
-	modifiers          ModType
-	pointerEnterSerial uint32
-	cursorSerial       uint32
-	sx                 float32
-	sy                 float32
-	currentPtrSurface  *wl.Surface // Track which surface pointer is currently on
+	pointerSurface        *wl.Surface
+	modifiers             ModType
+	pointerEnterSerial    uint32
+	cursorSerial          uint32
+	sx                    float32
+	sy                    float32
+	currentPtrSurface     *wl.Surface // Track which surface pointer is currently on
+	axisValue120Remainder [2]int32
 
 	focusWidget *Widget
 	grab        *Widget
@@ -1234,9 +1243,28 @@ func (input *Input) PointerButton(
 }
 
 func (input *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
+	input.PointerFrame(nil)
 }
 
 func (input *Input) PointerFrame(wlPointer *wl.Pointer) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+	if Widget == nil {
+		return
+	}
+	if Widget.userdata != nil {
+		Widget.userdata.PointerFrame(Widget, input)
+	} else if Window.Userdata != nil {
+		Window.Userdata.PointerFrame(Widget, input)
+	}
 }
 
 func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
@@ -1339,6 +1367,48 @@ func (input *Input) PointerAxisDiscrete(wlPointer *wl.Pointer, axis uint32, disc
 		Widget.userdata.AxisDiscrete(Widget, input, axis, discrete)
 	} else if Window.Userdata != nil {
 		Window.Userdata.AxisDiscrete(Widget, input, axis, discrete)
+	}
+}
+
+func (input *Input) HandlePointerAxisValue120(ev wl.PointerAxisValue120Event) {
+	input.PointerAxisValue120(nil, ev.Axis, ev.Value120)
+}
+
+func (input *Input) PointerAxisValue120(wlPointer *wl.Pointer, axis uint32, value120 int32) {
+	var Window = input.pointerFocus
+	if Window == nil {
+		return
+	}
+	var Widget *Widget
+	if input.grab != nil {
+		Widget = input.grab
+	} else {
+		Widget = input.focusWidget
+	}
+	if Widget == nil {
+		return
+	}
+
+	if Widget.userdata != nil {
+		if handler, ok := Widget.userdata.(AxisValue120Handler); ok {
+			handler.AxisValue120(Widget, input, axis, value120)
+			return
+		}
+	} else if Window.Userdata != nil {
+		if handler, ok := Window.Userdata.(AxisValue120Handler); ok {
+			handler.AxisValue120(Widget, input, axis, value120)
+			return
+		}
+	}
+
+	if axis >= uint32(len(input.axisValue120Remainder)) {
+		return
+	}
+	input.axisValue120Remainder[axis] += value120
+	steps := input.axisValue120Remainder[axis] / 120
+	input.axisValue120Remainder[axis] -= steps * 120
+	if steps != 0 {
+		input.PointerAxisDiscrete(wlPointer, axis, steps)
 	}
 }
 

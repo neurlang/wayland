@@ -26,6 +26,7 @@ type PointerListener interface {
 	wl.PointerAxisSourceHandler
 	wl.PointerAxisStopHandler
 	wl.PointerAxisDiscreteHandler
+	wl.PointerAxisValue120Handler
 }
 
 func PointerAddListener(p *wl.Pointer, h PointerListener) {
@@ -38,6 +39,7 @@ func PointerAddListener(p *wl.Pointer, h PointerListener) {
 	p.AddAxisSourceHandler(h)
 	p.AddAxisStopHandler(h)
 	p.AddAxisDiscreteHandler(h)
+	p.AddAxisValue120Handler(h)
 
 }
 func PointerDestroy(p *wl.Pointer) {
