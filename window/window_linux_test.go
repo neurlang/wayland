@@ -102,3 +102,92 @@ func TestDisplayRunWakesOnDefer(t *testing.T) {
 		}
 	}
 }
+
+func TestDisplayBufferScaleUsesLargestAvailableOutputScale(t *testing.T) {
+	d := &Display{outputList: []*output{
+		{scale: 1},
+		nil,
+		{scale: 2},
+		{scale: 3},
+	}}
+
+	if got := d.BufferScale(); got != 3 {
+		t.Errorf("BufferScale() = %d, want 3", got)
+	}
+}
+
+func TestNormalizeBufferScaleRejectsInvalidScale(t *testing.T) {
+	for _, scale := range []int32{-1, 0} {
+		if got := normalizeBufferScale(scale); got != 1 {
+			t.Errorf("normalizeBufferScale(%d) = %d, want 1", scale, got)
+		}
+	}
+}
+
+func TestFractionalBufferSize(t *testing.T) {
+	tests := []struct {
+		name   string
+		length int32
+		scale  uint32
+		want   int32
+	}{
+		{name: "one times", length: 1000, scale: 120, want: 1000},
+		{name: "one and a half times", length: 1000, scale: 180, want: 1500},
+		{name: "rounds up", length: 101, scale: 180, want: 152},
+		{name: "sub-unit scale", length: 1000, scale: 90, want: 750},
+		{name: "zero falls back to one", length: 1000, scale: 0, want: 1000},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fractionalBufferSize(tt.length, tt.scale); got != tt.want {
+				t.Errorf("fractionalBufferSize(%d, %d) = %d, want %d", tt.length, tt.scale, got, tt.want)
+			}
+		})
+	}
+}
+
+type nestedResizeHandler struct {
+	WidgetHandler
+	calls int
+}
+
+func (h *nestedResizeHandler) Resize(widget *Widget, _, _, _, _ int32) {
+	h.calls++
+	if h.calls == 1 {
+		widget.ScheduleResize(933, 680)
+	}
+}
+
+func TestDrainPendingResizesAppliesRequestFromResizeHandler(t *testing.T) {
+	display := &Display{}
+	window := &Window{
+		Display: display,
+		pendingAllocation: Rectangle{
+			Width:  1000,
+			Height: 690,
+		},
+		resizeNeeded: 1,
+	}
+	surface := &surface{Window: window}
+	handler := &nestedResizeHandler{}
+	widget := &Widget{
+		Window:   window,
+		surface:  surface,
+		userdata: handler,
+	}
+	surface.Widget = widget
+	window.mainSurface = surface
+
+	drainPendingResizes(window)
+
+	if handler.calls != 2 {
+		t.Fatalf("resize handler called %d times, want 2", handler.calls)
+	}
+	if got := widget.allocation; got.Width != 933 || got.Height != 680 {
+		t.Errorf("final allocation = %dx%d, want 933x680", got.Width, got.Height)
+	}
+	if window.resizeNeeded != 0 {
+		t.Errorf("resizeNeeded = %d, want 0", window.resizeNeeded)
+	}
+}

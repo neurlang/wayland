@@ -23,6 +23,8 @@ package window
 
 //import zwp "github.com/neurlang/wayland/wayland"
 import (
+	viewporter "github.com/neurlang/wayland/stable/viewporter"
+	fractional "github.com/neurlang/wayland/staging/fractional-scale-v1"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
 	"github.com/neurlang/wayland/wlcursor"
@@ -89,6 +91,8 @@ type Display struct {
 	dataDeviceVersion  int       //nolint:unused // Reserved for future use
 	textCursorPosition *struct{} //nolint:unused // Reserved for future use
 	xdgShell           *zxdg.WmBase
+	viewporter         *viewporter.WpViewporter
+	fractionalScaleMgr *fractional.WpScaleManagerV1
 	serial             uint32
 
 	//display_fd        int32
@@ -114,7 +118,7 @@ type Display struct {
 	inputList []*Input
 	//	padd		uint64
 	//	pade		uint64
-	outputList [2]*output //nolint:unused // Reserved for future use
+	outputList []*output
 	//	padf		uint64
 	//	padg		uint64
 
@@ -152,7 +156,7 @@ type Rectangle struct {
 
 type toysurface interface {
 	prepare(dx int, dy int, width int32, height int32, flags uint32,
-		bufferTransform uint32, bufferScale int32) cairo.Surface
+		bufferTransform uint32, bufferScale int32, bufferWidth int32, bufferHeight int32) cairo.Surface
 	swap(bufferTransform uint32, bufferScale int32, serverAllocation *Rectangle)
 	acquire(ctx *struct{}) int
 	release()
@@ -183,6 +187,10 @@ type surface struct {
 	bufferType      int32
 	bufferTransform int32
 	bufferScale     int32
+	enteredOutputs  map[*wl.Output]struct{}
+	viewport        *viewporter.WpViewport
+	fractionalScale *fractional.WpScaleV1
+	preferredScale  uint32
 
 	cairoSurface cairo.Surface
 }
@@ -350,7 +358,7 @@ func (w *Popup) popupCreateSurface(surface *surface, flags uint32) {
 	surface.cairoSurface = (*surface.toysurface).prepare(
 		0, 0,
 		allocation.Width, allocation.Height, flags,
-		uint32(surface.bufferTransform), surface.bufferScale)
+		uint32(surface.bufferTransform), surface.bufferScale, 0, 0)
 
 }
 
@@ -630,6 +638,109 @@ func (Window *Window) ToplevelClose(zxdgToplevelV6 *zxdg.Toplevel) {
 func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
 func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
+}
+
+func (surface *surface) enterOutput(wlSurface *wl.Surface, wlOutput *wl.Output) {
+	if wlSurface != surface.surface_ || surface.Window == nil {
+		return
+	}
+	output := surface.Window.Display.outputByProxy(wlOutput)
+	if output == nil {
+		return
+	}
+	if surface.enteredOutputs == nil {
+		surface.enteredOutputs = make(map[*wl.Output]struct{})
+	}
+	if _, entered := surface.enteredOutputs[wlOutput]; entered {
+		return
+	}
+	surface.enteredOutputs[wlOutput] = struct{}{}
+	output.surfaces[surface] = struct{}{}
+	surface.updateBufferScale()
+}
+
+func (surface *surface) leaveOutput(wlSurface *wl.Surface, wlOutput *wl.Output) {
+	if wlSurface != surface.surface_ || surface.Window == nil || surface.enteredOutputs == nil {
+		return
+	}
+	if _, entered := surface.enteredOutputs[wlOutput]; !entered {
+		return
+	}
+	delete(surface.enteredOutputs, wlOutput)
+	if output := surface.Window.Display.outputByProxy(wlOutput); output != nil {
+		delete(output.surfaces, surface)
+	}
+	surface.updateBufferScale()
+}
+
+func (surface *surface) updateBufferScale() {
+	if surface.Window == nil {
+		return
+	}
+	if surface.usesFractionalScale() {
+		if surface.bufferScale != 1 {
+			surface.bufferScale = 1
+			_ = surface.surface_.SetBufferScale(1)
+		}
+		return
+	}
+	var scale int32
+	for wlOutput := range surface.enteredOutputs {
+		if output := surface.Window.Display.outputByProxy(wlOutput); output != nil && output.scale > scale {
+			scale = output.scale
+		}
+	}
+	if scale == 0 {
+		scale = surface.Window.Display.BufferScale()
+	}
+	scale = normalizeBufferScale(scale)
+	if surface.bufferScale == scale {
+		return
+	}
+	surface.bufferScale = scale
+	_ = surface.surface_.SetBufferScale(scale)
+	if surface.Widget != nil {
+		surfaceResize(surface)
+	}
+	surface.Window.ScheduleRedraw()
+}
+
+const fractionalScaleDenominator = 120
+
+func (surface *surface) usesFractionalScale() bool {
+	return surface.viewport != nil && surface.fractionalScale != nil
+}
+
+func fractionalBufferSize(length int32, scale uint32) int32 {
+	if length <= 0 {
+		return length
+	}
+	if scale == 0 {
+		scale = fractionalScaleDenominator
+	}
+	return int32((int64(length)*int64(scale) + fractionalScaleDenominator - 1) / fractionalScaleDenominator)
+}
+
+func (surface *surface) bufferSize(width, height int32) (int32, int32) {
+	if surface.usesFractionalScale() {
+		surfaceToBufferSize(uint32(surface.bufferTransform), 1, &width, &height)
+		return fractionalBufferSize(width, surface.preferredScale), fractionalBufferSize(height, surface.preferredScale)
+	}
+	surfaceToBufferSize(uint32(surface.bufferTransform), surface.bufferScale, &width, &height)
+	return width, height
+}
+
+func (surface *surface) HandleWpScaleV1PreferredScale(ev fractional.WpScaleV1PreferredScaleEvent) {
+	if ev.Scale == 0 || surface.preferredScale == ev.Scale {
+		return
+	}
+	surface.preferredScale = ev.Scale
+	if surface.Widget != nil {
+		surfaceResize(surface)
+	}
+	if surface.Window != nil {
+		surface.Window.ScheduleRedraw()
+	}
 }
 
 type Widget struct {
@@ -1007,8 +1118,47 @@ type output struct {
 	link           [2]*output //nolint:unused // Reserved for future use
 	transform      int32      //nolint:unused // Reserved for future use
 	scale          int32
+	surfaces       map[*surface]struct{}
 	maker          string
 	model          string
+}
+
+func normalizeBufferScale(scale int32) int32 {
+	if scale < 1 {
+		return 1
+	}
+	return scale
+}
+
+func maxBufferScale(scales ...int32) int32 {
+	max := int32(1)
+	for _, scale := range scales {
+		if scale > max {
+			max = scale
+		}
+	}
+	return max
+}
+
+// BufferScale reports the highest integer scale announced by the connected
+// outputs. It is useful before a surface has entered a specific output.
+func (d *Display) BufferScale() int32 {
+	scales := make([]int32, 0, len(d.outputList))
+	for _, output := range d.outputList {
+		if output != nil {
+			scales = append(scales, output.scale)
+		}
+	}
+	return maxBufferScale(scales...)
+}
+
+func (d *Display) outputByProxy(wlOutput *wl.Output) *output {
+	for _, output := range d.outputList {
+		if output != nil && output.output == wlOutput {
+			return output
+		}
+	}
+	return nil
 }
 
 type shmPool struct {
@@ -2021,7 +2171,7 @@ func (s *shmSurface) BufferRelease(buf *wl.Buffer) {
 }
 
 func (s *shmSurface) prepare(dx int, dy int, width int32, height int32, flags uint32,
-	bufferTransform uint32, bufferScale int32) cairo.Surface {
+	bufferTransform uint32, bufferScale int32, bufferWidth int32, bufferHeight int32) cairo.Surface {
 
 	var resizeHint = (flags & SurfaceHintResize) != 0
 	surface := s
@@ -2054,7 +2204,11 @@ func (s *shmSurface) prepare(dx int, dy int, width int32, height int32, flags ui
 		leaf.resizePool = nil
 	}
 
-	surfaceToBufferSize(bufferTransform, bufferScale, &width, &height)
+	if bufferWidth > 0 && bufferHeight > 0 {
+		width, height = bufferWidth, bufferHeight
+	} else {
+		surfaceToBufferSize(bufferTransform, bufferScale, &width, &height)
+	}
 
 	if (leaf.cairoSurface != nil) &&
 		(int32((*leaf.cairoSurface).ImageSurfaceGetWidth()) == width) &&
@@ -2241,6 +2395,10 @@ func surfaceFlush(surface *surface) {
 		surface.inputRegion = nil
 	}
 
+	if surface.viewport != nil && surface.allocation.Width > 0 && surface.allocation.Height > 0 {
+		_ = surface.viewport.SetDestination(surface.allocation.Width, surface.allocation.Height)
+	}
+
 	(*surface.toysurface).swap(uint32(surface.bufferTransform), surface.bufferScale,
 		&surface.serverAllocation)
 
@@ -2260,6 +2418,7 @@ func windowClose(window *Window) {
 func surfaceCreateSurface(surface *surface, flags uint32) {
 	var Display = surface.Window.Display
 	var allocation = surface.allocation
+	bufferWidth, bufferHeight := surface.bufferSize(allocation.Width, allocation.Height)
 
 	if surface.toysurface == nil {
 		var toy = shmSurfaceCreate(Display, surface.surface_, flags, &allocation)
@@ -2270,7 +2429,7 @@ func surfaceCreateSurface(surface *surface, flags uint32) {
 	surface.cairoSurface = (*surface.toysurface).prepare(
 		0, 0,
 		allocation.Width, allocation.Height, flags,
-		uint32(surface.bufferTransform), surface.bufferScale)
+		uint32(surface.bufferTransform), surface.bufferScale, bufferWidth, bufferHeight)
 
 }
 
@@ -2293,6 +2452,13 @@ func windowCreateMainSurface(Window *Window) {
 
 //line 1552
 func surfaceDestroy(surface *surface) {
+	if surface.Window != nil {
+		for wlOutput := range surface.enteredOutputs {
+			if output := surface.Window.Display.outputByProxy(wlOutput); output != nil {
+				delete(output.surfaces, surface)
+			}
+		}
+	}
 	if surface.frameCb != nil {
 		wlclient.CallbackDestroy(surface.frameCb)
 	}
@@ -2307,6 +2473,12 @@ func surfaceDestroy(surface *surface) {
 
 	if surface.subsurface != nil {
 		wlclient.SubsurfaceDestroy(surface.subsurface)
+	}
+	if surface.fractionalScale != nil {
+		_ = surface.fractionalScale.Destroy()
+	}
+	if surface.viewport != nil {
+		_ = surface.viewport.Destroy()
 	}
 
 	_ = surface.surface_.Destroy()
@@ -2479,6 +2651,20 @@ func (d *Display) RegistryGlobal(registry *wl.Registry, id uint32, iface string,
 		d.xdgShell = wlclient.RegistryBindWmBaseInterface(d.registry, id, 1)
 
 		zxdg.WmBaseAddListener(d.xdgShell, d)
+
+	case "wp_viewporter":
+		ctx, _ := wl.GetUserData[wl.Context](d.registry)
+		manager := viewporter.NewWpViewporter(ctx)
+		if err := d.registry.Bind(id, iface, minU32(version, 1), manager); err == nil {
+			d.viewporter = manager
+		}
+
+	case "wp_fractional_scale_manager_v1":
+		ctx, _ := wl.GetUserData[wl.Context](d.registry)
+		manager := fractional.NewWpScaleManagerV1(ctx)
+		if err := d.registry.Bind(id, iface, minU32(version, 1), manager); err == nil {
+			d.fractionalScaleMgr = manager
+		}
 
 	case "text_cursor_position":
 	case "wl_subcompositor":
@@ -3060,12 +3246,17 @@ func (input *Input) ReceiveSelectionData(mimeType string, function io.WriteClose
 func surfaceResize(surface *surface) {
 	var Widget = surface.Widget
 
+	if Widget == nil {
+		return
+	}
+
 	if Widget.userdata != nil {
+		pwidth, pheight := surface.bufferSize(Widget.allocation.Width, Widget.allocation.Height)
 		Widget.userdata.Resize(Widget,
 			Widget.allocation.Width,
 			Widget.allocation.Height,
-			Widget.Window.pendingAllocation.Width,
-			Widget.Window.pendingAllocation.Height)
+			pwidth,
+			pheight)
 	}
 
 	if (surface.allocation.Width != Widget.allocation.Width) ||
@@ -3119,6 +3310,18 @@ func idleResize(Window *Window) {
 	Window.redrawNeeded = 1
 
 	windowDoResize(Window)
+}
+
+// drainPendingResizes applies resize requests until the widget and the
+// compositor-facing allocation agree. A resize handler may discover its final
+// pixel geometry (for example after receiving a fractional scale) and request
+// another logical size from inside windowDoResize. Processing only one request
+// here leaves the old, oversized allocation visible until an unrelated user
+// resize wakes the event loop again.
+func drainPendingResizes(Window *Window) {
+	for Window.resizeNeeded != 0 {
+		idleResize(Window)
+	}
 }
 
 //line 4223
@@ -3304,7 +3507,7 @@ func (Window *Window) Run(events uint32) {
 			return
 		}
 
-		idleResize(Window)
+		drainPendingResizes(Window)
 
 	}
 
@@ -3395,12 +3598,39 @@ func surfaceCreate(Window *Window) *surface {
 	}
 	surface.surface_ = surf
 
-	surface.bufferScale = 1
-	wlclient.SurfaceAddListener(surface.surface_, SurfaceEnter, SurfaceLeave)
+	surface.bufferScale = Display.BufferScale()
+	_ = surface.surface_.SetBufferScale(surface.bufferScale)
+	wlclient.SurfaceAddListener(surface.surface_, surface.enterOutput, surface.leaveOutput)
+	surface.enableFractionalScale()
 
 	Window.subsurfaceListNew = append(Window.subsurfaceListNew, surface)
 
 	return surface
+}
+
+func (surface *surface) enableFractionalScale() {
+	if surface.Window == nil || surface.Window.Display == nil {
+		return
+	}
+	display := surface.Window.Display
+	if display.viewporter == nil || display.fractionalScaleMgr == nil {
+		return
+	}
+	viewport, err := display.viewporter.GetViewport(surface.surface_)
+	if err != nil {
+		return
+	}
+	fractionalScale, err := display.fractionalScaleMgr.GetScale(surface.surface_)
+	if err != nil {
+		_ = viewport.Destroy()
+		return
+	}
+	surface.viewport = viewport
+	surface.fractionalScale = fractionalScale
+	surface.preferredScale = fractionalScaleDenominator
+	surface.fractionalScale.AddPreferredScaleHandler(surface)
+	surface.bufferScale = 1
+	_ = surface.surface_.SetBufferScale(1)
 }
 
 // line 5219
@@ -3539,7 +3769,14 @@ func (o *output) OutputDone(wlOutput *wl.Output) {
 
 }
 func (o *output) OutputScale(wlOutput *wl.Output, factor int32) {
-
+	scale := normalizeBufferScale(factor)
+	if o.scale == scale {
+		return
+	}
+	o.scale = scale
+	for surface := range o.surfaces {
+		surface.updateBufferScale()
+	}
 }
 
 func (o *output) OutputMode(
@@ -3559,11 +3796,13 @@ func displayAddOutput(d *Display, id uint32) {
 
 	output.Display = d
 	output.scale = 1
+	output.surfaces = make(map[*surface]struct{})
 	output.output = wlclient.RegistryBindOutputInterface(d.registry, id, 2)
 
 	output.serverOutputId = id
 
 	wlclient.OutputAddListener(output.output, output)
+	d.outputList = append(d.outputList, output)
 
 }
 
@@ -3693,6 +3932,12 @@ func (d *Display) Destroy() {
 	if d.dataDeviceManager != nil {
 		wlclient.DataDeviceManagerDestroy(d.dataDeviceManager)
 	}
+	if d.fractionalScaleMgr != nil {
+		_ = d.fractionalScaleMgr.Destroy()
+	}
+	if d.viewporter != nil {
+		_ = d.viewporter.Destroy()
+	}
 
 	wlclient.RegistryDestroy(d.registry)
 
@@ -3715,7 +3960,7 @@ func (d *Display) CreateDataSource() (*DataSource, error) {
 
 //line 6478
 func displayDefer(Display *Display /*task *task,*/, fun runner) {
-	Display.deferredMu.Lock() 
+	Display.deferredMu.Lock()
 	Display.deferredListNew = append(Display.deferredListNew, fun)
 	Display.deferredMu.Unlock()
 }
