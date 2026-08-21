@@ -755,6 +755,7 @@ type Input struct {
 	sy                    float32
 	currentPtrSurface     *wl.Surface // Track which surface pointer is currently on
 	axisValue120Remainder [2]int32
+	axisValue120Seen      [2]bool
 
 	focusWidget *Widget
 	grab        *Widget
@@ -1247,6 +1248,12 @@ func (input *Input) HandlePointerFrame(ev wl.PointerFrameEvent) {
 }
 
 func (input *Input) PointerFrame(wlPointer *wl.Pointer) {
+	defer func() {
+		for axis := range input.axisValue120Seen {
+			input.axisValue120Seen[axis] = false
+		}
+	}()
+
 	var Window = input.pointerFocus
 	if Window == nil {
 		return
@@ -1272,6 +1279,12 @@ func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {
 }
 
 func (input *Input) PointerAxis(wlPointer *wl.Pointer, time uint32, axis uint32, value float32) {
+	// axis_value120 is always paired with one raw axis event of the same
+	// axis later in the frame. Consumers that scroll in discrete steps must
+	// process one representation, not both.
+	if axis < uint32(len(input.axisValue120Seen)) && input.axisValue120Seen[axis] {
+		return
+	}
 	var Window = input.pointerFocus
 	if Window == nil {
 		return
@@ -1388,6 +1401,10 @@ func (input *Input) PointerAxisValue120(wlPointer *wl.Pointer, axis uint32, valu
 	if Widget == nil {
 		return
 	}
+	if axis >= uint32(len(input.axisValue120Remainder)) {
+		return
+	}
+	input.axisValue120Seen[axis] = true
 
 	if Widget.userdata != nil {
 		if handler, ok := Widget.userdata.(AxisValue120Handler); ok {
@@ -1401,9 +1418,6 @@ func (input *Input) PointerAxisValue120(wlPointer *wl.Pointer, axis uint32, valu
 		}
 	}
 
-	if axis >= uint32(len(input.axisValue120Remainder)) {
-		return
-	}
 	input.axisValue120Remainder[axis] += value120
 	steps := input.axisValue120Remainder[axis] / 120
 	input.axisValue120Remainder[axis] -= steps * 120

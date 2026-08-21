@@ -121,12 +121,19 @@ func (h *pointerFrameHandler) AxisValue120(_ *Widget, _ *Input, _ uint32, value1
 
 type discreteAxisHandler struct {
 	WidgetHandler
-	steps []int32
+	steps   []int32
+	rawAxes int
 }
 
 func (h *discreteAxisHandler) AxisDiscrete(_ *Widget, _ *Input, _ uint32, discrete int32) {
 	h.steps = append(h.steps, discrete)
 }
+
+func (h *discreteAxisHandler) Axis(_ *Widget, _ *Input, _ uint32, _ uint32, _ float32) {
+	h.rawAxes++
+}
+
+func (h *discreteAxisHandler) PointerFrame(*Widget, *Input) {}
 
 func pointerTestInput(handler WidgetHandler) *Input {
 	display := &Display{}
@@ -157,8 +164,12 @@ func TestPointerValue120FallbackAccumulatesWholeSteps(t *testing.T) {
 
 	for range 4 {
 		input.PointerAxisValue120(nil, wl.PointerAxisVerticalScroll, 30)
+		input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, 5)
+		input.PointerFrame(nil)
 	}
 	input.PointerAxisValue120(nil, wl.PointerAxisVerticalScroll, -240)
+	input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, -10)
+	input.PointerFrame(nil)
 
 	want := []int32{1, -2}
 	if len(handler.steps) != len(want) {
@@ -168,5 +179,13 @@ func TestPointerValue120FallbackAccumulatesWholeSteps(t *testing.T) {
 		if handler.steps[i] != want[i] {
 			t.Fatalf("discrete events = %v, want %v", handler.steps, want)
 		}
+	}
+	if handler.rawAxes != 0 {
+		t.Fatalf("paired raw axis was delivered %d times, want 0", handler.rawAxes)
+	}
+
+	input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, 5)
+	if handler.rawAxes != 1 {
+		t.Fatalf("raw axis after frame was delivered %d times, want 1", handler.rawAxes)
 	}
 }
