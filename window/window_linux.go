@@ -572,18 +572,24 @@ func (Window *Window) ToplevelConfigure(
 	}
 
 	if (width > 0) && (height > 0) {
-		/* The width / height params are for Window geometry,
-		 * but window_schedule_resize takes allocation. Add
-		 * on the shadow margin to get the difference. */
+		/* The configure dimensions are window-geometry dimensions, while
+		 * ScheduleResize takes the main-surface allocation.  A client titlebar
+		 * is a visible subsurface above that allocation, so remove it here;
+		 * windowGetGeometry adds the same extent back before committing the
+		 * xdg_surface geometry. */
 		var margin int32 = 0
+		contentHeight, ok := windowContentHeightForGeometry(Window, height)
+		if !ok {
+			return
+		}
 
-		Window.ScheduleResize(width+margin*2, height+margin*2)
+		Window.ScheduleResize(width+margin*2, contentHeight+margin*2)
 
 		// Update decoration sizes immediately during resize for smooth tracking
 		// Frame callbacks in UpdateSizeForResize prevent flicker while maintaining responsiveness
 		// This is called on every configure event to ensure decorations track window size in real-time
 		if Window.decoration != nil && !Window.fullscreen {
-			Window.decoration.UpdateSizeForResize(width, height)
+			Window.decoration.UpdateSizeForResize(width, contentHeight)
 		}
 	} else if (Window.savedAllocation.Width > 0) &&
 		(Window.savedAllocation.Height > 0) {
@@ -3188,6 +3194,35 @@ func windowGetAllocation(Window *Window, allocation *Rectangle) {
 //line 4445
 func windowGetGeometry(Window *Window, geometry *Rectangle) {
 	windowGetAllocation(Window, geometry)
+	if Window.decoration != nil {
+		// The title subsurface is positioned above the main surface. Window
+		// geometry must cover that visible titlebar as well as the content; the
+		// shadow is deliberately excluded because it is not part of the window.
+		geometry.Y -= TitleHeight
+		geometry.Height += TitleHeight
+	}
+}
+
+// windowUsesClientDecorations reports whether a configure includes the visible
+// title subsurface.  During the first configure decorations have not yet been
+// created, but they are requested and will be created by windowDoResize.
+func windowUsesClientDecorations(Window *Window) bool {
+	return Window != nil && !Window.fullscreen && Window.Display != nil &&
+		Window.Display.subcompositor != nil &&
+		(Window.decoration != nil || Window.decorationsRequested)
+}
+
+// windowContentHeightForGeometry converts a toplevel configure height in
+// xdg_surface window-geometry coordinates to the main-surface allocation
+// height.  It rejects a geometry too short to contain the visible titlebar.
+func windowContentHeightForGeometry(Window *Window, geometryHeight int32) (int32, bool) {
+	if !windowUsesClientDecorations(Window) {
+		return geometryHeight, true
+	}
+	if geometryHeight <= TitleHeight {
+		return 0, false
+	}
+	return geometryHeight - TitleHeight, true
 }
 
 //line 4458
@@ -3207,14 +3242,9 @@ func windowSyncGeometry(Window *Window) {
 		return
 	}
 
-	var yFix int32
-	if Window.decoration != nil {
-		yFix = TitleHeight
-	}
-
 	_ = Window.xdgSurface.SetWindowGeometry(
 		geometry.X,
-		geometry.Y-yFix,
+		geometry.Y,
 		geometry.Width,
 		geometry.Height)
 	Window.lastGeometry = geometry
