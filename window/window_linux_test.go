@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/neurlang/wayland/wl"
 )
 
 // noopRunner is a no-op implementation of the runner interface for testing.
@@ -100,5 +102,90 @@ func TestDisplayRunWakesOnDefer(t *testing.T) {
 			// Not done yet; yield briefly before polling again.
 			time.Sleep(5 * time.Millisecond)
 		}
+	}
+}
+
+type pointerFrameHandler struct {
+	WidgetHandler
+	frames    int
+	value120s []int32
+}
+
+func (h *pointerFrameHandler) PointerFrame(*Widget, *Input) {
+	h.frames++
+}
+
+func (h *pointerFrameHandler) AxisValue120(_ *Widget, _ *Input, _ uint32, value120 int32) {
+	h.value120s = append(h.value120s, value120)
+}
+
+type discreteAxisHandler struct {
+	WidgetHandler
+	steps   []int32
+	rawAxes int
+}
+
+func (h *discreteAxisHandler) AxisDiscrete(_ *Widget, _ *Input, _ uint32, discrete int32) {
+	h.steps = append(h.steps, discrete)
+}
+
+func (h *discreteAxisHandler) Axis(_ *Widget, _ *Input, _ uint32, _ uint32, _ float32) {
+	h.rawAxes++
+}
+
+func (h *discreteAxisHandler) PointerFrame(*Widget, *Input) {}
+
+func pointerTestInput(handler WidgetHandler) *Input {
+	display := &Display{}
+	window := &Window{Display: display}
+	widget := &Widget{Window: window, userdata: handler}
+	window.mainSurface = &surface{Window: window, Widget: widget}
+	return &Input{Display: display, pointerFocus: window, focusWidget: widget}
+}
+
+func TestPointerFrameAndValue120ReachOptionalWidgetHandler(t *testing.T) {
+	handler := &pointerFrameHandler{}
+	input := pointerTestInput(handler)
+
+	input.PointerAxisValue120(nil, wl.PointerAxisVerticalScroll, 30)
+	input.PointerFrame(nil)
+
+	if len(handler.value120s) != 1 || handler.value120s[0] != 30 {
+		t.Fatalf("value120 events = %v, want [30]", handler.value120s)
+	}
+	if handler.frames != 1 {
+		t.Fatalf("pointer frames = %d, want 1", handler.frames)
+	}
+}
+
+func TestPointerValue120FallbackAccumulatesWholeSteps(t *testing.T) {
+	handler := &discreteAxisHandler{}
+	input := pointerTestInput(handler)
+
+	for range 4 {
+		input.PointerAxisValue120(nil, wl.PointerAxisVerticalScroll, 30)
+		input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, 5)
+		input.PointerFrame(nil)
+	}
+	input.PointerAxisValue120(nil, wl.PointerAxisVerticalScroll, -240)
+	input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, -10)
+	input.PointerFrame(nil)
+
+	want := []int32{1, -2}
+	if len(handler.steps) != len(want) {
+		t.Fatalf("discrete events = %v, want %v", handler.steps, want)
+	}
+	for i := range want {
+		if handler.steps[i] != want[i] {
+			t.Fatalf("discrete events = %v, want %v", handler.steps, want)
+		}
+	}
+	if handler.rawAxes != 0 {
+		t.Fatalf("paired raw axis was delivered %d times, want 0", handler.rawAxes)
+	}
+
+	input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, 5)
+	if handler.rawAxes != 1 {
+		t.Fatalf("raw axis after frame was delivered %d times, want 1", handler.rawAxes)
 	}
 }
