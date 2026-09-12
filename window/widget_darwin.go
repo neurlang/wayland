@@ -1,9 +1,12 @@
 package window
 
 import (
+	"io"
 	"sync"
 
 	cairo "github.com/neurlang/wayland/cairoshim"
+	"github.com/neurlang/wayland/wl"
+	"github.com/neurlang/wayland/wlclient"
 	"github.com/spaolacci/murmur3"
 )
 
@@ -265,7 +268,7 @@ func (input *Input) DeviceSetSelection(ds *DataSource, num uint32) {
 	// Not implemented for macOS
 }
 
-func (input *Input) ReceiveSelectionData(str string, val interface{}) error {
+func (input *Input) ReceiveSelectionData(str string, val io.WriteCloser) error {
 	// Not implemented for macOS
 	return nil
 }
@@ -277,7 +280,7 @@ type DataSource struct {
 
 // DataSource methods for compatibility
 
-func (ds *DataSource) AddListener(l interface{}) {
+func (ds *DataSource) AddListener(l wlclient.DataSourceListener) {
 	// Not implemented for macOS
 }
 
@@ -285,6 +288,6 @@ func (ds *DataSource) Offer(str string) {
 	// Not implemented for macOS
 }
 
-func (ds *DataSource) RemoveListener(l interface{}) {
+func (ds *DataSource) RemoveListener(l wlclient.DataSourceListener) {
 	// Not implemented for macOS
 }

@@ -45,20 +45,18 @@ type KeyboardHandler interface {
 
 // FullscreenHandler defines the interface for fullscreen events
 type FullscreenHandler interface {
-	Fullscreen(Window *Window, data WidgetHandler)
+	Fullscreen(*Window, WidgetHandler)
 }
 
 // CloseHandler defines the interface for window close events
 type CloseHandler interface {
-	Close(Window *Window)
+	Close()
 }
 
 // DataHandler defines the interface for data transfer events
-type DataHandler interface {
-	DataOffer(Window *Window, offer interface{})
-}
+type DataHandler func(*Window, *Input, float32, float32, []string, *Window, WidgetHandler)
 
 // ResizeHandler defines the interface for resize events
 type ResizeHandler interface {
-	Resize(Window *Window, width int32, height int32)
+	MinimumSize() (int32, int32)
 }

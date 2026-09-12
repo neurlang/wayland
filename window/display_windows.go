@@ -2,7 +2,7 @@ package window
 
 import (
 	"github.com/neurlang/wayland/wl"
-	"github.com/neurlang/wayland/xdg"
+	zxdg "github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/winc"
 )
 
@@ -36,7 +36,7 @@ func DisplayRun(d *Display) {
 	winc.RunMainLoop()
 }
 
-func (d *Display) SetSeatHandler(_ interface{}) {
+func (d *Display) SetSeatHandler(_ SeatHandler) {
 }
 
 // HandleRegistryGlobal is a dummy method for Display.
@@ -56,7 +56,7 @@ func (d *Display) HandleShmFormat(_ wl.ShmFormatEvent) {
 }
 
 // HandleWmBasePing is a dummy method for Display.
-func (d *Display) HandleWmBasePing(_ xdg.WmBasePingEvent) {
+func (d *Display) HandleWmBasePing(_ zxdg.WmBasePingEvent) {
 	// Dummy implementation
 }
 
@@ -85,7 +85,7 @@ func (d *Display) SetUserData(_ interface{}) {
 }
 
 // ShellPing is a dummy method for Display.
-func (d *Display) ShellPing(*xdg.WmBase, uint32) {
+func (d *Display) ShellPing(*zxdg.WmBase, uint32) {
 	// Dummy implementation
 }
 

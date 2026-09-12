@@ -74,10 +74,10 @@ var decorationFonts = []string{
 }
 
 // Component types
-type componentType int
+type ComponentType int
 
 const (
-	ComponentNone componentType = iota
+	ComponentNone ComponentType = iota
 	ComponentShadow
 	ComponentTitle
 	ComponentButtonMin
@@ -114,7 +114,7 @@ type WindowDecoration struct {
 	titleSurf           *DecorationSurface
 	shadowBlur          *image.RGBA
 	active              bool
-	hoverButton         componentType
+	hoverButton         ComponentType
 	pointerX            float32
 	pointerY            float32
 	pointerSerial       uint32
@@ -533,7 +533,7 @@ func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 }
 
 // drawButton renders a window button (min/max/close)
-func (d *WindowDecoration) drawButton(dc *gg.Context, btnType componentType, x, y int32) {
+func (d *WindowDecoration) drawButton(dc *gg.Context, btnType ComponentType, x, y int32) {
 	colTitle := ColTitle[d.window.decoration_theme]
 	if !d.active {
 		colTitle = ColTitleInact[d.window.decoration_theme]
@@ -626,7 +626,7 @@ func (d *WindowDecoration) SetActive(active bool) {
 }
 
 // SetHoverButton updates the hover state and redraws
-func (d *WindowDecoration) SetHoverButton(btn componentType) {
+func (d *WindowDecoration) SetHoverButton(btn ComponentType) {
 	if d.hoverButton != btn {
 		d.hoverButton = btn
 		// Only redraw titlebar if we're actually on the titlebar
@@ -637,8 +637,8 @@ func (d *WindowDecoration) SetHoverButton(btn componentType) {
 	}
 }
 
-// Redraw redraws all decoration surfaces
-func (d *WindowDecoration) Redraw() {
+// redraw redraws all decoration surfaces
+func (d *WindowDecoration) redraw() {
 	d.drawShadow()
 	d.drawTitleBar()
 }

@@ -663,6 +663,30 @@ func (w *Widget) SetUserDataWidgetHandler(wh WidgetHandler) {
 	w.userdata = wh
 }
 
+func (w *Widget) ImageSurfaceGetData() []byte {
+	return nil
+}
+
+func (w *Widget) ImageSurfaceGetWidth() int {
+	return int(w.allocation.Width)
+}
+
+func (w *Widget) ImageSurfaceGetHeight() int {
+	return int(w.allocation.Height)
+}
+
+func (w *Widget) ImageSurfaceGetStride() int {
+	return int(w.allocation.Width * 4)
+}
+
+func (w *Widget) Reference() cairo.Surface {
+	return nil
+}
+
+func (w *Widget) SetDestructor(f func()) {}
+
+func (w *Widget) SetUserData(f func()) {}
+
 type widgetList struct {
 	l []*Widget
 }
@@ -3465,6 +3489,10 @@ func (Window *Window) SetMaximized(maximized bool) error {
 
 func (Window *Window) SetMinimized() error {
 	return windowSetMinimized(Window)
+}
+
+func (Window *Window) SeMaximized(maximized bool) error {
+	return windowSetMaximized(Window, maximized)
 }
 
 func windowSetMaximized(window *Window, maximized bool) error {

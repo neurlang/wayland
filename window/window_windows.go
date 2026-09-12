@@ -8,7 +8,7 @@ import (
 
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
-	"github.com/neurlang/wayland/xdg"
+	zxdg "github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/winc"
 	"github.com/neurlang/winc/w32"
 )
@@ -134,7 +134,7 @@ func (w *Window) SetKeyboardHandler(t KeyboardHandler) {
 
 }
 
-func (w Window) SetFullscreenHandler(t interface{}) {
+func (w *Window) SetFullscreenHandler(t FullscreenHandler) {
 
 }
 
@@ -142,7 +142,7 @@ func (w *Window) SetTitle(s string) {
 	w.form.SetText(s)
 }
 
-func (w Window) SetBufferType(shm interface{}) {
+func (w *Window) SetBufferType(t int32) {
 
 }
 
@@ -481,6 +481,7 @@ func (w *Window) AddPopupWidget(p *Popup, handler WidgetHandler) *Widget {
 
 	return &p.widget
 }
+
 func (w *Window) CreatePopup(_ *wl.Seat, _, width, height, x, y uint32) (popup *Popup) {
 
 	form := winc.NewCustomForm(w.form, 0, w32.WS_POPUP)
@@ -508,6 +509,24 @@ func SurfaceEnter(wlSurface *wl.Surface, wlOutput *wl.Output) {
 func SurfaceLeave(wlSurface *wl.Surface, wlOutput *wl.Output) {
 }
 
+type DataHandler func(*Window, *Input, float32, float32, []string, *Window, WidgetHandler)
+
+type FullscreenHandler interface {
+	Fullscreen(*Window, WidgetHandler)
+}
+type CloseHandler interface {
+	Close()
+}
+
+type ResizeHandler interface {
+	MinimumSize() (int32, int32)
+}
+
+type SeatHandler interface {
+	Capabilities(i *Input, seat *wl.Seat, caps uint32)
+	Name(i *Input, seat *wl.Seat, name string)
+}
+
 type Popuper interface {
 	Render(cairo.Surface, uint32)
 	Done()
@@ -515,7 +534,7 @@ type Popuper interface {
 }
 
 type Popup struct {
-	Popup *xdg.Popup
+	Popup *zxdg.Popup
 
 	Display *Display
 

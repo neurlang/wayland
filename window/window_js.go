@@ -9,7 +9,8 @@ import (
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/external/swizzle"
 	"github.com/neurlang/wayland/wl"
-	"github.com/neurlang/wayland/xdg"
+	"github.com/neurlang/wayland/wlclient"
+	zxdg "github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/wayland/xkbcommon"
 )
 
@@ -45,18 +46,79 @@ type Input struct {
 	lastKey string
 }
 
-type WidgetHandler interface{}
+type WidgetHandler interface {
+	Resize(Widget *Widget, width int32, height int32, pwidth int32, pheight int32)
+	Redraw(Widget *Widget)
+	Enter(Widget *Widget, Input *Input, x float32, y float32)
+	Leave(Widget *Widget, Input *Input)
+	Motion(Widget *Widget, Input *Input, time uint32, x float32, y float32) int
+	Button(
+		Widget *Widget,
+		Input *Input,
+		time uint32,
+		button uint32,
+		state wl.PointerButtonState,
+		data WidgetHandler,
+	)
+	TouchUp(Widget *Widget, Input *Input, serial uint32, time uint32, id int32)
+	TouchDown(
+		Widget *Widget,
+		Input *Input,
+		serial uint32,
+		time uint32,
+		id int32,
+		x float32,
+		y float32,
+	)
+	TouchMotion(Widget *Widget, Input *Input, time uint32, id int32, x float32, y float32)
+	TouchFrame(Widget *Widget, Input *Input)
+	TouchCancel(Widget *Widget, width int32, height int32)
+	Axis(Widget *Widget, Input *Input, time uint32, axis uint32, value float32)
+	AxisSource(Widget *Widget, Input *Input, source uint32)
+	AxisStop(Widget *Widget, Input *Input, time uint32, axis uint32)
+	AxisDiscrete(Widget *Widget, Input *Input, axis uint32, discrete int32)
+	PointerFrame(Widget *Widget, Input *Input)
+}
+
+type SeatHandler interface {
+	Capabilities(i *Input, seat *wl.Seat, caps uint32)
+	Name(i *Input, seat *wl.Seat, name string)
+}
+
+type GlobalHandler interface {
+	HandleGlobal(d *Display, id uint32, iface string, version uint32, data interface{})
+}
+
+type FullscreenHandler interface {
+	Fullscreen(*Window, WidgetHandler)
+}
+
+type CloseHandler interface {
+	Close()
+}
+
+type ResizeHandler interface {
+	MinimumSize() (int32, int32)
+}
+
+type DataHandler func(*Window, *Input, float32, float32, []string, *Window, WidgetHandler)
+
+type Popuper interface {
+	Render(cairo.Surface, uint32)
+	Done()
+	Configure() *Widget
+}
 
 type DataSource struct {
 	CopyBuffer string
 }
 
 type Popup struct {
-	Popup   *xdg.Popup
+	Popup   *zxdg.Popup
 	Display *Display
 }
 
-func (p *Popup) SetPopupHandler(_ interface{}) {}
+func (p *Popup) SetPopupHandler(ph Popuper) {}
 func (p *Popup) BufferRelease(_ *wl.Buffer) {}
 func (p *Popup) PopupGetSurface() cairo.Surface { return nil }
 func (p *Popup) Destroy() {}
@@ -73,7 +135,7 @@ func (d *Display) Exit() {
 	js.Global().Get("window").Call("close")
 }
 
-func (d *Display) SetSeatHandler(_ interface{}) {
+func (d *Display) SetSeatHandler(_ SeatHandler) {
 }
 
 func (d *Display) CreateDataSource() (*DataSource, error) {
@@ -93,7 +155,7 @@ func (d *Display) HandleRegistryGlobalRemove(_ wl.RegistryGlobalRemoveEvent) {
 func (d *Display) HandleShmFormat(_ wl.ShmFormatEvent) {
 }
 
-func (d *Display) HandleWmBasePing(_ xdg.WmBasePingEvent) {
+func (d *Display) HandleWmBasePing(_ zxdg.WmBasePingEvent) {
 }
 
 func (d *Display) RegistryGlobal(_ *wl.Registry, _ uint32, _ string, _ uint32) {
@@ -102,13 +164,13 @@ func (d *Display) RegistryGlobal(_ *wl.Registry, _ uint32, _ string, _ uint32) {
 func (d *Display) RegistryGlobalRemove(_ *wl.Registry, _ uint32) {
 }
 
-func (d *Display) SetGlobalHandler(_ interface{}) {
+func (d *Display) SetGlobalHandler(_ GlobalHandler) {
 }
 
 func (d *Display) SetUserData(_ interface{}) {
 }
 
-func (d *Display) ShellPing(_ *xdg.WmBase, _ uint32) {
+func (d *Display) ShellPing(_ *zxdg.WmBase, _ uint32) {
 }
 
 func (d *Display) ShmFormat(_ *wl.Shm, _ uint32) {
@@ -179,7 +241,7 @@ func (w *Window) SetKeyboardHandler(h KeyboardHandler) {
 	w.handler = h
 }
 
-func (w *Window) SetFullscreenHandler(_ interface{}) {
+func (w *Window) SetFullscreenHandler(_ FullscreenHandler) {
 }
 
 func (w *Window) SetDecorationTheme(_ Theme) {
@@ -210,11 +272,12 @@ func (w *Window) AddPopupWidget(_ *Popup, _ WidgetHandler) *Widget {
 	return nil
 }
 
+
 func (w *Window) CreatePopup(_ *wl.Seat, _, _, _, _, _ uint32) *Popup {
 	return nil
 }
 
-func (w *Window) AddWidget(wh interface{}) *Widget {
+func (w *Window) AddWidget(wh WidgetHandler) *Widget {
 	widget := &Widget{window: w, userdata: wh}
 	w.widgets = append(w.widgets, widget)
 	return widget
@@ -489,7 +552,7 @@ func renderToCanvas() {
 	ctx.Call("putImageData", imgData, 0, 0)
 }
 
-func (w *Widget) SetUserDataWidgetHandler(wh interface{}) {
+func (w *Widget) SetUserDataWidgetHandler(wh WidgetHandler) {
 	w.userdata = wh
 }
 
@@ -530,13 +593,13 @@ func (i *Input) ReceiveSelectionData(_ string, _ io.WriteCloser) error {
 func (i *Input) DeviceSetSelection(_ *DataSource, _ uint32) {
 }
 
-func (s *DataSource) RemoveListener(_ interface{}) {
+func (s *DataSource) RemoveListener(_ wlclient.DataSourceListener) {
 }
 
 func (s *DataSource) Offer(_ string) {
 }
 
-func (s *DataSource) AddListener(_ interface{}) {
+func (s *DataSource) AddListener(_ wlclient.DataSourceListener) {
 }
 
 func (w *Widget) ScheduleResize(width int32, height int32) {

@@ -8,7 +8,7 @@ import (
 
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/wl"
-	"github.com/neurlang/wayland/xdg"
+	zxdg "github.com/neurlang/wayland/xdg"
 )
 
 type Display struct {
@@ -38,7 +38,7 @@ func (w *Window) SetDecorationTheme(theme Theme) {
 }
 
 type Popup struct {
-	Popup        *xdg.Popup
+	Popup        *zxdg.Popup
 	popuper      Popuper
 	Display      *Display
 	popupWindow  *Window
@@ -195,7 +195,7 @@ func (w *Window) SetKeyboardHandler(handler KeyboardHandler) {
 }
 
 // SetFullscreenHandler sets the fullscreen handler
-func (w *Window) SetFullscreenHandler(handler interface{}) {
+func (w *Window) SetFullscreenHandler(handler FullscreenHandler) {
 	// Placeholder for fullscreen handler
 }
 
@@ -293,7 +293,7 @@ func (w *Window) ScheduleRedraw() {
 }
 
 // Redraw performs the actual drawing
-func (w *Window) Redraw() {
+func (w *Window) redraw() {
 	if w.inhibited {
 		return
 	}
@@ -445,7 +445,7 @@ func (d *Display) GetSerial() uint32 {
 	return 0
 }
 
-func (d *Display) SetSeatHandler(_ interface{}) {}
+func (d *Display) SetSeatHandler(h SeatHandler) {}
 
 func (d *Display) HandleRegistryGlobal(_ wl.RegistryGlobalEvent) {}
 
@@ -453,7 +453,7 @@ func (d *Display) HandleRegistryGlobalRemove(_ wl.RegistryGlobalRemoveEvent) {}
 
 func (d *Display) HandleShmFormat(_ wl.ShmFormatEvent) {}
 
-func (d *Display) HandleWmBasePing(_ xdg.WmBasePingEvent) {}
+func (d *Display) HandleWmBasePing(_ zxdg.WmBasePingEvent) {}
 
 func (d *Display) RegistryGlobal(_ *wl.Registry, _ uint32, _ string, _ uint32) {}
 
@@ -467,6 +467,6 @@ func (d *Display) SetGlobalHandler(_ GlobalHandler) {}
 
 func (d *Display) SetUserData(_ interface{}) {}
 
-func (d *Display) ShellPing(*xdg.WmBase, uint32) {}
+func (d *Display) ShellPing(shell *zxdg.WmBase, serial uint32) {}
 
-func (d *Display) ShmFormat(*wl.Shm, uint32) {}
+func (d *Display) ShmFormat(wlShm *wl.Shm, format uint32) {}
