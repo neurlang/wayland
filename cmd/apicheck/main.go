@@ -216,21 +216,31 @@ func extractInterfaceMethods(iface *ast.InterfaceType) []FuncDef {
 			m := FuncDef{Name: spec.Names[0].Name}
 			if fd.Params != nil {
 				for _, param := range fd.Params.List {
-					for _, name := range param.Names {
+					if len(param.Names) == 0 {
 						m.Params = append(m.Params, ParamDef{
-							Name: name.Name,
 							Type: exprToString(param.Type),
 						})
+					} else {
+						for _, name := range param.Names {
+							m.Params = append(m.Params, ParamDef{
+								Name: name.Name,
+								Type: exprToString(param.Type),
+							})
+						}
 					}
 				}
 			}
-			if fd.Results != nil {
-				for _, result := range fd.Results.List {
+		if fd.Results != nil {
+			for _, result := range fd.Results.List {
+				if len(result.Names) == 0 {
+					m.Results = append(m.Results, exprToString(result.Type))
+				} else {
 					for range result.Names {
 						m.Results = append(m.Results, exprToString(result.Type))
 					}
 				}
 			}
+		}
 			methods = append(methods, m)
 		}
 	}
@@ -259,19 +269,29 @@ func funcDeclToDef(fd *ast.FuncDecl) *FuncDef {
 
 	if fd.Type.Params != nil {
 		for _, param := range fd.Type.Params.List {
-			for _, name := range param.Names {
+			if len(param.Names) == 0 {
 				fi.Params = append(fi.Params, ParamDef{
-					Name: name.Name,
 					Type: exprToString(param.Type),
 				})
+			} else {
+				for _, name := range param.Names {
+					fi.Params = append(fi.Params, ParamDef{
+						Name: name.Name,
+						Type: exprToString(param.Type),
+					})
+				}
 			}
 		}
 	}
 
 	if fd.Type.Results != nil {
 		for _, result := range fd.Type.Results.List {
-			for range result.Names {
+			if len(result.Names) == 0 {
 				fi.Results = append(fi.Results, exprToString(result.Type))
+			} else {
+				for range result.Names {
+					fi.Results = append(fi.Results, exprToString(result.Type))
+				}
 			}
 		}
 	}
