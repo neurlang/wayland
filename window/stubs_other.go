@@ -1,5 +1,5 @@
-//go:build windows || js
-// +build windows js
+//go:build !linux
+// +build !linux
 
 package window
 
@@ -60,7 +60,6 @@ func (d *WindowDecoration) UpdateSize() {}
 func (d *WindowDecoration) UpdateSizeForResize(contentWidth, contentHeight int32) {}
 func (d *WindowDecoration) SetHoverButton(btn ComponentType) {}
 
-func (w *Window) ScheduleRedraw() {}
 func (w *Window) ToplevelClose(t *zxdg.Toplevel) {}
 func (w *Window) ToplevelConfigure(t *zxdg.Toplevel, width int32, height int32, states []int32) {}
 func (w *Window) SurfaceConfigure(s *zxdg.Surface, serial uint32) {}
