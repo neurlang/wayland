@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	cairo "github.com/neurlang/wayland/cairoshim"
-	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
 	"github.com/spaolacci/murmur3"
 )

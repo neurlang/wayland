@@ -918,7 +918,7 @@ func goScheduleRedraw(windowPtr unsafe.Pointer) {
 
 	// Schedule redraw
 	window.ScheduleRedraw()
-	window.Redraw()
+	window.redraw()
 }
 
 //export goWindowResize

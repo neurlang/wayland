@@ -445,6 +445,8 @@ func (d *Display) GetSerial() uint32 {
 	return 0
 }
 
+type SeatHandler interface {}
+
 func (d *Display) SetSeatHandler(h SeatHandler) {}
 
 func (d *Display) HandleRegistryGlobal(_ wl.RegistryGlobalEvent) {}
