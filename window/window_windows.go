@@ -152,12 +152,12 @@ var (
 )
 
 const (
-	BI_RGB         = 0
-	DIB_RGB_COLORS = 0
-	SRCCOPY        = 0x00CC0020
+	biRgb        = 0
+	dibRgbColors = 0
+	srcCopy      = 0x00CC0020
 )
 
-type BITMAPINFOHEADER struct {
+type bitmapInfoHeader struct {
 	BiSize          uint32
 	BiWidth         int32
 	BiHeight        int32
@@ -171,8 +171,8 @@ type BITMAPINFOHEADER struct {
 	BiClrImportant  uint32
 }
 
-type BITMAPINFO struct {
-	BmiHeader BITMAPINFOHEADER
+type bitmapInfo struct {
+	BmiHeader bitmapInfoHeader
 	BmiColors [1]uint32
 }
 
@@ -198,13 +198,13 @@ func redrawer(widget *Widget, canvas *winc.Canvas) {
 	defer w32.ReleaseDC(hwnd, hdc)
 
 	// Setup bitmap info for DIB (Device Independent Bitmap)
-	var bi BITMAPINFO
+	var bi bitmapInfo
 	bi.BmiHeader.BiSize = uint32(unsafe.Sizeof(bi.BmiHeader))
 	bi.BmiHeader.BiWidth = int32(w)
 	bi.BmiHeader.BiHeight = -int32(h) // Negative height for top-down bitmap
 	bi.BmiHeader.BiPlanes = 1
 	bi.BmiHeader.BiBitCount = 32 // 32 bits per pixel (RGBA)
-	bi.BmiHeader.BiCompression = BI_RGB
+	bi.BmiHeader.BiCompression = biRgb
 	bi.BmiHeader.BiSizeImage = 0
 
 	// Call StretchDIBits to draw the entire bitmap in one call
@@ -220,8 +220,8 @@ func redrawer(widget *Widget, canvas *winc.Canvas) {
 		uintptr(h),                       // source height
 		uintptr(unsafe.Pointer(&buf[0])), // pointer to bitmap bits
 		uintptr(unsafe.Pointer(&bi)),     // pointer to BITMAPINFO
-		DIB_RGB_COLORS,                   // color usage
-		SRCCOPY,                          // raster operation
+		dibRgbColors,                   // color usage
+		srcCopy,                          // raster operation
 	)
 
 	widget.setHashHashesRects(hash, nil, nil)

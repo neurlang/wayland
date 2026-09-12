@@ -31,12 +31,12 @@ type Widget struct {
 	draw_mut  sync.Mutex
 }
 
-const BUFFER_BYTES = 4
+const bufferBytes = 4
 
 // ImageSurfaceGetData returns the pixel buffer for drawing
 func (w *Widget) ImageSurfaceGetData() []byte {
 	if len(w.buffer) == 0 {
-		w.buffer = make([]byte, BUFFER_BYTES*w.allocation_width*w.allocation_height)
+		w.buffer = make([]byte, bufferBytes*w.allocation_width*w.allocation_height)
 	}
 	return w.buffer
 }
@@ -53,13 +53,13 @@ func (w *Widget) ImageSurfaceGetHeight() int {
 
 // ImageSurfaceGetStride returns the stride (bytes per row)
 func (w *Widget) ImageSurfaceGetStride() int {
-	return w.allocation_width * BUFFER_BYTES
+	return w.allocation_width * bufferBytes
 }
 
 // hashBuffer computes a hash for a portion of the buffer
 func hashBuffer(buf []byte, y, end, w int) uint64 {
 	hash := murmur3.Sum64WithSeed(
-		buf[BUFFER_BYTES*y*w:BUFFER_BYTES*end*w], uint32(y))
+		buf[bufferBytes*y*w:bufferBytes*end*w], uint32(y))
 	return hash
 }
 
@@ -154,7 +154,7 @@ func (w *Widget) SetAllocation(x int32, y int32, pwidth int32, pheight int32) {
 	w.allocation_y = int(y)
 	w.allocation_width = int(pwidth)
 	w.allocation_height = int(pheight)
-	w.buffer = make([]byte, BUFFER_BYTES*w.allocation_width*w.allocation_height)
+	w.buffer = make([]byte, bufferBytes*w.allocation_width*w.allocation_height)
 	w.swapbuffer = nil
 	w.drawnHash = 0
 	w.drawnHashes = nil
