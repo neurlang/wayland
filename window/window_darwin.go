@@ -445,7 +445,10 @@ func (d *Display) GetSerial() uint32 {
 	return 0
 }
 
-type SeatHandler interface {}
+type SeatHandler interface {
+	Capabilities(*Input, *wl.Seat, uint32)
+	Name(*Input, *wl.Seat, string)
+}
 
 func (d *Display) SetSeatHandler(h SeatHandler) {}
 
