@@ -12,6 +12,10 @@ type ComponentType int
 type DecorationSurface struct{}
 type WindowDecoration struct{}
 
+type AxisValue120Handler interface {
+	AxisValue120(Widget *Widget, Input *Input, axis uint32, value120 int32)
+}
+
 const (
 	ComponentNone ComponentType = iota
 	ComponentShadow
@@ -113,6 +117,8 @@ func (input *Input) HandlePointerAxis(ev wl.PointerAxisEvent) {}
 func (input *Input) HandlePointerAxisSource(ev wl.PointerAxisSourceEvent) {}
 func (input *Input) HandlePointerAxisStop(ev wl.PointerAxisStopEvent) {}
 func (input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {}
+func (input *Input) HandlePointerAxisValue120(ev wl.PointerAxisValue120Event) {}
+func (input *Input) PointerAxisValue120(wlPointer *wl.Pointer, axis uint32, value120 int32) {}
 func (input *Input) HandleDataDeviceEnter(ev wl.DataDeviceEnterEvent) {}
 func (input *Input) HandleDataDeviceLeave(ev wl.DataDeviceLeaveEvent) {}
 func (input *Input) HandleDataDeviceMotion(ev wl.DataDeviceMotionEvent) {}

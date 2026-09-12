@@ -289,6 +289,16 @@ func (input *Input) HandlePointerAxisDiscrete(ev wl.PointerAxisDiscreteEvent) {
 	((*window.Input)(input)).HandlePointerAxisDiscrete(ev)
 }
 
+func (input *Input) HandlePointerAxisValue120(ev wl.PointerAxisValue120Event) {
+	println("func HandlePointerAxisValue120")
+	((*window.Input)(input)).HandlePointerAxisValue120(ev)
+}
+
+func (input *Input) PointerAxisValue120(wlPointer *wl.Pointer, axis uint32, value120 int32) {
+	println("func PointerAxisValue120")
+	((*window.Input)(input)).PointerAxisValue120(wlPointer, axis, value120)
+}
+
 // Popup methods
 func (p *Popup) HandleSurfaceConfigure(ev zxdg.SurfaceConfigureEvent) {
 	println("func HandleSurfaceConfigure")

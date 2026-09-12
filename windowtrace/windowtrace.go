@@ -260,6 +260,10 @@ type WidgetHandler interface {
 	PointerFrame(widget *Widget, input *Input)
 }
 
+type AxisValue120Handler interface {
+	AxisValue120(widget *Widget, input *Input, axis uint32, value120 int32)
+}
+
 func (w widgetHandler) Resize(widget *window.Widget, width int32, height int32, pwidth int32, pheight int32) {
 	println("func Resize")
 	w.WidgetHandler.Resize((*Widget)(widget), width, height, pwidth, pheight)
