@@ -19,7 +19,7 @@ var (
 	body     js.Value
 	canvas   js.Value
 	ctx      js.Value
-	surface  *Surface
+	surface  *Widget
 	windows  []*Window
 	renderFn js.Func
 )
@@ -40,6 +40,11 @@ type Widget struct {
 	window     *Window
 	userdata   interface{}
 	allocation Rectangle
+	data       []byte
+	width      int32
+	height     int32
+	stride     int32
+	cleared    bool
 }
 
 type Input struct {
@@ -259,6 +264,14 @@ func (w *Window) ToggleMaximized() error {
 	return nil
 }
 
+func (w *Window) SeMaximized(maximized bool) error {
+	return nil
+}
+
+func (w *Window) SetMaximized(maximized bool) error {
+	return nil
+}
+
 func (w *Window) UninhibitRedraw() {
 }
 
@@ -311,7 +324,7 @@ func initCanvas() {
 		height := int(canvas.Get("height").Int())
 		stride := width * 4
 		surfaceData := make([]byte, stride*height)
-		surface = &Surface{
+		surface = &Widget{
 			data:   surfaceData,
 			width:  int32(width),
 			height: int32(height),
@@ -334,7 +347,7 @@ func initCanvas() {
 		
 		stride := width * 4
 		surfaceData := make([]byte, stride*height)
-		surface = &Surface{
+		surface = &Widget{
 			data:   surfaceData,
 			width:  int32(width),
 			height: int32(height),
@@ -502,41 +515,30 @@ func (w *Window) WindowGetSurface() cairo.Surface {
 	return surface
 }
 
-type Surface struct {
-	data    []byte
-	width   int32
-	height  int32
-	stride  int32
-	cleared bool
+func (w *Widget) Reference() cairo.Surface {
+	return w
 }
 
-func (s *Surface) Reference() cairo.Surface {
-	return s
+func (w *Widget) SetUserData(data func()) {
 }
 
-func (s *Surface) Destroy() {
+func (w *Widget) SetDestructor(destructor func()) {
 }
 
-func (s *Surface) SetUserData(data func()) {
+func (w *Widget) ImageSurfaceGetData() []byte {
+	return w.data
 }
 
-func (s *Surface) SetDestructor(destructor func()) {
+func (w *Widget) ImageSurfaceGetWidth() int {
+	return int(w.width)
 }
 
-func (s *Surface) ImageSurfaceGetData() []byte {
-	return s.data
+func (w *Widget) ImageSurfaceGetHeight() int {
+	return int(w.height)
 }
 
-func (s *Surface) ImageSurfaceGetWidth() int {
-	return int(s.width)
-}
-
-func (s *Surface) ImageSurfaceGetHeight() int {
-	return int(s.height)
-}
-
-func (s *Surface) ImageSurfaceGetStride() int {
-	return int(s.stride)
+func (w *Widget) ImageSurfaceGetStride() int {
+	return int(w.stride)
 }
 
 func renderToCanvas() {
