@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="viewporter">
+  <description summary="surface cropping and scaling"/>
+
+  <interface name="wp_viewporter" version="1">
+    <request name="destroy" type="destructor"/>
+    <enum name="error">
+      <entry name="viewport_exists" value="0"/>
+    </enum>
+    <request name="get_viewport">
+      <arg name="id" type="new_id" interface="wp_viewport"/>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </request>
+  </interface>
+
+  <interface name="wp_viewport" version="1">
+    <request name="destroy" type="destructor"/>
+    <enum name="error">
+      <entry name="bad_value" value="0"/>
+      <entry name="bad_size" value="1"/>
+      <entry name="out_of_buffer" value="2"/>
+      <entry name="no_surface" value="3"/>
+    </enum>
+    <request name="set_source">
+      <arg name="x" type="fixed"/>
+      <arg name="y" type="fixed"/>
+      <arg name="width" type="fixed"/>
+      <arg name="height" type="fixed"/>
+    </request>
+    <request name="set_destination">
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+    </request>
+  </interface>
+</protocol>

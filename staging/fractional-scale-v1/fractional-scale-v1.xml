@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="fractional_scale_v1">
+  <description summary="fractional surface scale information"/>
+
+  <interface name="wp_fractional_scale_manager_v1" version="1">
+    <request name="destroy" type="destructor"/>
+    <enum name="error">
+      <entry name="fractional_scale_exists" value="0"/>
+    </enum>
+    <request name="get_fractional_scale">
+      <arg name="id" type="new_id" interface="wp_fractional_scale_v1"/>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </request>
+  </interface>
+
+  <interface name="wp_fractional_scale_v1" version="1">
+    <request name="destroy" type="destructor"/>
+    <event name="preferred_scale">
+      <arg name="scale" type="uint"/>
+    </event>
+  </interface>
+</protocol>

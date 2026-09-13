@@ -132,7 +132,7 @@ func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 		// If another redraw is pending, schedule it
 		if d.pendingShadowRedraw {
 			d.pendingShadowRedraw = false
-			d.commitShadow()
+			d.drawShadow()
 		}
 	} else if d.titleSurf != nil && d.titleSurf.frameCb == ev.C {
 		wlclient.CallbackDestroy(ev.C)
@@ -141,7 +141,7 @@ func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {
 		// If another redraw is pending, schedule it
 		if d.pendingTitleRedraw {
 			d.pendingTitleRedraw = false
-			d.commitTitleBar()
+			d.drawTitleBar()
 		}
 	}
 }
