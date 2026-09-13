@@ -9,8 +9,6 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/neurlang/wayland/wl"
 )
 
 // noopRunner is a no-op implementation of the runner interface for testing.
@@ -190,6 +188,8 @@ func TestPointerValue120FallbackAccumulatesWholeSteps(t *testing.T) {
 	input.PointerAxis(nil, 0, wl.PointerAxisVerticalScroll, 5)
 	if handler.rawAxes != 1 {
 		t.Fatalf("raw axis after frame was delivered %d times, want 1", handler.rawAxes)
+	}
+}
 // TestWindowScheduleRedrawTaskConcurrent verifies that concurrent redraw
 // requests atomically claim a single deferred task. In particular, the
 // scheduled flag must already be visible when the task is published to the
@@ -228,6 +228,8 @@ func TestWindowScheduleRedrawTaskConcurrent(t *testing.T) {
 		if got := atomic.LoadInt32(&w.redrawTaskScheduled); got != 1 {
 			t.Fatalf("attempt %d: redrawTaskScheduled = %d, want 1", attempt, got)
 		}
+	}
+}
 func TestWindowGeometryIncludesClientTitlebar(t *testing.T) {
 	window := &Window{
 		mainSurface: &surface{allocation: Rectangle{X: 3, Y: 5, Width: 1707, Height: 1021}},
