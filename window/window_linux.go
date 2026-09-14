@@ -84,40 +84,16 @@ type Display struct {
 	Display            *wl.Display
 	registry           *wl.Registry
 	compositor         *wl.Compositor
-	subcompositor      *wl.Subcompositor //nolint:unused // Reserved for future use
+	subcompositor      *wl.Subcompositor
 	shm                *wl.Shm
 	dataDeviceManager  *wl.DataDeviceManager
-	dataDeviceVersion  int       //nolint:unused // Reserved for future use
-	textCursorPosition *struct{} //nolint:unused // Reserved for future use
 	xdgShell           *zxdg.WmBase
 	serial             uint32
-
-	//display_fd        int32
-	displayFdEvents uint32 //nolint:unused // Reserved for future use
-
-	//display_task task
-	//	pad4		uint64
-	//	pad5		uint64
-	//	pad6		uint64
-
-	deferredList [2]uintptr //nolint:unused // Reserved for future use
-	//	pad7		uint64
-	//	pad8		uint64
 
 	running bool
 
 	globalList []*global
-	//	pad9		uint64
-	//	pada		uint64
-	windowList [2]*Window //nolint:unused // Reserved for future use
-	//	padb		uint64
-	//	padc		uint64
 	inputList []*Input
-	//	padd		uint64
-	//	pade		uint64
-	outputList [2]*output //nolint:unused // Reserved for future use
-	//	padf		uint64
-	//	padg		uint64
 
 	cursorTheme *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor
@@ -131,10 +107,8 @@ type Display struct {
 	dataDeviceManagerVersion uint32
 
 	deferredListNew []runner
+	deferredMu      sync.Mutex // guards deferredListNew
 
-	deferredMu sync.Mutex // guards deferredListNew
-
-	//display_task_new os.Runner
 	surface2window map[*wl.Surface]*Window
 
 	globalHandler GlobalHandler
