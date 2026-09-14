@@ -677,15 +677,6 @@ const (
 	ComponentButtonClose = window.ComponentButtonClose
 )
 
-const (
-	TYPE_NONE       = window.TYPE_NONE
-	TYPE_TOPLEVEL   = window.TYPE_TOPLEVEL
-	TYPE_FULLSCREEN = window.TYPE_FULLSCREEN
-	TYPE_MAXIMIZED  = window.TYPE_MAXIMIZED
-	TYPE_TRANSIENT  = window.TYPE_TRANSIENT
-	TYPE_MENU       = window.TYPE_MENU
-	TYPE_CUSTOM     = window.TYPE_CUSTOM
-)
 
 const (
 	CursorDefault = window.CursorDefault

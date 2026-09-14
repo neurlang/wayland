@@ -35,16 +35,6 @@ const ButtonWidth = 32
 const SymDim = 14
 const ShadowBlurSize = 64
 
-const (
-	TYPE_NONE byte = iota
-	TYPE_TOPLEVEL
-	TYPE_FULLSCREEN
-	TYPE_MAXIMIZED
-	TYPE_TRANSIENT
-	TYPE_MENU
-	TYPE_CUSTOM
-)
-
 func NewWindowDecoration(window *Window) *WindowDecoration { return nil }
 
 func (d *WindowDecoration) HandleCallbackDone(ev wl.CallbackDoneEvent) {}

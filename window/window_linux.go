@@ -176,13 +176,13 @@ type CloseHandler interface {
 }
 
 const (
-	TYPE_NONE byte = iota
-	TYPE_TOPLEVEL
-	TYPE_FULLSCREEN
-	TYPE_MAXIMIZED
-	TYPE_TRANSIENT
-	TYPE_MENU
-	TYPE_CUSTOM
+	typeNone byte = iota
+	typeTopLevel
+	typeFullscreen
+	typeMaximized
+	typeTransient
+	typeMenu
+	typeCustom
 )
 
 type ResizeHandler interface {
@@ -2897,15 +2897,15 @@ func (window *Window) SetFullscreen(fullscreen bool) error {
 		return errors.New("no xdg shell")
 	}
 
-	if (window.typ == TYPE_FULLSCREEN) == fullscreen {
+	if (window.typ == typeFullscreen) == fullscreen {
 		return errors.New("bad typ")
 	}
 
 	if fullscreen {
-		window.typ = TYPE_FULLSCREEN
+		window.typ = typeFullscreen
 		return window.xdgToplevel.SetFullscreen(nil)
 	} else {
-		window.typ = TYPE_TOPLEVEL
+		window.typ = typeTopLevel
 		_ = window.xdgToplevel.UnsetFullscreen()
 		window.ScheduleResize(window.savedAllocation.Width,
 			window.savedAllocation.Height)
@@ -3451,7 +3451,7 @@ func (Window *Window) ScheduleRedraw() {
 
 func (Window *Window) ToggleMaximized() error {
 	// extra feature: un-fullscreen using toggle maximized button if fullscreen
-	if (Window.typ == TYPE_FULLSCREEN) && Window.fullscreen {
+	if (Window.typ == typeFullscreen) && Window.fullscreen {
 		_ = Window.SetFullscreen(false)
 		return nil
 	}
