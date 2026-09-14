@@ -86,17 +86,17 @@ func (f *Font) GetRGBTexture(code string) [][3]byte {
 		faketexture := make([][3]byte, f.cellx*f.celly)
 		fakestring := fmt.Sprintf("%+q", code)
 
-		fakestring = strings.Replace(fakestring, "\"", "", -1)
-		fakestring = strings.Replace(fakestring, "\\", "", -1)
-		fakestring = strings.Replace(fakestring, "u", "", -1)
-		fakestring = strings.Replace(fakestring, "U", "", -1)
+		fakestring = strings.ReplaceAll(fakestring, "\"", "")
+		fakestring = strings.ReplaceAll(fakestring, "\\", "")
+		fakestring = strings.ReplaceAll(fakestring, "u", "")
+		fakestring = strings.ReplaceAll(fakestring, "U", "")
 
 		//println(fakestring)
 		var i = 0
-		for xbox := byte(0); xbox < 3; xbox++ {
-			for ybox := byte(0); ybox < 4; ybox++ {
-				for y := byte(0); y < 6; y++ {
-					for x := byte(0); x < 4; x++ {
+		for xbox := range byte(3) {
+			for ybox := range byte(4) {
+				for y := range byte(6) {
+					for x := range byte(4) {
 						pos := int(ybox)*f.cellx*6 + int(xbox)*4 + int(y)*f.cellx + int(x)
 						if len(fakestring) > i {
 							if hexfontGet(fakestring[i], x, y) {

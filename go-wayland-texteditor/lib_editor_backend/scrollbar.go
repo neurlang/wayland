@@ -38,7 +38,7 @@ func reprocess_scrollbar(file [][]string) (out []byte, err error) {
 	is_csharp = detect_csharp(file)
 
 	// Set color for each pixel.
-	for y := 0; y < height; y++ {
+	for y := range height {
 
 		var color_out [][5]int
 

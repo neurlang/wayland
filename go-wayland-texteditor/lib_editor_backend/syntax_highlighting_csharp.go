@@ -43,7 +43,7 @@ func reprocess_syntax_highlighting_csharp(file [][]string) (out [][5]int) {
 	return out
 }
 
-func reprocess_syntax_highlighting_row_csharp(row []string, y int, comments, strings *bool) (out [][5]int) {
+func reprocess_syntax_highlighting_row_csharp(row []string, y int, comments, _ *bool) (out [][5]int) {
 	var loaded uint64
 	var digits, dblquote, snglquote, comment1, comment2, comment, escape, alpha bool
 	comment = *comments

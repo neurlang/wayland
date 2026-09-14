@@ -22,15 +22,13 @@
 package main
 
 import (
-	"math/rand"
-	"time"
-
 	cairo "github.com/neurlang/wayland/cairoshim"
 	wl "github.com/neurlang/wayland/wl"
 
 	xkb "github.com/neurlang/wayland/xkbcommon"
 
 	"bytes"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"os"
@@ -315,8 +313,7 @@ func (s *textarea) Button(_ *window.Widget, _ *window.Input, time uint32, button
 						cmd.Stderr = &errb
 						err := cmd.Run()
 						if err == nil {
-							files := strings.Split(outb.String(), separator)
-							for _, srcPath := range files {
+							for srcPath := range strings.SplitSeq(outb.String(), separator) {
 								if srcPath[len(srcPath)-1] == '\n' {
 									srcPath = srcPath[0 : len(srcPath)-1]
 								}
@@ -915,8 +912,6 @@ func main() {
 
 	textarea.window.SetKeyboardHandler(&textarea)
 	textarea.window.SetFullscreenHandler(&textarea)
-
-	rand.Seed(int64(time.Now().Nanosecond()))
 
 	textarea.widget.SetUserDataWidgetHandler(&textarea)
 

@@ -307,10 +307,7 @@ func (sg *StringGrid) Motion(pos ObjectPosition) {
 		pos.X = 0
 	}
 	if pos.Y >= sg.LineCount-sg.FilePosition.Y {
-		pos.Y = sg.LineCount - 1 - sg.FilePosition.Y
-		if pos.Y < 0 {
-			pos.Y = 0
-		}
+		pos.Y = max(sg.LineCount-1-sg.FilePosition.Y, 0)
 	}
 	if pos.X > 0 && pos.Y >= 0 && pos.Y < len(sg.LineLens) && sg.LineLens[pos.Y] < pos.X {
 		pos.X = sg.LineLens[pos.Y]
@@ -684,9 +681,7 @@ func (sb *Scrollbar) Render(c Canvas) {
 	sb.mut.RLock()
 	var renderbuf = sb.RGBok
 	pos := rowHeight * sb.Width * skippedPostion
-	if pos > len(renderbuf) {
-		pos = len(renderbuf)
-	}
+	pos = min(pos, len(renderbuf))
 	renderbuf = renderbuf[pos:]
 	length := sb.Width * sb.Height
 	sb.mut.RUnlock()
