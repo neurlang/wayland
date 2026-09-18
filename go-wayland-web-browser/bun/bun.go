@@ -12,7 +12,7 @@ func RenderDocument(ctx *gg.Context, document *hotdog.Document, experimentalLayo
 		document.DOM.RenderBox.Width = float64(ctx.Width())
 		document.DOM.RenderBox.Height = float64(ctx.Height())
 
-		ctx.SetRGB(1, 1, 1)
+		ctx.SetRGB(body.Style.BackgroundColor.R, body.Style.BackgroundColor.G, body.Style.BackgroundColor.B)
 		ctx.Clear()
 
 		layoutDOM(ctx, body, 0)
@@ -85,18 +85,22 @@ func calculateNode(ctx *gg.Context, node *hotdog.NodeDOM, postion int) {
 }
 
 func GetPageTitle(TreeDOM *hotdog.NodeDOM) string {
-	nodeChildren := getNodeChildren(TreeDOM)
-	pageTitle := "Sem Titulo"
+	const unnamed = "Unnamed"
+	pageTitle := unnamed
 
 	if getElementName(TreeDOM) == "title" {
 		return getNodeContent(TreeDOM)
 	}
 
+	nodeChildren := getNodeChildren(TreeDOM)
+
 	for i := 0; i < len(nodeChildren); i++ {
+
 		nPageTitle := GetPageTitle(nodeChildren[i])
 
-		if nPageTitle != "Sem Titulo" {
+		if nPageTitle != unnamed {
 			pageTitle = nPageTitle
+			break
 		}
 	}
 
