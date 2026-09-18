@@ -116,6 +116,27 @@ func GetElementStylesheet(elementName string, attributes []*hotdog.Attribute) *h
 		elementStylesheet = parseInlineStylesheet(attributes, elementStylesheet)
 	}
 
+	if elementName == "body" {
+		for _, attrib := range attributes {
+			if attrib.Name == "bgcolor" {
+				elementStylesheet = mapPropToStylesheet(elementStylesheet, []string{"background-color", attrib.Value})
+			}
+		}
+		if elementStylesheet.BackgroundColor == nil {
+			elementStylesheet.BackgroundColor = &hotdog.ColorRGBA{R: 1, G: 1, B: 1, A: 0}
+		} else {
+			elementStylesheet.BackgroundColor.A = 0
+		}
+	}
+
+	if elementName == "canvas" {
+		for _, attrib := range attributes {
+			if attrib.Name == "width" || attrib.Name == "height" {
+				elementStylesheet = mapPropToStylesheet(elementStylesheet, []string{attrib.Name, attrib.Value})
+			}
+		}
+	}
+
 	if elementStylesheet.FontSize == float64(0) {
 		fontSize := elementFontTable[elementName]
 

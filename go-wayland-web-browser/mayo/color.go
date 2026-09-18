@@ -13,8 +13,7 @@ func hexToFloatInRange(hex string) float64 {
 	if err != nil {
 		panic(err)
 	}
-
-	return float64(number / 255)
+	return float64(number) / 255
 }
 
 // parseColorValue parses a single color component value from a string
