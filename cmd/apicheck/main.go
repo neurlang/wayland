@@ -158,7 +158,7 @@ func loadPackageAPI(goos, pkgPath string) PackageAPI {
 							if vs.Type != nil {
 								c.Type = exprToString(vs.Type)
 							}
-							if vs.Values != nil && len(vs.Values) > 0 {
+							if len(vs.Values) > 0 {
 								c.Value = exprToString(vs.Values[0])
 							}
 							api.Constants = append(api.Constants, c)

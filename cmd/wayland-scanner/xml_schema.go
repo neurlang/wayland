@@ -9,11 +9,6 @@ func UnmarshalXML(data []byte) (Protocol, error) {
 	return r, err
 }
 
-// MarshalXML serializes a Protocol structure into XML format
-func (r *Protocol) MarshalXML() ([]byte, error) {
-	return xml.Marshal(r)
-}
-
 // Protocol represents a Wayland protocol definition
 type Protocol struct {
 	Interface []Interface `xml:"interface"`

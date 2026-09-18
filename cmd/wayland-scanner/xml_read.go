@@ -19,7 +19,7 @@ func xmlProcess(inputFile, outputFile string) {
 
 	var f GoFile
 
-	f.PkgName = before_wl(xml.Name)
+	f.PkgName = beforeWl(xml.Name)
 	f.Name = sanitizeSingleLineComment(xml.Name)
 	f.FileName = sanitizeSingleLineComment(inputFile)
 
