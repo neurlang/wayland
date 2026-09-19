@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	gg "github.com/danfragoso/thdwb/gg"
 	profiler "github.com/danfragoso/thdwb/profiler"
+	gg "github.com/gogpu/gg"
 	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	mustard "github.com/neurlang/wayland/go-wayland-web-browser/mustard"

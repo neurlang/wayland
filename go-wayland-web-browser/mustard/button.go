@@ -1,17 +1,17 @@
 package mustard
 
 import (
-	gg "github.com/danfragoso/thdwb/gg"
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	gg "github.com/gogpu/gg"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
+	"image"
 )
 
 // CreateButtonWidget - Creates and returns a new Button Widget
-func CreateButtonWidget(label string, asset []byte) *ButtonWidget {
+func CreateButtonWidget(label string, asset image.Image) *ButtonWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
-	icon, _ := gg.LoadAsset(asset)
+	icon := asset
 
 	return &ButtonWidget{
 		baseWidget: baseWidget{
@@ -112,11 +112,11 @@ func (button *ButtonWidget) render(s Surface, time uint32) {
 
 	if button.content != "" {
 		context.SetHexColor(button.fontColor)
-		context.SetFont(button.font, button.fontSize)
+		context.SetFont(button.font.Face(button.fontSize))
 		context.DrawString(button.content, float64(left)+button.padding, float64(top)+button.padding+button.fontSize)
 	}
 
 	if button.icon != nil {
-		context.DrawImage(button.icon, int(left+4), int(top+2))
+		context.DrawImage(gg.ImageBufFromImage(button.icon), left+4, top+2)
 	}
 }

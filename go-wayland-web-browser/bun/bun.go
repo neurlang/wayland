@@ -1,7 +1,7 @@
 package bun
 
 import (
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 
@@ -12,8 +12,7 @@ func RenderDocument(ctx *gg.Context, document *hotdog.Document, experimentalLayo
 		document.DOM.RenderBox.Width = float64(ctx.Width())
 		document.DOM.RenderBox.Height = float64(ctx.Height())
 
-		ctx.SetRGB(body.Style.BackgroundColor.R, body.Style.BackgroundColor.G, body.Style.BackgroundColor.B)
-		ctx.Clear()
+		ctx.ClearWithColor(gg.RGBA{body.Style.BackgroundColor.R, body.Style.BackgroundColor.G, body.Style.BackgroundColor.B, 1})
 
 		layoutDOM(ctx, body, 0)
 	} else {

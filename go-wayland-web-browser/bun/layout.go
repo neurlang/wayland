@@ -1,7 +1,7 @@
 package bun
 
 import (
-	"github.com/danfragoso/thdwb/gg"
+	"github.com/gogpu/gg"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 )
 

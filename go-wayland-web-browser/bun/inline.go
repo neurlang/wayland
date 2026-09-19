@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"strings"
 
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
+	text "github.com/gogpu/gg/text"
 	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	"github.com/neurlang/wayland/go-wayland-web-browser/sauce"
@@ -24,13 +26,15 @@ func paintInlineElement(ctx *gg.Context, node *hotdog.NodeDOM) {
 		if err != nil {
 			fmt.Println(err)
 			// Use the stand-in error image.
-			im, _, _ = image.Decode(bytes.NewReader(assets.ErrorImage()))
+			im = assets.ErrorImage()
 		}
-		ctx.DrawImage(im, int(node.RenderBox.Left), int(node.RenderBox.Top))
+		ctx.DrawImage(gg.ImageBufFromImage(im), node.RenderBox.Left, node.RenderBox.Top)
 	}
 
 	ctx.SetRGBA(node.Style.Color.R, node.Style.Color.G, node.Style.Color.B, node.Style.Color.A)
-	ctx.SetFont(sansSerif[node.Style.FontWeight], node.Style.FontSize)
+	ctx.SetFont(SansSerif.Face(node.Style.FontSize, text.WithVariations(
+		text.NewFontVariation("wght", float32(node.Style.FontWeight)),
+	)))
 	ctx.DrawStringWrapped(node.Content, node.RenderBox.Left, node.RenderBox.Top, 0, 0, node.RenderBox.Width, 1, gg.AlignLeft)
 	ctx.Fill()
 }
@@ -57,7 +61,9 @@ func fetchNodeImage(node *hotdog.NodeDOM) (image.Image, error) {
 }
 
 func calculateInlineLayout(ctx *gg.Context, node *hotdog.NodeDOM, childIdx int) {
-	ctx.SetFont(sansSerif[node.Style.FontWeight], node.Style.FontSize)
+	ctx.SetFont(SansSerif.Face(node.Style.FontSize, text.WithVariations(
+		text.NewFontVariation("wght", float32(node.Style.FontWeight)),
+	)))
 
 	if childIdx > 0 && node.Parent.Children[childIdx-1] != nil {
 		prev := node.Parent.Children[childIdx-1]
@@ -78,7 +84,7 @@ func calculateInlineLayout(ctx *gg.Context, node *hotdog.NodeDOM, childIdx int) 
 		if err != nil {
 			fmt.Println(err)
 			// Use the stand-in error image.
-			im, _, _ = image.Decode(bytes.NewReader(assets.ErrorImage()))
+			im = assets.ErrorImage()
 		}
 		imgSize := im.Bounds().Size()
 
@@ -88,10 +94,10 @@ func calculateInlineLayout(ctx *gg.Context, node *hotdog.NodeDOM, childIdx int) 
 		if node.RenderBox.Width == 0 {
 			node.RenderBox.Width = node.Parent.RenderBox.Width
 		}
-
-		node.RenderBox.Height = ctx.MeasureStringWrapped(node.Content, node.RenderBox.Width, 1)
+		_, h := ctx.MeasureMultilineString(strings.Repeat("\n", len(ctx.WordWrap(node.Content, node.RenderBox.Width))-1), 1)
+		node.RenderBox.Height = h
 		mW, _ := ctx.MeasureString(node.Content)
-		if mW < node.RenderBox.Width {
+		if mW > node.RenderBox.Width {
 			node.RenderBox.Width = mW
 		}
 	}

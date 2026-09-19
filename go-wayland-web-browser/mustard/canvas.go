@@ -1,7 +1,7 @@
 package mustard
 
 import (
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
 )
 
 // CreateImageWidget - Creates and returns a new Image Widget
@@ -83,6 +83,6 @@ func (ctx *CanvasWidget) render(s Surface, time uint32) {
 		ctx.renderer(ctx)
 		ctx.drawingRepaint = false
 	}
-	ctx.context.DrawImage(ctx.drawingContext.Image(), int(left), ctx.offset)
-	context.DrawImage(ctx.context.Image(), int(left), int(top))
+	ctx.context.DrawImage(gg.ImageBufFromImage(ctx.drawingContext.Image()), left, float64(ctx.offset))
+	context.DrawImage(gg.ImageBufFromImage(ctx.context.Image()), left, top)
 }

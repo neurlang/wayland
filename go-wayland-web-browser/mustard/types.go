@@ -3,8 +3,8 @@ package mustard
 import (
 	"image"
 
-	gg "github.com/danfragoso/thdwb/gg"
-	"github.com/goki/freetype/truetype"
+	gg "github.com/gogpu/gg"
+	"github.com/gogpu/gg/text"
 	cairo "github.com/neurlang/wayland/cairoshim"
 	window "github.com/neurlang/wayland/windowtrace"
 )
@@ -89,7 +89,7 @@ type baseWidget struct {
 	computedBox    box
 	widgetPosition widgetPosition //nolint:unused // Reserved for future use
 
-	font *truetype.Font
+	font *text.FontSource
 
 	needsRepaint bool
 	fixedWidth   bool

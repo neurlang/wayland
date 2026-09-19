@@ -3,9 +3,9 @@ package mustard
 import (
 	"image"
 
-	gg "github.com/danfragoso/thdwb/gg"
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	gg "github.com/gogpu/gg"
+	text "github.com/gogpu/gg/text"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 	window "github.com/neurlang/wayland/windowtrace"
 	wl "github.com/neurlang/wayland/wl"
 )
@@ -87,9 +87,10 @@ func (contextMenu *contextMenu) DrawContextMenu() {
 	ctx.SetHexColor("#eee")
 	ctx.Fill()
 
-	font, _ := truetype.Parse(assets.OpenSans(400))
 	ctx.SetHexColor("#222")
-	ctx.SetFont(font, 16)
+	ctx.SetFont(bun.SansSerif.Face(16, text.WithVariations(
+		text.NewFontVariation("wght", float32(400)),
+	)))
 
 	textLeft := 4.
 
@@ -129,11 +130,12 @@ func (cm *contextMenu) Render(s Surface, time uint32) {
 	menuWidth := float64(s.ImageSurfaceGetWidth())
 	textLeft := 4.
 	ctx.SetHexColor("#eee")
-	ctx.Clear()
+	ctx.ClearWithColor(gg.Hex("#fff"))
 
-	font, _ := truetype.Parse(assets.OpenSans(400))
 	ctx.SetHexColor("#222")
-	ctx.SetFont(font, 16)
+	ctx.SetFont(bun.SansSerif.Face(16, text.WithVariations(
+		text.NewFontVariation("wght", float32(400)),
+	)))
 
 	for idx, entry := range cm.entries {
 		if cm.selectedEntry == entry {

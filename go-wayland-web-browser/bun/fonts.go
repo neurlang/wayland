@@ -1,20 +1,8 @@
 package bun
 
 import (
-	"github.com/neurlang/wayland/go-wayland-web-browser/assets"
-
-	"github.com/goki/freetype/truetype"
+	"github.com/go-fonts/dejavu/dejavusans"
+	"github.com/gogpu/gg/text"
 )
 
-var sansSerif = map[int]*truetype.Font{
-	300: parseFont(300),
-	400: parseFont(400),
-	600: parseFont(600),
-	700: parseFont(700),
-	800: parseFont(800),
-}
-
-func parseFont(weight int) *truetype.Font {
-	font, _ := truetype.Parse(assets.OpenSans(weight))
-	return font
-}
+var SansSerif, _ = text.NewFontSource(dejavusans.TTF)

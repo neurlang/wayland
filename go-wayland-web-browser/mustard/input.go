@@ -1,15 +1,15 @@
 package mustard
 
 import (
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 
-	"github.com/goki/freetype/truetype"
+	gg "github.com/gogpu/gg"
 )
 
 // CreateInputWidget - Creates and returns a new Input Widget
 func CreateInputWidget() *InputWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
 	return &InputWidget{
 		baseWidget: baseWidget{
@@ -118,7 +118,7 @@ func (input *InputWidget) render(s Surface, time uint32) {
 
 	context.SetHexColor("#2f2f2f")
 
-	context.SetFont(input.font, input.fontSize)
+	context.SetFont(input.font.Face(input.fontSize))
 	w, h := context.MeasureString(input.value)
 
 	cursorP := width - totalPadding*2
@@ -172,6 +172,6 @@ func (input *InputWidget) render(s Surface, time uint32) {
 		height-2,
 	)
 
-	context.SetLineJoinRound()
+	context.SetLineJoin(gg.LineJoinRound)
 	context.Stroke()
 }

@@ -1,14 +1,13 @@
 package mustard
 
 import (
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 )
 
 // CreateLabelWidget - Creates and returns a new Label Widget
 func CreateLabelWidget(content string) *LabelWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
 	return &LabelWidget{
 		baseWidget: baseWidget{
@@ -87,7 +86,7 @@ func (label *LabelWidget) render(s Surface, time uint32) {
 	context.Fill()
 
 	context.SetHexColor(label.fontColor)
-	context.SetFont(label.font, label.fontSize)
+	context.SetFont(label.font.Face(label.fontSize))
 	context.DrawString(label.content, float64(left)+label.fontSize/4, float64(top)+label.fontSize*2/2)
 	context.Fill()
 

@@ -6,6 +6,10 @@ import (
 
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	mayo "github.com/neurlang/wayland/go-wayland-web-browser/mayo"
+
+	"github.com/aglyzov/charmap"
+
+	"golang.org/x/net/html"
 )
 
 var xmlTag = regexp.MustCompile(`(\<.+?\>)|(\<//?\w+\>\\?)`)
@@ -131,6 +135,12 @@ func ParseHTML(document string) *hotdog.Document {
 	parseDocument := xmlTag.MatchString(document)
 	document = strings.ReplaceAll(document, "\n", "")
 
+	for charset, table := range charmap.KnownCharsets {
+		if strings.Contains(document, "charset="+charset) {
+			document = string(charmap.ToUTF8(table, []byte(document)))
+		}
+	}
+
 	for parseDocument {
 		var currentNode *hotdog.NodeDOM
 
@@ -152,7 +162,7 @@ func ParseHTML(document string) *hotdog.Document {
 					if clTag.MatchString(contentString) {
 						lastNode.Content = ""
 					} else {
-						lastNode.Content = strings.TrimSpace(contentString)
+						lastNode.Content = html.UnescapeString(strings.TrimSpace(contentString))
 					}
 
 					if lastNode.Parent != nil {

@@ -1,19 +1,16 @@
 package mustard
 
 import (
-	"image"
-
-	"github.com/danfragoso/thdwb/gg"
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
-
+	"github.com/gogpu/gg"
 	cairo "github.com/neurlang/wayland/cairoshim"
+	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 )
 
 // CreateTreeWidget - Creates and returns a new Tree Widget
 func CreateTreeWidget() *TreeWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
 	//openIcon, _ := gg.LoadAsset(assets.DownChevron())
 	//closeIcon, _ := gg.LoadAsset(assets.RightChevron())
@@ -33,10 +30,10 @@ func CreateTreeWidget() *TreeWidget {
 			font: font,
 		},
 
-		//openIcon:  openIcon,
-		//closeIcon: closeIcon,
+		openIcon:  assets.RightChevron(),
+		closeIcon: assets.Logo(),
 		fontSize:  20,
-		fontColor: "#000",
+		fontColor: "#ff00ff00",
 	}
 }
 
@@ -173,8 +170,8 @@ func (tree *TreeWidget) SetBackgroundColor(backgroundColor string) {
 }
 
 func (tree *TreeWidget) render(s cairo.Surface, time uint32) {
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+	pm := gg.NewPixmapFromBuffer(s.ImageSurfaceGetData(), s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
+	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight(), gg.WithPixmap(pm))
 	top, left, width, height := tree.computedBox.GetCoords()
 
 	context.SetHexColor(tree.backgroundColor)
@@ -218,27 +215,28 @@ func flowNode(context *gg.Context, node *TreeWidgetNode, tree *TreeWidget, level
 }
 
 func drawNode(context *gg.Context, node *TreeWidgetNode, tree *TreeWidget, level int) {
-	top, left, width, _ := node.box.GetCoords()
+	top, left, width, height := node.box.GetCoords()
 
 	if node.isSelected {
 		context.SetHexColor("#7db1ff32")
-		context.DrawRectangle(float64(tree.computedBox.left), float64(top), float64(width), tree.fontSize+4)
+		context.DrawRectangle(float64(tree.computedBox.left), float64(top), float64(width), float64(height))
 		context.Fill()
 
 	} else {
 		context.SetHexColor(tree.backgroundColor)
-		context.DrawRectangle(float64(tree.computedBox.left), float64(top), float64(width), tree.fontSize+4)
+		context.DrawRectangle(float64(tree.computedBox.left), float64(top), float64(width), float64(height))
 		context.Fill()
 	}
 
 	context.SetHexColor(tree.fontColor)
-	context.SetFont(tree.font, tree.fontSize)
-	context.DrawString(node.Key, float64(left)+20+tree.fontSize/4, float64(top)+tree.fontSize*2/2)
+	context.SetFont(tree.font.Face(tree.fontSize))
+	context.SetColor(gg.Black)
+	context.DrawString(node.Key, float64(left)+20, float64(top))
 	context.Fill()
 
 	if len(node.Children) > 0 {
 		if node.isOpen {
-			//context.DrawImage(tree.openIcon, int(left+4), int(top+1))
+			context.DrawImage(gg.ImageBufFromImage(tree.openIcon), left+4, top+1)
 
 			for _, childNode := range node.Children {
 				drawNode(context, childNode, tree, level+1)
@@ -246,7 +244,7 @@ func drawNode(context *gg.Context, node *TreeWidgetNode, tree *TreeWidget, level
 		} else {
 			context.Push()
 			context.Rotate(40)
-			//context.DrawImage(tree.closeIcon, int(left+4), int(top+1))
+			context.DrawImage(gg.ImageBufFromImage(tree.closeIcon), left+4, top+1)
 			context.Pop()
 		}
 	}

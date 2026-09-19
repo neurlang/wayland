@@ -3,7 +3,7 @@ package mustard
 import (
 	"image"
 
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
 	window "github.com/neurlang/wayland/windowtrace"
 	"github.com/neurlang/wayland/wl"
 )

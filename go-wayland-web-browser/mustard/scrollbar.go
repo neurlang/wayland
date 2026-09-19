@@ -1,14 +1,13 @@
 package mustard
 
 import (
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 )
 
 // CreateScrollBarWidget - Creates and returns a new ScrollBar Widget
 func CreateScrollBarWidget(orientation ScrollBarOrientation) *ScrollBarWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
 	return &ScrollBarWidget{
 		baseWidget: baseWidget{

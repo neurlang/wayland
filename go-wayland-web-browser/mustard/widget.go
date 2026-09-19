@@ -3,7 +3,7 @@ package mustard
 import (
 	"image"
 
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
 	cairo "github.com/neurlang/wayland/cairoshim"
 )
 
@@ -14,9 +14,8 @@ func makeContextFromCairo(s cairo.Surface) *gg.Context {
 		println("no cairo")
 		return gg.NewContext(0, 0)
 	}
-
-	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
-	(context.Image()).(*image.RGBA).Pix = s.ImageSurfaceGetData()
+	pm := gg.NewPixmapFromBuffer(s.ImageSurfaceGetData(), s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight())
+	context := gg.NewContext(s.ImageSurfaceGetWidth(), s.ImageSurfaceGetHeight(), gg.WithPixmap(pm))
 	return context
 }
 

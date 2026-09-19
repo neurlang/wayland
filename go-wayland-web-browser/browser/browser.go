@@ -7,8 +7,8 @@ import (
 
 	"github.com/neurlang/wayland/go-wayland-web-browser/bun"
 
-	gg "github.com/danfragoso/thdwb/gg"
 	profiler "github.com/danfragoso/thdwb/profiler"
+	gg "github.com/gogpu/gg"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
 	ketchup "github.com/neurlang/wayland/go-wayland-web-browser/ketchup"
 	mustard "github.com/neurlang/wayland/go-wayland-web-browser/mustard"

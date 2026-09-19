@@ -1,8 +1,11 @@
 package bun
 
 import (
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
+	text "github.com/gogpu/gg/text"
 	hotdog "github.com/neurlang/wayland/go-wayland-web-browser/hotdog"
+
+	"strings"
 )
 
 func paintListItemElement(ctx *gg.Context, node *hotdog.NodeDOM) {
@@ -12,8 +15,10 @@ func paintListItemElement(ctx *gg.Context, node *hotdog.NodeDOM) {
 
 	ctx.DrawCircle(node.RenderBox.Left-15, node.RenderBox.Top+node.Style.FontSize/2, 3)
 	ctx.SetRGBA(node.Style.Color.R, node.Style.Color.G, node.Style.Color.B, node.Style.Color.A)
-	ctx.SetFont(sansSerif[node.Style.FontWeight], node.Style.FontSize)
-	ctx.DrawStringWrapped(node.Content, node.RenderBox.Left, node.RenderBox.Top+1, 0, 0, node.RenderBox.Width, 1.5, gg.AlignLeft)
+	ctx.SetFont(SansSerif.Face(node.Style.FontSize, text.WithVariations(
+		text.NewFontVariation("wght", float32(node.Style.FontWeight)),
+	)))
+	ctx.DrawStringWrapped(node.Content, node.RenderBox.Left, node.RenderBox.Top+1, 0, 0, node.RenderBox.Width, 1, gg.AlignLeft)
 	ctx.Fill()
 }
 
@@ -23,8 +28,11 @@ func calculateListItemLayout(ctx *gg.Context, node *hotdog.NodeDOM, childIdx int
 	}
 
 	if node.Style.Height == 0 && len(node.Content) > 0 {
-		ctx.SetFont(sansSerif[node.Style.FontWeight], node.Style.FontSize)
-		node.RenderBox.Height = ctx.MeasureStringWrapped(node.Content, node.RenderBox.Width, 1.5) + 2 + ctx.FontHeight()*.5
+		ctx.SetFont(SansSerif.Face(node.Style.FontSize, text.WithVariations(
+			text.NewFontVariation("wght", float32(node.Style.FontWeight)),
+		)))
+		_, h := ctx.MeasureMultilineString(strings.Repeat("\n", len(ctx.WordWrap(node.Content, node.Style.Width))-1), 1)
+		node.RenderBox.Height = h + 2
 	}
 
 	if childIdx > 0 {

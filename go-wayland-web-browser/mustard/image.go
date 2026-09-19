@@ -1,19 +1,13 @@
 package mustard
 
 import (
-	"log"
-
-	gg "github.com/danfragoso/thdwb/gg"
+	gg "github.com/gogpu/gg"
+	"image"
 )
 
 // CreateImageWidget - Creates and returns a new Image Widget
-func CreateImageWidget(path []byte) *ImageWidget {
+func CreateImageWidget(data image.Image) *ImageWidget {
 	var widgets []Widget
-
-	img, err := gg.LoadAsset(path)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return &ImageWidget{
 		baseWidget: baseWidget{
@@ -29,7 +23,7 @@ func CreateImageWidget(path []byte) *ImageWidget {
 		},
 
 		//path: path,
-		img: img,
+		img: data,
 	}
 }
 
@@ -51,6 +45,6 @@ func (im *ImageWidget) render(s Surface, time uint32) {
 	context := makeContextFromCairo(s)
 
 	top, left, _, _ := im.computedBox.GetCoords()
-	context.DrawImage(im.img, int(left)+15, int(top)+3)
+	context.DrawImage(gg.ImageBufFromImage(im.img), left+15, top+3)
 
 }

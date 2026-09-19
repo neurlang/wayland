@@ -1,15 +1,14 @@
 package mustard
 
 import (
-	gg "github.com/danfragoso/thdwb/gg"
-	"github.com/goki/freetype/truetype"
-	assets "github.com/neurlang/wayland/go-wayland-web-browser/assets"
+	gg "github.com/gogpu/gg"
+	bun "github.com/neurlang/wayland/go-wayland-web-browser/bun"
 )
 
 // CreateTextWidget - Creates and returns a new Text Widget
 func CreateTextWidget(content string) *TextWidget {
 	var widgets []Widget
-	font, _ := truetype.Parse(assets.OpenSans(400))
+	font := bun.SansSerif
 
 	return &TextWidget{
 		baseWidget: baseWidget{
@@ -84,12 +83,12 @@ func (text *TextWidget) render(s Surface, time uint32) {
 	context := makeContextFromCairo(s)
 	top, left, width, height := text.computedBox.GetCoords()
 
-	context.SetFont(text.font, text.fontSize)
+	context.SetFont(text.font.Face(text.fontSize))
 	context.DrawRectangle(float64(left), float64(top), float64(width), float64(height))
 	context.SetHexColor(text.backgroundColor)
 	context.Fill()
 
 	context.SetHexColor(text.fontColor)
-	context.DrawStringWrapped(text.content, float64(left)+text.fontSize/4, float64(top)+text.fontSize*2/2, 0, 0, float64(width), text.fontSize*0.15, gg.AlignLeft)
+	context.DrawStringWrapped(text.content, float64(left), float64(top), 0, 0, float64(width), 1.5, gg.AlignLeft)
 	context.Fill()
 }
