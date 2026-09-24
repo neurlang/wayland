@@ -142,6 +142,10 @@ func (w *Window) SetTitle(s string) {
 	w.form.SetText(s)
 }
 
+// SetAppID is a no-op on Windows; it keeps the cross-platform window API
+// compatible with the Wayland implementation.
+func (w *Window) SetAppID(appID string) {}
+
 func (w *Window) SetBufferType(t int32) {
 
 }

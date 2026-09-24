@@ -239,6 +239,10 @@ func (w *Window) SetTitle(title string) {
 	document.Set("title", title)
 }
 
+// SetAppID is a no-op in the browser; it keeps the cross-platform window API
+// compatible with the Wayland implementation.
+func (w *Window) SetAppID(appID string) {}
+
 func (w *Window) SetBufferType(t int32) {
 }
 
