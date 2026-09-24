@@ -3502,6 +3502,14 @@ func (Window *Window) SetTitle(title string) {
 	}
 }
 
+// SetAppID sets the stable desktop application identifier used by compositors
+// to match this window with its .desktop entry.
+func (Window *Window) SetAppID(appID string) {
+	if Window.xdgToplevel != nil && appID != "" {
+		_ = Window.xdgToplevel.SetAppId(appID)
+	}
+}
+
 // line 5178
 func surfaceCreate(Window *Window) *surface {
 	var Display = Window.Display

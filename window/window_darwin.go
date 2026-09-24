@@ -161,6 +161,10 @@ func (w *Window) SetTitle(title string) {
 	}
 }
 
+// SetAppID is a no-op on macOS; it keeps the cross-platform window API
+// compatible with the Wayland implementation.
+func (w *Window) SetAppID(appID string) {}
+
 // SetFullscreen toggles fullscreen mode
 func (w *Window) SetFullscreen(fullscreen bool) error {
 	if w.darwinHandle != nil {
