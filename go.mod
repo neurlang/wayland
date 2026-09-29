@@ -25,7 +25,7 @@ require (
 	github.com/aglyzov/charmap v0.0.0-20240916203842-8463cca61eca // indirect
 	github.com/gogpu/gpucontext v0.28.0 // indirect
 	github.com/gogpu/gputypes v0.5.2 // indirect
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
