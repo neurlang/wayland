@@ -10,9 +10,12 @@ import (
 	"math"
 
 	"github.com/fogleman/gg"
+	"github.com/golang/freetype/truetype"
 	sys "github.com/neurlang/wayland/os"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/gobold"
 )
 
 // Decoration constants
@@ -71,6 +74,11 @@ var decorationFonts = []string{
 	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf", // fedora
 	"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
 	"/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+	"/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",            // arch, cachyos
+	"/usr/share/fonts/liberation/LiberationSans-Bold.ttf", // arch
+	"/usr/share/fonts/noto/NotoSans-Bold.ttf",             // arch
+	"/usr/share/fonts/gnu-free/FreeSansBold.otf",          // arch
+	"/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",    // debian
 }
 
 // Component types
@@ -479,25 +487,35 @@ func (d *WindowDecoration) commitTitleBar() {
 	surf.buffer.inUse = true
 }
 
+// loadDecorationFont gives dc the font the title is drawn with: the first of
+// decorationFonts the system has and, when it has none of them (Arch and
+// CachyOS keep their fonts elsewhere than the distributions listed, and a
+// title bar without a title looks like a bug), the Go Bold font compiled in.
+func loadDecorationFont(dc *gg.Context) {
+	for _, fontPath := range decorationFonts {
+		if err := dc.LoadFontFace(fontPath, 12); err == nil {
+			return
+		}
+	}
+	dc.SetFontFace(decorationFallbackFace(12))
+}
+
+// decorationFallbackFace is the built-in title font at the given size in points.
+func decorationFallbackFace(size float64) font.Face {
+	f, err := truetype.Parse(gobold.TTF)
+	if err != nil {
+		panic("window: built-in title font: " + err.Error()) // the font is compiled in
+	}
+	return truetype.NewFace(f, &truetype.Options{Size: size})
+}
+
 // drawTitleText renders the window title
 func (d *WindowDecoration) drawTitleText(dc *gg.Context, titleWidth int) {
 	if d.window == nil || d.window.title == "" {
 		return
 	}
 
-	// Load font - try each path until one works
-	fontLoaded := false
-	for _, fontPath := range decorationFonts {
-		if err := dc.LoadFontFace(fontPath, 12); err == nil {
-			fontLoaded = true
-			break
-		}
-	}
-
-	if !fontLoaded {
-		// Can't load any font
-		return
-	}
+	loadDecorationFont(dc)
 
 	// Calculate available space for title (excluding buttons on right)
 	availableWidth := float64(titleWidth - 3*ButtonWidth - 40)
