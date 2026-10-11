@@ -60,9 +60,16 @@ func (ctx *Context) readEvent() (*Event, error) {
 		if oobn > len(control) {
 			return nil, ErrControlMsgBuffer
 		}
-		scms, err := os.ParseSocketControlMessage(control)
+		scms, err := os.ParseSocketControlMessage(control[:oobn])
 		if err != nil {
 			return nil, combinedError{ErrControlMsgParseError, err}
+		}
+		// The parsed messages' Data slices point into control, which goes
+		// back to bytePool below and is reused by the next read. A queued
+		// fd would then decode from whatever that read left there, so keep
+		// copies.
+		for i := range scms {
+			scms[i].Data = append([]byte(nil), scms[i].Data...)
 		}
 		ctx.scms = append(ctx.scms, scms...)
 	}
