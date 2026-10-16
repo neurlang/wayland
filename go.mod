@@ -12,6 +12,7 @@ require (
 	github.com/neurlang/winc v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/spaolacci/murmur3 v1.1.0
+	github.com/unxed/xkb-go v0.1.9-0.20260927162601-6df30840d0f4
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
 	github.com/yalue/native_endian v1.0.2
 	github.com/zzl/go-win32api/v2 v2.1.0
