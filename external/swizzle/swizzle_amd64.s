@@ -19,8 +19,8 @@ TEXT ·haveSSSE3(SB),NOSPLIT,$0
 
 // func bgra16(p []byte)
 TEXT ·bgra16(SB),NOSPLIT,$0-24
-	MOVQ	p+0(FP), SI
-	MOVQ	len+8(FP), DI
+	MOVQ	p_base+0(FP), SI
+	MOVQ	p_len+8(FP), DI
 
 	// Sanity check that len is a multiple of 16.
 	MOVQ	DI, AX
@@ -56,8 +56,8 @@ done:
 
 // func bgra4(p []byte)
 TEXT ·bgra4(SB),NOSPLIT,$0-24
-	MOVQ	p+0(FP), SI
-	MOVQ	len+8(FP), DI
+	MOVQ	p_base+0(FP), SI
+	MOVQ	p_len+8(FP), DI
 
 	// Sanity check that len is a multiple of 4.
 	MOVQ	DI, AX
