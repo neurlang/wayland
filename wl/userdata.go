@@ -4,13 +4,20 @@ import "sync"
 
 var userDataMap = new(sync.Map)
 
+type userDataKey struct {
+	ctx *Context
+	id  ProxyId
+}
+
+func keyOf(p Proxy) userDataKey { return userDataKey{p.Context(), p.Id()} }
+
 func SetUserData[T any](key Proxy, value *T) {
 	//println("set", key.Id())
-	userDataMap.Store(key.Id(), *value)
+	userDataMap.Store(keyOf(key), *value)
 
 }
 func GetUserData[T any](key Proxy) (found *T, exists bool) {
-	eface, is := userDataMap.Load(key.Id())
+	eface, is := userDataMap.Load(keyOf(key))
 	if !is {
 		return
 	}
@@ -19,5 +26,5 @@ func GetUserData[T any](key Proxy) (found *T, exists bool) {
 }
 func DeleteUserData(key Proxy) {
 	//println("clr", key.Id())
-	userDataMap.Delete(key.Id())
+	userDataMap.Delete(keyOf(key))
 }
