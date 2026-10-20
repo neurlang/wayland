@@ -36,12 +36,14 @@ import (
 
 	sys "github.com/neurlang/wayland/os"
 
+	"context"
 	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
 
 	xkb "github.com/neurlang/wayland/xkbcommon"
+	pxkb "github.com/unxed/xkb-go"
 )
 
 type runner interface {
@@ -775,6 +777,18 @@ type Input struct {
 	dragEnterSerial uint32  //nolint:unused // Reserved for future use
 
 	xkb struct {
+		// pureKeymap/pureState hold the pure-Go, FFI-free keymap decoded by
+		// github.com/unxed/xkb-go directly from the wl_keyboard.keymap
+		// string the compositor sends. This is the primary path (vtui#160,
+		// mirroring the X11 path added for vtui#10): no CGO, no dlopen of
+		// libxkbcommon.so.
+		pureKeymap *pxkb.Keymap
+		pureState  *pxkb.State
+
+		// keymap/state fall back to libxkbcommon via purego (functions_purego_linux.go)
+		// and are only populated when xkb-go fails to parse the compositor's
+		// keymap string, which should not happen in practice with a
+		// well-formed keymap.
 		keymap       *xkb.Keymap
 		state        *xkb.State
 		composeTable *xkb.ComposeTable
@@ -1570,8 +1584,13 @@ func (input *Input) GetModifiers() ModType {
 }
 
 // This gets the UTF32 rune from the key sym ("notUnicode")
+//
+// Keysym values are standardized (X11/XKB keysym numbers), so this uses
+// xkb-go's pure-Go, FFI-free table (vtui#160) regardless of whether the
+// keysym itself came from the pure-Go or the libxkbcommon fallback path
+// below.
 func (input *Input) GetRune(sym *uint32, _ uint32) (r rune) {
-	r = rune(xkb.KeysymToUtf32(*sym))
+	r = pxkb.KeysymToUTF32(pxkb.Keysym(*sym))
 	return
 }
 
@@ -1612,7 +1631,7 @@ func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 
 	input.Display.serial = serial
 	var code = key + 8
-	if window == nil || input.xkb.state == nil {
+	if window == nil || (input.xkb.pureState == nil && input.xkb.state == nil) {
 		return
 	}
 
@@ -1625,7 +1644,12 @@ func (input *Input) keyboardHandleKey(keyboard *wl.Keyboard,
 		return
 	}
 
-	var sym, _ = input.xkb.state.KeyGetSyms(code)
+	var sym uint32
+	if input.xkb.pureState != nil {
+		sym = pureKeyGetSym(input.xkb.pureState, code)
+	} else {
+		sym, _ = input.xkb.state.KeyGetSyms(code)
+	}
 
 	input.keyboardHandleKeyInternal(keyboard, window, sym, state, time, key)
 
@@ -1651,6 +1675,9 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 	var format = e.Format
 	var size = e.Size
 
+	var pureKeymap *pxkb.Keymap
+	var pureState *pxkb.State
+
 	var keymap *xkb.Keymap
 	var state *xkb.State
 	var composeTable *xkb.ComposeTable
@@ -1674,24 +1701,59 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 		return
 	}
 
-	/* Set up XKB keymap */
-	keymap = input.Display.xkbContext.KeymapNewFromString(mapStr,
-		xkb.KeymapFormatTextV1,
-		0)
-	_ = sys.Munmap(mapStr)
-	sys.Close(int(fd))
-
-	if keymap == nil {
-		println("failed to compile keymap")
-		return
+	/*
+	 * Primary path (vtui#160): decode the keymap text the compositor just
+	 * sent with github.com/unxed/xkb-go, a pure-Go XKB implementation --
+	 * no CGO, no dlopen of libxkbcommon.so. This is the same library the
+	 * X11 backend already uses for its own keymap (vtui#10). Unlike X11,
+	 * Wayland hands the client the complete keymap as a string via
+	 * wl_keyboard.keymap, so there is no wire-protocol work to do here at
+	 * all: NewKeymapFromString exists for exactly this.
+	 */
+	if pureCtx := pxkb.NewContext(context.Background(), pxkb.ContextNoFlags); pureCtx != nil {
+		if km, perr := pureCtx.NewKeymapFromString(mapStr, pxkb.KeymapFormatTextV1); perr == nil && km != nil {
+			pureKeymap, pureState = km, km.NewState()
+		}
+	}
+	if pureState != nil && (pureKeymap.ModGetIndex(xkb.ModNameCtrl) < 0 ||
+		pureKeymap.ModGetIndex(xkb.ModNameAlt) < 0 ||
+		pureKeymap.ModGetIndex(xkb.ModNameShift) < 0) {
+		// A keymap that parsed but is missing one of the three core PC
+		// modifiers can't drive Ctrl/Alt/Shift; treat it as a failed parse
+		// rather than silently running with modifiers that can never
+		// report as active.
+		pureKeymap, pureState = nil, nil
 	}
 
-	/* Set up XKB state */
-	state = keymap.StateNew()
-	if state == nil {
-		println("failed to create XKB state")
-		xkb.KeymapUnref(keymap)
-		return
+	if pureState == nil {
+		// Fall back to libxkbcommon via FFI (purego) only when xkb-go could
+		// not make sense of the compositor's keymap. This should not
+		// happen for a spec-conformant compositor; when it does, this
+		// keeps the keyboard usable at the cost of one dlopen of
+		// libxkbcommon.so instead of none.
+		println("wayland: xkb-go could not parse the compositor's keymap, falling back to libxkbcommon")
+		if input.Display.xkbContext == nil {
+			input.Display.xkbContext = xkb.ContextNew(xkb.ContextNoFlags)
+		}
+		if input.Display.xkbContext != nil {
+			keymap = input.Display.xkbContext.KeymapNewFromString(mapStr,
+				xkb.KeymapFormatTextV1,
+				0)
+			if keymap != nil {
+				state = keymap.StateNew()
+				if state == nil {
+					println("failed to create XKB state")
+					xkb.KeymapUnref(keymap)
+					keymap = nil
+				}
+			}
+		}
+		if keymap == nil || state == nil {
+			println("failed to compile keymap (xkb-go and libxkbcommon both failed)")
+			_ = sys.Munmap(mapStr)
+			sys.Close(int(fd))
+			return
+		}
 	}
 
 	/* Look up the preferred locale, falling back to "C" as default */
@@ -1706,42 +1768,91 @@ func (input *Input) HandleKeyboardKeymap(e wl.KeyboardKeymapEvent) {
 		}
 	}
 
-	/* Set up XKB compose table */
-	composeTable =
-		input.Display.xkbContext.ComposeTableNewFromLocale(locale,
-			xkb.ComposeCompileNoFlags)
-	if composeTable == nil {
-		print("locale ")
-		print(locale)
-		println(": could not create XKB compose table for locale. Disabiling compose.")
+	/*
+	 * Set up XKB compose (dead-key) support. xkb-go doesn't implement
+	 * Compose(5) file parsing, so this still goes through libxkbcommon;
+	 * it is best-effort exactly like before this change, and already
+	 * disables itself gracefully (below) when no compose table is
+	 * available for the locale, or now, when libxkbcommon itself isn't
+	 * available at all.
+	 */
+	if input.Display.xkbContext == nil {
+		input.Display.xkbContext = xkb.ContextNew(xkb.ContextNoFlags)
+	}
+	if input.Display.xkbContext == nil {
+		println("libxkbcommon unavailable: disabling compose (dead key) support")
 	} else {
-		/* Set up XKB compose state */
-		composeState = xkb.ComposeStateNew(composeTable,
-			xkb.ComposeStateNoFlags)
-		if composeState == nil {
-			println("could not create XKB compose state. Disabiling compose.")
-			xkb.ComposeTableUnref(composeTable)
-
+		composeTable =
+			input.Display.xkbContext.ComposeTableNewFromLocale(locale,
+				xkb.ComposeCompileNoFlags)
+		if composeTable == nil {
+			print("locale ")
+			print(locale)
+			println(": could not create XKB compose table for locale. Disabiling compose.")
 		} else {
-			xkb.ComposeStateUnref(input.xkb.composeState)
-			xkb.ComposeTableUnref(input.xkb.composeTable)
-			input.xkb.composeState = composeState
-			input.xkb.composeTable = composeTable
+			/* Set up XKB compose state */
+			composeState = xkb.ComposeStateNew(composeTable,
+				xkb.ComposeStateNoFlags)
+			if composeState == nil {
+				println("could not create XKB compose state. Disabiling compose.")
+				xkb.ComposeTableUnref(composeTable)
+
+			} else {
+				xkb.ComposeStateUnref(input.xkb.composeState)
+				xkb.ComposeTableUnref(input.xkb.composeTable)
+				input.xkb.composeState = composeState
+				input.xkb.composeTable = composeTable
+			}
 		}
 	}
 
+	_ = sys.Munmap(mapStr)
+	sys.Close(int(fd))
+
 	xkb.KeymapUnref(input.xkb.keymap)
 	xkb.StateUnref(input.xkb.state)
+	input.xkb.pureKeymap = pureKeymap
+	input.xkb.pureState = pureState
 	input.xkb.keymap = keymap
 	input.xkb.state = state
 
-	input.xkb.controlMask =
-		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameCtrl)
-	input.xkb.altMask =
-		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameAlt)
-	input.xkb.shiftMask =
-		1 << input.xkb.keymap.ModGetIndex(xkb.ModNameShift)
+	if pureState != nil {
+		input.xkb.controlMask = pureModBit(pureKeymap, xkb.ModNameCtrl)
+		input.xkb.altMask = pureModBit(pureKeymap, xkb.ModNameAlt)
+		input.xkb.shiftMask = pureModBit(pureKeymap, xkb.ModNameShift)
+	} else {
+		input.xkb.controlMask =
+			1 << input.xkb.keymap.ModGetIndex(xkb.ModNameCtrl)
+		input.xkb.altMask =
+			1 << input.xkb.keymap.ModGetIndex(xkb.ModNameAlt)
+		input.xkb.shiftMask =
+			1 << input.xkb.keymap.ModGetIndex(xkb.ModNameShift)
+	}
 
+}
+
+// pureKeyGetSym mirrors the libxkbcommon-backed State.KeyGetSyms fallback
+// below: it returns the first keysym xkb-go resolves for code (ordinary
+// keys resolve to exactly one), or KeyNoSymbol if the key produces none.
+func pureKeyGetSym(state *pxkb.State, code uint32) uint32 {
+	syms := state.KeyGetSyms(pxkb.Keycode(code))
+	if len(syms) == 0 {
+		return uint32(pxkb.KeyNoSymbol)
+	}
+	return uint32(syms[0])
+}
+
+// pureModBit converts a modifier's index in km to the bitmask HandleKeyboardModifiers
+// matches against a serialized mod mask, the same convention
+// libxkbcommon's ModGetIndex/mask pairing above uses. It returns 0 (never
+// active) for a modifier xkb-go could not find, rather than panicking on
+// a negative shift count.
+func pureModBit(km *pxkb.Keymap, name string) uint32 {
+	idx := km.ModGetIndex(name)
+	if idx < 0 || idx >= 32 {
+		return 0
+	}
+	return 1 << uint(idx)
 }
 func (input *Input) HandleKeyboardLeave(e wl.KeyboardLeaveEvent) {
 	var serial = e.Serial
@@ -1753,14 +1864,20 @@ func (input *Input) HandleKeyboardModifiers(e wl.KeyboardModifiersEvent) {
 	var mask uint32
 
 	/* If we're not using a keymap, then we don't handle PC-style modifiers */
-	if input.xkb.keymap == nil {
+	if input.xkb.pureState == nil && input.xkb.keymap == nil {
 		return
 	}
 
-	input.xkb.state.UpdateMask(e.ModsDepressed, e.ModsLatched,
-		e.ModsLocked, 0, 0, e.Group)
-
-	mask = input.xkb.state.SerializeMods(xkb.StateModsDepressed | xkb.StateModsLatched)
+	if input.xkb.pureState != nil {
+		input.xkb.pureState.UpdateMask(
+			pxkb.ModMask(e.ModsDepressed), pxkb.ModMask(e.ModsLatched), pxkb.ModMask(e.ModsLocked),
+			0, 0, pxkb.Group(e.Group))
+		mask = uint32(input.xkb.pureState.SerializeMods(pxkb.StateModDepressed | pxkb.StateModLatched))
+	} else {
+		input.xkb.state.UpdateMask(e.ModsDepressed, e.ModsLatched,
+			e.ModsLocked, 0, 0, e.Group)
+		mask = input.xkb.state.SerializeMods(xkb.StateModsDepressed | xkb.StateModsLatched)
+	}
 	input.modifiers = 0
 	if (mask & input.xkb.controlMask) != 0 {
 		input.modifiers |= ModControlMask
@@ -3766,10 +3883,15 @@ func DisplayCreate(argv []string) (d *Display, e error) {
 		return nil, fmt.Errorf("failed to connect to Wayland Display: %w", e)
 	}
 
-	d.xkbContext = xkb.ContextNew(xkb.ContextNoFlags)
-	if d.xkbContext == nil {
-		return nil, fmt.Errorf("failed to create XKB context: %w", e)
-	}
+	// d.xkbContext (libxkbcommon via purego) is no longer created eagerly
+	// here: the primary keymap path (vtui#160) is the pure-Go
+	// github.com/unxed/xkb-go, set up per-keyboard in
+	// HandleKeyboardKeymap, which needs no libxkbcommon.so at all. Failing
+	// DisplayCreate just because libxkbcommon.so isn't installed would
+	// block Wayland entirely even though the primary path doesn't need
+	// it. d.xkbContext is now created lazily, only if xkb-go fails to
+	// parse a compositor's keymap (fallback) or for Compose(5)/dead-key
+	// support, which xkb-go doesn't implement.
 
 	//d.display_fd = (int32)(wlclient.DisplayGetFd(d.Display))
 
