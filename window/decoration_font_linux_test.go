@@ -5,8 +5,7 @@ package window
 import (
 	"testing"
 
-	"github.com/fogleman/gg"
-	"golang.org/x/image/font"
+	"github.com/gogpu/gg"
 )
 
 // A system with none of decorationFonts still gets a title: the built-in font.
@@ -15,8 +14,7 @@ func TestDecorationFallbackFaceMeasuresText(t *testing.T) {
 	if face == nil {
 		t.Fatal("no fallback face")
 	}
-	defer func() { _ = face.Close() }()
-	if w := font.MeasureString(face, "f4 - Panels"); w <= 0 {
+	if w := face.Advance("f4 - Panels"); w <= 0 {
 		t.Fatalf("the fallback face measured a title as %v wide", w)
 	}
 }

@@ -8,14 +8,14 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sync"
 
-	"github.com/fogleman/gg"
-	"github.com/golang/freetype/truetype"
+	"github.com/go-fonts/dejavu/dejavusansbold"
+	"github.com/gogpu/gg"
+	"github.com/gogpu/gg/text"
 	sys "github.com/neurlang/wayland/os"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/gofont/gobold"
 )
 
 // Decoration constants
@@ -170,13 +170,14 @@ func (d *WindowDecoration) createShadowBlur() {
 	const boundary = 20 // Smaller boundary = larger shadow area
 
 	d.shadowBlur = image.NewRGBA(image.Rect(0, 0, size, size))
-	dc := gg.NewContextForRGBA(d.shadowBlur)
+	pm := gg.NewPixmapFromBuffer(d.shadowBlur.Pix, size, size)
+	dc := gg.NewContext(size, size, gg.WithPixmap(pm))
 
 	// Draw fully opaque black - blur will make it semi-transparent at edges
 	dc.SetColor(color.RGBA{0, 0, 0, 255})
 	dc.DrawRectangle(float64(boundary), float64(boundary),
 		float64(size-2*boundary), float64(size-2*boundary))
-	dc.Fill()
+	_ = dc.Fill()
 
 	blurImage(d.shadowBlur, ShadowBlurSize)
 }
@@ -345,10 +346,7 @@ func (d *WindowDecoration) renderShadow() {
 		surf.buffer = buf
 	}
 
-	img := imageFromBuffer(surf.buffer)
-	dc := gg.NewContextForRGBA(img)
-
-	dc.SetColor(color.Transparent)
+	dc := contextFromBuffer(surf.buffer)
 	dc.Clear()
 
 	// Draw shadow as a gradient from edges inward
@@ -365,28 +363,27 @@ func (d *WindowDecoration) renderShadow() {
 
 		// Top shadow (excluding left and right corners at this level)
 		dc.DrawRectangle(fi+1, fi, w-2*fi-2, 1)
-		dc.Fill()
+		_ = dc.Fill()
 
 		// Bottom shadow (excluding left and right corners at this level)
 		dc.DrawRectangle(fi+1, h-fi-1, w-2*fi-2, 1)
-		dc.Fill()
+		_ = dc.Fill()
 
 		// Left shadow (full height)
 		dc.DrawRectangle(fi, fi, 1, h-2*fi)
-		dc.Fill()
+		_ = dc.Fill()
 
 		// Right shadow (full height)
 		dc.DrawRectangle(w-fi-1, fi, 1, h-2*fi)
-		dc.Fill()
+		_ = dc.Fill()
 	}
 
 	// Mask out the content area (make it transparent)
-	dc.SetColor(color.Transparent)
+	dc.SetFillPattern(gg.NewSolidPattern(gg.Transparent))
 	dc.DrawRectangle(float64(ShadowMargin), float64(ShadowMargin+TitleHeight),
 		float64(d.window.pendingAllocation.Width),
 		float64(d.window.pendingAllocation.Height))
-	dc.SetFillStyle(gg.NewSolidPattern(color.Transparent))
-	dc.Fill()
+	_ = dc.Fill()
 }
 
 // commitShadow commits the shadow surface with frame callback
@@ -448,15 +445,13 @@ func (d *WindowDecoration) renderTitleBar() {
 		surf.buffer = buf
 	}
 
-	img := imageFromBuffer(surf.buffer)
-	dc := gg.NewContextForRGBA(img)
+	dc := contextFromBuffer(surf.buffer)
 
 	colTitle := ColTitle[d.window.decoration_theme]
 	if !d.active {
 		colTitle = ColTitleInact[d.window.decoration_theme]
 	}
-	dc.SetColor(colTitle)
-	dc.Clear()
+	dc.ClearWithColor(gg.FromColor(colTitle))
 
 	// Draw buttons first
 	d.drawButton(dc, ComponentButtonMin, surf.width-3*ButtonWidth, 0)
@@ -487,26 +482,40 @@ func (d *WindowDecoration) commitTitleBar() {
 	surf.buffer.inUse = true
 }
 
+var (
+	decorationFontOnce   sync.Once
+	decorationFontSource *text.FontSource
+)
+
 // loadDecorationFont gives dc the font the title is drawn with: the first of
 // decorationFonts the system has and, when it has none of them (Arch and
 // CachyOS keep their fonts elsewhere than the distributions listed, and a
-// title bar without a title looks like a bug), the Go Bold font compiled in.
+// title bar without a title looks like a bug), DejaVu Sans Bold compiled in.
 func loadDecorationFont(dc *gg.Context) {
-	for _, fontPath := range decorationFonts {
-		if err := dc.LoadFontFace(fontPath, 12); err == nil {
-			return
+	decorationFontOnce.Do(func() {
+		for _, fontPath := range decorationFonts {
+			src, err := text.NewFontSourceFromFile(fontPath)
+			if err == nil {
+				decorationFontSource = src
+				return
+			}
 		}
-	}
-	dc.SetFontFace(decorationFallbackFace(12))
+		src, err := text.NewFontSource(dejavusansbold.TTF)
+		if err != nil {
+			panic("window: built-in title font: " + err.Error()) // the font is compiled in
+		}
+		decorationFontSource = src
+	})
+	dc.SetFont(decorationFontSource.Face(12))
 }
 
 // decorationFallbackFace is the built-in title font at the given size in points.
-func decorationFallbackFace(size float64) font.Face {
-	f, err := truetype.Parse(gobold.TTF)
+func decorationFallbackFace(size float64) text.Face {
+	src, err := text.NewFontSource(dejavusansbold.TTF)
 	if err != nil {
 		panic("window: built-in title font: " + err.Error()) // the font is compiled in
 	}
-	return truetype.NewFace(f, &truetype.Options{Size: size})
+	return src.Face(size)
 }
 
 // drawTitleText renders the window title
@@ -588,7 +597,7 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType ComponentType, x, 
 	// Draw button background
 	dc.SetColor(btnCol)
 	dc.DrawRectangle(float64(x), float64(y), ButtonWidth, TitleHeight)
-	dc.Fill()
+	_ = dc.Fill()
 
 	// Determine symbol color
 	if !d.active {
@@ -610,7 +619,7 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType ComponentType, x, 
 	case ComponentButtonMin:
 		// Horizontal line for minimize
 		dc.DrawLine(symX, symY+SymDim-1, symX+SymDim-1, symY+SymDim-1)
-		dc.Stroke()
+		_ = dc.Stroke()
 	case ComponentButtonMax:
 		if d.window.maximized {
 			// Two overlapping squares for unmaximize
@@ -618,20 +627,20 @@ func (d *WindowDecoration) drawButton(dc *gg.Context, btnType ComponentType, x, 
 			const offset = 2
 			// Back square
 			dc.DrawRectangle(symX+offset, symY+offset, small, small)
-			dc.Stroke()
+			_ = dc.Stroke()
 			// Front square
 			dc.DrawRectangle(symX, symY, small, small)
-			dc.Stroke()
+			_ = dc.Stroke()
 		} else {
 			// Single square for maximize
 			dc.DrawRectangle(symX, symY, SymDim-1, SymDim-1)
-			dc.Stroke()
+			_ = dc.Stroke()
 		}
 	case ComponentButtonClose:
 		// X symbol for close
 		dc.DrawLine(symX, symY, symX+SymDim-1, symY+SymDim-1)
 		dc.DrawLine(symX+SymDim-1, symY, symX, symY+SymDim-1)
-		dc.Stroke()
+		_ = dc.Stroke()
 	}
 }
 
@@ -834,13 +843,10 @@ func (d *WindowDecoration) freeBuffer(buf *decorationBuffer) {
 	}
 }
 
-// imageFromBuffer creates an RGBA image backed by the buffer's shared memory
-func imageFromBuffer(buf *decorationBuffer) *image.RGBA {
-	return &image.RGBA{
-		Pix:    buf.data,
-		Stride: int(buf.stride),
-		Rect:   image.Rect(0, 0, int(buf.width), int(buf.height)),
-	}
+// contextFromBuffer creates a gogpu/gg context backed by the buffer's shared memory.
+func contextFromBuffer(buf *decorationBuffer) *gg.Context {
+	pm := gg.NewPixmapFromBuffer(buf.data, int(buf.width), int(buf.height))
+	return gg.NewContext(int(buf.width), int(buf.height), gg.WithPixmap(pm))
 }
 
 // blurImage applies a Gaussian blur to an RGBA image
