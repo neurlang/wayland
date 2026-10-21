@@ -2,9 +2,12 @@ package main
 
 import (
 	"image"
+	"sync"
 	"unicode/utf8"
 
-	"github.com/fogleman/gg"
+	"github.com/go-fonts/dejavu/dejavusansbold"
+	"github.com/gogpu/gg"
+	"github.com/gogpu/gg/text"
 )
 
 type DecorationButton struct {
@@ -39,6 +42,37 @@ var decorationFonts = []string{
 	"/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf", // fedora
 	"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
 	"/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+	"/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",            // arch, cachyos
+	"/usr/share/fonts/liberation/LiberationSans-Bold.ttf", // arch
+	"/usr/share/fonts/noto/NotoSans-Bold.ttf",             // arch
+	"/usr/share/fonts/gnu-free/FreeSansBold.otf",          // arch
+	"/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",    // debian
+}
+
+var (
+	decorationFontOnce   sync.Once
+	decorationFontSource *text.FontSource
+)
+
+// loadDecorationFont gives dc the font used for title and button labels:
+// the first of decorationFonts present on the system, else DejaVu Sans Bold
+// compiled in (same approach as window/decoration_linux.go).
+func loadDecorationFont(dc *gg.Context) {
+	decorationFontOnce.Do(func() {
+		for _, fontPath := range decorationFonts {
+			src, err := text.NewFontSourceFromFile(fontPath)
+			if err == nil {
+				decorationFontSource = src
+				return
+			}
+		}
+		src, err := text.NewFontSource(dejavusansbold.TTF)
+		if err != nil {
+			panic("imageviewer: built-in title font: " + err.Error())
+		}
+		decorationFontSource = src
+	})
+	dc.SetFont(decorationFontSource.Face(12))
 }
 
 func cutString(dc *gg.Context, w float64, out string) string {
@@ -122,15 +156,15 @@ func (d *Decoration) clientSideDecorationLeftButtons(dc *gg.Context, w, xRd floa
 			pear = 1.
 		}
 		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
-		dc.SetRGB255(0, 0, 0)
+		dc.SetRGB(0, 0, 0)
 		dc.SetLineWidth(2.)
-		dc.StrokePreserve()
+		_ = dc.StrokePreserve()
 		if ((i + 1) == d.LeftActive) != (!v.Pear) {
-			dc.SetRGB255(192, 192, 192)
+			dc.SetRGB(192.0/255.0, 192.0/255.0, 192.0/255.0)
 		} else {
-			dc.SetRGB255(255, 255, 255)
+			dc.SetRGB(1, 1, 1)
 		}
-		dc.Fill()
+		_ = dc.Fill()
 		dc.ClearPath()
 
 		icon := 0.125
@@ -161,15 +195,15 @@ func (d *Decoration) clientSideDecorationRightButtons(dc *gg.Context, w float64)
 			pear = 1.
 		}
 		dc.DrawRoundedRectangle(lpos, Border/(2-pear)+2, float64(v.Width), float64(d.Titlebar)-2-pear*Border, hb)
-		dc.SetRGB255(0, 0, 0)
+		dc.SetRGB(0, 0, 0)
 		dc.SetLineWidth(2.)
-		dc.StrokePreserve()
+		_ = dc.StrokePreserve()
 		if ((i + 1) == d.RightActive) != (!v.Pear) {
-			dc.SetRGB255(192, 192, 192)
+			dc.SetRGB(192.0/255.0, 192.0/255.0, 192.0/255.0)
 		} else {
-			dc.SetRGB255(255, 255, 255)
+			dc.SetRGB(1, 1, 1)
 		}
-		dc.Fill()
+		_ = dc.Fill()
 		dc.ClearPath()
 
 		icon := 0.125
@@ -207,28 +241,24 @@ func (d *Decoration) clientSideDecoration(a DecoratedRgbaWindow, justBorder, con
 	} else {
 		dc.DrawRoundedRectangle(1, 1, w-2, h-2, hb)
 	}
-	dc.SetFillRuleEvenOdd()
+	dc.SetFillRule(gg.FillRuleEvenOdd)
 	dc.DrawRectangle(Border, Border+float64(d.Titlebar), w-2*Border, h-2*Border-float64(d.Titlebar))
 
-	dc.SetRGB255(0, 0, 0)
+	dc.SetRGB(0, 0, 0)
 	dc.SetLineWidth(2.)
-	dc.StrokePreserve()
+	_ = dc.StrokePreserve()
 
 	if a.UnFocused() && !configuring {
-		dc.SetRGB255(192, 192, 192)
+		dc.SetRGB(192.0/255.0, 192.0/255.0, 192.0/255.0)
 
 	} else {
-		dc.SetRGB255(255, 255, 255)
+		dc.SetRGB(1, 1, 1)
 	}
-	dc.Fill()
+	_ = dc.Fill()
 	dc.ClearPath()
-	dc.SetFillRuleWinding()
+	dc.SetFillRule(gg.FillRuleNonZero)
 
-	for _, v := range decorationFonts {
-		if err := dc.LoadFontFace(v, 12); err == nil {
-			break
-		}
-	}
+	loadDecorationFont(dc)
 	xRd := d.clientSideDecorationRightButtons(dc, w)
 	xLd := d.clientSideDecorationLeftButtons(dc, w, xRd)
 

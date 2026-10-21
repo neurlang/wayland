@@ -7,8 +7,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDiPA=
 github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
-github.com/fogleman/gg v1.3.0 h1:/7zJX8F6AaYQc57WQCyN9cAIz+4bCJGO9B+dyW29am8=
-github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/go-fonts/dejavu v0.3.4 h1:Qqyx9IOs5CQFxyWTdvddeWzrX0VNwUAvbmAzL0fpjbc=
 github.com/go-fonts/dejavu v0.3.4/go.mod h1:D1z0DglIz+lmpeNYMYlxW4r22IhcdOYnt+R3PShU/Kg=
 github.com/go-webgpu/goffi v0.6.3 h1:p4gKGikHBAQ/8iUiew9MV4C5M1ZGIsk8QGFGuJjMj+A=
@@ -25,8 +23,6 @@ github.com/gogpu/naga v0.18.0 h1:2y83HUcAnlwEZMuHOiYTMdNYM9J8rev40gkI4zJ96Uk=
 github.com/gogpu/naga v0.18.0/go.mod h1:15sQaHKkbqXcwTN+hHYGLsA0WBBnkmYzne/eF5p5WEg=
 github.com/gogpu/wgpu v0.31.6 h1:WIySgNZHQfUaNRCQ/AzaZpDkcZn5dggqXlRAgpWtVu4=
 github.com/gogpu/wgpu v0.31.6/go.mod h1:r8z3uZOyjl95KXN1eyMxFnwwPMZ0yuBFrLFi8v37QGY=
-github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF08vX0COfcOBJRhZ8lUbR+ZWIs0Y5g=
-github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
 github.com/neurlang/gm v0.0.3 h1:P1dYxJ9VDh5F8XCVCG5njpODGWyxKIrfqS+OOo2bgCo=
 github.com/neurlang/gm v0.0.3/go.mod h1:tEtZIcgkJWJddVyVrtA6FBmPjY6vKFrCuzsThhmCgnE=
 github.com/neurlang/winc v0.1.2 h1:A3ke70Z7wfk3IKtLRnosKHhNPI6tSt3oG9XTx7lauFU=

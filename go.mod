@@ -5,7 +5,6 @@ go 1.25.0
 require (
 	github.com/danfragoso/thdwb/profiler v0.0.0-20210612223625-beb2b4a85bbb
 	github.com/ebitengine/purego v0.7.1
-	github.com/fogleman/gg v1.3.0
 	github.com/go-fonts/dejavu v0.3.4
 	github.com/gogpu/gg v0.52.5
 	github.com/neurlang/gm v0.0.3
@@ -25,7 +24,6 @@ require (
 	github.com/aglyzov/charmap v0.0.0-20240916203842-8463cca61eca
 	github.com/gogpu/gpucontext v0.28.0 // indirect
 	github.com/gogpu/gputypes v0.5.2 // indirect
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
