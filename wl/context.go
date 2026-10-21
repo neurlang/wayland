@@ -287,5 +287,6 @@ func (ctx *Context) Close() (err error) {
 	ctx.objects = nil
 	ctx.scms = nil
 	ctx.mu.Unlock()
+	CleanContextData(ctx)
 	return err
 }
