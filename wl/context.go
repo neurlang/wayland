@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -143,19 +144,15 @@ func (ctx *Context) LookupProxy(id ProxyId) Proxy {
 // XDG_RUNTIME_DIR environment variable
 var ErrXdgRuntimeDirNotSet = errors.New("variable XDG_RUNTIME_DIR not set in the environment")
 
-// Connect connects to a Wayland compositor running on a specific wayland unix socket
+// Connect connects to a Wayland compositor running on a specific wayland unix socket.
+// An empty addr means WAYLAND_DISPLAY, else wayland-0. As in libwayland's
+// wl_display_connect, an absolute addr is the socket's path as is, and a
+// relative one names a socket in XDG_RUNTIME_DIR.
 func Connect(addr string) (ret *Display, err error) {
-	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
-	if runtimeDir == "" {
-		return nil, ErrXdgRuntimeDirNotSet
+	addr, err = socketPath(addr)
+	if err != nil {
+		return nil, err
 	}
-	if addr == "" {
-		addr = os.Getenv("WAYLAND_DISPLAY")
-	}
-	if addr == "" {
-		addr = "wayland-0"
-	}
-	addr = runtimeDir + "/" + addr
 	c := new(Context)
 	c.objects = make(map[ProxyId]Proxy)
 	c.currentId = 0
@@ -171,6 +168,24 @@ func Connect(addr string) (ret *Display, err error) {
 	//DON'T dispatch events in separate goroutine
 	//go c.Run()
 	return NewDisplay(c), nil
+}
+
+// socketPath resolves the socket Connect dials for addr.
+func socketPath(addr string) (string, error) {
+	if addr == "" {
+		addr = os.Getenv("WAYLAND_DISPLAY")
+	}
+	if addr == "" {
+		addr = "wayland-0"
+	}
+	if filepath.IsAbs(addr) {
+		return addr, nil
+	}
+	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+	if runtimeDir == "" {
+		return "", ErrXdgRuntimeDirNotSet
+	}
+	return filepath.Join(runtimeDir, addr), nil
 }
 
 var errFoundMyCallback = errors.New("run found my callback")
