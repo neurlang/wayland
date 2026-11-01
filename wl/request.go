@@ -52,7 +52,7 @@ func (ctx *Context) SendRequest(proxy Proxy, opcode uint32, args ...interface{})
 	ctx.sendMu.Lock()
 	for _, arg := range args {
 		p, ok := arg.(Proxy)
-		if !ok {
+		if !ok || isNil(p) {
 			continue
 		}
 		if _, pending := ctx.unsent[p.Id()]; pending {
