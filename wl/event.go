@@ -2,11 +2,11 @@ package wl
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
 	"github.com/neurlang/wayland/os"
-	"github.com/yalue/native_endian"
 )
 
 // Event is the Wayland event (e.g. a response) from the compositor
@@ -53,7 +53,7 @@ func (ctx *Context) readEvent() (*Event, error) {
 	if err != nil {
 		return nil, combinedError{ErrReadHeader, err}
 	}
-	size := int(native_endian.NativeEndian().Uint16(header[6:8]))
+	size := int(binary.NativeEndian.Uint16(header[6:8]))
 	if size < headerSize {
 		return nil, ErrInvalidMsgSize
 	}
@@ -63,8 +63,8 @@ func (ctx *Context) readEvent() (*Event, error) {
 	}
 	ctx.inStart += size
 	return &Event{
-		Pid:    ProxyId(native_endian.NativeEndian().Uint32(msg[0:4])),
-		Opcode: uint32(native_endian.NativeEndian().Uint16(msg[4:6])),
+		Pid:    ProxyId(binary.NativeEndian.Uint32(msg[0:4])),
+		Opcode: uint32(binary.NativeEndian.Uint16(msg[4:6])),
 		Data:   msg[headerSize:],
 	}, nil
 }
@@ -209,7 +209,7 @@ func (ev *Event) Uint32() uint32 {
 		ev.err = ErrUnableToParseUint32
 		return 0
 	}
-	return native_endian.NativeEndian().Uint32(buf)
+	return binary.NativeEndian.Uint32(buf)
 }
 
 // SafeCast casts to any type, it doesn't panic if proxy is nil

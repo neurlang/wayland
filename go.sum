@@ -37,8 +37,6 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8 h1:qPHDyQTLtn40kezY6y4UL7bH7Z0Im9wSu1tQtM2wbUU=
 github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8/go.mod h1:Y5Ti1uUBdKDsb0W8aPtIo9krs+29Y7p6Bc9yyy4AM6g=
-github.com/yalue/native_endian v1.0.2 h1:e4SxBbaCoOOO4E3axd7FSriUhzc1bIzqZGG5jl6Evbg=
-github.com/yalue/native_endian v1.0.2/go.mod h1:cr+I2WnCwDkkPV0DvgBpGQkJV12CDWR5bAoMtT+56iE=
 github.com/zzl/go-win32api/v2 v2.1.0 h1:BwXsEl3iycRhG4lpe3JsnNACyQH/U7RTBhJwyCaIB/g=
 github.com/zzl/go-win32api/v2 v2.1.0/go.mod h1:doi6ewHPdh9tDmqe837Ro7IwqtB9yE+1fC8suK/Ssj0=
 golang.design/x/clipboard v0.7.0 h1:4Je8M/ys9AJumVnl8m+rZnIvstSnYj1fvzqYrU3TXvo=
