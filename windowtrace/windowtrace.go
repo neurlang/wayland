@@ -55,8 +55,6 @@ const (
 const ZwpRelativePointerManagerV1Version = window.ZwpRelativePointerManagerV1Version
 const ZwpPointerConstraintsV1Version = window.ZwpPointerConstraintsV1Version
 
-
-
 func DisplayCreate(argv []string) (d *Display, e error) {
 	println("func DisplayCreate")
 	disp, err := window.DisplayCreate(argv)
@@ -640,7 +638,6 @@ func (input *Input) HandleDataDeviceDataOffer(ev wl.DataDeviceDataOfferEvent) {
 	((*window.Input)(input)).HandleDataDeviceDataOffer(ev)
 }
 
-
 type FullscreenHandler interface {
 	Fullscreen(*Window, WidgetHandler)
 }
@@ -669,14 +666,13 @@ type ComponentType = window.ComponentType
 type DecorationSurface window.DecorationSurface
 
 const (
-	ComponentNone      = window.ComponentNone
-	ComponentShadow    = window.ComponentShadow
-	ComponentTitle     = window.ComponentTitle
-	ComponentButtonMin = window.ComponentButtonMin
-	ComponentButtonMax = window.ComponentButtonMax
+	ComponentNone        = window.ComponentNone
+	ComponentShadow      = window.ComponentShadow
+	ComponentTitle       = window.ComponentTitle
+	ComponentButtonMin   = window.ComponentButtonMin
+	ComponentButtonMax   = window.ComponentButtonMax
 	ComponentButtonClose = window.ComponentButtonClose
 )
-
 
 const (
 	CursorDefault = window.CursorDefault
@@ -685,10 +681,10 @@ const (
 )
 
 const (
-	ShadowMargin  = window.ShadowMargin
-	TitleHeight   = window.TitleHeight
-	ButtonWidth   = window.ButtonWidth
-	SymDim        = window.SymDim
+	ShadowMargin   = window.ShadowMargin
+	TitleHeight    = window.TitleHeight
+	ButtonWidth    = window.ButtonWidth
+	SymDim         = window.SymDim
 	ShadowBlurSize = window.ShadowBlurSize
 )
 

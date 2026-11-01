@@ -224,7 +224,7 @@ func redrawer(widget *Widget, canvas *winc.Canvas) {
 		uintptr(h),                       // source height
 		uintptr(unsafe.Pointer(&buf[0])), // pointer to bitmap bits
 		uintptr(unsafe.Pointer(&bi)),     // pointer to BITMAPINFO
-		dibRgbColors,                   // color usage
+		dibRgbColors,                     // color usage
 		srcCopy,                          // raster operation
 	)
 

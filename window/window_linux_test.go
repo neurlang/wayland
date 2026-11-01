@@ -190,6 +190,7 @@ func TestPointerValue120FallbackAccumulatesWholeSteps(t *testing.T) {
 		t.Fatalf("raw axis after frame was delivered %d times, want 1", handler.rawAxes)
 	}
 }
+
 // TestWindowScheduleRedrawTaskConcurrent verifies that concurrent redraw
 // requests atomically claim a single deferred task. In particular, the
 // scheduled flag must already be visible when the task is published to the

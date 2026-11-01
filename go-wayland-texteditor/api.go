@@ -58,7 +58,6 @@ type EraseResponse struct {
 	Erased bool
 }
 
-
 func load_content(creq ContentRequest) (*ContentResponse, error) {
 	requestByte, err := json.Marshal(creq)
 	if err != nil {

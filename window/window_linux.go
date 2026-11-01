@@ -81,19 +81,19 @@ type global struct {
 }
 
 type Display struct {
-	Display            *wl.Display
-	registry           *wl.Registry
-	compositor         *wl.Compositor
-	subcompositor      *wl.Subcompositor
-	shm                *wl.Shm
-	dataDeviceManager  *wl.DataDeviceManager
-	xdgShell           *zxdg.WmBase
-	serial             uint32
+	Display           *wl.Display
+	registry          *wl.Registry
+	compositor        *wl.Compositor
+	subcompositor     *wl.Subcompositor
+	shm               *wl.Shm
+	dataDeviceManager *wl.DataDeviceManager
+	xdgShell          *zxdg.WmBase
+	serial            uint32
 
 	running bool
 
 	globalList []*global
-	inputList []*Input
+	inputList  []*Input
 
 	cursorTheme *wlcursor.Theme
 	cursors     *[lengthCursors]*wlcursor.Cursor

@@ -4,7 +4,7 @@ type Interface interface {
 	Call(proc, payload string) string
 }
 
-type iface struct {}
+type iface struct{}
 
 func (i *iface) Call(proc, data string) string {
 	if proc == "/content" {
@@ -17,5 +17,3 @@ func (i *iface) Call(proc, data string) string {
 func New() (*iface, error) {
 	return &iface{}, nil
 }
-
-

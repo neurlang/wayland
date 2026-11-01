@@ -33,8 +33,8 @@ type FuncDef struct {
 }
 
 type InterfaceDef struct {
-	Name    string     `json:"name"`
-	Methods []FuncDef  `json:"methods"`
+	Name    string    `json:"name"`
+	Methods []FuncDef `json:"methods"`
 }
 
 type ConstantDef struct {
@@ -58,12 +58,12 @@ type Mismatch struct {
 }
 
 type Report struct {
-	Platform    string      `json:"platform"`
-	Pkg1        string      `json:"pkg1"`
-	Pkg2        string      `json:"pkg2"`
-	Mismatches  []Mismatch  `json:"mismatches"`
-	Passing     []string    `json:"passing"`
-	Summary     string      `json:"summary"`
+	Platform   string     `json:"platform"`
+	Pkg1       string     `json:"pkg1"`
+	Pkg2       string     `json:"pkg2"`
+	Mismatches []Mismatch `json:"mismatches"`
+	Passing    []string   `json:"passing"`
+	Summary    string     `json:"summary"`
 }
 
 func main() {
@@ -230,17 +230,17 @@ func extractInterfaceMethods(iface *ast.InterfaceType) []FuncDef {
 					}
 				}
 			}
-		if fd.Results != nil {
-			for _, result := range fd.Results.List {
-				if len(result.Names) == 0 {
-					m.Results = append(m.Results, exprToString(result.Type))
-				} else {
-					for range result.Names {
+			if fd.Results != nil {
+				for _, result := range fd.Results.List {
+					if len(result.Names) == 0 {
 						m.Results = append(m.Results, exprToString(result.Type))
+					} else {
+						for range result.Names {
+							m.Results = append(m.Results, exprToString(result.Type))
+						}
 					}
 				}
 			}
-		}
 			methods = append(methods, m)
 		}
 	}
@@ -426,7 +426,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if !types2[t.Name] {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "FAIL",
-				Message: fmt.Sprintf("Type %q missing in %s", t.Name, pkg2),
+				Message:  fmt.Sprintf("Type %q missing in %s", t.Name, pkg2),
 			})
 		}
 	}
@@ -434,7 +434,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if !types1[t.Name] {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "WARN",
-				Message: fmt.Sprintf("Type %q missing in %s", t.Name, pkg1),
+				Message:  fmt.Sprintf("Type %q missing in %s", t.Name, pkg1),
 			})
 		}
 	}
@@ -447,7 +447,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 			if !equalSlices(methods1, methods2) {
 				report.Mismatches = append(report.Mismatches, Mismatch{
 					Severity: "FAIL",
-					Message: fmt.Sprintf("Interface %q methods differ:\n    %s: %v\n    %s: %v", name, pkg1, methods1, pkg2, methods2),
+					Message:  fmt.Sprintf("Interface %q methods differ:\n    %s: %v\n    %s: %v", name, pkg1, methods1, pkg2, methods2),
 				})
 			} else {
 				report.Passing = append(report.Passing, fmt.Sprintf("Interface %q matches", name))
@@ -455,7 +455,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		} else {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "FAIL",
-				Message: fmt.Sprintf("Interface %q missing in %s", name, pkg2),
+				Message:  fmt.Sprintf("Interface %q missing in %s", name, pkg2),
 			})
 		}
 	}
@@ -463,7 +463,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if _, ok := iface1[name]; !ok {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "WARN",
-				Message: fmt.Sprintf("Interface %q missing in %s", name, pkg1),
+				Message:  fmt.Sprintf("Interface %q missing in %s", name, pkg1),
 			})
 		}
 	}
@@ -473,7 +473,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if !consts2[c.Name] {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "FAIL",
-				Message: fmt.Sprintf("Constant %q missing in %s", c.Name, pkg2),
+				Message:  fmt.Sprintf("Constant %q missing in %s", c.Name, pkg2),
 			})
 		}
 	}
@@ -481,7 +481,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if !consts1[c.Name] {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "WARN",
-				Message: fmt.Sprintf("Constant %q missing in %s", c.Name, pkg1),
+				Message:  fmt.Sprintf("Constant %q missing in %s", c.Name, pkg1),
 			})
 		}
 	}
@@ -499,7 +499,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 			if !found {
 				report.Mismatches = append(report.Mismatches, Mismatch{
 					Severity: "FAIL",
-					Message: fmt.Sprintf("Function %q missing in %s", f.Name, pkg2),
+					Message:  fmt.Sprintf("Function %q missing in %s", f.Name, pkg2),
 				})
 			}
 		}
@@ -516,7 +516,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 			if !found {
 				report.Mismatches = append(report.Mismatches, Mismatch{
 					Severity: "WARN",
-					Message: fmt.Sprintf("Function %q missing in %s", f.Name, pkg1),
+					Message:  fmt.Sprintf("Function %q missing in %s", f.Name, pkg1),
 				})
 			}
 		}
@@ -527,7 +527,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if _, ok := methods2[name]; !ok {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "FAIL",
-				Message: fmt.Sprintf("Method %q missing in %s", name, pkg2),
+				Message:  fmt.Sprintf("Method %q missing in %s", name, pkg2),
 			})
 		}
 	}
@@ -535,7 +535,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 		if _, ok := methods1[name]; !ok {
 			report.Mismatches = append(report.Mismatches, Mismatch{
 				Severity: "WARN",
-				Message: fmt.Sprintf("Method %q missing in %s", name, pkg1),
+				Message:  fmt.Sprintf("Method %q missing in %s", name, pkg1),
 			})
 		}
 	}
@@ -547,7 +547,7 @@ func compareAPIs(goos, pkg1, pkg2 string, api1, api2 PackageAPI) Report {
 				if !equalSlices(s1, s2) {
 					report.Mismatches = append(report.Mismatches, Mismatch{
 						Severity: "FAIL",
-						Message: fmt.Sprintf("Method %q signature differs:\n    %s: %v\n    %s: %v", name, pkg1, s1, pkg2, s2),
+						Message:  fmt.Sprintf("Method %q signature differs:\n    %s: %v\n    %s: %v", name, pkg1, s1, pkg2, s2),
 					})
 				} else {
 					report.Passing = append(report.Passing, fmt.Sprintf("Method %q matches", name))

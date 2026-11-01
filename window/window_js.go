@@ -3,15 +3,15 @@
 package window
 
 import (
-	"io"
-	"syscall/js"
-	"time"
 	cairo "github.com/neurlang/wayland/cairoshim"
 	"github.com/neurlang/wayland/external/swizzle"
 	"github.com/neurlang/wayland/wl"
 	"github.com/neurlang/wayland/wlclient"
 	zxdg "github.com/neurlang/wayland/xdg"
 	"github.com/neurlang/wayland/xkbcommon"
+	"io"
+	"syscall/js"
+	"time"
 )
 
 var (
@@ -28,12 +28,12 @@ type Display struct {
 }
 
 type Window struct {
-	Display  *Display
-	width    int32
-	height   int32
-	title    string
-	handler  KeyboardHandler
-	widgets  []*Widget
+	Display *Display
+	width   int32
+	height  int32
+	title   string
+	handler KeyboardHandler
+	widgets []*Widget
 }
 
 type Widget struct {
@@ -123,10 +123,10 @@ type Popup struct {
 	Display *Display
 }
 
-func (p *Popup) SetPopupHandler(ph Popuper) {}
-func (p *Popup) BufferRelease(_ *wl.Buffer) {}
+func (p *Popup) SetPopupHandler(ph Popuper)     {}
+func (p *Popup) BufferRelease(_ *wl.Buffer)     {}
 func (p *Popup) PopupGetSurface() cairo.Surface { return nil }
-func (p *Popup) Destroy() {}
+func (p *Popup) Destroy()                       {}
 
 func DisplayCreate(args []string) (*Display, error) {
 	initCanvas()
@@ -203,23 +203,23 @@ type Rectangle struct {
 }
 
 const (
-	CursorBottomLeft = 0
-	CursorBottomRight = 1
-	CursorBottom = 2
-	CursorDragging = 3
-	CursorLeftPtr = 4
-	CursorLeft = 5
-	CursorRight = 6
-	CursorTopLeft = 7
-	CursorTopRight = 8
-	CursorTop = 9
-	CursorIbeam = 10
-	CursorHand1 = 11
-	CursorWatch = 12
-	CursorDndMove = 13
-	CursorDndCopy = 14
+	CursorBottomLeft   = 0
+	CursorBottomRight  = 1
+	CursorBottom       = 2
+	CursorDragging     = 3
+	CursorLeftPtr      = 4
+	CursorLeft         = 5
+	CursorRight        = 6
+	CursorTopLeft      = 7
+	CursorTopRight     = 8
+	CursorTop          = 9
+	CursorIbeam        = 10
+	CursorHand1        = 11
+	CursorWatch        = 12
+	CursorDndMove      = 13
+	CursorDndCopy      = 14
 	CursorDndForbidden = 15
-	CursorBlank = 16
+	CursorBlank        = 16
 )
 
 const BufferTypeShm = 1
@@ -289,7 +289,6 @@ func (w *Window) AddPopupWidget(_ *Popup, _ WidgetHandler) *Widget {
 	return nil
 }
 
-
 func (w *Window) CreatePopup(_ *wl.Seat, _, _, _, _, _ uint32) *Popup {
 	return nil
 }
@@ -311,19 +310,19 @@ func (w *Window) Destroy() {
 
 func initCanvas() {
 	console := js.Global().Get("console")
-	
+
 	if canvas.Truthy() {
 		return
 	}
-	
+
 	body = document.Get("body")
-	
+
 	existingCanvas := document.Call("getElementById", "canvas")
 	if existingCanvas.Truthy() {
 		canvas = existingCanvas
-		
+
 		ctx = canvas.Call("getContext", "2d")
-		
+
 		width := int(canvas.Get("width").Int())
 		height := int(canvas.Get("height").Int())
 		stride := width * 4
@@ -334,21 +333,21 @@ func initCanvas() {
 			height: int32(height),
 			stride: int32(stride),
 		}
-		
+
 		console.Call("log", "=== Using existing canvas ===")
 	} else {
 		width := 640
 		height := 640
-		
+
 		canvas = document.Call("createElement", "canvas")
-		
+
 		canvas.Call("setAttribute", "width", js.ValueOf(width))
 		canvas.Call("setAttribute", "height", js.ValueOf(height))
-		
+
 		body.Call("appendChild", canvas)
-		
+
 		ctx = canvas.Call("getContext", "2d")
-		
+
 		stride := width * 4
 		surfaceData := make([]byte, stride*height)
 		surface = &Widget{
@@ -357,10 +356,10 @@ func initCanvas() {
 			height: int32(height),
 			stride: int32(stride),
 		}
-		
+
 		console.Call("log", "=== Created new canvas ===")
 	}
-	
+
 	setupInputHandlers()
 }
 
@@ -368,7 +367,7 @@ func setupInputHandlers() {
 	if !canvas.Truthy() {
 		return
 	}
-	
+
 	canvas.Call("addEventListener", "mousedown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		jsButton := event.Get("button")
@@ -381,15 +380,17 @@ func setupInputHandlers() {
 		case 2:
 			waylandButton = 273
 		}
-		
+
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
-			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
+			if handler, ok := windows[0].widgets[0].userdata.(interface {
+				Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler)
+			}); ok {
 				handler.Button(windows[0].widgets[0], &Input{}, uint32(time.Now().UnixNano()/1000000), waylandButton, wl.PointerButtonStatePressed, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
 		return nil
 	}))
-	
+
 	canvas.Call("addEventListener", "mouseup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		jsButton := event.Get("button")
@@ -402,26 +403,30 @@ func setupInputHandlers() {
 		case 2:
 			waylandButton = 273
 		}
-		
+
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
-			if handler, ok := windows[0].widgets[0].userdata.(interface{ Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler) }); ok {
+			if handler, ok := windows[0].widgets[0].userdata.(interface {
+				Button(*Widget, *Input, uint32, uint32, wl.PointerButtonState, WidgetHandler)
+			}); ok {
 				handler.Button(windows[0].widgets[0], &Input{}, uint32(time.Now().UnixNano()/1000000), waylandButton, wl.PointerButtonStateReleased, windows[0].widgets[0].userdata.(WidgetHandler))
 			}
 		}
 		return nil
 	}))
-	
+
 	canvas.Call("addEventListener", "mousemove", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		xVal := event.Get("offsetX")
 		yVal := event.Get("offsetY")
-		
+
 		if len(windows) > 0 && len(windows[0].widgets) > 0 && windows[0].widgets[0].userdata != nil {
 			cursor := -1
-			if handler, ok := windows[0].widgets[0].userdata.(interface{ Motion(*Widget, *Input, uint32, float32, float32) int }); ok {
+			if handler, ok := windows[0].widgets[0].userdata.(interface {
+				Motion(*Widget, *Input, uint32, float32, float32) int
+			}); ok {
 				cursor = handler.Motion(windows[0].widgets[0], &Input{}, 0, float32(xVal.Float()), float32(yVal.Float()))
 			}
-			
+
 			if cursor == CursorHand1 {
 				style := canvas.Get("style")
 				style.Set("cursor", "pointer")
@@ -432,7 +437,7 @@ func setupInputHandlers() {
 		}
 		return nil
 	}))
-	
+
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		event := args[0]
 		keyCodeVal := event.Get("keyCode")
@@ -612,7 +617,9 @@ func (w *Widget) ScheduleResize(width int32, height int32) {
 	w.allocation.Width = width
 	w.allocation.Height = height
 	if w.window != nil && w.userdata != nil {
-		if handler, ok := w.userdata.(interface{ Resize(*Widget, int32, int32, int32, int32) }); ok {
+		if handler, ok := w.userdata.(interface {
+			Resize(*Widget, int32, int32, int32, int32)
+		}); ok {
 			handler.Resize(w, width, height, width, height)
 		}
 	}

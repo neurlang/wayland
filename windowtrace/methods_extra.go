@@ -391,5 +391,3 @@ func (d *WindowDecoration) UpdateSizeForResize(contentWidth, contentHeight int32
 	println("func UpdateSizeForResize")
 	((*window.WindowDecoration)(d)).UpdateSizeForResize(contentWidth, contentHeight)
 }
-
-
