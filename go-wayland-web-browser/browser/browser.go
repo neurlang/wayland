@@ -70,7 +70,7 @@ func loadDocumentFromUrl(browser *hotdog.WebBrowser, statusLabel *mustard.LabelW
 }
 
 func treeNodeFromDOM(node *hotdog.NodeDOM) *mustard.TreeWidgetNode {
-	nodeString := fmt.Sprintf(node.Element)
+	nodeString := fmt.Sprint(node.Element)
 	xPath := node.GetXPath()
 	treeNode := mustard.CreateTreeWidgetNode(nodeString, xPath)
 	treeNode.Open()
