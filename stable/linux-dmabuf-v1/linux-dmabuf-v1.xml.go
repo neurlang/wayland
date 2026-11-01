@@ -419,6 +419,15 @@ func (p *ZwpDmabufFeedbackV1) Dispatch(event *Event) {
 	}
 }
 
+// EventFDs returns how many fds the event with opcode carries
+func (p *ZwpDmabufFeedbackV1) EventFDs(opcode uint32) int {
+	switch opcode {
+	case 1:
+		return 1
+	}
+	return 0
+}
+
 // ZwpDmabufFeedbackV1DoneEvent is the all feedback has been sent
 type ZwpDmabufFeedbackV1DoneEvent struct {
 }

@@ -27,12 +27,13 @@ func TestQueuedFdsSurviveTheNextRead(t *testing.T) {
 	conn := c.(*net.UnixConn)
 	defer conn.Close()
 	ctx := &Context{conn: conn, objects: make(map[ProxyId]Proxy)}
+	kb := NewKeyboard(ctx)
 
 	first, second := tempFile(t), tempFile(t)
 	for _, file := range []*os.File{first, second} {
-		msg := make([]byte, 12) // object 1, opcode 0, size 12, one uint32 argument
-		binary.LittleEndian.PutUint32(msg[0:], 1)
-		binary.LittleEndian.PutUint32(msg[4:], 12<<16)
+		msg := make([]byte, 16) // wl_keyboard.keymap: format, fd, size
+		binary.LittleEndian.PutUint32(msg[0:], uint32(kb.Id()))
+		binary.LittleEndian.PutUint32(msg[4:], 16<<16)
 		if err := syscall.Sendmsg(fds[1], msg, syscall.UnixRights(int(file.Fd())), nil, 0); err != nil {
 			t.Fatal(err)
 		}
@@ -42,8 +43,14 @@ func TestQueuedFdsSurviveTheNextRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := ctx.claimFDs(ev, kb); err != nil {
+		t.Fatal(err)
+	}
 	ev2, err := ctx.readEvent()
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ctx.claimFDs(ev2, kb); err != nil {
 		t.Fatal(err)
 	}
 	for i, c := range []struct {

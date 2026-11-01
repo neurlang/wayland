@@ -77,6 +77,32 @@ func (p *`)
 	return b.String()
 }
 
+type GoEventFDsMethod struct {
+	Events []*GoEvent
+}
+
+func (m *GoEventFDsMethod) Serialize(s *GoStruct) string {
+	var cases strings.Builder
+	for num, e := range m.Events {
+		if n := e.FDCount(); n > 0 {
+			fmt.Fprintf(&cases, "\tcase %d:\n\t\treturn %d\n", num, n)
+		}
+	}
+	if cases.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(`// EventFDs returns how many fds the event with opcode carries
+func (p *`)
+	b.WriteString(s.Name)
+	b.WriteString(`) EventFDs(opcode uint32) int {
+	switch opcode {
+`)
+	b.WriteString(cases.String())
+	b.WriteString("\t}\n\treturn 0\n}\n")
+	return b.String()
+}
+
 type GoStruct struct {
 	Name     string
 	Comment  string
@@ -126,6 +152,9 @@ type `)
 		b.WriteString(m.Serialize(num, s))
 	}
 	b.WriteString((&GoDispatchMethod{
+		Events: s.Events,
+	}).Serialize(s))
+	b.WriteString((&GoEventFDsMethod{
 		Events: s.Events,
 	}).Serialize(s))
 	for _, e := range s.Events {
@@ -334,6 +363,16 @@ type `)
 	}
 	b.WriteString("\n}\n")
 	return b.String()
+}
+
+func (e *GoEvent) FDCount() int {
+	n := 0
+	for _, a := range e.Args {
+		if a.Type.Type == "fd" {
+			n++
+		}
+	}
+	return n
 }
 
 func (e *GoEvent) SerializeCase(num int) string {

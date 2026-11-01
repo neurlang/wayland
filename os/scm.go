@@ -18,6 +18,16 @@ func ParseSocketControlMessage([]byte) (scms []SocketControlMessage, err error) 
 	return nil, ErrUnsupportedOS
 }
 
+// MsgCtrunc is the recvmsg flag reporting that control data was discarded
+// for lack of buffer space
+const MsgCtrunc = 0
+
+// CmsgSpace returns the buffer size one control message with dataLen bytes
+// of data needs
+func CmsgSpace(int) int {
+	return 0
+}
+
 // ParseUnixRights calls a system call to parse unix rights
 func ParseUnixRights(*SocketControlMessage) (fds []int, err error) {
 	return nil, ErrUnsupportedOS

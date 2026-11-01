@@ -1421,6 +1421,15 @@ func (p *DataSource) Dispatch(event *Event) {
 	}
 }
 
+// EventFDs returns how many fds the event with opcode carries
+func (p *DataSource) EventFDs(opcode uint32) int {
+	switch opcode {
+	case 1:
+		return 1
+	}
+	return 0
+}
+
 // DataSourceTargetEvent is the a target accepts an offered mime type
 type DataSourceTargetEvent struct {
 	// MimeType is the mime type accepted by the target
@@ -3167,6 +3176,15 @@ func (p *Keyboard) Dispatch(event *Event) {
 		}
 
 	}
+}
+
+// EventFDs returns how many fds the event with opcode carries
+func (p *Keyboard) EventFDs(opcode uint32) int {
+	switch opcode {
+	case 0:
+		return 1
+	}
+	return 0
 }
 
 // KeyboardKeymapEvent is the keyboard mapping
