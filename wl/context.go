@@ -7,7 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	sys "github.com/neurlang/wayland/os"
 	//"reflect"
@@ -25,6 +28,10 @@ type Context struct {
 	in        []byte
 	inStart   int
 	control   []byte
+	raw       syscall.RawConn
+	pollFn    func(fd uintptr)
+	pollFds   [1]unix.PollFd
+	pollErr   error
 
 	// The compositor requires client-allocated ids to arrive in the order
 	// they were allocated: libwayland's wl_map rejects a new id that is

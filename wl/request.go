@@ -1,12 +1,12 @@
 package wl
 
 import (
+	"encoding/binary"
 	"errors"
 	"net"
 	"reflect"
 
 	"github.com/neurlang/wayland/os"
-	"github.com/yalue/native_endian"
 )
 
 // Request is the request message from your program to the Wayland compositor
@@ -107,7 +107,7 @@ func (r *Request) Write(arg interface{}) error {
 // PutUint32 (Request PutUint32) writes an uint32 argument to the compositor
 func (r *Request) PutUint32(u uint32) {
 	buf := bytePool.Take(4)
-	native_endian.NativeEndian().PutUint32(buf, u)
+	binary.NativeEndian.PutUint32(buf, u)
 	r.data = append(r.data, buf...)
 }
 
@@ -164,9 +164,9 @@ func writeRequest(conn *net.UnixConn, r Request) error {
 	// calculate message total size
 	size := uint32(len(r.data) + 8)
 	buf := make([]byte, 4)
-	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
+	binary.NativeEndian.PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	native_endian.NativeEndian().PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
+	binary.NativeEndian.PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
 	header = append(header, buf...)
 
 	d, c, err := conn.WriteMsgUnix(append(header, r.data...), r.oob, nil)
@@ -186,9 +186,9 @@ func writeRequestUnix(fd int, r Request) error {
 	// calculate message total size
 	size := uint32(len(r.data) + 8)
 	buf := make([]byte, 4)
-	native_endian.NativeEndian().PutUint32(buf, uint32(r.pid))
+	binary.NativeEndian.PutUint32(buf, uint32(r.pid))
 	header = append(header, buf...)
-	native_endian.NativeEndian().PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
+	binary.NativeEndian.PutUint32(buf, size<<16|r.Opcode&0x0000ffff)
 	header = append(header, buf...)
 
 	// unix.

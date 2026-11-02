@@ -2,11 +2,13 @@ package wl
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/neurlang/wayland/os"
-	"github.com/yalue/native_endian"
 )
 
 // Event is the Wayland event (e.g. a response) from the compositor
@@ -53,7 +55,7 @@ func (ctx *Context) readEvent() (*Event, error) {
 	if err != nil {
 		return nil, combinedError{ErrReadHeader, err}
 	}
-	size := int(native_endian.NativeEndian().Uint16(header[6:8]))
+	size := int(binary.NativeEndian.Uint16(header[6:8]))
 	if size < headerSize {
 		return nil, ErrInvalidMsgSize
 	}
@@ -63,32 +65,84 @@ func (ctx *Context) readEvent() (*Event, error) {
 	}
 	ctx.inStart += size
 	return &Event{
-		Pid:    ProxyId(native_endian.NativeEndian().Uint32(msg[0:4])),
-		Opcode: uint32(native_endian.NativeEndian().Uint16(msg[4:6])),
+		Pid:    ProxyId(binary.NativeEndian.Uint32(msg[0:4])),
+		Opcode: uint32(binary.NativeEndian.Uint16(msg[4:6])),
 		Data:   msg[headerSize:],
 	}, nil
 }
 
 func (ctx *Context) fill(n int) ([]byte, error) {
 	for len(ctx.in)-ctx.inStart < n {
-		if ctx.inStart > 0 {
-			ctx.in = ctx.in[:copy(ctx.in, ctx.in[ctx.inStart:])]
-			ctx.inStart = 0
-		}
-		if cap(ctx.in) < n || cap(ctx.in) == len(ctx.in) {
-			grown := make([]byte, len(ctx.in), max(n, inBufferSize))
-			copy(grown, ctx.in)
-			ctx.in = grown
-		}
-		m, err := ctx.read(ctx.in[len(ctx.in):cap(ctx.in)])
-		if m > 0 {
-			ctx.in = ctx.in[:len(ctx.in)+m]
-		}
-		if err != nil {
+		if err := ctx.readOnce(n); err != nil {
 			return nil, err
 		}
 	}
 	return ctx.in[ctx.inStart : ctx.inStart+n], nil
+}
+
+func (ctx *Context) readOnce(n int) error {
+	if ctx.inStart > 0 {
+		ctx.in = ctx.in[:copy(ctx.in, ctx.in[ctx.inStart:])]
+		ctx.inStart = 0
+	}
+	if cap(ctx.in) < n || cap(ctx.in) == len(ctx.in) {
+		grown := make([]byte, len(ctx.in), max(n, inBufferSize))
+		copy(grown, ctx.in)
+		ctx.in = grown
+	}
+	m, err := ctx.read(ctx.in[len(ctx.in):cap(ctx.in)])
+	if m > 0 {
+		ctx.in = ctx.in[:len(ctx.in)+m]
+	}
+	return err
+}
+
+// Buffered reports whether a whole event is already read and waiting,
+// so Run dispatches it without touching the socket.
+func (ctx *Context) Buffered() bool {
+	buf := ctx.in[ctx.inStart:]
+	return len(buf) >= headerSize && len(buf) >= int(binary.NativeEndian.Uint16(buf[6:8]))
+}
+
+// ReadReady reads once from the socket when it has data, without
+// blocking, and reports whether it did; Buffered then says whether the
+// read completed an event. A peer that hung up reads as io.EOF.
+func (ctx *Context) ReadReady() (bool, error) {
+	if ctx.conn == nil {
+		return false, ErrContextConnNil
+	}
+	if ctx.pollFn == nil {
+		raw, err := ctx.conn.SyscallConn()
+		if err != nil {
+			return false, fmt.Errorf("wl: socket for a readiness poll: %w", err)
+		}
+		ctx.raw = raw
+		ctx.pollFn = ctx.pollReadable
+	}
+	if err := ctx.raw.Control(ctx.pollFn); err != nil {
+		return false, fmt.Errorf("wl: readiness poll: %w", err)
+	}
+	if ctx.pollErr != nil {
+		return false, fmt.Errorf("wl: readiness poll: %w", ctx.pollErr)
+	}
+	if ctx.pollFds[0].Revents == 0 {
+		return false, nil
+	}
+	if err := ctx.readOnce(headerSize); err != nil {
+		return true, err
+	}
+	return true, nil
+}
+
+func (ctx *Context) pollReadable(fd uintptr) {
+	ctx.pollFds[0] = unix.PollFd{Fd: int32(fd), Events: unix.POLLIN}
+	for {
+		_, err := unix.Poll(ctx.pollFds[:], 0)
+		if err != unix.EINTR {
+			ctx.pollErr = err
+			return
+		}
+	}
 }
 
 func (ctx *Context) read(b []byte) (int, error) {
@@ -209,7 +263,7 @@ func (ev *Event) Uint32() uint32 {
 		ev.err = ErrUnableToParseUint32
 		return 0
 	}
-	return native_endian.NativeEndian().Uint32(buf)
+	return binary.NativeEndian.Uint32(buf)
 }
 
 // SafeCast casts to any type, it doesn't panic if proxy is nil
